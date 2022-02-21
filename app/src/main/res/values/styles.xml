@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="window_enter_fade_in_exit_fade_out">
+        <item name="android:windowEnterAnimation">@anim/anim_screen_fade_in</item>
+        <item name="android:windowExitAnimation">@anim/anim_screen_fade_out</item>
+    </style>
+</resources>

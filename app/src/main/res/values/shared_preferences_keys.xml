@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- [pref_login] -->
+    <string name="pref_login" translatable="false">pref_login</string>
+    <string name="pref_login_session_token_string" translatable="false">pref_login_session_token_string</string>
+    <string name="pref_login_user_nick_name_string" translatable="false">pref_login_user_nick_name_string</string>
+    <!-- login_type : 0 = un_login, 1 = my_server, 2 = google, 3 = kakao, 4 = naver -->
+    <string name="pref_login_login_type_int" translatable="false">pref_login_login_type_int</string>
+    <string name="pref_login_user_server_id_string" translatable="false">pref_login_user_server_id_string</string>
+    <string name="pref_login_user_server_pw_string" translatable="false">pref_login_user_server_pw_string</string>
+
+</resources>
