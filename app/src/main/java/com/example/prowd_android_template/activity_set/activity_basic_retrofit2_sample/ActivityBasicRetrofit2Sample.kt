@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_network_sample
+package com.example.prowd_android_template.activity_set.activity_basic_retrofit2_sample
 
 import android.content.Context
 import android.content.Intent
@@ -6,19 +6,22 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_basic_retrofit2_sample.ActivityBasicRetrofit2Sample
+import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
+import com.example.prowd_android_template.activity_set.activity_home.ActivityHomeViewModel
+import com.example.prowd_android_template.activity_set.activity_network_sample.ActivityNetworkSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityNetworkSampleBinding
+import com.example.prowd_android_template.databinding.ActivityBasicRetrofit2SampleBinding
+import com.example.prowd_android_template.databinding.ActivityHomeBinding
 
-class ActivityNetworkSample : AppCompatActivity() {
+class ActivityBasicRetrofit2Sample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityNetworkSampleBinding
+    private lateinit var bindingMbr: ActivityBasicRetrofit2SampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityNetworkSampleViewModel
+    private lateinit var viewModelMbr: ActivityBasicRetrofit2SampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -37,7 +40,7 @@ class ActivityNetworkSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityNetworkSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityBasicRetrofit2SampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -111,7 +114,7 @@ class ActivityNetworkSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityNetworkSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityBasicRetrofit2SampleViewModel::class.java]
 
         // (다이얼로그 생성)
         networkErrorDialogMbr = DialogConfirm(
@@ -156,7 +159,6 @@ class ActivityNetworkSample : AppCompatActivity() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
             // 로그인 데이터 객체 생성
             viewModelMbr.loginPrefMbr = this.getSharedPreferences(
                 getString(R.string.pref_login),
@@ -174,20 +176,7 @@ class ActivityNetworkSample : AppCompatActivity() {
 
     // 뷰 리스너 설정
     private fun setViewListener() {
-        // 기본 레트로핏2 샘플 버튼
-        bindingMbr.goToBasicRetrofit2SampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicRetrofit2Sample::class.java
-                )
-            startActivity(intent)
-        }
 
-        // 기본 OKIO 샘플 버튼
-        bindingMbr.goToBasicOkioSampleBtn.setOnClickListener {
-            // TODO
-        }
     }
 
     // 라이브 데이터 설정

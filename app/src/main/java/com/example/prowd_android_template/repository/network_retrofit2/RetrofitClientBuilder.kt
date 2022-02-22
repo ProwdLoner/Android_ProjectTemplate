@@ -16,7 +16,7 @@ object RetrofitClientBuilder {
     private const val connectTimeOutMilliSecondMbr = 3000L
     private const val readTimeOutMilliSecondMbr = 3000L
     private const val writeTimeOutMilliSecondMbr = 3000L
-    private const val retryOnConnectionFailureMbr = true
+    private const val retryOnConnectionFailureMbr = false
 
 
     // ---------------------------------------------------------------------------------------------
