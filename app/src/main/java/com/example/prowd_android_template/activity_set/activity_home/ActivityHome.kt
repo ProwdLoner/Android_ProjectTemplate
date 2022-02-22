@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
+import com.example.prowd_android_template.activity_set.activity_network_sample.ActivityNetworkSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -185,7 +186,12 @@ class ActivityHome : AppCompatActivity() {
 
         // 네트워크 샘플 이동 버튼
         bindingMbr.goToNetworkSampleBtn.setOnClickListener {
-            // TODO
+            val intent =
+                Intent(
+                    this,
+                    ActivityNetworkSample::class.java
+                )
+            startActivity(intent)
         }
 
         // 데이터베이스 샘플 이동 버튼
