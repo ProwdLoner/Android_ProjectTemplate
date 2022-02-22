@@ -10,6 +10,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_network_sample.ActivityNetworkSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample"
             android:exported="false" />
         <activity
