@@ -10,16 +10,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
-            android:name="com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample"
+            android:name=".activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample"
             android:exported="false" />
         <activity
-            android:name="com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample"
+            android:name=".activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample"
             android:exported="false" />
         <activity
-            android:name="com.example.prowd_android_template.activity_set.activity_home.ActivityHome"
+            android:name=".activity_set.activity_dialog_sample.ActivityDialogSample"
             android:exported="false" />
         <activity
-            android:name="com.example.prowd_android_template.activity_set.activity_init.ActivityInit"
+            android:name=".activity_set.activity_home.ActivityHome"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_init.ActivityInit"
             android:exported="true"
             android:theme="@style/Theme.ActivityInit">
             <intent-filter>

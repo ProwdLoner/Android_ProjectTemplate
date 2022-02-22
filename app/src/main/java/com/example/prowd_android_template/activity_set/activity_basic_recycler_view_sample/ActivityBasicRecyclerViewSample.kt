@@ -1,24 +1,23 @@
-package com.example.prowd_android_template.activity_set.activity_recycler_view_sample
+package com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample
 
 import android.content.Context
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
+import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSampleViewModel
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
+import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
 import com.example.prowd_android_template.databinding.ActivityRecyclerViewSampleBinding
 
-class ActivityRecyclerViewSample : AppCompatActivity() {
+class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityRecyclerViewSampleBinding
+    private lateinit var bindingMbr: ActivityBasicRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityRecyclerViewSampleViewModel
+    private lateinit var viewModelMbr: ActivityBasicRecyclerViewSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -37,7 +36,7 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityRecyclerViewSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityBasicRecyclerViewSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -108,7 +107,7 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityRecyclerViewSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityBasicRecyclerViewSampleViewModel::class.java]
 
         // (다이얼로그 생성)
         networkErrorDialogMbr = DialogConfirm(
@@ -196,15 +195,6 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
         // (뷰 정보 설정)
 
         // (리스너 설정)
-        // 기본 리사이클러 뷰 테스트 버튼
-        bindingMbr.goToBasicRecyclerViewSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicRecyclerViewSample::class.java
-                )
-            startActivity(intent)
-        }
 
     }
 }
