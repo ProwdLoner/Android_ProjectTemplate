@@ -17,7 +17,7 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp">
+                android:layout_height="wrap_content">
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -32,128 +32,51 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="기본 리사이클러뷰 샘플"
+                android:text="모두의 오픈소스!"
                 android:textColor="#FF000000"
                 android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-            <Button
-                android:id="@+id/add_item_btn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
-                android:layout_marginTop="15dp"
-                android:layout_marginEnd="5dp"
-                android:ellipsize="end"
-                android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:lines="1"
-                android:text="add"
-                android:textSize="11sp"
-                app:layout_constraintEnd_toStartOf="@id/item_shuffle_btn"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/activity_title" />
-
-            <Button
-                android:id="@+id/item_shuffle_btn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:layout_marginEnd="5dp"
-                android:ellipsize="end"
-                android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:lines="1"
-                android:text="shuffle"
-                android:textSize="11sp"
-                app:layout_constraintEnd_toStartOf="@id/go_to_top_btn"
-                app:layout_constraintStart_toEndOf="@id/add_item_btn"
-                app:layout_constraintTop_toBottomOf="@id/activity_title" />
-
-            <Button
-                android:id="@+id/go_to_top_btn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:layout_marginEnd="5dp"
-                android:ellipsize="end"
-                android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:lines="1"
-                android:text="go to top"
-                android:textSize="11sp"
-                app:layout_constraintEnd_toStartOf="@id/go_to_bottom_btn"
-                app:layout_constraintStart_toEndOf="@id/item_shuffle_btn"
-                app:layout_constraintTop_toBottomOf="@id/activity_title" />
-
-            <Button
-                android:id="@+id/go_to_bottom_btn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:layout_marginEnd="5dp"
-                android:ellipsize="end"
-                android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:lines="1"
-                android:text="go to bottom"
-                android:textSize="11sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/go_to_top_btn"
-                app:layout_constraintTop_toBottomOf="@id/activity_title" />
-
-            <TextView
-                android:id="@+id/sort_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
-                android:fontFamily="@font/apple_sd_gothic_neo_r"
-                android:text="아이템 정렬 기준"
-                android:textColor="#FF000000"
-                app:layout_constraintBottom_toBottomOf="@id/item_sort_spinner"
-                app:layout_constraintStart_toStartOf="@id/add_item_btn"
-                app:layout_constraintTop_toTopOf="@id/item_sort_spinner" />
-
-            <Spinner
-                android:id="@+id/item_sort_spinner"
-                android:layout_width="200dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                app:layout_constraintStart_toEndOf="@id/sort_title"
-                app:layout_constraintTop_toBottomOf="@id/add_item_btn" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/screen_refresh_layout"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:paddingBottom="15dp"
+            android:paddingTop="15dp"
+            android:scrollbars="vertical">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/screen_vertical_recycler_view"
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:fillViewport="true"
-                android:paddingTop="15dp"
-                android:scrollbars="vertical"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="wrap_content">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <Button
+                    android:id="@+id/go_to_basic_recycler_view_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="기본 리사이클러뷰 샘플"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </ScrollView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

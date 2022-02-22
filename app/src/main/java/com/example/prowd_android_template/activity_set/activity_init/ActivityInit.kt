@@ -17,7 +17,7 @@ import java.net.SocketTimeoutException
 class ActivityInit : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var binding: ActivityInitBinding
+    private lateinit var bindingMbr: ActivityInitBinding
 
     // (뷰 모델 객체)
     private lateinit var viewModelMbr: ActivityInitViewModel
@@ -32,7 +32,7 @@ class ActivityInit : AppCompatActivity() {
     // 업데이트 요청 다이얼로그(앱 실행 최소 버전 미달 시점에 요청)
     private lateinit var versionUpdateDialogMbr: DialogBinaryChoose
 
-    private lateinit var delayCountDownTimer: CountDownTimer
+    private lateinit var delayCountDownTimerMbr: CountDownTimer
 
 
     // ---------------------------------------------------------------------------------------------
@@ -41,8 +41,8 @@ class ActivityInit : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        binding = ActivityInitBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        bindingMbr = ActivityInitBinding.inflate(layoutInflater)
+        setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
         createMemberObjects()
@@ -62,18 +62,18 @@ class ActivityInit : AppCompatActivity() {
         super.onResume()
         if (!viewModelMbr.delayGoToNextActivityAsyncCompletedOnceMbr) { // 화면 대기가 끝나지 않았을 때
             // 화면 체류 delay 실행
-            delayCountDownTimer = object :
-                CountDownTimer(viewModelMbr.countDownRestMilliSec, viewModelMbr.countDownInterval) {
+            delayCountDownTimerMbr = object :
+                CountDownTimer(viewModelMbr.countDownRestMilliSecMbr, viewModelMbr.countDownIntervalMbr) {
                 override fun onTick(millisUntilFinished: Long) {
                     // 초 마다 화면에 카운트 다운
-                    if (viewModelMbr.countDownRestMilliSec.toFloat() % 1000f == 0f) {
-                        binding.countDownTxt.text =
-                            (viewModelMbr.countDownRestMilliSec.toFloat() / 1000f).toInt()
+                    if (viewModelMbr.countDownRestMilliSecMbr.toFloat() % 1000f == 0f) {
+                        bindingMbr.countDownTxt.text =
+                            (viewModelMbr.countDownRestMilliSecMbr.toFloat() / 1000f).toInt()
                                 .toString()
                     }
 
-                    viewModelMbr.countDownRestMilliSec =
-                        viewModelMbr.countDownRestMilliSec - viewModelMbr.countDownInterval
+                    viewModelMbr.countDownRestMilliSecMbr =
+                        viewModelMbr.countDownRestMilliSecMbr - viewModelMbr.countDownIntervalMbr
                 }
 
                 override fun onFinish() {
@@ -90,7 +90,7 @@ class ActivityInit : AppCompatActivity() {
 
     override fun onPause() {
         if (!viewModelMbr.delayGoToNextActivityAsyncCompletedOnceMbr) { // 화면 대기가 끝나지 않았을 때
-            delayCountDownTimer.cancel()
+            delayCountDownTimerMbr.cancel()
         }
 
         super.onPause()
@@ -248,8 +248,8 @@ class ActivityInit : AppCompatActivity() {
         }
 
         // (뷰 정보 설정)
-        binding.countDownTxt.text =
-            (viewModelMbr.countDownRestMilliSec.toFloat() / 1000f).toInt().toString()
+        bindingMbr.countDownTxt.text =
+            (viewModelMbr.countDownRestMilliSecMbr.toFloat() / 1000f).toInt().toString()
 
         // (리스너 설정)
     }

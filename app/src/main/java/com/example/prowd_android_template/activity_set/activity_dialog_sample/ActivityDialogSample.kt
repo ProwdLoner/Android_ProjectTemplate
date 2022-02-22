@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_dialog_sample
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
@@ -15,7 +14,7 @@ import com.example.prowd_android_template.databinding.ActivityDialogSampleBindin
 class ActivityDialogSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var binding: ActivityDialogSampleBinding
+    private lateinit var bindingMbr: ActivityDialogSampleBinding
 
     // (뷰 모델 객체)
     private lateinit var viewModelMbr: ActivityDialogSampleViewModel
@@ -37,8 +36,8 @@ class ActivityDialogSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        binding = ActivityDialogSampleBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        bindingMbr = ActivityDialogSampleBinding.inflate(layoutInflater)
+        setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
         createMemberObjects()
@@ -242,17 +241,20 @@ class ActivityDialogSample : AppCompatActivity() {
         // (뷰 정보 설정)
 
         // (리스너 설정)
-        binding.testLoadingDialogBtn.setOnClickListener {
+        // 로딩 다이얼로그 테스트 버튼
+        bindingMbr.testLoadingDialogBtn.setOnClickListener {
             viewModelMbr.isProgressLoadingDialogShownMbr = true
             progressLoadingDialogMbr.show()
         }
 
-        binding.testBinaryChooseDialogBtn.setOnClickListener {
+        // 선택 다이얼로그 테스트 버튼
+        bindingMbr.testBinaryChooseDialogBtn.setOnClickListener {
             viewModelMbr.isBinaryChooseDialogShownMbr = true
             binaryChooseDialogMbr.show()
         }
 
-        binding.testConfirmDialogBtn.setOnClickListener {
+        // 확인 다이얼로그 테스트 버튼
+        bindingMbr.testConfirmDialogBtn.setOnClickListener {
             viewModelMbr.isConfirmDialogShownMbr = true
             confirmDialogMbr.show()
         }

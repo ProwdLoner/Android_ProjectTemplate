@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_recycler_view_sample
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
@@ -13,7 +12,7 @@ import com.example.prowd_android_template.databinding.ActivityRecyclerViewSample
 class ActivityRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var binding: ActivityRecyclerViewSampleBinding
+    private lateinit var bindingMbr: ActivityRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
     private lateinit var viewModelMbr: ActivityRecyclerViewSampleViewModel
@@ -35,8 +34,8 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        binding = ActivityRecyclerViewSampleBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        bindingMbr = ActivityRecyclerViewSampleBinding.inflate(layoutInflater)
+        setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
         createMemberObjects()
@@ -64,7 +63,7 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
                     null
                 )
 
-            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr){// 액티비티 유저와 세션 유저가 다를 때
+            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) {// 액티비티 유저와 세션 유저가 다를 때
                 //  데이터 로딩
 
                 // 현 액티비티 진입 유저 저장
@@ -194,6 +193,10 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
         // (뷰 정보 설정)
 
         // (리스너 설정)
+        // 기본 리사이클러 뷰 테스트 버튼
+        bindingMbr.goToBasicRecyclerViewSampleBtn.setOnClickListener {
+            // TODO
+        }
 
     }
 }

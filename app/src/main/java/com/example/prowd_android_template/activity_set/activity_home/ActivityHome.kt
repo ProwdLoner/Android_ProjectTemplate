@@ -2,7 +2,6 @@ package com.example.prowd_android_template.activity_set.activity_home
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
@@ -16,7 +15,7 @@ import com.example.prowd_android_template.databinding.ActivityHomeBinding
 class ActivityHome : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var binding: ActivityHomeBinding
+    private lateinit var bindingMbr: ActivityHomeBinding
 
     // (뷰 모델 객체)
     private lateinit var viewModelMbr: ActivityHomeViewModel
@@ -38,8 +37,8 @@ class ActivityHome : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        binding = ActivityHomeBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        bindingMbr = ActivityHomeBinding.inflate(layoutInflater)
+        setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
         createMemberObjects()
@@ -67,7 +66,7 @@ class ActivityHome : AppCompatActivity() {
                     null
                 )
 
-            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr){// 액티비티 유저와 세션 유저가 다를 때
+            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) {// 액티비티 유저와 세션 유저가 다를 때
                 //  데이터 로딩
 
                 // 현 액티비티 진입 유저 저장
@@ -197,7 +196,7 @@ class ActivityHome : AppCompatActivity() {
 
         // (리스너 설정)
         // 다이얼로그 샘플 이동 버튼
-        binding.goToDialogSampleBtn.setOnClickListener {
+        bindingMbr.goToDialogSampleBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
@@ -206,14 +205,69 @@ class ActivityHome : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // 네트워크 샘플 이동 버튼
+        bindingMbr.goToNetworkSampleBtn.setOnClickListener {
+            // TODO
+        }
+
+        // 데이터베이스 샘플 이동 버튼
+        bindingMbr.goToDatabaseSampleBtn.setOnClickListener {
+            // TODO
+        }
+
+        // 회원관리 샘플 이동 버튼
+        bindingMbr.goToUserManagementSampleBtn.setOnClickListener {
+            // TODO
+        }
+
         // 리사이클러 뷰 샘플 이동 버튼
-        binding.goToRecyclerViewSampleBtn.setOnClickListener {
+        bindingMbr.goToRecyclerViewSampleBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
                     ActivityRecyclerViewSample::class.java
                 )
             startActivity(intent)
+        }
+
+        // JNI 샘플 이동 버튼
+        bindingMbr.goToJniSampleBtn.setOnClickListener {
+            // TODO
+        }
+
+        // 카메라 샘플 이동 버튼
+        bindingMbr.goToCameraSampleBtn.setOnClickListener {
+            // TODO
+        }
+
+        // 이미지 샘플 이동 버튼
+        bindingMbr.goToImageSampleBtn.setOnClickListener {
+            // TODO
+        }
+
+        // 동영상 샘플 이동 버튼
+        bindingMbr.goToVideoSampleBtn.setOnClickListener {
+            // TODO
+        }
+
+        // 오디오 샘플 이동 버튼
+        bindingMbr.goToAudioSampleBtn.setOnClickListener {
+            // TODO
+        }
+
+        // 머신러닝 샘플 이동 버튼
+        bindingMbr.goToMachineLearningSampleBtn.setOnClickListener {
+            // TODO
+        }
+
+        // 지도 샘플 이동 버튼
+        bindingMbr.goToMapSampleBtn.setOnClickListener {
+            //TODO
+        }
+
+        // 달력 샘플 이동 버튼
+        bindingMbr.goToCalendarSampleBtn.setOnClickListener {
+            // TODO
         }
 
     }

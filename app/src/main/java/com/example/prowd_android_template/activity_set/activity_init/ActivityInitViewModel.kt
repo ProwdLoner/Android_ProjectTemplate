@@ -19,8 +19,8 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     // (데이터)
     // 대기시간 (밀리초)
-    var countDownRestMilliSec = 2000L
-    var countDownInterval = 1L
+    var countDownRestMilliSecMbr = 2000L
+    var countDownIntervalMbr = 1L
 
     // (플래그 데이터)
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
