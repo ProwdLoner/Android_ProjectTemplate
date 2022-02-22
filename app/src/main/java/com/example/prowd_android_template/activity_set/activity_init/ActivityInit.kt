@@ -7,7 +7,6 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.util.Log
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_home.ActivityHome
@@ -50,11 +49,11 @@ class ActivityInit : AppCompatActivity() {
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
 
-        // (초기 뷰 설정)
-        initViewObject()
-
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
+
+        // (뷰 리스너 설정)
+        setViewListener()
 
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
@@ -71,9 +70,7 @@ class ActivityInit : AppCompatActivity() {
                 override fun onTick(millisUntilFinished: Long) {
                     // 초 마다 화면에 카운트 다운
                     if (viewModelMbr.countDownRestMilliSecMbr.toFloat() % 1000f == 0f) {
-                        bindingMbr.countDownTxt.text =
-                            (viewModelMbr.countDownRestMilliSecMbr.toFloat() / 1000f).toInt()
-                                .toString()
+                        viewModelMbr.countDownNumberLiveDataMbr.value = (viewModelMbr.countDownRestMilliSecMbr.toFloat() / 1000f).toInt()
                     }
 
                     viewModelMbr.countDownRestMilliSecMbr =
@@ -227,13 +224,9 @@ class ActivityInit : AppCompatActivity() {
         }
     }
 
-    // 초기 뷰 설정
-    private fun initViewObject() {
-        // (뷰 정보 설정)
-        bindingMbr.countDownTxt.text =
-            (viewModelMbr.countDownRestMilliSecMbr.toFloat() / 1000f).toInt().toString()
+    // 뷰 리스너 설정
+    private fun setViewListener() {
 
-        // (리스너 설정)
     }
 
     // 액티비티 초기화 로직
@@ -389,6 +382,11 @@ class ActivityInit : AppCompatActivity() {
             } else {
                 serverErrorDialogMbr.dismiss()
             }
+        }
+
+        // 카운트 다운 출력
+        viewModelMbr.countDownNumberLiveDataMbr.observe(this){
+            bindingMbr.countDownTxt.text = it.toString()
         }
     }
 }

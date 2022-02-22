@@ -7,7 +7,6 @@ import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityRecyclerViewSampleBinding
@@ -45,11 +44,11 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
 
-        // (초기 뷰 설정)
-        initViewObject()
-
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
+
+        // (뷰 리스너 설정)
+        setViewListener()
 
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
@@ -172,11 +171,8 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
         }
     }
 
-    // 초기 뷰 설정
-    private fun initViewObject() {
-        // (뷰 정보 설정)
-
-        // (리스너 설정)
+    // 뷰 리스너 설정
+    private fun setViewListener() {
         // 기본 리사이클러 뷰 테스트 버튼
         bindingMbr.goToBasicRecyclerViewSampleBtn.setOnClickListener {
             val intent =

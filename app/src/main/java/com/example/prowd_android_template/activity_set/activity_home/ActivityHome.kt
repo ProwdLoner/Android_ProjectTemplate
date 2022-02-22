@@ -45,11 +45,11 @@ class ActivityHome : AppCompatActivity() {
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
 
-        // (초기 뷰 설정)
-        initViewObject()
-
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
+
+        // (뷰 리스너 설정)
+        setViewListener()
 
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
@@ -171,11 +171,8 @@ class ActivityHome : AppCompatActivity() {
         }
     }
 
-    // 초기 뷰 설정
-    private fun initViewObject() {
-        // (뷰 정보 설정)
-
-        // (리스너 설정)
+    // 뷰 리스너 설정
+    private fun setViewListener() {
         // 다이얼로그 샘플 이동 버튼
         bindingMbr.goToDialogSampleBtn.setOnClickListener {
             val intent =

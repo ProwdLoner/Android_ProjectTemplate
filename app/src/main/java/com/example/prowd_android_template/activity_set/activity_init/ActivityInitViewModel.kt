@@ -20,7 +20,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     // (데이터)
     // 대기시간 (밀리초)
-    var countDownRestMilliSecMbr = 2000L
+    var countDownRestMilliSecMbr = 1000L
     var countDownIntervalMbr = 1L
 
     // (플래그 데이터)
@@ -41,6 +41,9 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     // 업데이트 다이얼로그 출력 플래그
     var isVersionUpdateDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    // 카운트 다운 숫자 데이터
+    var countDownNumberLiveDataMbr : MutableLiveData<Int> = MutableLiveData((countDownRestMilliSecMbr.toFloat() / 1000f).toInt())
 
 
     // ---------------------------------------------------------------------------------------------
