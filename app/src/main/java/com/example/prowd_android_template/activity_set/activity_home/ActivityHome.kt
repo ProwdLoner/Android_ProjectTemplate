@@ -31,9 +31,6 @@ class ActivityHome : AppCompatActivity() {
     // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
     private lateinit var serverErrorDialogMbr: DialogConfirm
 
-    // 로그인 정보 객체
-    lateinit var loginPrefMbr: SharedPreferences
-
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -65,7 +62,7 @@ class ActivityHome : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
 
             val sessionToken =
-                loginPrefMbr.getString(
+                viewModelMbr.loginPrefMbr.getString(
                     getString(R.string.pref_login),
                     null
                 )
@@ -114,12 +111,6 @@ class ActivityHome : AppCompatActivity() {
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ActivityHomeViewModel::class.java]
 
-        // 로그인 데이터 객체 생성
-        loginPrefMbr = this.getSharedPreferences(
-            getString(R.string.pref_login),
-            Context.MODE_PRIVATE
-        )
-
         // (다이얼로그 생성)
         networkErrorDialogMbr = DialogConfirm(
             this,
@@ -163,9 +154,15 @@ class ActivityHome : AppCompatActivity() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
+            // 로그인 데이터 객체 생성
+            viewModelMbr.loginPrefMbr = this.getSharedPreferences(
+                getString(R.string.pref_login),
+                Context.MODE_PRIVATE
+            )
+
             // 현 액티비티 진입 유저 저장
             viewModelMbr.currentUserSessionTokenMbr =
-                loginPrefMbr.getString(
+                viewModelMbr.loginPrefMbr.getString(
                     getString(R.string.pref_login_session_token_string),
                     null
                 )
