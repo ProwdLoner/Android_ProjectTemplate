@@ -47,6 +47,9 @@ class ActivityDialogSample : AppCompatActivity() {
         // (초기 뷰 설정)
         initViewObject()
 
+        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
+        setLiveData()
+
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
@@ -122,7 +125,7 @@ class ActivityDialogSample : AppCompatActivity() {
                 )
                 myToast.show()
 
-                viewModelMbr.isProgressLoadingDialogShownMbr = false
+                viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = false
             }
         )
 
@@ -141,7 +144,7 @@ class ActivityDialogSample : AppCompatActivity() {
                 )
                 myToast.show()
 
-                viewModelMbr.isBinaryChooseDialogShownMbr = false
+                viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
             },
             onNegBtnClickedMbr = {
                 val myToast = Toast.makeText(
@@ -151,7 +154,7 @@ class ActivityDialogSample : AppCompatActivity() {
                 )
                 myToast.show()
 
-                viewModelMbr.isBinaryChooseDialogShownMbr = false
+                viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
             },
             onCanceledMbr = {
                 val myToast = Toast.makeText(
@@ -161,7 +164,7 @@ class ActivityDialogSample : AppCompatActivity() {
                 )
                 myToast.show()
 
-                viewModelMbr.isBinaryChooseDialogShownMbr = false
+                viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
             }
         )
 
@@ -179,7 +182,7 @@ class ActivityDialogSample : AppCompatActivity() {
                 )
                 myToast.show()
 
-                viewModelMbr.isConfirmDialogShownMbr = false
+                viewModelMbr.isConfirmDialogShownLiveDataMb.value = false
             },
             onCanceledMbr = {
                 val myToast = Toast.makeText(
@@ -189,7 +192,7 @@ class ActivityDialogSample : AppCompatActivity() {
                 )
                 myToast.show()
 
-                viewModelMbr.isConfirmDialogShownMbr = false
+                viewModelMbr.isConfirmDialogShownLiveDataMb.value = false
             }
         )
 
@@ -216,48 +219,56 @@ class ActivityDialogSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun initViewObject() {
-        // (화면 회전시 뷰모델 정보에 따른 화면 복구)
-        // 로딩 다이얼로그 여부
-        if (viewModelMbr.isProgressLoadingDialogShownMbr) {
-            progressLoadingDialogMbr.show()
-        } else {
-            progressLoadingDialogMbr.dismiss()
-        }
-
-        // 선택 다이얼로그 여부
-        if (viewModelMbr.isBinaryChooseDialogShownMbr) {
-            binaryChooseDialogMbr.show()
-        } else {
-            binaryChooseDialogMbr.dismiss()
-        }
-
-        // 확인 다이얼로그 여부
-        if (viewModelMbr.isConfirmDialogShownMbr) {
-            confirmDialogMbr.show()
-        } else {
-            confirmDialogMbr.dismiss()
-        }
-
         // (뷰 정보 설정)
 
         // (리스너 설정)
         // 로딩 다이얼로그 테스트 버튼
         bindingMbr.testLoadingDialogBtn.setOnClickListener {
-            viewModelMbr.isProgressLoadingDialogShownMbr = true
+            viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = true
             progressLoadingDialogMbr.show()
         }
 
         // 선택 다이얼로그 테스트 버튼
         bindingMbr.testBinaryChooseDialogBtn.setOnClickListener {
-            viewModelMbr.isBinaryChooseDialogShownMbr = true
+            viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = true
             binaryChooseDialogMbr.show()
         }
 
         // 확인 다이얼로그 테스트 버튼
         bindingMbr.testConfirmDialogBtn.setOnClickListener {
-            viewModelMbr.isConfirmDialogShownMbr = true
+            viewModelMbr.isConfirmDialogShownLiveDataMb.value = true
             confirmDialogMbr.show()
         }
 
+    }
+
+    // 라이브 데이터 설정
+    private fun setLiveData() {
+        // 로딩 다이얼로그 출력 플래그
+        viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.observe(this) {
+            if (it) {
+                progressLoadingDialogMbr.show()
+            } else {
+                progressLoadingDialogMbr.dismiss()
+            }
+        }
+
+        // 선택 다이얼로그 출력 플래그
+        viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.observe(this) {
+            if (it) {
+                binaryChooseDialogMbr.show()
+            } else {
+                binaryChooseDialogMbr.dismiss()
+            }
+        }
+
+        // 확인 다이얼로그 출력 플래그
+        viewModelMbr.isConfirmDialogShownLiveDataMb.observe(this) {
+            if (it) {
+                confirmDialogMbr.show()
+            } else {
+                confirmDialogMbr.dismiss()
+            }
+        }
     }
 }

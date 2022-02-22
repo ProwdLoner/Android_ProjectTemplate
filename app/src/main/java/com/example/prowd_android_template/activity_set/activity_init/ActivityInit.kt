@@ -7,6 +7,7 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_home.ActivityHome
@@ -51,6 +52,9 @@ class ActivityInit : AppCompatActivity() {
 
         // (초기 뷰 설정)
         initViewObject()
+
+        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
+        setLiveData()
 
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
@@ -139,17 +143,17 @@ class ActivityInit : AppCompatActivity() {
             "다시시도",
             "종료",
             onPosBtnClickedMbr = {
-                viewModelMbr.isNetworkErrorDialogShownMbr = false
+                viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
 
                 // 로직 다시 실행
                 doActivityInit()
             },
             onNegBtnClickedMbr = {
-                viewModelMbr.isNetworkErrorDialogShownMbr = false
+                viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
                 finish()
             },
             onCanceledMbr = {
-                viewModelMbr.isNetworkErrorDialogShownMbr = false
+                viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
                 finish()
             }
         )
@@ -162,17 +166,17 @@ class ActivityInit : AppCompatActivity() {
             "다시시도",
             "종료",
             onPosBtnClickedMbr = {
-                viewModelMbr.isServerErrorDialogShownMbr = false
+                viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
 
                 // 로직 다시 실행
                 doActivityInit()
             },
             onNegBtnClickedMbr = {
-                viewModelMbr.isServerErrorDialogShownMbr = false
+                viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
                 finish()
             },
             onCanceledMbr = {
-                viewModelMbr.isServerErrorDialogShownMbr = false
+                viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
                 finish()
             }
         )
@@ -201,16 +205,16 @@ class ActivityInit : AppCompatActivity() {
                         )
                     )
                 } finally {
-                    viewModelMbr.isVersionUpdateDialogShownMbr = false
+                    viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = false
                     finish()
                 }
             },
             onNegBtnClickedMbr = { // 부정
-                viewModelMbr.isVersionUpdateDialogShownMbr = false
+                viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = false
                 finish()
             },
             onCanceledMbr = {
-                viewModelMbr.isVersionUpdateDialogShownMbr = false
+                viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = false
                 finish()
             }
         )
@@ -225,28 +229,6 @@ class ActivityInit : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun initViewObject() {
-        // (화면 회전시 뷰모델 정보에 따른 화면 복구)
-        // 네트워크 에러 다이얼로그 여부
-        if (viewModelMbr.isNetworkErrorDialogShownMbr) {
-            networkErrorDialogMbr.show()
-        } else {
-            networkErrorDialogMbr.dismiss()
-        }
-
-        // 서버 에러 다이얼로그 여부
-        if (viewModelMbr.isServerErrorDialogShownMbr) {
-            serverErrorDialogMbr.show()
-        } else {
-            serverErrorDialogMbr.dismiss()
-        }
-
-        // 버전 업데이트 다이얼로그 여부
-        if (viewModelMbr.isVersionUpdateDialogShownMbr) {
-            versionUpdateDialogMbr.show()
-        } else {
-            versionUpdateDialogMbr.dismiss()
-        }
-
         // (뷰 정보 설정)
         bindingMbr.countDownTxt.text =
             (viewModelMbr.countDownRestMilliSecMbr.toFloat() / 1000f).toInt().toString()
@@ -264,7 +246,7 @@ class ActivityInit : AppCompatActivity() {
                 onComplete = { needUpdate ->
                     runOnUiThread checkAppVersionAsyncComplete@{
                         if (needUpdate) { // 업데이트 필요
-                            viewModelMbr.isVersionUpdateDialogShownMbr = true
+                            viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = true
                             versionUpdateDialogMbr.show()
                         } else { // 업데이트 불필요
                             // 로그인 검증 실행
@@ -333,10 +315,10 @@ class ActivityInit : AppCompatActivity() {
                                     onError = { checkLoginSessionAsyncError ->
                                         runOnUiThread checkLoginSessionAsyncError@{
                                             if (checkLoginSessionAsyncError is SocketTimeoutException) { // 타임아웃 에러
-                                                viewModelMbr.isNetworkErrorDialogShownMbr = true
+                                                viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = true
                                                 networkErrorDialogMbr.show()
                                             } else {
-                                                viewModelMbr.isServerErrorDialogShownMbr = true
+                                                viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = true
                                                 serverErrorDialogMbr.contentMbr =
                                                     "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.\n\n에러 메시지 :\n${checkLoginSessionAsyncError.message}"
                                                 serverErrorDialogMbr.show()
@@ -351,10 +333,10 @@ class ActivityInit : AppCompatActivity() {
                 onError = { checkAppVersionAsyncError ->
                     runOnUiThread checkAppVersionAsyncError@{
                         if (checkAppVersionAsyncError is SocketTimeoutException) { // 타임아웃 에러
-                            viewModelMbr.isNetworkErrorDialogShownMbr = true
+                            viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = true
                             networkErrorDialogMbr.show()
                         } else {
-                            viewModelMbr.isServerErrorDialogShownMbr = true
+                            viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = true
                             serverErrorDialogMbr.contentMbr =
                                 "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.\n\n에러 메시지 :\n${checkAppVersionAsyncError.message}"
                             serverErrorDialogMbr.show()
@@ -377,6 +359,36 @@ class ActivityInit : AppCompatActivity() {
                 )
             startActivity(intent)
             finish()
+        }
+    }
+
+    // 라이브 데이터 설정
+    private fun setLiveData() {
+        // 업데이트 다이얼로그 출력 플래그
+        viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.observe(this) {
+            if (it) {
+                versionUpdateDialogMbr.show()
+            } else {
+                versionUpdateDialogMbr.dismiss()
+            }
+        }
+
+        // 네트워크 에러 다이얼로그 출력 플래그
+        viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.observe(this) {
+            if (it) {
+                networkErrorDialogMbr.show()
+            } else {
+                networkErrorDialogMbr.dismiss()
+            }
+        }
+
+        // 서버 에러 다이얼로그 출력 플래그
+        viewModelMbr.isServerErrorDialogShownLiveDataMbr.observe(this) {
+            if (it) {
+                serverErrorDialogMbr.show()
+            } else {
+                serverErrorDialogMbr.dismiss()
+            }
         }
     }
 }

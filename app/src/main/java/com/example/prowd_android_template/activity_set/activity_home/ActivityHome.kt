@@ -48,6 +48,9 @@ class ActivityHome : AppCompatActivity() {
         // (초기 뷰 설정)
         initViewObject()
 
+        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
+        setLiveData()
+
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
@@ -118,10 +121,10 @@ class ActivityHome : AppCompatActivity() {
             "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
             null,
             onCheckBtnClickedMbr = {
-                viewModelMbr.isNetworkErrorDialogShownMbr = false
+                viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
             },
             onCanceledMbr = {
-                viewModelMbr.isNetworkErrorDialogShownMbr = false
+                viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
             }
         )
 
@@ -132,10 +135,10 @@ class ActivityHome : AppCompatActivity() {
             "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
             null,
             onCheckBtnClickedMbr = {
-                viewModelMbr.isServerErrorDialogShownMbr = false
+                viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
             },
             onCanceledMbr = {
-                viewModelMbr.isServerErrorDialogShownMbr = false
+                viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
             }
         )
 
@@ -144,7 +147,7 @@ class ActivityHome : AppCompatActivity() {
             true,
             "로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중",
             onCanceledMbr = {
-                viewModelMbr.isProgressLoadingDialogShownMbr = false
+                viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = false
             }
         )
 
@@ -170,28 +173,6 @@ class ActivityHome : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun initViewObject() {
-        // (화면 회전시 뷰모델 정보에 따른 화면 복구)
-        // 네트워크 에러 다이얼로그 여부
-        if (viewModelMbr.isNetworkErrorDialogShownMbr) {
-            networkErrorDialogMbr.show()
-        } else {
-            networkErrorDialogMbr.dismiss()
-        }
-
-        // 서버 에러 다이얼로그 여부
-        if (viewModelMbr.isServerErrorDialogShownMbr) {
-            serverErrorDialogMbr.show()
-        } else {
-            serverErrorDialogMbr.dismiss()
-        }
-
-        // 버전 업데이트 다이얼로그 여부
-        if (viewModelMbr.isProgressLoadingDialogShownMbr) {
-            progressLoadingDialogMbr.show()
-        } else {
-            progressLoadingDialogMbr.dismiss()
-        }
-
         // (뷰 정보 설정)
 
         // (리스너 설정)
@@ -270,5 +251,35 @@ class ActivityHome : AppCompatActivity() {
             // TODO
         }
 
+    }
+
+    // 라이브 데이터 설정
+    private fun setLiveData() {
+        // 로딩 다이얼로그 출력 플래그
+        viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.observe(this) {
+            if (it) {
+                progressLoadingDialogMbr.show()
+            } else {
+                progressLoadingDialogMbr.dismiss()
+            }
+        }
+
+        // 네트워크 에러 다이얼로그 출력 플래그
+        viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.observe(this) {
+            if (it) {
+                networkErrorDialogMbr.show()
+            } else {
+                networkErrorDialogMbr.dismiss()
+            }
+        }
+
+        // 서버 에러 다이얼로그 출력 플래그
+        viewModelMbr.isServerErrorDialogShownLiveDataMbr.observe(this) {
+            if (it) {
+                serverErrorDialogMbr.show()
+            } else {
+                serverErrorDialogMbr.dismiss()
+            }
+        }
     }
 }

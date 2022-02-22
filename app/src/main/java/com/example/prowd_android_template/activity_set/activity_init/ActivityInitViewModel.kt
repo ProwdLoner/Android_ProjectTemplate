@@ -2,6 +2,7 @@ package com.example.prowd_android_template.activity_set.activity_init
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -26,17 +27,20 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
 
-    // 네트워크 에러 다이얼로그 출력 플래그
-    var isNetworkErrorDialogShownMbr = false
-
-    // 서버 에러 다이얼로그 출력 플래그
-    var isServerErrorDialogShownMbr = false
-
-    // 업데이트 다이얼로그 출력 플래그
-    var isVersionUpdateDialogShownMbr = false
-
     // 앱 기본 대기 시간이 끝났을 때
     var delayGoToNextActivityAsyncCompletedOnceMbr = false
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <뷰모델 라이브데이터 공간>
+    // 네트워크 에러 다이얼로그 출력 플래그
+    var isNetworkErrorDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    // 서버 에러 다이얼로그 출력 플래그
+    var isServerErrorDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    // 업데이트 다이얼로그 출력 플래그
+    var isVersionUpdateDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
 
 
     // ---------------------------------------------------------------------------------------------

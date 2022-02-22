@@ -3,6 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_dialog_sample
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -27,14 +28,17 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
 
+
+    // ---------------------------------------------------------------------------------------------
+    // <뷰모델 라이브데이터 공간>
     // 로딩 다이얼로그 출력 플래그
-    var isProgressLoadingDialogShownMbr = false
+    var isProgressLoadingDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
 
     // 선택 다이얼로그 출력 플래그
-    var isBinaryChooseDialogShownMbr = false
+    var isBinaryChooseDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
 
     // 확인 다이얼로그 출력 플래그
-    var isConfirmDialogShownMbr = false
+    var isConfirmDialogShownLiveDataMb: MutableLiveData<Boolean> = MutableLiveData(false)
 
 
     // ---------------------------------------------------------------------------------------------
