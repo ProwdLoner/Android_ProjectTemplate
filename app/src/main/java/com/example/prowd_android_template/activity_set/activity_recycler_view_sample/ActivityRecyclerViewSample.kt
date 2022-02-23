@@ -47,8 +47,8 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
 
-        // (뷰 리스너 설정)
-        setViewListener()
+        // (초기 뷰 설정)
+        viewSetting()
 
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
@@ -171,8 +171,8 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
         }
     }
 
-    // 뷰 리스너 설정
-    private fun setViewListener() {
+    // 초기 뷰 설정
+    private fun viewSetting() {
         // 기본 리사이클러 뷰 테스트 버튼
         bindingMbr.goToBasicRecyclerViewSampleBtn.setOnClickListener {
             val intent =

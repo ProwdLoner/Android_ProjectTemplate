@@ -7,7 +7,6 @@ import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_basic_retrofit2_sample.ActivityBasicRetrofit2Sample
-import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityNetworkSampleBinding
@@ -48,8 +47,8 @@ class ActivityNetworkSample : AppCompatActivity() {
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
 
-        // (뷰 리스너 설정)
-        setViewListener()
+        // (초기 뷰 설정)
+        viewSetting()
 
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
@@ -172,8 +171,8 @@ class ActivityNetworkSample : AppCompatActivity() {
         }
     }
 
-    // 뷰 리스너 설정
-    private fun setViewListener() {
+    // 초기 뷰 설정
+    private fun viewSetting() {
         // 기본 레트로핏2 샘플 버튼
         bindingMbr.goToBasicRetrofit2SampleBtn.setOnClickListener {
             val intent =

@@ -1,19 +1,13 @@
 package com.example.prowd_android_template.activity_set.activity_basic_retrofit2_sample
 
 import android.content.Context
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
-import com.example.prowd_android_template.activity_set.activity_home.ActivityHomeViewModel
-import com.example.prowd_android_template.activity_set.activity_network_sample.ActivityNetworkSample
-import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRetrofit2SampleBinding
-import com.example.prowd_android_template.databinding.ActivityHomeBinding
 
 class ActivityBasicRetrofit2Sample : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -51,8 +45,8 @@ class ActivityBasicRetrofit2Sample : AppCompatActivity() {
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
 
-        // (뷰 리스너 설정)
-        setViewListener()
+        // (초기 뷰 설정)
+        viewSetting()
 
         // (로직 실행)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
@@ -174,9 +168,11 @@ class ActivityBasicRetrofit2Sample : AppCompatActivity() {
         }
     }
 
-    // 뷰 리스너 설정
-    private fun setViewListener() {
-
+    // 초기 뷰 설정
+    private fun viewSetting() {
+        bindingMbr.requestBtn.setOnClickListener {
+            // todo : 네트워크 요청
+        }
     }
 
     // 라이브 데이터 설정
