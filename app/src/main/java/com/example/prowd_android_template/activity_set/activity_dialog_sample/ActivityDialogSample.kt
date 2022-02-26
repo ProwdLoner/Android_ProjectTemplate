@@ -154,18 +154,20 @@ class ActivityDialogSample : AppCompatActivity() {
             if (it) {
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
-                    true,
-                    "로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중",
-                    onCanceledMbr = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "progressLoadingDialogMbr? - canceled",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
+                    DialogProgressLoading.DialogInfoVO(
+                        true,
+                        "로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중",
+                        onCanceled = {
+                            val myToast = Toast.makeText(
+                                this,
+                                "progressLoadingDialogMbr? - canceled",
+                                Toast.LENGTH_SHORT
+                            )
+                            myToast.show()
 
-                        viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = false
-                    }
+                            viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = false
+                        }
+                    )
                 )
                 progressLoadingDialogMbr?.show()
             } else {
@@ -179,41 +181,43 @@ class ActivityDialogSample : AppCompatActivity() {
             if (it) {
                 binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
-                    true,
-                    "네트워크 에러",
-                    "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                    null,
-                    null,
-                    onPosBtnClickedMbr = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "binaryChooseDialogMbr? - pos",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
+                    DialogBinaryChoose.DialogInfoVO(
+                        true,
+                        "네트워크 에러",
+                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            val myToast = Toast.makeText(
+                                this,
+                                "binaryChooseDialogMbr? - pos",
+                                Toast.LENGTH_SHORT
+                            )
+                            myToast.show()
 
-                        viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
-                    },
-                    onNegBtnClickedMbr = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "binaryChooseDialogMbr? - neg",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
+                            viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
+                        },
+                        onNegBtnClicked = {
+                            val myToast = Toast.makeText(
+                                this,
+                                "binaryChooseDialogMbr? - neg",
+                                Toast.LENGTH_SHORT
+                            )
+                            myToast.show()
 
-                        viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
-                    },
-                    onCanceledMbr = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "binaryChooseDialogMbr? - canceled",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
+                            viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
+                        },
+                        onCanceled = {
+                            val myToast = Toast.makeText(
+                                this,
+                                "binaryChooseDialogMbr? - canceled",
+                                Toast.LENGTH_SHORT
+                            )
+                            myToast.show()
 
-                        viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
-                    }
+                            viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = false
+                        }
+                    )
                 )
                 binaryChooseDialogMbr?.show()
             } else {
@@ -227,30 +231,32 @@ class ActivityDialogSample : AppCompatActivity() {
             if (it) {
                 confirmDialogMbr = DialogConfirm(
                     this,
-                    true,
-                    "서버 에러",
-                    "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                    null,
-                    onCheckBtnClickedMbr = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "confirmDialogMbr? - check",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
+                    DialogConfirm.DialogInfoVO(
+                        true,
+                        "서버 에러",
+                        "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                        null,
+                        onCheckBtnClicked = {
+                            val myToast = Toast.makeText(
+                                this,
+                                "confirmDialogMbr? - check",
+                                Toast.LENGTH_SHORT
+                            )
+                            myToast.show()
 
-                        viewModelMbr.isConfirmDialogShownLiveDataMb.value = false
-                    },
-                    onCanceledMbr = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "confirmDialogMbr? - canceled",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
+                            viewModelMbr.isConfirmDialogShownLiveDataMb.value = false
+                        },
+                        onCanceled = {
+                            val myToast = Toast.makeText(
+                                this,
+                                "confirmDialogMbr? - canceled",
+                                Toast.LENGTH_SHORT
+                            )
+                            myToast.show()
 
-                        viewModelMbr.isConfirmDialogShownLiveDataMb.value = false
-                    }
+                            viewModelMbr.isConfirmDialogShownLiveDataMb.value = false
+                        }
+                    )
                 )
                 confirmDialogMbr?.show()
             } else {

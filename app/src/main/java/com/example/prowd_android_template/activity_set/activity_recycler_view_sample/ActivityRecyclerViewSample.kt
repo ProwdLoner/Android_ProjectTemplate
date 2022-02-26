@@ -149,11 +149,13 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
             if (it) {
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
-                    true,
-                    "로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중",
-                    onCanceledMbr = {
-                        viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = false
-                    }
+                    DialogProgressLoading.DialogInfoVO(
+                        true,
+                        "로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중",
+                        onCanceled = {
+                            viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = false
+                        }
+                    )
                 )
                 progressLoadingDialogMbr?.show()
             } else {
@@ -167,16 +169,18 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
             if (it) {
                 networkErrorDialogMbr = DialogConfirm(
                     this,
-                    true,
-                    "네트워크 에러",
-                    "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                    null,
-                    onCheckBtnClickedMbr = {
-                        viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
-                    },
-                    onCanceledMbr = {
-                        viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
-                    }
+                    DialogConfirm.DialogInfoVO(
+                        true,
+                        "네트워크 에러",
+                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                        null,
+                        onCheckBtnClicked = {
+                            viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
+                        },
+                        onCanceled = {
+                            viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
+                        }
+                    )
                 )
                 networkErrorDialogMbr?.show()
             } else {
@@ -190,16 +194,18 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
             if (it) {
                 serverErrorDialogMbr = DialogConfirm(
                     this,
-                    true,
-                    "서버 에러",
-                    "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                    null,
-                    onCheckBtnClickedMbr = {
-                        viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
-                    },
-                    onCanceledMbr = {
-                        viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
-                    }
+                    DialogConfirm.DialogInfoVO(
+                        true,
+                        "서버 에러",
+                        "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                        null,
+                        onCheckBtnClicked = {
+                            viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
+                        },
+                        onCanceled = {
+                            viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
+                        }
+                    )
                 )
                 serverErrorDialogMbr?.show()
             } else {

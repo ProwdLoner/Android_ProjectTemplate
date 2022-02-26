@@ -12,12 +12,7 @@ import com.example.prowd_android_template.databinding.DialogConfirmBinding
 
 class DialogConfirm constructor(
     context: Context,
-    var setCancelableMbr : Boolean,
-    var titleMbr: String,
-    var contentMbr: String,
-    var checkBtnTxtMbr: String?,
-    var onCheckBtnClickedMbr: Runnable?,
-    var onCanceledMbr:Runnable?
+    var dialogInfoMbr : DialogInfoVO
 ) : Dialog(context) {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -36,22 +31,22 @@ class DialogConfirm constructor(
         window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         // 취소 불가 설정
-        setCancelable(setCancelableMbr)
+        setCancelable(dialogInfoMbr.isCancelable)
         setOnCancelListener {
-            onCanceledMbr?.run()
+            dialogInfoMbr.onCanceled?.run()
         }
 
         // 확인 버튼 텍스트 설정
-        if (null != checkBtnTxtMbr) {
-            bindingMbr.confirmButton.text = checkBtnTxtMbr
+        if (null != dialogInfoMbr.checkBtnTxt) {
+            bindingMbr.confirmButton.text = dialogInfoMbr.checkBtnTxt
         }
 
         // 타이틀 텍스트 설정
-        bindingMbr.title.text = titleMbr
+        bindingMbr.title.text = dialogInfoMbr.title
         bindingMbr.title.isSelected = true // marque 적용을 위한 설정
 
         // 본문 텍스트 설정
-        bindingMbr.contentTxt.text = contentMbr
+        bindingMbr.contentTxt.text = dialogInfoMbr.content
 
         // (버튼 클릭 크기 조정)
         (bindingMbr.confirmButton.parent as View).post {
@@ -68,7 +63,7 @@ class DialogConfirm constructor(
         // (리스너 설정)
         // 확인 버튼 클릭
         bindingMbr.confirmButton.setOnClickListener {
-            onCheckBtnClickedMbr?.run()
+            dialogInfoMbr.onCheckBtnClicked?.run()
             this.dismiss()
         }
     }
@@ -79,4 +74,16 @@ class DialogConfirm constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <중첩 클래스 공간>
+    data class DialogInfoVO(
+        var isCancelable: Boolean,
+        var title: String,
+        var content: String,
+        var checkBtnTxt: String?,
+        var onCheckBtnClicked: Runnable?,
+        var onCanceled: Runnable?
+    )
 }

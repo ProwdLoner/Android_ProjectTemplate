@@ -230,7 +230,7 @@ class ActivityInit : AppCompatActivity() {
                                             } else {
                                                 viewModelMbr.isServerErrorDialogShownLiveDataMbr.value =
                                                     true
-                                                serverErrorDialogMbr?.contentMbr =
+                                                serverErrorDialogMbr?.dialogInfoMbr!!.content =
                                                     "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.\n\n에러 메시지 :\n${checkLoginSessionAsyncError.message}"
                                                 serverErrorDialogMbr?.show()
                                             }
@@ -248,7 +248,7 @@ class ActivityInit : AppCompatActivity() {
                             networkErrorDialogMbr?.show()
                         } else {
                             viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = true
-                            serverErrorDialogMbr?.contentMbr =
+                            serverErrorDialogMbr?.dialogInfoMbr!!.content =
                                 "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.\n\n에러 메시지 :\n${checkAppVersionAsyncError.message}"
                             serverErrorDialogMbr?.show()
                         }
@@ -280,40 +280,42 @@ class ActivityInit : AppCompatActivity() {
             if (it) {
                 versionUpdateDialogMbr = DialogBinaryChoose(
                     this,
-                    true,
-                    "업데이트 안내",
-                    "서비스를 이용하기 위해\n업데이트 하시겠습니까?",
-                    null,
-                    null,
-                    onPosBtnClickedMbr = { // 긍정
-                        // 업데이트 페이지로 이동
-                        try {
-                            this.startActivity(
-                                Intent(
-                                    "android.intent.action.VIEW",
-                                    Uri.parse("market://details?id=${this.packageName}")
+                    DialogBinaryChoose.DialogInfoVO(
+                        true,
+                        "업데이트 안내",
+                        "서비스를 이용하기 위해\n업데이트 하시겠습니까?",
+                        null,
+                        null,
+                        onPosBtnClicked = { // 긍정
+                            // 업데이트 페이지로 이동
+                            try {
+                                this.startActivity(
+                                    Intent(
+                                        "android.intent.action.VIEW",
+                                        Uri.parse("market://details?id=${this.packageName}")
+                                    )
                                 )
-                            )
-                        } catch (e: ActivityNotFoundException) {
-                            this.startActivity(
-                                Intent(
-                                    "android.intent.action.VIEW",
-                                    Uri.parse("https://play.google.com/store/apps/details?id=${this.packageName}")
+                            } catch (e: ActivityNotFoundException) {
+                                this.startActivity(
+                                    Intent(
+                                        "android.intent.action.VIEW",
+                                        Uri.parse("https://play.google.com/store/apps/details?id=${this.packageName}")
+                                    )
                                 )
-                            )
-                        } finally {
+                            } finally {
+                                viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = false
+                                finish()
+                            }
+                        },
+                        onNegBtnClicked = { // 부정
+                            viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = false
+                            finish()
+                        },
+                        onCanceled = {
                             viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = false
                             finish()
                         }
-                    },
-                    onNegBtnClickedMbr = { // 부정
-                        viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = false
-                        finish()
-                    },
-                    onCanceledMbr = {
-                        viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = false
-                        finish()
-                    }
+                    )
                 )
                 versionUpdateDialogMbr?.show()
             } else {
@@ -327,25 +329,27 @@ class ActivityInit : AppCompatActivity() {
             if (it) {
                 networkErrorDialogMbr = DialogBinaryChoose(
                     this,
-                    true,
-                    "네트워크 에러",
-                    "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                    "다시시도",
-                    "종료",
-                    onPosBtnClickedMbr = {
-                        viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
+                    DialogBinaryChoose.DialogInfoVO(
+                        true,
+                        "네트워크 에러",
+                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                        "다시시도",
+                        "종료",
+                        onPosBtnClicked = {
+                            viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
 
-                        // 로직 다시 실행
-                        doActivityInit()
-                    },
-                    onNegBtnClickedMbr = {
-                        viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
-                        finish()
-                    },
-                    onCanceledMbr = {
-                        viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
-                        finish()
-                    }
+                            // 로직 다시 실행
+                            doActivityInit()
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
+                            finish()
+                        },
+                        onCanceled = {
+                            viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
+                            finish()
+                        }
+                    )
                 )
                 networkErrorDialogMbr?.show()
             } else {
@@ -359,25 +363,27 @@ class ActivityInit : AppCompatActivity() {
             if (it) {
                 serverErrorDialogMbr = DialogBinaryChoose(
                     this,
-                    true,
-                    "서버 에러",
-                    "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                    "다시시도",
-                    "종료",
-                    onPosBtnClickedMbr = {
-                        viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
+                    DialogBinaryChoose.DialogInfoVO(
+                        true,
+                        "서버 에러",
+                        "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                        "다시시도",
+                        "종료",
+                        onPosBtnClicked = {
+                            viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
 
-                        // 로직 다시 실행
-                        doActivityInit()
-                    },
-                    onNegBtnClickedMbr = {
-                        viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
-                        finish()
-                    },
-                    onCanceledMbr = {
-                        viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
-                        finish()
-                    }
+                            // 로직 다시 실행
+                            doActivityInit()
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
+                            finish()
+                        },
+                        onCanceled = {
+                            viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
+                            finish()
+                        }
+                    )
                 )
                 serverErrorDialogMbr?.show()
             } else {

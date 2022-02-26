@@ -12,9 +12,7 @@ import com.example.prowd_android_template.databinding.DialogProgressLoadingBindi
 
 class DialogProgressLoading constructor(
     context: Context,
-    var setCancelableMbr : Boolean,
-    var progressMsgMbr: String?,
-    var onCanceledMbr : Runnable?
+    var dialogInfoMbr : DialogInfoVO
 ) : Dialog(context) {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -31,9 +29,9 @@ class DialogProgressLoading constructor(
 
         // (초기 뷰 설정)
         // 취소 불가 설정
-        setCancelable(setCancelableMbr)
+        setCancelable(dialogInfoMbr.isCancelable)
         setOnCancelListener {
-            onCanceledMbr?.run()
+            dialogInfoMbr.onCanceled?.run()
         }
 
         window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -45,9 +43,9 @@ class DialogProgressLoading constructor(
             .into(bindingMbr.loadingGifImg)
 
         // 진행 텍스트 설정
-        if (null != progressMsgMbr) { // 설정 메시지 출력
+        if (null != dialogInfoMbr.progressMsg) { // 설정 메시지 출력
             bindingMbr.progressMessageTxt.visibility = View.VISIBLE
-            bindingMbr.progressMessageTxt.text = progressMsgMbr
+            bindingMbr.progressMessageTxt.text = dialogInfoMbr.progressMsg
         } else { // 기본 메시지 출력
             bindingMbr.progressMessageTxt.visibility = View.GONE
         }
@@ -61,4 +59,13 @@ class DialogProgressLoading constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <중첩 클래스 공간>
+    data class DialogInfoVO(
+        var isCancelable : Boolean,
+        var progressMsg : String?,
+        var onCanceled : Runnable?
+    )
 }

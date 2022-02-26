@@ -12,14 +12,7 @@ import com.example.prowd_android_template.databinding.DialogBinaryChooseBinding
 
 class DialogBinaryChoose constructor(
     context: Context,
-    var setCancelableMbr : Boolean,
-    var titleMbr: String,
-    var contentMbr: String,
-    var posBtnTxtMbr: String?,
-    var negBtnTxtMbr: String?,
-    var onPosBtnClickedMbr: Runnable?,
-    var onNegBtnClickedMbr: Runnable?,
-    var onCanceledMbr:Runnable?
+    var dialogInfoMbr : DialogInfoVO
 ) : Dialog(context) {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -37,21 +30,21 @@ class DialogBinaryChoose constructor(
         window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         // 취소 불가 설정
-        setCancelable(setCancelableMbr)
+        setCancelable(dialogInfoMbr.isCancelable)
         setOnCancelListener {
-            onCanceledMbr?.run()
+            dialogInfoMbr.onCanceled?.run()
         }
 
-        if (null != posBtnTxtMbr) {
-            bindingMbr.positiveBtn.text = posBtnTxtMbr
+        if (null != dialogInfoMbr.posBtnTxt) {
+            bindingMbr.positiveBtn.text = dialogInfoMbr.posBtnTxt
         }
 
-        if (null != negBtnTxtMbr) {
-            bindingMbr.negativeBtn.text = negBtnTxtMbr
+        if (null != dialogInfoMbr.negBtnTxt) {
+            bindingMbr.negativeBtn.text = dialogInfoMbr.negBtnTxt
         }
 
-        bindingMbr.title.text = titleMbr
-        bindingMbr.contentTxt.text = contentMbr
+        bindingMbr.title.text = dialogInfoMbr.title
+        bindingMbr.contentTxt.text = dialogInfoMbr.content
 
         // (버튼 클릭 크기 조정)
         (bindingMbr.negativeBtn.parent as View).post {
@@ -78,12 +71,12 @@ class DialogBinaryChoose constructor(
 
         // (리스너 설정)
         bindingMbr.positiveBtn.setOnClickListener {
-            onPosBtnClickedMbr?.run()
+            dialogInfoMbr.onPosBtnClicked?.run()
             this.dismiss()
         }
 
         bindingMbr.negativeBtn.setOnClickListener {
-            onNegBtnClickedMbr?.run()
+            dialogInfoMbr.onNegBtnClicked?.run()
             this.dismiss()
         }
     }
@@ -95,4 +88,18 @@ class DialogBinaryChoose constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <중첩 클래스 공간>
+    data class DialogInfoVO(
+        var isCancelable: Boolean,
+        var title: String,
+        var content: String,
+        var posBtnTxt: String?,
+        var negBtnTxt: String?,
+        var onPosBtnClicked: Runnable?,
+        var onNegBtnClicked: Runnable?,
+        var onCanceled:Runnable?
+    )
 }
