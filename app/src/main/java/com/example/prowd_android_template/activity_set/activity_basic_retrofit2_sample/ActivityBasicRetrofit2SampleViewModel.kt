@@ -32,6 +32,9 @@ class ActivityBasicRetrofit2SampleViewModel(application: Application) :
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
 
+    // 데이터 수집 등, 첫번째에만 발동
+    var isDataFirstLoadingMbr = false
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>

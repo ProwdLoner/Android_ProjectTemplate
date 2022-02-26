@@ -25,11 +25,15 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     var isChangingConfigurationsMbr = false
 
     // (데이터)
+    // 로그인 정보 객체
+    lateinit var loginPrefMbr: SharedPreferences
+
+    // (플래그 데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
     var currentUserSessionTokenMbr: String? = null
 
-    // 로그인 정보 객체
-    lateinit var loginPrefMbr: SharedPreferences
+    // 데이터 수집 등, 첫번째에만 발동
+    var isDataFirstLoadingMbr = false
 
 
     // ---------------------------------------------------------------------------------------------

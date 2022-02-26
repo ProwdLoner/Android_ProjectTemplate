@@ -57,34 +57,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
         // (초기 뷰 설정)
         viewSetting()
-
-        // (로직 실행)
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-            // 헤더 데이터 로딩
-            getScreenVerticalRecyclerViewAdapterHeaderDataAsync(
-                onComplete = {
-                    // 푸터 데이터 로딩
-                    getScreenVerticalRecyclerViewAdapterFooterDataAsync(
-                        onComplete = {
-                            // 아이템 데이터 로딩
-                            if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
-                                return@getScreenVerticalRecyclerViewAdapterFooterDataAsync
-                            }
-
-                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                                true
-                            getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
-                                onComplete = {
-                                    viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                                        false
-                                }
-                            )
-                        }
-                    )
-                }
-            )
-        }
     }
 
     override fun onResume() {
@@ -99,8 +71,36 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     null
                 )
 
-            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) {// 액티비티 유저와 세션 유저가 다를 때
-                //  데이터 로딩
+            if (!viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
+                sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
+            ) {
+                // 데이터 초기 로딩 플래그 변경
+                viewModelMbr.isDataFirstLoadingMbr = true
+
+                // (ScreenVerticalRecyclerViewAdapter 데이터 로딩)
+                // 헤더 데이터 로딩
+                getScreenVerticalRecyclerViewAdapterHeaderDataAsync(
+                    onComplete = {
+                        // 푸터 데이터 로딩
+                        getScreenVerticalRecyclerViewAdapterFooterDataAsync(
+                            onComplete = {
+                                // 아이템 데이터 로딩
+                                if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
+                                    return@getScreenVerticalRecyclerViewAdapterFooterDataAsync
+                                }
+
+                                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                    true
+                                getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
+                                    onComplete = {
+                                        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                            false
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
 
                 // 현 액티비티 진입 유저 저장
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken

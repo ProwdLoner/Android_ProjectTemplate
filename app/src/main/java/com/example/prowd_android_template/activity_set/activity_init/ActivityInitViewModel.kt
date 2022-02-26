@@ -29,6 +29,9 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
 
+    // 데이터 수집 등, 첫번째에만 발동
+    var isDataFirstLoadingMbr = false
+
     // 앱 기본 대기 시간이 끝났을 때
     var delayGoToNextActivityAsyncCompletedOnceMbr = false
 
@@ -36,16 +39,20 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
     // 네트워크 에러 다이얼로그 출력 정보
-    var networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> = MutableLiveData(null)
+    var networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+        MutableLiveData(null)
 
     // 서버 에러 다이얼로그 출력 정보
-    var serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> = MutableLiveData(null)
+    var serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+        MutableLiveData(null)
 
     // 업데이트 다이얼로그 출력 정보
-    var versionUpdateDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> = MutableLiveData(null)
+    var versionUpdateDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+        MutableLiveData(null)
 
     // 카운트 다운 숫자 데이터
-    var countDownNumberLiveDataMbr : MutableLiveData<Int> = MutableLiveData((countDownRestMilliSecMbr.toFloat() / 1000f).toInt())
+    var countDownNumberLiveDataMbr: MutableLiveData<Int> =
+        MutableLiveData((countDownRestMilliSecMbr.toFloat() / 1000f).toInt())
 
 
     // ---------------------------------------------------------------------------------------------
