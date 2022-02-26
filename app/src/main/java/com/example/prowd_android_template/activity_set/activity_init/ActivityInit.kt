@@ -24,13 +24,13 @@ class ActivityInit : AppCompatActivity() {
 
     // (다이얼로그 객체)
     // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private lateinit var networkErrorDialogMbr: DialogBinaryChoose
+    private  var networkErrorDialogMbr: DialogBinaryChoose? = null
 
     // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private lateinit var serverErrorDialogMbr: DialogBinaryChoose
+    private  var serverErrorDialogMbr: DialogBinaryChoose? = null
 
     // 업데이트 요청 다이얼로그(앱 실행 최소 버전 미달 시점에 요청)
-    private lateinit var versionUpdateDialogMbr: DialogBinaryChoose
+    private  var versionUpdateDialogMbr: DialogBinaryChoose? = null
 
     private lateinit var delayCountDownTimerMbr: CountDownTimer
 
@@ -54,11 +54,6 @@ class ActivityInit : AppCompatActivity() {
 
         // (초기 뷰 설정)
         viewSetting()
-
-        // (로직 실행)
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-        }
     }
 
     override fun onResume() {
@@ -112,9 +107,9 @@ class ActivityInit : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr.dismiss()
-        serverErrorDialogMbr.dismiss()
-        versionUpdateDialogMbr.dismiss()
+        networkErrorDialogMbr?.dismiss()
+        serverErrorDialogMbr?.dismiss()
+        versionUpdateDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -240,7 +235,7 @@ class ActivityInit : AppCompatActivity() {
                     runOnUiThread checkAppVersionAsyncComplete@{
                         if (needUpdate) { // 업데이트 필요
                             viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.value = true
-                            versionUpdateDialogMbr.show()
+                            versionUpdateDialogMbr?.show()
                         } else { // 업데이트 불필요
                             // 로그인 검증 실행
                             if (!viewModelMbr.checkLoginSessionAsyncOnProgressedMbr) {
@@ -309,12 +304,12 @@ class ActivityInit : AppCompatActivity() {
                                         runOnUiThread checkLoginSessionAsyncError@{
                                             if (checkLoginSessionAsyncError is SocketTimeoutException) { // 타임아웃 에러
                                                 viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = true
-                                                networkErrorDialogMbr.show()
+                                                networkErrorDialogMbr?.show()
                                             } else {
                                                 viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = true
-                                                serverErrorDialogMbr.contentMbr =
+                                                serverErrorDialogMbr?.contentMbr =
                                                     "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.\n\n에러 메시지 :\n${checkLoginSessionAsyncError.message}"
-                                                serverErrorDialogMbr.show()
+                                                serverErrorDialogMbr?.show()
                                             }
                                         }
                                     }
@@ -327,12 +322,12 @@ class ActivityInit : AppCompatActivity() {
                     runOnUiThread checkAppVersionAsyncError@{
                         if (checkAppVersionAsyncError is SocketTimeoutException) { // 타임아웃 에러
                             viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = true
-                            networkErrorDialogMbr.show()
+                            networkErrorDialogMbr?.show()
                         } else {
                             viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = true
-                            serverErrorDialogMbr.contentMbr =
+                            serverErrorDialogMbr?.contentMbr =
                                 "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.\n\n에러 메시지 :\n${checkAppVersionAsyncError.message}"
-                            serverErrorDialogMbr.show()
+                            serverErrorDialogMbr?.show()
                         }
                     }
                 }
@@ -360,27 +355,27 @@ class ActivityInit : AppCompatActivity() {
         // 업데이트 다이얼로그 출력 플래그
         viewModelMbr.isVersionUpdateDialogShownLiveDataMbr.observe(this) {
             if (it) {
-                versionUpdateDialogMbr.show()
+                versionUpdateDialogMbr?.show()
             } else {
-                versionUpdateDialogMbr.dismiss()
+                versionUpdateDialogMbr?.dismiss()
             }
         }
 
         // 네트워크 에러 다이얼로그 출력 플래그
         viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.observe(this) {
             if (it) {
-                networkErrorDialogMbr.show()
+                networkErrorDialogMbr?.show()
             } else {
-                networkErrorDialogMbr.dismiss()
+                networkErrorDialogMbr?.dismiss()
             }
         }
 
         // 서버 에러 다이얼로그 출력 플래그
         viewModelMbr.isServerErrorDialogShownLiveDataMbr.observe(this) {
             if (it) {
-                serverErrorDialogMbr.show()
+                serverErrorDialogMbr?.show()
             } else {
-                serverErrorDialogMbr.dismiss()
+                serverErrorDialogMbr?.dismiss()
             }
         }
 

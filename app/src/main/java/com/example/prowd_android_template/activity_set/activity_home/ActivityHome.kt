@@ -23,13 +23,13 @@ class ActivityHome : AppCompatActivity() {
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
-    private lateinit var progressLoadingDialogMbr: DialogProgressLoading
+    private  var progressLoadingDialogMbr: DialogProgressLoading? = null
 
     // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private lateinit var networkErrorDialogMbr: DialogConfirm
+    private  var networkErrorDialogMbr: DialogConfirm? = null
 
     // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private lateinit var serverErrorDialogMbr: DialogConfirm
+    private  var serverErrorDialogMbr: DialogConfirm? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -51,11 +51,6 @@ class ActivityHome : AppCompatActivity() {
 
         // (초기 뷰 설정)
         viewSetting()
-
-        // (로직 실행)
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-        }
     }
 
     override fun onResume() {
@@ -95,9 +90,9 @@ class ActivityHome : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr.dismiss()
-        serverErrorDialogMbr.dismiss()
-        progressLoadingDialogMbr.dismiss()
+        networkErrorDialogMbr?.dismiss()
+        serverErrorDialogMbr?.dismiss()
+        progressLoadingDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -261,27 +256,27 @@ class ActivityHome : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.observe(this) {
             if (it) {
-                progressLoadingDialogMbr.show()
+                progressLoadingDialogMbr?.show()
             } else {
-                progressLoadingDialogMbr.dismiss()
+                progressLoadingDialogMbr?.dismiss()
             }
         }
 
         // 네트워크 에러 다이얼로그 출력 플래그
         viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.observe(this) {
             if (it) {
-                networkErrorDialogMbr.show()
+                networkErrorDialogMbr?.show()
             } else {
-                networkErrorDialogMbr.dismiss()
+                networkErrorDialogMbr?.dismiss()
             }
         }
 
         // 서버 에러 다이얼로그 출력 플래그
         viewModelMbr.isServerErrorDialogShownLiveDataMbr.observe(this) {
             if (it) {
-                serverErrorDialogMbr.show()
+                serverErrorDialogMbr?.show()
             } else {
-                serverErrorDialogMbr.dismiss()
+                serverErrorDialogMbr?.dismiss()
             }
         }
     }

@@ -21,13 +21,13 @@ class ActivityDialogSample : AppCompatActivity() {
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
-    private lateinit var progressLoadingDialogMbr: DialogProgressLoading
+    private  var progressLoadingDialogMbr: DialogProgressLoading? = null
 
     // 선택 다이얼로그
-    private lateinit var binaryChooseDialogMbr: DialogBinaryChoose
+    private  var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
     // 확인 다이얼로그
-    private lateinit var confirmDialogMbr: DialogConfirm
+    private  var confirmDialogMbr: DialogConfirm? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -49,11 +49,6 @@ class ActivityDialogSample : AppCompatActivity() {
 
         // (초기 뷰 설정)
         viewSetting()
-
-        // (로직 실행)
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-        }
     }
 
     override fun onResume() {
@@ -93,9 +88,9 @@ class ActivityDialogSample : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        progressLoadingDialogMbr.dismiss()
-        binaryChooseDialogMbr.dismiss()
-        confirmDialogMbr.dismiss()
+        progressLoadingDialogMbr?.dismiss()
+        binaryChooseDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -120,7 +115,7 @@ class ActivityDialogSample : AppCompatActivity() {
             onCanceledMbr = {
                 val myToast = Toast.makeText(
                     this,
-                    "progressLoadingDialogMbr - canceled",
+                    "progressLoadingDialogMbr? - canceled",
                     Toast.LENGTH_SHORT
                 )
                 myToast.show()
@@ -139,7 +134,7 @@ class ActivityDialogSample : AppCompatActivity() {
             onPosBtnClickedMbr = {
                 val myToast = Toast.makeText(
                     this,
-                    "binaryChooseDialogMbr - pos",
+                    "binaryChooseDialogMbr? - pos",
                     Toast.LENGTH_SHORT
                 )
                 myToast.show()
@@ -149,7 +144,7 @@ class ActivityDialogSample : AppCompatActivity() {
             onNegBtnClickedMbr = {
                 val myToast = Toast.makeText(
                     this,
-                    "binaryChooseDialogMbr - neg",
+                    "binaryChooseDialogMbr? - neg",
                     Toast.LENGTH_SHORT
                 )
                 myToast.show()
@@ -159,7 +154,7 @@ class ActivityDialogSample : AppCompatActivity() {
             onCanceledMbr = {
                 val myToast = Toast.makeText(
                     this,
-                    "binaryChooseDialogMbr - canceled",
+                    "binaryChooseDialogMbr? - canceled",
                     Toast.LENGTH_SHORT
                 )
                 myToast.show()
@@ -177,7 +172,7 @@ class ActivityDialogSample : AppCompatActivity() {
             onCheckBtnClickedMbr = {
                 val myToast = Toast.makeText(
                     this,
-                    "confirmDialogMbr - check",
+                    "confirmDialogMbr? - check",
                     Toast.LENGTH_SHORT
                 )
                 myToast.show()
@@ -187,7 +182,7 @@ class ActivityDialogSample : AppCompatActivity() {
             onCanceledMbr = {
                 val myToast = Toast.makeText(
                     this,
-                    "confirmDialogMbr - canceled",
+                    "confirmDialogMbr? - canceled",
                     Toast.LENGTH_SHORT
                 )
                 myToast.show()
@@ -222,19 +217,19 @@ class ActivityDialogSample : AppCompatActivity() {
         // 로딩 다이얼로그 테스트 버튼
         bindingMbr.testLoadingDialogBtn.setOnClickListener {
             viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = true
-            progressLoadingDialogMbr.show()
+            progressLoadingDialogMbr?.show()
         }
 
         // 선택 다이얼로그 테스트 버튼
         bindingMbr.testBinaryChooseDialogBtn.setOnClickListener {
             viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.value = true
-            binaryChooseDialogMbr.show()
+            binaryChooseDialogMbr?.show()
         }
 
         // 확인 다이얼로그 테스트 버튼
         bindingMbr.testConfirmDialogBtn.setOnClickListener {
             viewModelMbr.isConfirmDialogShownLiveDataMb.value = true
-            confirmDialogMbr.show()
+            confirmDialogMbr?.show()
         }
 
     }
@@ -244,27 +239,27 @@ class ActivityDialogSample : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.observe(this) {
             if (it) {
-                progressLoadingDialogMbr.show()
+                progressLoadingDialogMbr?.show()
             } else {
-                progressLoadingDialogMbr.dismiss()
+                progressLoadingDialogMbr?.dismiss()
             }
         }
 
         // 선택 다이얼로그 출력 플래그
         viewModelMbr.isBinaryChooseDialogShownLiveDataMbr.observe(this) {
             if (it) {
-                binaryChooseDialogMbr.show()
+                binaryChooseDialogMbr?.show()
             } else {
-                binaryChooseDialogMbr.dismiss()
+                binaryChooseDialogMbr?.dismiss()
             }
         }
 
         // 확인 다이얼로그 출력 플래그
         viewModelMbr.isConfirmDialogShownLiveDataMb.observe(this) {
             if (it) {
-                confirmDialogMbr.show()
+                confirmDialogMbr?.show()
             } else {
-                confirmDialogMbr.dismiss()
+                confirmDialogMbr?.dismiss()
             }
         }
     }
