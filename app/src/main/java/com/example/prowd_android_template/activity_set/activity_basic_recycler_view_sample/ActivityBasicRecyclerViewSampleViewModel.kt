@@ -85,10 +85,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
 
-    // ScreenVerticalRecyclerViewAdapter 리플래시 스와이프 여부
-    var isScreenVerticalRecyclerViewAdapterItemDataRefreshingLiveDataMbr: MutableLiveData<Boolean> =
-        MutableLiveData(false)
-
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>

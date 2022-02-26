@@ -162,7 +162,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     null
                 )
 
-            // 어뎁터 셋 객체 생성
+            // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
             viewModelMbr.adapterSetMbr =
                 ActivityBasicRecyclerViewSampleAdapterSet(this, viewModelMbr)
         }
@@ -171,6 +171,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         // (리사이클러 뷰 설정)
+        // (ScreenVerticalRecyclerViewAdapter)
         // 리사이클러 뷰 레이아웃 설정
         val scrollAdapterLayoutManager = LinearLayoutManager(this)
         scrollAdapterLayoutManager.orientation = LinearLayoutManager.VERTICAL
@@ -184,7 +185,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         bindingMbr.screenVerticalRecyclerView.addOnScrollListener(object :
             RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (dy > 0) { //check for scroll down
+                if (dy > 0) { // 스크롤 다운을 했을 때에만 발동
                     val visibleItemCount = scrollAdapterLayoutManager.childCount
                     val totalItemCount = scrollAdapterLayoutManager.itemCount
                     val pastVisibleItems =
@@ -196,11 +197,13 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                             return
                         }
 
+                        // 아이템 데이터 로딩 플래그 실행
                         viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                             true
 
                         getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
                             onComplete = {
+                                // 아이템 데이터 로딩 플래그 종료
                                 viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                                     false
                             }
@@ -212,17 +215,15 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
         // 화면 리플레시
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
-            viewModelMbr.isScreenVerticalRecyclerViewAdapterItemDataRefreshingLiveDataMbr.value =
-                true
 
             if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
                 // 현재 데이터 변경이 일어나고 있다면,
                 // 리플래시 취소
-                viewModelMbr.isScreenVerticalRecyclerViewAdapterItemDataRefreshingLiveDataMbr.value =
-                    false
+                bindingMbr.screenRefreshLayout.isRefreshing = false
                 return@setOnRefreshListener
             }
 
+            // 아이템 데이터 로딩 플래그 실행
             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                 true
 
@@ -234,23 +235,26 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
                 onComplete = {
-                    viewModelMbr.isScreenVerticalRecyclerViewAdapterItemDataRefreshingLiveDataMbr.value =
-                        false
+                    bindingMbr.screenRefreshLayout.isRefreshing = false
+
+                    // 아이템 데이터 로딩 플래그 종료
                     viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                         false
                 }
             )
         }
 
-        // 아이템 셔플
+        // 아이템 셔플 테스트
         bindingMbr.itemShuffleBtn.setOnClickListener {
             if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
                 return@setOnClickListener
             }
 
+            // 아이템 데이터 로딩 플래그 실행
             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                 true
 
+            // todo 연산용 현재 데이터 리스트 클론 생성
             // 헤더 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
             val headerIdx =
                 viewModelMbr.screenVerticalRecyclerViewDataListLiveDataMbr.value!!.indexOfFirst {
@@ -294,6 +298,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             }
 
             viewModelMbr.screenVerticalRecyclerViewDataListLiveDataMbr.value = adapterDataList
+            // 아이템 데이터 로딩 플래그 종료
             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                 false
         }
@@ -554,13 +559,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             } else {
                 bindingMbr.itemSortSpinner.isEnabled = true
                 bindingMbr.itemSortSpinner.isClickable = true
-            }
-        }
-
-        viewModelMbr.isScreenVerticalRecyclerViewAdapterItemDataRefreshingLiveDataMbr.observe(this)
-        {
-            if (!it) {
-                bindingMbr.screenRefreshLayout.isRefreshing = false
             }
         }
     }
