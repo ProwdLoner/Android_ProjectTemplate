@@ -6,6 +6,8 @@ import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.custom_view.DialogConfirm
+import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.value_object.RepoNetGetTestInfoOutputVO
 import org.json.JSONObject
@@ -59,14 +61,17 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
-    // 네트워크 에러 다이얼로그 출력 플래그
-    var isNetworkErrorDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 네트워크 에러 다이얼로그 출력 정보
+    var networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
+        MutableLiveData(null)
 
-    // 서버 에러 다이얼로그 출력 플래그
-    var isServerErrorDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 서버 에러 다이얼로그 출력 정보
+    var serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
+        MutableLiveData(null)
 
-    // 로딩 다이얼로그 출력 플래그
-    var isProgressLoadingDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 로딩 다이얼로그 출력 정보
+    var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
+        MutableLiveData(null)
 
     // (ScreenVerticalRecyclerViewAdapter)
     // ScreenVerticalRecyclerViewAdapter 아이템 데이터
@@ -162,7 +167,8 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 4 -> {
                     // 콘텐츠 내림차순 정렬
                     dummyDataList.sortWith(compareBy {
-                        val transFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val transFormat =
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                         val date: Date = transFormat.parse(it.writeDate)!!
 
                         date.time
@@ -171,7 +177,8 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 5 -> {
                     // 콘텐츠 오름차순 정렬
                     dummyDataList.sortWith(compareByDescending {
-                        val transFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val transFormat =
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                         val date: Date = transFormat.parse(it.writeDate)!!
 
                         date.time

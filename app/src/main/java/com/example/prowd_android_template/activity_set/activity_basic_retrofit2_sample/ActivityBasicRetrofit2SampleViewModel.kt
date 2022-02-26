@@ -4,11 +4,14 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.custom_view.DialogConfirm
+import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ActivityBasicRetrofit2SampleViewModel(application: Application) : AndroidViewModel(application) {
+class ActivityBasicRetrofit2SampleViewModel(application: Application) :
+    AndroidViewModel(application) {
     // <멤버 변수 공간>
     private val applicationMbr = application
 
@@ -32,14 +35,17 @@ class ActivityBasicRetrofit2SampleViewModel(application: Application) : AndroidV
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
-    // 네트워크 에러 다이얼로그 출력 플래그
-    var isNetworkErrorDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 네트워크 에러 다이얼로그 출력 정보
+    var networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
+        MutableLiveData(null)
 
-    // 서버 에러 다이얼로그 출력 플래그
-    var isServerErrorDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 서버 에러 다이얼로그 출력 정보
+    var serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
+        MutableLiveData(null)
 
-    // 로딩 다이얼로그 출력 플래그
-    var isProgressLoadingDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 로딩 다이얼로그 출력 정보
+    var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
+        MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------

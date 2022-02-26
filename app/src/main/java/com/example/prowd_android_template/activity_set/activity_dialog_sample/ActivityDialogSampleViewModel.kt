@@ -4,6 +4,9 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
+import com.example.prowd_android_template.custom_view.DialogConfirm
+import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -28,20 +31,20 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     // 로그인 정보 객체
     lateinit var loginPrefMbr: SharedPreferences
 
-    // 로딩 다이얼로그 정보
-
-
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
-    // 로딩 다이얼로그 출력 플래그
-    var isProgressLoadingDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 로딩 다이얼로그 출력 정보
+    var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
+        MutableLiveData(null)
 
-    // 선택 다이얼로그 출력 플래그
-    var isBinaryChooseDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 선택 다이얼로그 출력 정보
+    var binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+        MutableLiveData(null)
 
-    // 확인 다이얼로그 출력 플래그
-    var isConfirmDialogShownLiveDataMb: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 확인 다이얼로그 출력 정보
+    var confirmDialogInfoLiveDataMb: MutableLiveData<DialogConfirm.DialogInfoVO?> =
+        MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------

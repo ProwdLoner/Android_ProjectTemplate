@@ -3,6 +3,8 @@ package com.example.prowd_android_template.activity_set.activity_init
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
+import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -33,14 +35,14 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
-    // 네트워크 에러 다이얼로그 출력 플래그
-    var isNetworkErrorDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 네트워크 에러 다이얼로그 출력 정보
+    var networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> = MutableLiveData(null)
 
-    // 서버 에러 다이얼로그 출력 플래그
-    var isServerErrorDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 서버 에러 다이얼로그 출력 정보
+    var serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> = MutableLiveData(null)
 
-    // 업데이트 다이얼로그 출력 플래그
-    var isVersionUpdateDialogShownLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+    // 업데이트 다이얼로그 출력 정보
+    var versionUpdateDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> = MutableLiveData(null)
 
     // 카운트 다운 숫자 데이터
     var countDownNumberLiveDataMbr : MutableLiveData<Int> = MutableLiveData((countDownRestMilliSecMbr.toFloat() / 1000f).toInt())

@@ -500,15 +500,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // 라이브 데이터 설정
     private fun setLiveData() {
         // 로딩 다이얼로그 출력 플래그
-        viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.observe(this) {
-            if (it) {
+        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
+            if (it != null) {
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
-                    DialogProgressLoading.DialogInfoVO(true,
-                        "로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중",
-                        onCanceled = {
-                            viewModelMbr.isProgressLoadingDialogShownLiveDataMbr.value = false
-                        })
+                    it
                 )
                 progressLoadingDialogMbr?.show()
             } else {
@@ -518,22 +514,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         }
 
         // 네트워크 에러 다이얼로그 출력 플래그
-        viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.observe(this) {
-            if (it) {
+        viewModelMbr.networkErrorDialogInfoLiveDataMbr.observe(this) {
+            if (it != null) {
                 networkErrorDialogMbr = DialogConfirm(
                     this,
-                    DialogConfirm.DialogInfoVO(
-                        true,
-                        "네트워크 에러",
-                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                        null,
-                        onCheckBtnClicked = {
-                            viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
-                        },
-                        onCanceled = {
-                            viewModelMbr.isNetworkErrorDialogShownLiveDataMbr.value = false
-                        }
-                    )
+                    it
                 )
                 networkErrorDialogMbr?.show()
             } else {
@@ -543,22 +528,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         }
 
         // 서버 에러 다이얼로그 출력 플래그
-        viewModelMbr.isServerErrorDialogShownLiveDataMbr.observe(this) {
-            if (it) {
+        viewModelMbr.serverErrorDialogInfoLiveDataMbr.observe(this) {
+            if (it != null) {
                 serverErrorDialogMbr = DialogConfirm(
                     this,
-                    DialogConfirm.DialogInfoVO(
-                        true,
-                        "서버 에러",
-                        "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                        null,
-                        onCheckBtnClicked = {
-                            viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
-                        },
-                        onCanceled = {
-                            viewModelMbr.isServerErrorDialogShownLiveDataMbr.value = false
-                        }
-                    )
+                    it
                 )
                 serverErrorDialogMbr?.show()
             } else {
