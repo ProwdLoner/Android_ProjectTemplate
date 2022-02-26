@@ -74,8 +74,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             if (!viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
             ) {
-                // 데이터 초기 로딩 플래그 변경
+                // 진입 플래그 변경
                 viewModelMbr.isDataFirstLoadingMbr = true
+                viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 // (ScreenVerticalRecyclerViewAdapter 데이터 로딩)
                 // 헤더 데이터 로딩
@@ -89,10 +90,12 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                     return@getScreenVerticalRecyclerViewAdapterFooterDataAsync
                                 }
 
+                                // 아이템 데이터 로딩 플래그 실행
                                 viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                                     true
                                 getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
                                     onComplete = {
+                                        // 아이템 데이터 로딩 플래그 종료
                                         viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                                             false
                                     }
@@ -101,9 +104,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         )
                     }
                 )
-
-                // 현 액티비티 진입 유저 저장
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
             }
         }
 

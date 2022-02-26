@@ -88,7 +88,7 @@ class ActivityInit : AppCompatActivity() {
 
             if (!viewModelMbr.isDataFirstLoadingMbr // 데이터 최초 로딩 시점일 때
             ) {
-                // 데이터 초기 로딩 플래그 변경
+                // 진입 플래그 변경
                 viewModelMbr.isDataFirstLoadingMbr = true
 
                 doActivityInit()
