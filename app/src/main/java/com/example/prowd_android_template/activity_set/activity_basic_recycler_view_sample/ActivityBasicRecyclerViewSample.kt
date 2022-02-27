@@ -3,6 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_basic_recycler_
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -18,7 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
-// todo 화면 회전시 스와이프 아이콘 체류 문제, 헤더 푸터를 제외했을 때의 에러
+// todo 헤더 푸터를 제외했을 때의 에러
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -237,8 +238,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
                 onComplete = {
-                    bindingMbr.screenRefreshLayout.isRefreshing = false
-
                     // 아이템 데이터 로딩 플래그 종료
                     viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                         false
@@ -499,7 +498,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
                         // 변경된 기준에 따른 데이터 초기화
                         if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
-                            bindingMbr.screenRefreshLayout.isRefreshing = false
                             return
                         }
 
@@ -515,7 +513,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
                         getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
                             onComplete = {
-                                bindingMbr.screenRefreshLayout.isRefreshing = false
                                 viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                                     false
                             }
@@ -582,6 +579,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 bindingMbr.itemSortSpinner.isEnabled = false
                 bindingMbr.itemSortSpinner.isClickable = false
             } else {
+                bindingMbr.screenRefreshLayout.isRefreshing = false
                 bindingMbr.itemSortSpinner.isEnabled = true
                 bindingMbr.itemSortSpinner.isClickable = true
             }
