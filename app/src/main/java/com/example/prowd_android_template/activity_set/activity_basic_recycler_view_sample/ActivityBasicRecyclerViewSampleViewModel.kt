@@ -5,7 +5,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.repository.RepositorySet
@@ -18,6 +17,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.collections.ArrayList
 
+// todo 리사이클러 아이템 라이브 데이터 제거
 class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
@@ -50,7 +50,9 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
             "writeDate (desc)"
         )
 
-    // 페이지 정렬 기준 (이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
+    // 페이지 정렬 기준
+    // (sortSpinnerColumnArray 의 인덱스 번호.
+    // 이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
     // 초기 정렬 기준 설정
     var getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr: Int = 3
 
@@ -60,6 +62,9 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = false
+
+    // 셔플 여부(새 아이템 추가 위치에 반영)
+    var isShuffledMbr = false
 
 
     // ---------------------------------------------------------------------------------------------
@@ -75,11 +80,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // 로딩 다이얼로그 출력 정보
     var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
         MutableLiveData(null)
-
-    // (ScreenVerticalRecyclerViewAdapter)
-    // ScreenVerticalRecyclerViewAdapter 아이템 데이터
-    val screenVerticalRecyclerViewDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
-        MutableLiveData(ArrayList())
 
     // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
     var changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
@@ -107,7 +107,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr: Int = 20
 
     // 현재 설정으로 다음 데이터 리스트 요청
-    fun getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
+    fun getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
         activity: Activity,
         pageNum: Int,
         onComplete: (ArrayList<RepoNetGetTestInfoOutputVO>) -> Unit
