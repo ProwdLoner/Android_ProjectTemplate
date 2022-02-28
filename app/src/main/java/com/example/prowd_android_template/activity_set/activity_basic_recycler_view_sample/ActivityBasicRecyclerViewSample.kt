@@ -28,6 +28,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // (뷰 모델 객체)
     private lateinit var viewModelMbr: ActivityBasicRecyclerViewSampleViewModel
 
+    // (어뎁터 객체)
+    private lateinit var adapterSetMbr: ActivityBasicRecyclerViewSampleAdapterSet
+
     // (다이얼로그 객체)
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
@@ -144,6 +147,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ActivityBasicRecyclerViewSampleViewModel::class.java]
 
+        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
+        adapterSetMbr = ActivityBasicRecyclerViewSampleAdapterSet(this, viewModelMbr)
+
     }
 
     // viewModel 저장용 데이터 초기화
@@ -162,10 +168,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     getString(R.string.pref_login_session_token_string),
                     null
                 )
-
-            // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-            viewModelMbr.adapterSetMbr =
-                ActivityBasicRecyclerViewSampleAdapterSet(this, viewModelMbr)
         }
     }
 
@@ -180,7 +182,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
         // 리사이클러 뷰 어뎁터 설정
         bindingMbr.screenVerticalRecyclerView.adapter =
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter
+            adapterSetMbr.screenVerticalRecyclerViewAdapter
 
         // 리사이클러 뷰 스크롤 설정
         bindingMbr.screenVerticalRecyclerView.addOnScrollListener(object :
@@ -232,7 +234,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
 
             // 리스트 데이터 초기화
-            clearScreenVerticalRecyclerViewAdapterItemDataNextPage()
+            clearScreenVerticalRecyclerViewAdapterItemData()
 
             viewModelMbr.isShuffledMbr = false
 
@@ -255,12 +257,17 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                 true
 
+            // 어뎁터 주입용 데이터 리스트 클론 생성
+            val screenVerticalRecyclerViewAdapterDataListCopy =
+                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
             // 헤더 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
             val headerIdx =
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.indexOfFirst {
+                screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
                     it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
                 }
 
+            // 아이템 리스트의 첫번째 인덱스
             val firstItemIdx = if (-1 == headerIdx) { // 헤더가 존재하지 않으면,
                 0
             } else { // 헤더가 존재하면,
@@ -269,21 +276,19 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
             val footerIdx =
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.indexOfLast {
+                screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
                     it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
                 }
 
+            // 아이템 리스트의 마지막 인덱스
             val endItemIdx = if (-1 == footerIdx) {
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.size
+                screenVerticalRecyclerViewAdapterDataListCopy.size - 1
             } else {
-                footerIdx
+                footerIdx - 1
             }
 
-            val screenVerticalRecyclerViewAdapterDataListCopy =
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-
             val itemDataList =
-                screenVerticalRecyclerViewAdapterDataListCopy.slice(firstItemIdx until endItemIdx)
+                screenVerticalRecyclerViewAdapterDataListCopy.slice(firstItemIdx..endItemIdx)
             val sortedItemDataList = itemDataList.shuffled()
 
             val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
@@ -291,20 +296,19 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             if (headerIdx != -1) {
                 // 헤더가 존재하면 헤더 데이터를 먼저 추가
-                adapterDataList.add(viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr[headerIdx])
+                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[headerIdx])
             }
 
             adapterDataList.addAll(sortedItemDataList)
 
             if (footerIdx != -1) {
                 // 푸터가 존재하면 푸터 데이터를 마지막에 추가
-                adapterDataList.add(viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr[footerIdx])
+                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx])
             }
 
             // 화면 갱신
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.setNewItemList(
+            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                 adapterDataList
-            )
 
             viewModelMbr.isShuffledMbr = true
 
@@ -321,7 +325,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         // 아래로 이동 버튼
         bindingMbr.goToBottomBtn.setOnClickListener {
             bindingMbr.screenVerticalRecyclerView.smoothScrollToPosition(
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.size - 1
+                adapterSetMbr.screenVerticalRecyclerViewAdapter.currentItemListMbr.size - 1
             )
         }
 
@@ -334,12 +338,17 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                 true
 
+            // 어뎁터 주입용 데이터 리스트 클론 생성
+            val screenVerticalRecyclerViewAdapterDataListCopy =
+                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
             // 헤더 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
             val headerIdx =
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.indexOfFirst {
+                screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
                     it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
                 }
 
+            // 아이템 리스트의 첫번째 인덱스
             val firstItemIdx = if (-1 == headerIdx) { // 헤더가 존재하지 않으면,
                 0
             } else { // 헤더가 존재하면,
@@ -348,18 +357,16 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
             val footerIdx =
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.indexOfLast {
+                screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
                     it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
                 }
 
+            // 아이템 리스트의 마지막 인덱스
             val endItemIdx = if (-1 == footerIdx) {
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.size
+                screenVerticalRecyclerViewAdapterDataListCopy.size - 1
             } else {
-                footerIdx
+                footerIdx - 1
             }
-
-            val screenVerticalRecyclerViewAdapterDataListCopy =
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
 
             // 추가할 아이템
             // todo : 실제 추가할 때에는 리포지토리에 반영하고, uid 등 서버 입력 시점에 정해지는 데이터를 받아오고 그 여부에 따라 화면 갱신
@@ -370,23 +377,23 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             val addedItem =
                 ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
-                    viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.maxUid,
+                    adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
                     1,
-                    "added title ${viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.size}",
-                    "added content ${viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.size}",
+                    "added title ${screenVerticalRecyclerViewAdapterDataListCopy.size}",
+                    "added content ${screenVerticalRecyclerViewAdapterDataListCopy.size}",
                     utcTimeString
                 )
 
             // 정렬 상태와 상관 없이 가장 뒤에 추가
             // 그 다음 아이템 정렬 여부에 따라 정렬 후 반영 -> 추가된 아이템 위치로 스크롤 이동
             screenVerticalRecyclerViewAdapterDataListCopy.add(
-                endItemIdx,
+                endItemIdx + 1,
                 addedItem
             )
 
             // 정렬을 위한 아이템 리스트 추출
             val itemDataList =
-                ArrayList(screenVerticalRecyclerViewAdapterDataListCopy.slice(firstItemIdx..endItemIdx))
+                ArrayList(screenVerticalRecyclerViewAdapterDataListCopy.slice(firstItemIdx..endItemIdx + 1))
 
             if (!viewModelMbr.isShuffledMbr) { // 셔플 상태가 아니면 == 정렬 상태라면,
                 // item 을 기준에 따라 정렬
@@ -443,14 +450,14 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             if (headerIdx != -1) {
                 // 헤더가 존재하면 헤더 데이터를 먼저 추가
-                adapterDataList.add(viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr[headerIdx])
+                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[headerIdx])
             }
 
             adapterDataList.addAll(itemDataList)
 
             if (footerIdx != -1) {
                 // 푸터가 존재하면 푸터 데이터를 마지막에 추가
-                adapterDataList.add(viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr[footerIdx])
+                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx])
             }
 
             // 리스트에서 addedItem.itemUid 의 위치를 가져오기
@@ -459,16 +466,15 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             }
 
             // 리스트 화면 갱신
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.setNewItemList(
+            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                 adapterDataList
-            )
 
             // 새로 추가된 아이템의 위치로 스크롤 이동
             bindingMbr.screenVerticalRecyclerView.scrollToPosition(
                 newItemIdx
             )
 
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.blinkIdx = newItemIdx
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.blinkIdx = newItemIdx
 
             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                 false
@@ -509,7 +515,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
 
                         // 리스트 데이터 초기화
-                        clearScreenVerticalRecyclerViewAdapterItemDataNextPage()
+                        clearScreenVerticalRecyclerViewAdapterItemData()
                         viewModelMbr.isShuffledMbr = false
 
                         getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
@@ -585,12 +591,18 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 bindingMbr.itemSortSpinner.isClickable = true
             }
         }
+
+        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.setNewItemList(it)
+        }
     }
 
     // ScreenVerticalRecyclerViewAdapter 의 헤더 데이터 갱신
+    // todo : 로더 추가
     private fun getScreenVerticalRecyclerViewAdapterHeaderDataAsync(onComplete: () -> Unit) {
+        // 어뎁터 주입용 데이터 리스트 클론 생성
         val screenVerticalRecyclerViewAdapterDataListCopy =
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
 
         // 헤더 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
         val headerIdx =
@@ -606,7 +618,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         // todo 새로운 데이터 가져오기
         val headerData =
             ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO(
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.maxUid,
+                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
                 "헤더 본문입니다."
             )
 
@@ -614,17 +626,18 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         screenVerticalRecyclerViewAdapterDataListCopy.add(0, headerData)
 
         // 아이템 갱신
-        viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.setNewItemList(
+        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
             screenVerticalRecyclerViewAdapterDataListCopy
-        )
 
         onComplete()
     }
 
     // ScreenVerticalRecyclerViewAdapter 의 푸터 데이터 갱신
+    // todo : 로더 추가
     private fun getScreenVerticalRecyclerViewAdapterFooterDataAsync(onComplete: () -> Unit) {
+        // 어뎁터 주입용 데이터 리스트 클론 생성
         val screenVerticalRecyclerViewAdapterDataListCopy =
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
 
         // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
         val footerIdx =
@@ -642,7 +655,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         // 새로운 데이터 가져오기
         val footerData =
             ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO(
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.maxUid,
+                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
                 "푸터 본문입니다."
             )
 
@@ -650,47 +663,31 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         screenVerticalRecyclerViewAdapterDataListCopy.add(footerData)
 
         // 아이템 갱신
-        viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.setNewItemList(
+        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
             screenVerticalRecyclerViewAdapterDataListCopy
-        )
 
         onComplete()
     }
 
     // ScreenVerticalRecyclerViewAdapter 의 아이템 데이터 갱신
+    // todo : 로더 추가
     private fun getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(onComplete: () -> Unit) {
+        // 어뎁터 주입용 데이터 리스트 클론 생성
+        val screenVerticalRecyclerViewAdapterDataListCopy =
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
         // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
         val footerIdx =
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.indexOfLast {
+            screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
                 it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
             }
 
+        // 아이템 리스트 마지막 인덱스
         val endItemIdx = if (-1 == footerIdx) {
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.size
+            screenVerticalRecyclerViewAdapterDataListCopy.size - 1
         } else {
-            footerIdx
+            footerIdx - 1
         }
-
-        val screenVerticalRecyclerViewAdapterDataListCopy =
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-
-        // 임시 아이템 로더 추가 (푸터가 존재하면 푸터의 앞, 아니라면 리스트 가장 마지막에 추가)
-        screenVerticalRecyclerViewAdapterDataListCopy.add(
-            endItemIdx,
-            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.ItemLoader.ItemVO(
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.maxUid
-            )
-        )
-
-        // 아이템 로더 반영
-        viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.setNewItemList(
-            screenVerticalRecyclerViewAdapterDataListCopy
-        )
-
-        // 아이템 로더 위치로 스크롤 이동
-        bindingMbr.screenVerticalRecyclerView.scrollToPosition(
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.size - 1
-        )
 
         // 아이템 데이터 가져오기
         viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
@@ -698,32 +695,10 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr,
             onComplete = { dataList ->
 
-                // 클론 변수 재활용 = 현재 클론 생성
-                screenVerticalRecyclerViewAdapterDataListCopy.clear()
-                screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-                    viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-                )
-
-                // 아이템 로더 제거
-                screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
-                    endItemIdx
-                )
-
-                // 화면 반영
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.setNewItemList(
-                    screenVerticalRecyclerViewAdapterDataListCopy
-                )
-
                 if (0 == dataList.size) {
                     onComplete()
                     return@getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync
                 }
-
-                // 클론 변수 재활용 = 현재 클론 생성
-                screenVerticalRecyclerViewAdapterDataListCopy.clear()
-                screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-                    viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-                )
 
                 viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr++
 
@@ -734,7 +709,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 for (data in dataList) {
                     adapterDataList.add(
                         ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
-                            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.maxUid,
+                            adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
                             data.uid,
                             data.title,
                             data.content,
@@ -744,29 +719,32 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 }
 
                 screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-                    endItemIdx,
+                    endItemIdx + 1,
                     adapterDataList
                 )
 
-                viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.setNewItemList(
+                viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                     screenVerticalRecyclerViewAdapterDataListCopy
-                )
 
                 onComplete()
             })
     }
 
     // ScreenVerticalRecyclerViewAdapter 데이터 초기화
-    private fun clearScreenVerticalRecyclerViewAdapterItemDataNextPage() {
+    private fun clearScreenVerticalRecyclerViewAdapterItemData() {
+        // 어뎁터 주입용 데이터 리스트 클론 생성
+        val screenVerticalRecyclerViewAdapterDataListCopy =
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
         // 헤더 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
         val headerIdx =
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.indexOfFirst {
+            screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
                 it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
             }
 
         // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
         val footerIdx =
-            viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr.indexOfLast {
+            screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
                 it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
             }
 
@@ -775,16 +753,15 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
         if (headerIdx != -1) {
             // 헤더가 존재하면 헤더 데이터를 먼저 추가
-            adapterDataList.add(viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr[headerIdx])
+            adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[headerIdx])
         }
 
         if (footerIdx != -1) {
             // 푸터가 존재하면 푸터 데이터를 마지막에 추가
-            adapterDataList.add(viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.currentItemListMbr[footerIdx])
+            adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx])
         }
 
-        viewModelMbr.adapterSetMbr!!.screenVerticalRecyclerViewAdapter.setNewItemList(
+        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
             adapterDataList
-        )
     }
 }

@@ -268,6 +268,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     binding.writeDate.text = dateString
 
                     // 아이템 제거 버튼 클릭
+                    // todo 슬라이드 제거 방식 적용
                     binding.deleteBtn.setOnClickListener {
                         if (parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
                             return@setOnClickListener
@@ -275,21 +276,23 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
                         parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                             true
+                        // 어뎁터 주입용 데이터 리스트 클론 생성
+                        val screenVerticalRecyclerViewAdapterDataListCopy =
+                            getCurrentItemDeepCopyReplica()
+
                         // todo 아이템을 리포지토리에서 제거 후 완료 여부에 따라 화면에서 제거
 
-                        // 해당 아이템 인덱스를 구하고 화면 반영
-                        val dataListReplica = getCurrentItemDeepCopyReplica()
-
                         val itemIdx =
-                            dataListReplica.indexOfFirst {
+                            screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
                                 it.itemUid == entity.itemUid
                             }
 
-                        dataListReplica.removeAt(
+                        screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
                             itemIdx
                         )
 
-                        setNewItemList(dataListReplica)
+                        parentViewModel.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+                            screenVerticalRecyclerViewAdapterDataListCopy
 
                         parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                             false

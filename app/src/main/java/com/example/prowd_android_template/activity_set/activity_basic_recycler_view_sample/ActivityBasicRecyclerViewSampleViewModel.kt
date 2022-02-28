@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.repository.RepositorySet
@@ -25,9 +26,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // (repository 모델)
     private val repositorySetMbr: RepositorySet = RepositorySet.getInstance(applicationMbr)
-
-    // (어뎁터 객체)
-    var adapterSetMbr: ActivityBasicRecyclerViewSampleAdapterSet? = null
 
     // (스레드 풀)
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
@@ -84,6 +82,11 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
     var changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
+
+    // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
+    // todo
+    var screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
+        MutableLiveData(ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>())
 
 
     // ---------------------------------------------------------------------------------------------
