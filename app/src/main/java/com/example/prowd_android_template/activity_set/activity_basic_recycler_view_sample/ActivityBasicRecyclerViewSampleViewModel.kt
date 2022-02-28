@@ -17,7 +17,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.collections.ArrayList
 
-// todo 네트워크 에러 다이얼로그 로직
 class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>

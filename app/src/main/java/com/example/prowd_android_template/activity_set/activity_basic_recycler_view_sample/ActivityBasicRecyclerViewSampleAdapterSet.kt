@@ -8,14 +8,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
 import com.example.prowd_android_template.databinding.*
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 class ActivityBasicRecyclerViewSampleAdapterSet(
     val screenVerticalRecyclerViewAdapter: ScreenVerticalRecyclerViewAdapter
@@ -422,6 +420,30 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <공개 메소드 공간>
+        // todo 임시로 로더 만들기 및 로더 제거
+        fun showHeaderLoader() {
+
+        }
+
+        fun deleteHeaderLoader() {
+
+        }
+
+        fun showFooterLoader() {
+
+        }
+
+        fun deleteFooterLoader() {
+
+        }
+
+        fun showItemLoader() {
+
+        }
+
+        fun deleteItemLoader() {
+
+        }
 
 
         // ---------------------------------------------------------------------------------------------
