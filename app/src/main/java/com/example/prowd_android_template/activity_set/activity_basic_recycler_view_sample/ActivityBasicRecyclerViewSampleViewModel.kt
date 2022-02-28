@@ -1,6 +1,5 @@
 package com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample
 
-import android.app.Activity
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
@@ -18,7 +17,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.collections.ArrayList
 
-// todo 리사이클러 아이템 라이브 데이터 제거
+// todo 네트워크 에러 다이얼로그 로직
 class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
@@ -118,18 +117,18 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // 현재 설정으로 다음 데이터 리스트 요청
     fun getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
-        activity: Activity,
         pageNum: Int,
-        onComplete: (ArrayList<RepoNetGetTestInfoOutputVO>) -> Unit
+        onComplete: (ArrayList<RepoNetGetTestInfoOutputVO>) -> Unit,
+        onError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.acquire()
 
-            // todo 네트워크 실제 데이터 리스트 가져오기
+            // 원래는 네트워크에서 실제 데이터 리스트 가져오기
             val resultDataList: ArrayList<RepoNetGetTestInfoOutputVO> = ArrayList()
 
             // 더미 데이터 가져오기 (json)
-            val assetManager = activity.resources.assets
+            val assetManager = applicationMbr.resources.assets
             val inputStream =
                 assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_dummy_data.json")
             val jsonString = inputStream.bufferedReader().use { it.readText() }
@@ -211,12 +210,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                     resultDataList.add(dummyDataObj)
                 }
             }
-
-            if (!activity.isFinishing) {
-                activity.runOnUiThread {
-                    onComplete(resultDataList)
-                }
-            }
+            onComplete(resultDataList)
 
             getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
 

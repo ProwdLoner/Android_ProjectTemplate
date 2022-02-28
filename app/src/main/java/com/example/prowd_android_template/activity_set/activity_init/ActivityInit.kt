@@ -294,7 +294,7 @@ class ActivityInit : AppCompatActivity() {
                                                             finish()
                                                         }
                                                     )
-                                            } else {
+                                            } else { // 그외 에러
                                                 viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
                                                     DialogBinaryChoose.DialogInfoVO(
                                                         true,

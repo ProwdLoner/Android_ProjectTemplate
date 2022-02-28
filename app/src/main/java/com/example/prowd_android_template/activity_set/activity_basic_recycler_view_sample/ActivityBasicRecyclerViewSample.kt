@@ -8,13 +8,13 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
+import java.net.SocketTimeoutException
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -762,42 +762,84 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
                 // 아이템 데이터 가져오기
                 viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
-                    this@ActivityBasicRecyclerViewSample,
                     viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr,
                     onComplete = { dataList ->
+                        runOnUiThread {
 
-                        if (0 == dataList.size) {
-                            onComplete()
-                            return@getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync
-                        }
+                            if (0 == dataList.size) {
+                                onComplete()
+                                return@runOnUiThread
+                            }
 
-                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr++
+                            viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr++
 
-                        // 외부 데이터를 어뎁터용 데이터로 변형
-                        val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
-                            java.util.ArrayList()
+                            // 외부 데이터를 어뎁터용 데이터로 변형
+                            val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+                                java.util.ArrayList()
 
-                        for (data in dataList) {
-                            adapterDataList.add(
-                                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
-                                    data.uid,
-                                    data.title,
-                                    data.content,
-                                    data.writeDate
+                            for (data in dataList) {
+                                adapterDataList.add(
+                                    ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
+                                        adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
+                                        data.uid,
+                                        data.title,
+                                        data.content,
+                                        data.writeDate
+                                    )
                                 )
+                            }
+
+                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
+                                endItemIdx + 1,
+                                adapterDataList
                             )
+
+                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+                                screenVerticalRecyclerViewAdapterDataListCopy
+
+                            onComplete()
                         }
-
-                        screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-                            endItemIdx + 1,
-                            adapterDataList
-                        )
-
-                        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-                            screenVerticalRecyclerViewAdapterDataListCopy
-
-                        onComplete()
+                    },
+                    onError = {
+                        runOnUiThread {
+                            if (it is SocketTimeoutException) { // 타임아웃 에러
+                                viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "네트워크 에러",
+                                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                                        "확인",
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        }
+                                    )
+                            } else { // 그외 에러
+                                viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "서버 에러",
+                                        "현재 서버의 상태가 원활하지 않습니다.\n" +
+                                                "잠시 후 다시 시도해주세요.\n" +
+                                                "\n" +
+                                                "에러 메시지 :\n" +
+                                                "${it.message}",
+                                        "확인",
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        }
+                                    )
+                            }
+                        }
                     })
             }
         }.start()
