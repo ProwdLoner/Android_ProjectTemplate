@@ -33,7 +33,7 @@ class ActivityBasicRetrofit2SampleViewModel(application: Application) :
     var isChangingConfigurationsMbr = false
 
     // 데이터 수집 등, 첫번째에만 발동
-    var isDataFirstLoadingMbr = false
+    var isDataFirstLoadingMbr = true
 
 
     // ---------------------------------------------------------------------------------------------

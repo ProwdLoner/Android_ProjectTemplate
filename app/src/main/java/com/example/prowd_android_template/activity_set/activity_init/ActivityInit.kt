@@ -86,10 +86,10 @@ class ActivityInit : AppCompatActivity() {
 
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
-            if (!viewModelMbr.isDataFirstLoadingMbr // 데이터 최초 로딩 시점일 때
+            if (viewModelMbr.isDataFirstLoadingMbr // 데이터 최초 로딩 시점일 때
             ) {
                 // 진입 플래그 변경
-                viewModelMbr.isDataFirstLoadingMbr = true
+                viewModelMbr.isDataFirstLoadingMbr = false
 
                 doActivityInit()
             }

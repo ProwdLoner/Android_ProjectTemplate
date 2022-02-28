@@ -30,7 +30,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     var isChangingConfigurationsMbr = false
 
     // 데이터 수집 등, 첫번째에만 발동
-    var isDataFirstLoadingMbr = false
+    var isDataFirstLoadingMbr = true
 
     // 앱 기본 대기 시간이 끝났을 때
     var delayGoToNextActivityAsyncCompletedOnceMbr = false

@@ -61,7 +61,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var isChangingConfigurationsMbr = false
 
     // 데이터 수집 등, 첫번째에만 발동
-    var isDataFirstLoadingMbr = false
+    var isDataFirstLoadingMbr = true
 
     // 셔플 여부(새 아이템 추가 위치에 반영)
     var isShuffledMbr = false

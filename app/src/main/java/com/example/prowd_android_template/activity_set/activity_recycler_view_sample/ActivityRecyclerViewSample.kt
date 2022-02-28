@@ -63,11 +63,11 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
                     null
                 )
 
-            if (!viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
+            if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
             ) {
                 // 진입 플래그 변경
-                viewModelMbr.isDataFirstLoadingMbr = true
+                viewModelMbr.isDataFirstLoadingMbr = false
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
