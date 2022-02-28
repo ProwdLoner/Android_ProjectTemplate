@@ -483,7 +483,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             if (footerIdx != -1) {
                 // 푸터가 존재하면 푸터 데이터를 마지막에 추가
-                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx])
+                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx+1])
             }
 
             // 리스트에서 addedItem.itemUid 의 위치를 가져오기
