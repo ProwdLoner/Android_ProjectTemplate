@@ -38,7 +38,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     lateinit var loginPrefMbr: SharedPreferences
 
     // 정렬 기준 스피너 항목
-    val sortSpinnerColumnArray =
+    val sortSpinnerColumnArrayMbr =
         arrayOf(
             "title (abc)",
             "title (desc)",
@@ -79,14 +79,21 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
         MutableLiveData(null)
 
-    // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
+    // ScreenVerticalRecyclerViewAdapter 아이템 데이터 변경 진행 상태 플래그
     var changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
 
+    // ScreenVerticalRecyclerViewAdapter 헤더 데이터 변경 진행 상태 플래그
+    var changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
+
+    // ScreenVerticalRecyclerViewAdapter 푸터 데이터 변경 진행 상태 플래그
+    var changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
+
     // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
-    // todo
     var screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
-        MutableLiveData(ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>())
+        MutableLiveData(ArrayList())
 
 
     // ---------------------------------------------------------------------------------------------
@@ -205,11 +212,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 }
             }
 
-            // 더미 데이터 로딩 시간 임의 지정
-            Thread.sleep(2000L)
-
-            // todo : 여기까지, 네트워크에서 데이터를 가져온 것으로 가정
-
             if (!activity.isFinishing) {
                 activity.runOnUiThread {
                     onComplete(resultDataList)
@@ -217,6 +219,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
             }
 
             getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
+
         }
     }
 
