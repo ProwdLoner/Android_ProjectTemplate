@@ -264,60 +264,60 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         ): Boolean {
             return when (oldItem) {
                 is HeaderLoader.ItemVO -> {
-                    if (newItem is HeaderLoader.ItemVO){ // 아이템 서로 타입이 같으면,
+                    if (newItem is HeaderLoader.ItemVO) { // 아이템 서로 타입이 같으면,
                         // 내용 비교
                         oldItem == newItem
-                    }else{ // 아이템 서로 타입이 다르면,
+                    } else { // 아이템 서로 타입이 다르면,
                         // 무조건 다른 아이템
                         false
                     }
                 }
 
                 is Header.ItemVO -> {
-                    if (newItem is Header.ItemVO){ // 아이템 서로 타입이 같으면,
+                    if (newItem is Header.ItemVO) { // 아이템 서로 타입이 같으면,
                         // 내용 비교
                         oldItem == newItem
-                    }else{ // 아이템 서로 타입이 다르면,
+                    } else { // 아이템 서로 타입이 다르면,
                         // 무조건 다른 아이템
                         false
                     }
                 }
 
                 is FooterLoader.ItemVO -> {
-                    if (newItem is FooterLoader.ItemVO){ // 아이템 서로 타입이 같으면,
+                    if (newItem is FooterLoader.ItemVO) { // 아이템 서로 타입이 같으면,
                         // 내용 비교
                         oldItem == newItem
-                    }else{ // 아이템 서로 타입이 다르면,
+                    } else { // 아이템 서로 타입이 다르면,
                         // 무조건 다른 아이템
                         false
                     }
                 }
 
                 is Footer.ItemVO -> {
-                    if (newItem is Footer.ItemVO){ // 아이템 서로 타입이 같으면,
+                    if (newItem is Footer.ItemVO) { // 아이템 서로 타입이 같으면,
                         // 내용 비교
                         oldItem == newItem
-                    }else{ // 아이템 서로 타입이 다르면,
+                    } else { // 아이템 서로 타입이 다르면,
                         // 무조건 다른 아이템
                         false
                     }
                 }
 
                 is ItemLoader.ItemVO -> {
-                    if (newItem is ItemLoader.ItemVO){ // 아이템 서로 타입이 같으면,
+                    if (newItem is ItemLoader.ItemVO) { // 아이템 서로 타입이 같으면,
                         // 내용 비교
                         oldItem == newItem
-                    }else{ // 아이템 서로 타입이 다르면,
+                    } else { // 아이템 서로 타입이 다르면,
                         // 무조건 다른 아이템
                         false
                     }
                 }
 
                 is Item1.ItemVO -> {
-                    if (newItem is Item1.ItemVO){ // 아이템 서로 타입이 같으면,
+                    if (newItem is Item1.ItemVO) { // 아이템 서로 타입이 같으면,
                         // 내용 비교
                         oldItem == newItem
-                    }else{ // 아이템 서로 타입이 다르면,
+                    } else { // 아이템 서로 타입이 다르면,
                         // 무조건 다른 아이템
                         false
                     }
