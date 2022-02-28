@@ -19,6 +19,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 // todo 헤더 푸터를 제외했을 때의 에러
+// todo 현재 정렬 기준에 * 넣기
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)

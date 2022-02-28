@@ -303,6 +303,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             }
         }
 
+        // 아이템 내용 동일성 비교(아이템 내용/화면 변경시 사용될 기준)
         override fun isContentSame(
             oldItem: AdapterItemAbstractVO,
             newItem: AdapterItemAbstractVO
@@ -376,6 +377,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             }
         }
 
+        // 아이템 복제 로직 (서로 다른 타입에 대응하기 위해 구현이 필요)
         override fun getDeepCopyReplica(newItem: AdapterItemAbstractVO): AdapterItemAbstractVO {
             return when (newItem) {
                 is HeaderLoader.ItemVO -> {
