@@ -221,6 +221,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     private fun viewSetting() {
         // (리사이클러 뷰 설정)
         // (ScreenVerticalRecyclerViewAdapter)
+        bindingMbr.screenVerticalRecyclerView.adapter = adapterSetMbr.screenVerticalRecyclerViewAdapter
+
         // 화면 리플레시
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
 
@@ -374,7 +376,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             }
 
             // 추가할 아이템
-            // todo : 실제 추가할 때에는 리포지토리에 반영하고, uid 등 서버 입력 시점에 정해지는 데이터를 받아오고 그 여부에 따라 화면 갱신
+            // 실제 추가할 때에는 리포지토리에 반영하고, uid 등 서버 입력 시점에 정해지는 데이터를 받아오고 그 여부에 따라 화면 갱신
             // get UTC now
             val utcDataFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
             utcDataFormat.timeZone = TimeZone.getTimeZone("UTC")

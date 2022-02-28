@@ -17,9 +17,9 @@ abstract class AbstractRecyclerViewAdapter(
     val currentItemListMbr: ArrayList<AdapterItemAbstractVO> =
         arrayListOf()
 
-    // todo : 안전 처리 = 만약 이미 존재하는 uid 라면 중복 금지(정수값 최소에서 최대로 갈 때까지 진행되므로, 그때까지 아이템 리스트에 남아있을 가능성은 매우 드뭄)
-    // todo : 또한 모든 정수값이 가득 찼을 때에 대한 처리
-    var maxUid = Int.MIN_VALUE
+    // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
+    // Long 값 최소에서 최대로 갈 때까지 진행되므로, 그때까지 아이템 리스트에 남아있을 가능성은 매우 드뭄
+    var maxUid = Long.MIN_VALUE
         get() {
             return field++
         }
@@ -35,9 +35,6 @@ abstract class AbstractRecyclerViewAdapter(
             scrollAdapterLayoutManager.orientation = LinearLayoutManager.HORIZONTAL
         }
         targetView.layoutManager = scrollAdapterLayoutManager
-
-        // 리사이클러 뷰 어뎁터 설정
-        targetView.adapter = this
 
         // 리사이클러 뷰 스크롤 설정
         targetView.addOnScrollListener(object :
@@ -232,5 +229,5 @@ abstract class AbstractRecyclerViewAdapter(
 
     // ---------------------------------------------------------------------------------------------
     // <내부 클래스 공간>
-    abstract class AdapterItemAbstractVO(open val itemUid: Int)
+    abstract class AdapterItemAbstractVO(open val itemUid: Long)
 }

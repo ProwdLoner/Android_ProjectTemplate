@@ -441,7 +441,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Int
+                override val itemUid: Long
             ) : AdapterItemAbstractVO(itemUid)
         }
 
@@ -455,7 +455,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Int,
+                override val itemUid: Long,
                 val content: String
             ) : AdapterItemAbstractVO(itemUid)
         }
@@ -470,7 +470,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Int
+                override val itemUid: Long
             ) : AdapterItemAbstractVO(itemUid)
         }
 
@@ -484,7 +484,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Int,
+                override val itemUid: Long,
                 val content: String
             ) : AdapterItemAbstractVO(itemUid)
         }
@@ -499,7 +499,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Int
+                override val itemUid: Long
             ) : AdapterItemAbstractVO(itemUid)
         }
 
@@ -513,7 +513,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Int,
+                override val itemUid: Long,
                 val uid: Int,
                 val title: String,
                 val content: String,
