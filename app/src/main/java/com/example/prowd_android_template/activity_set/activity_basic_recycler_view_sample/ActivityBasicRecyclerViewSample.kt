@@ -3,7 +3,6 @@ package com.example.prowd_android_template.activity_set.activity_basic_recycler_
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter

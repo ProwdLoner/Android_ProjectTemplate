@@ -47,6 +47,9 @@ android {
             // 프로가드 활성화
             minifyEnabled true
 
+            // 리소스 경량화
+            shrinkResources true
+
             // 기본 프로가드 설정
             proguardFile getDefaultProguardFile('proguard-android.txt')
             // 프로젝트에 필요한 프로가드 설정
@@ -56,6 +59,9 @@ android {
         release {
             // 코드 난독화
             minifyEnabled true
+
+            // 리소스 경량화
+            shrinkResources true
 
             // 기본 프로가드 설정
             proguardFile getDefaultProguardFile('proguard-android.txt')
