@@ -48,7 +48,7 @@ android {
             minifyEnabled true
 
             // 리소스 경량화
-            shrinkResources true
+//            shrinkResources true
 
             // 기본 프로가드 설정
             proguardFile getDefaultProguardFile('proguard-android.txt')
@@ -61,7 +61,7 @@ android {
             minifyEnabled true
 
             // 리소스 경량화
-            shrinkResources true
+//            shrinkResources true
 
             // 기본 프로가드 설정
             proguardFile getDefaultProguardFile('proguard-android.txt')

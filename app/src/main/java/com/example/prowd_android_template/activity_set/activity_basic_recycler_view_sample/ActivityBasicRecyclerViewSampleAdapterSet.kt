@@ -263,20 +263,64 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             newItem: AdapterItemAbstractVO
         ): Boolean {
             return when (oldItem) {
+                is HeaderLoader.ItemVO -> {
+                    if (newItem is HeaderLoader.ItemVO){ // 아이템 서로 타입이 같으면,
+                        // 내용 비교
+                        oldItem == newItem
+                    }else{ // 아이템 서로 타입이 다르면,
+                        // 무조건 다른 아이템
+                        false
+                    }
+                }
+
                 is Header.ItemVO -> {
-                    oldItem == newItem as Header.ItemVO
+                    if (newItem is Header.ItemVO){ // 아이템 서로 타입이 같으면,
+                        // 내용 비교
+                        oldItem == newItem
+                    }else{ // 아이템 서로 타입이 다르면,
+                        // 무조건 다른 아이템
+                        false
+                    }
+                }
+
+                is FooterLoader.ItemVO -> {
+                    if (newItem is FooterLoader.ItemVO){ // 아이템 서로 타입이 같으면,
+                        // 내용 비교
+                        oldItem == newItem
+                    }else{ // 아이템 서로 타입이 다르면,
+                        // 무조건 다른 아이템
+                        false
+                    }
                 }
 
                 is Footer.ItemVO -> {
-                    oldItem == newItem as Footer.ItemVO
+                    if (newItem is Footer.ItemVO){ // 아이템 서로 타입이 같으면,
+                        // 내용 비교
+                        oldItem == newItem
+                    }else{ // 아이템 서로 타입이 다르면,
+                        // 무조건 다른 아이템
+                        false
+                    }
                 }
 
                 is ItemLoader.ItemVO -> {
-                    oldItem == newItem as ItemLoader.ItemVO
+                    if (newItem is ItemLoader.ItemVO){ // 아이템 서로 타입이 같으면,
+                        // 내용 비교
+                        oldItem == newItem
+                    }else{ // 아이템 서로 타입이 다르면,
+                        // 무조건 다른 아이템
+                        false
+                    }
                 }
 
                 is Item1.ItemVO -> {
-                    oldItem == newItem as Item1.ItemVO
+                    if (newItem is Item1.ItemVO){ // 아이템 서로 타입이 같으면,
+                        // 내용 비교
+                        oldItem == newItem
+                    }else{ // 아이템 서로 타입이 다르면,
+                        // 무조건 다른 아이템
+                        false
+                    }
                 }
 
                 // todo 아이템이 늘어나면 추가
@@ -289,7 +333,15 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
         override fun getDeepCopyReplica(newItem: AdapterItemAbstractVO): AdapterItemAbstractVO {
             return when (newItem) {
+                is HeaderLoader.ItemVO -> {
+                    newItem.copy()
+                }
+
                 is Header.ItemVO -> {
+                    newItem.copy()
+                }
+
+                is FooterLoader.ItemVO -> {
                     newItem.copy()
                 }
 
@@ -325,6 +377,20 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         // ---------------------------------------------------------------------------------------------
         // <내부 클래스 공간>
         // (아이템 클래스)
+        class HeaderLoader {
+            data class ViewHolder(
+                val view: View,
+                val binding: ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterHeaderLoaderBinding =
+                    ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterHeaderLoaderBinding.bind(
+                        view
+                    )
+            ) : RecyclerView.ViewHolder(view)
+
+            data class ItemVO(
+                override val itemUid: Int
+            ) : AdapterItemAbstractVO(itemUid)
+        }
+
         class Header {
             data class ViewHolder(
                 val view: View,
@@ -337,6 +403,20 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             data class ItemVO(
                 override val itemUid: Int,
                 val content: String
+            ) : AdapterItemAbstractVO(itemUid)
+        }
+
+        class FooterLoader {
+            data class ViewHolder(
+                val view: View,
+                val binding: ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterFooterLoaderBinding =
+                    ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterFooterLoaderBinding.bind(
+                        view
+                    )
+            ) : RecyclerView.ViewHolder(view)
+
+            data class ItemVO(
+                override val itemUid: Int
             ) : AdapterItemAbstractVO(itemUid)
         }
 

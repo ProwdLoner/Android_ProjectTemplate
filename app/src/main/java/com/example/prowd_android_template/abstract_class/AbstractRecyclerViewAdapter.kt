@@ -49,20 +49,22 @@ abstract class AbstractRecyclerViewAdapter :
             // 비교된 아이템은 유지(내용 변경, 변동 무), 이동, 삭제, 추가를 실행
             val newItem = newItemList[newItemListCurrentIdx]
 
-            if (newItemListCurrentIdx > currentItemListMbr.size - 1) { // currentItemListMbr 해당 위치에 데이터가 없을 때
+            if (newItemListCurrentIdx > currentItemListMbr.size - 1) {
+                // currentItemListMbr 마지막 아이템부터 뒤로 아이템이 없을 때,
                 // currentItemListMbr 에 새로운 아이템 추가
                 val changePosition = currentItemListMbr.size
 
                 currentItemListMbr.add(getDeepCopyReplica(newItem))
 
                 notifyItemInserted(changePosition)
-            } else { // 해당 위치에 비교용 데이터가 존재할 떼
+            } else { // 해당 위치에 비교용 데이터가 존재할 때,
+                // 아이템 비교 실행.
                 // 아이템 유지 여부 확인
                 if (isItemSame(
                         currentItemListMbr[newItemListCurrentIdx],
                         newItem
                     )
-                ) { // 두 아이템이 일치시
+                ) { // 두 아이템이 일치시(위치가 동일)
                     // 아이템 수정 여부 확인
                     if (!isContentSame(
                             currentItemListMbr[newItemListCurrentIdx],
@@ -75,12 +77,14 @@ abstract class AbstractRecyclerViewAdapter :
 
                         notifyItemChanged(newItemListCurrentIdx)
                     }
-                } else { // 두 아이템이 일치하지 않을 때
-                    // currentItem 이동, 추가 (삭제 아이템은 뒤로 밀려나서 한꺼번에 해소)
+                } else { // 두 아이템이 일치하지 않을 때 (위치가 다르거나 새로 생성되었을 가능성이 존재)
+                    // currentItem 이동 및, newItem 추가
                     // 이번 newItem 인덱스에서 싱크를 맞추고 다음으로 이동
                     var searchedIdx = -1
 
-                    // 현완료된 인덱스 뒤 + 1 (일치성 검사 끝난 다음부터)
+                    // 현 완료된 인덱스 뒤 + 1 (일치성 검사 끝난 다음부터) 비교
+                    // 인덱스가 존재하면 searchedIdx 에 해당 인덱스가 저장되어서 이동시키고,
+                    // 존재하지 않아서 searchedIdx 가 끝까지 -1 이라면 아이템 생성
                     for (oldItemIdx in newItemListCurrentIdx + 1 until currentItemListMbr.size) {
                         val oldItem = currentItemListMbr[oldItemIdx]
 
@@ -113,7 +117,7 @@ abstract class AbstractRecyclerViewAdapter :
 
                         notifyItemMoved(searchedIdx, newItemListCurrentIdx)
 
-                        // 컨텐츠 변경
+                        // 이동하여 위치를 동일하게 맞췄으니 컨텐츠가 동일한지 판단
                         if (!isContentSame(
                                 currentItemListMbr[newItemListCurrentIdx],
                                 newItem
@@ -130,7 +134,8 @@ abstract class AbstractRecyclerViewAdapter :
                 }
             }
 
-            // 마지막 비교 시점에 처리를 완료하고, currentItemListMbr 의 남은 데이터를 소멸
+            // 마지막 비교 시점에 처리를 완료하고, currentItemListMbr 의
+            // 남은 데이터(새로운 리스트에 존재하지 않아 뒤로 밀려난 데이터들)를 소멸
             if (newItemListLastIdx == newItemListCurrentIdx && // newItemList 마지막 인덱스
                 newItemListCurrentIdx <= currentItemListMbr.size - 1
             ) { // 비교 마지막인데 아직 아이템이 남아있을 경우
