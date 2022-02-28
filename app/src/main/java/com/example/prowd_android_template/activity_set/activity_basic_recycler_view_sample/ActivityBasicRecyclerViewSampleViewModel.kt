@@ -103,7 +103,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // ScreenVerticalRecyclerViewAdapter 데이터 현 페이지 (초기화 시에는 데이터 리스트를 초기화 하고 페이지 1부터 다시 받아오기)
     var getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
 
-    // 페이지 아이템 개수 (이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
+    // 한 페이지 아이템 개수 (이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
     var getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr: Int = 20
 
     // 현재 설정으로 다음 데이터 리스트 요청

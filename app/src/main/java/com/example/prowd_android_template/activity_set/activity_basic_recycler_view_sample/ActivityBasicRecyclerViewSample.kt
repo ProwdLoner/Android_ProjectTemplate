@@ -482,6 +482,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         bindingMbr.itemSortSpinner.adapter = sortSpinnerAdapter
         bindingMbr.itemSortSpinner.setSelection(viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr)
 
+        // 스피너 정렬 기준 변경
         bindingMbr.itemSortSpinner.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(
