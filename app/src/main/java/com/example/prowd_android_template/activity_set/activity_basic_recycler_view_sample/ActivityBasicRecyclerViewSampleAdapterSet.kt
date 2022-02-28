@@ -11,10 +11,7 @@ import android.view.animation.AnimationUtils
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.databinding.ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterFooterBinding
-import com.example.prowd_android_template.databinding.ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterHeaderBinding
-import com.example.prowd_android_template.databinding.ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItem1Binding
-import com.example.prowd_android_template.databinding.ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItemLoaderBinding
+import com.example.prowd_android_template.databinding.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -68,7 +65,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     Header.ViewHolder(
                         LayoutInflater.from(parent.context)
                             .inflate(
-                                R.layout.item_activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_header,
+                                R.layout.activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_header,
                                 parent,
                                 false
                             )
@@ -79,7 +76,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     Footer.ViewHolder(
                         LayoutInflater.from(parent.context)
                             .inflate(
-                                R.layout.item_activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_footer,
+                                R.layout.activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_footer,
                                 parent,
                                 false
                             )
@@ -90,7 +87,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     ItemLoader.ViewHolder(
                         LayoutInflater.from(parent.context)
                             .inflate(
-                                R.layout.item_activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_item_loader,
+                                R.layout.activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_item_loader,
                                 parent,
                                 false
                             )
@@ -101,7 +98,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     Item1.ViewHolder(
                         LayoutInflater.from(parent.context)
                             .inflate(
-                                R.layout.item_activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_item1,
+                                R.layout.activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_item1,
                                 parent,
                                 false
                             )
@@ -114,7 +111,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     Header.ViewHolder(
                         LayoutInflater.from(parent.context)
                             .inflate(
-                                R.layout.item_activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_header,
+                                R.layout.activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_header,
                                 parent,
                                 false
                             )
@@ -331,8 +328,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         class Header {
             data class ViewHolder(
                 val view: View,
-                val binding: ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterHeaderBinding =
-                    ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterHeaderBinding.bind(
+                val binding: ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterHeaderBinding =
+                    ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterHeaderBinding.bind(
                         view
                     )
             ) : RecyclerView.ViewHolder(view)
@@ -346,8 +343,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         class Footer {
             data class ViewHolder(
                 val view: View,
-                val binding: ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterFooterBinding =
-                    ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterFooterBinding.bind(
+                val binding: ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterFooterBinding =
+                    ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterFooterBinding.bind(
                         view
                     )
             ) : RecyclerView.ViewHolder(view)
@@ -361,8 +358,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         class ItemLoader {
             data class ViewHolder(
                 val view: View,
-                val binding: ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItemLoaderBinding =
-                    ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItemLoaderBinding.bind(
+                val binding: ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItemLoaderBinding =
+                    ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItemLoaderBinding.bind(
                         view
                     )
             ) : RecyclerView.ViewHolder(view)
@@ -375,8 +372,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         class Item1 {
             data class ViewHolder(
                 val view: View,
-                val binding: ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItem1Binding =
-                    ItemActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItem1Binding.bind(
+                val binding: ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItem1Binding =
+                    ActivityBasicRecyclerViewSampleScreenVerticalRecyclerViewAdapterItem1Binding.bind(
                         view
                     )
             ) : RecyclerView.ViewHolder(view)
