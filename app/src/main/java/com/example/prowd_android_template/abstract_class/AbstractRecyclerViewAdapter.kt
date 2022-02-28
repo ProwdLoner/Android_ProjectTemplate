@@ -1,9 +1,16 @@
 package com.example.prowd_android_template.abstract_class
 
+import android.app.Activity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
-abstract class AbstractRecyclerViewAdapter :
+abstract class AbstractRecyclerViewAdapter(
+    parentView: Activity,
+    targetView: RecyclerView,
+    isVertical: Boolean,
+    onScrollHitBottom: () -> Unit
+) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트
@@ -16,6 +23,39 @@ abstract class AbstractRecyclerViewAdapter :
         get() {
             return field++
         }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <생성자 공간>
+    init {
+        val scrollAdapterLayoutManager = LinearLayoutManager(parentView)
+        if (isVertical) {
+            scrollAdapterLayoutManager.orientation = LinearLayoutManager.VERTICAL
+        } else {
+            scrollAdapterLayoutManager.orientation = LinearLayoutManager.HORIZONTAL
+        }
+        targetView.layoutManager = scrollAdapterLayoutManager
+
+        // 리사이클러 뷰 어뎁터 설정
+        targetView.adapter = this
+
+        // 리사이클러 뷰 스크롤 설정
+        targetView.addOnScrollListener(object :
+            RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (dy > 0) { // 스크롤 다운을 했을 때에만 발동
+                    val visibleItemCount = scrollAdapterLayoutManager.childCount
+                    val totalItemCount = scrollAdapterLayoutManager.itemCount
+                    val pastVisibleItems =
+                        scrollAdapterLayoutManager.findFirstVisibleItemPosition()
+
+                    if (visibleItemCount + pastVisibleItems >= totalItemCount) {
+                        onScrollHitBottom()
+                    }
+                }
+            }
+        })
+    }
 
 
     // ---------------------------------------------------------------------------------------------

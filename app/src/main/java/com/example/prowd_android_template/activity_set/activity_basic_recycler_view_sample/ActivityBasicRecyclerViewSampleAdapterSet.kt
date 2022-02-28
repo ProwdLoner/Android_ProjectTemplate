@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
@@ -17,18 +18,21 @@ import java.util.*
 
 
 class ActivityBasicRecyclerViewSampleAdapterSet(
-    private val parentViewMbr: Activity,
-    private val parentViewModelMbr: ActivityBasicRecyclerViewSampleViewModel,
-    val screenVerticalRecyclerViewAdapter: ScreenVerticalRecyclerViewAdapter = ScreenVerticalRecyclerViewAdapter(
-        parentViewMbr,
-        parentViewModelMbr
-    )
+    val screenVerticalRecyclerViewAdapter: ScreenVerticalRecyclerViewAdapter
 ) {
     // 어뎁터 #1
     class ScreenVerticalRecyclerViewAdapter(
         private val parentViewMbr: Activity,
-        private val parentViewModel: ActivityBasicRecyclerViewSampleViewModel
-    ) : AbstractRecyclerViewAdapter() {
+        private val parentViewModel: ActivityBasicRecyclerViewSampleViewModel,
+        targetView: RecyclerView,
+        isVertical: Boolean,
+        onScrollHitBottom: () -> Unit
+    ) : AbstractRecyclerViewAdapter(
+        parentViewMbr,
+        targetView,
+        isVertical,
+        onScrollHitBottom
+    ) {
         // <멤버 변수 공간>
         var blinkIdx: Int? = null
 

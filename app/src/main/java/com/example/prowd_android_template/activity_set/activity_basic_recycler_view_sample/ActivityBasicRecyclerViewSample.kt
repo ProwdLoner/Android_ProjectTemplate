@@ -173,7 +173,28 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         viewModelMbr = ViewModelProvider(this)[ActivityBasicRecyclerViewSampleViewModel::class.java]
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityBasicRecyclerViewSampleAdapterSet(this, viewModelMbr)
+        adapterSetMbr = ActivityBasicRecyclerViewSampleAdapterSet(
+            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter(
+                this,
+                viewModelMbr,
+                bindingMbr.screenVerticalRecyclerView,
+                true,
+                onScrollHitBottom = { // 뷰 스크롤이 가장 아래쪽에 닿았을 때 = 페이징 타이밍
+                    if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
+                        // 아이템 데이터 로딩 플래그 실행
+                        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                            true
+
+                        getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
+                            onComplete = {
+                                // 아이템 데이터 로딩 플래그 종료
+                                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                    false
+                            }
+                        )
+                    }
+                }
+            ))
 
     }
 
@@ -200,48 +221,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     private fun viewSetting() {
         // (리사이클러 뷰 설정)
         // (ScreenVerticalRecyclerViewAdapter)
-        // 리사이클러 뷰 레이아웃 설정
-        // todo 결합
-        val scrollAdapterLayoutManager = LinearLayoutManager(this)
-        scrollAdapterLayoutManager.orientation = LinearLayoutManager.VERTICAL
-        bindingMbr.screenVerticalRecyclerView.layoutManager = scrollAdapterLayoutManager
-
-        // 리사이클러 뷰 어뎁터 설정
-        bindingMbr.screenVerticalRecyclerView.adapter =
-            adapterSetMbr.screenVerticalRecyclerViewAdapter
-
-        // 리사이클러 뷰 스크롤 설정
-        bindingMbr.screenVerticalRecyclerView.addOnScrollListener(object :
-            RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (dy > 0) { // 스크롤 다운을 했을 때에만 발동
-                    val visibleItemCount = scrollAdapterLayoutManager.childCount
-                    val totalItemCount = scrollAdapterLayoutManager.itemCount
-                    val pastVisibleItems =
-                        scrollAdapterLayoutManager.findFirstVisibleItemPosition()
-
-                    if (visibleItemCount + pastVisibleItems >= totalItemCount) {
-
-                        if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
-                            return
-                        }
-
-                        // 아이템 데이터 로딩 플래그 실행
-                        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                            true
-
-                        getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync(
-                            onComplete = {
-                                // 아이템 데이터 로딩 플래그 종료
-                                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                                    false
-                            }
-                        )
-                    }
-                }
-            }
-        })
-
         // 화면 리플레시
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
 
@@ -483,7 +462,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             if (footerIdx != -1) {
                 // 푸터가 존재하면 푸터 데이터를 마지막에 추가
-                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx+1])
+                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx + 1])
             }
 
             // 리스트에서 addedItem.itemUid 의 위치를 가져오기
