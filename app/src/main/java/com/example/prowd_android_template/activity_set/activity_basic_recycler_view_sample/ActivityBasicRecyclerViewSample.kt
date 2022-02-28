@@ -19,7 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
-// todo 현재 정렬 기준에 * 넣기
+// todo 현재 정렬 기준에 * 넣기, 리플레시 헤더/푸터 데이터 갱신
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -97,52 +97,45 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     )
 
                 // 헤더 데이터 로딩 중복 요청 금지
-                if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!!) {
-                    return
-                }
-
-                // 헤더 데이터 로딩 플래그 실행
-                viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value =
-                    true
-
-                // 헤더 데이터 로딩
-                getScreenVerticalRecyclerViewAdapterHeaderDataAsync {
+                if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!!) {
+                    // 헤더 데이터 로딩 플래그 실행
                     viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value =
-                        false
+                        true
+
+                    // 헤더 데이터 로딩
+                    getScreenVerticalRecyclerViewAdapterHeaderDataAsync {
+                        viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value =
+                            false
+                    }
                 }
 
                 // 푸터 데이터 로딩 중복 요청 금지
-                if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!!) {
-                    return
-                }
-
-                // 푸터 데이터 로딩 플래그 실행
-                viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
-                    true
-
-                // 푸터 데이터 로딩
-                getScreenVerticalRecyclerViewAdapterFooterDataAsync {
+                if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!!) {
+                    // 푸터 데이터 로딩 플래그 실행
                     viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
-                        false
+                        true
+
+                    // 푸터 데이터 로딩
+                    getScreenVerticalRecyclerViewAdapterFooterDataAsync {
+                        viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
+                            false
+                    }
                 }
 
                 // 아이템 데이터 로딩 중복 요청 금지
-                if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
-                    return
-                }
-
-                // 아이템 데이터 로딩 플래그 실행
-                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                    true
-
-                getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync {
-                    // 아이템 데이터 로딩 플래그 종료
+                if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
+                    // 아이템 데이터 로딩 플래그 실행
                     viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                        false
+                        true
+
+                    getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync {
+                        // 아이템 데이터 로딩 플래그 종료
+                        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                            false
+                    }
                 }
             }
         }
-
     }
 
     override fun onStop() {
