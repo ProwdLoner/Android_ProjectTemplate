@@ -32,7 +32,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
-        var blinkIdx: Int? = null
+        private var blinkIdx: Int? = null
 
 
         // ---------------------------------------------------------------------------------------------
@@ -271,28 +271,28 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
                     // 아이템 제거 버튼 클릭
                     // todo 슬라이드 제거 방식 적용
-                    binding.deleteBtn.setOnClickListener {
-                        // 어뎁터 주입용 데이터 리스트 클론 생성
-                        val screenVerticalRecyclerViewAdapterDataListCopy =
-                            getCurrentItemDeepCopyReplica()
-
-                        // todo 아이템을 리포지토리에서 제거 후 완료 여부에 따라 화면에서 제거
-
-                        val itemIdx =
-                            screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
-                                it.itemUid == entity.itemUid
-                            }
-
-                        screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
-                            itemIdx
-                        )
-
-                        parentViewModel.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-                            screenVerticalRecyclerViewAdapterDataListCopy
-
-                        // 중복 클릭 방지
-                        binding.deleteBtn.setOnClickListener { }
-                    }
+//                    binding.deleteBtn.setOnClickListener {
+//                        // 어뎁터 주입용 데이터 리스트 클론 생성
+//                        val screenVerticalRecyclerViewAdapterDataListCopy =
+//                            getCurrentItemDeepCopyReplica()
+//
+//                        // todo 아이템을 리포지토리에서 제거 후 완료 여부에 따라 화면에서 제거
+//
+//                        val itemIdx =
+//                            screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
+//                                it.itemUid == entity.itemUid
+//                            }
+//
+//                        screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
+//                            itemIdx
+//                        )
+//
+//                        parentViewModel.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+//                            screenVerticalRecyclerViewAdapterDataListCopy
+//
+//                        // 중복 클릭 방지
+//                        binding.deleteBtn.setOnClickListener { }
+//                    }
                 }
 
                 // todo 아이템이 늘어나면 추가
@@ -411,45 +411,6 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <공개 메소드 공간>
-        // todo 임시로 로더 만들기 및 로더 제거
-//        private var tempHeaderMbr: AdapterItemAbstractVO? = null
-//        fun showHeaderLoader() {
-//            // 이전에 로더를 실행한 적이 있으면 작동하지 않음
-//            if (currentItemListMbr[0] is HeaderLoader.ItemVO) {
-//                return
-//            }
-//
-//            // 어뎁터 주입용 데이터 리스트 클론 생성
-//            val screenVerticalRecyclerViewAdapterDataListCopy = getCurrentItemDeepCopyReplica()
-//
-//            // 헤더가 존재하면 삭제하고 피신
-//            if (screenVerticalRecyclerViewAdapterDataListCopy[0] is Header.ItemVO) {
-//                tempHeaderMbr = screenVerticalRecyclerViewAdapterDataListCopy.removeAt(0)
-//            }
-//
-//            // 로더를 추가하고 화면 갱신
-//            screenVerticalRecyclerViewAdapterDataListCopy.add(0, HeaderLoader.ItemVO(maxUid))
-//            setNewItemList(screenVerticalRecyclerViewAdapterDataListCopy)
-//        }
-//
-//        fun deleteHeaderLoader() {
-//            // 어뎁터 주입용 데이터 리스트 클론 생성
-//            val screenVerticalRecyclerViewAdapterDataListCopy = getCurrentItemDeepCopyReplica()
-//
-//            // 헤더 로더가 존재하면 지우기
-//            if (screenVerticalRecyclerViewAdapterDataListCopy[0] is HeaderLoader.ItemVO) {
-//                screenVerticalRecyclerViewAdapterDataListCopy.removeAt(0)
-//            }
-//
-//            // 이전 헤더가 존재하면 패치
-//            if (null != tempHeaderMbr) {
-//                screenVerticalRecyclerViewAdapterDataListCopy.add(0, tempHeaderMbr!!)
-//            }
-//
-//            // 화면 갱신
-//            setNewItemList(screenVerticalRecyclerViewAdapterDataListCopy)
-//        }
-//
 //        var tempFooterMbr: AdapterItemAbstractVO? = null
 //        fun showFooterLoader() {
 //            // 이전에 로더를 실행한 적이 있으면 작동하지 않음
@@ -522,6 +483,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long,
+                val contentUid : Long,
                 val content: String
             ) : AdapterItemAbstractVO(itemUid)
         }
