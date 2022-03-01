@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
@@ -41,6 +42,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
     // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
     private var serverErrorDialogMbr: DialogConfirm? = null
+
+    // 아이템 삭제 다이얼로그
+    private var itemDeleteConfirmDialogMbr: DialogBinaryChoose? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -121,6 +125,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         networkErrorDialogMbr?.dismiss()
         serverErrorDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+        itemDeleteConfirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -590,6 +595,105 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
             adapterSetMbr.screenVerticalRecyclerViewAdapter.setNewItemList(it)
         }
+
+        // screenVerticalRecyclerViewAdapter 아이템 삭제 요청
+        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.observe(
+            this
+        ) { contentUid ->
+            if (null != contentUid) {
+                itemDeleteConfirmDialogMbr = DialogBinaryChoose(
+                    this,
+                    DialogBinaryChoose.DialogInfoVO(
+                        true,
+                        "데이터 삭제",
+                        "데이터를 삭제하시겠습니까?",
+                        "삭제",
+                        "취소",
+                        onPosBtnClicked = {
+                            itemDeleteConfirmDialogMbr?.dismiss()
+                            itemDeleteConfirmDialogMbr = null
+
+                            // 데이터 삭제 : 네트워크에 요청 후 정상 응답이 오면 삭제
+                            // 로딩 다이얼로그 표시
+                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                                DialogProgressLoading.DialogInfoVO(
+                                    false,
+                                    "데이터를 삭제하는 중입니다.",
+                                    onCanceled = null
+                                )
+
+                            // todo : 데이터 삭제 api 작성
+                            // todo 아이템을 리포지토리에서 제거 후 완료 여부에 따라 화면에서 제거
+                            // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+                            object :
+                                CountDownTimer(
+                                    500L,
+                                    100L
+                                ) {
+                                override fun onTick(millisUntilFinished: Long) {}
+
+                                override fun onFinish() { // 네트워크 응답이 왔다고 가정
+                                    // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
+                                    viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+
+                                    // 어뎁터 주입용 데이터 리스트 클론 생성
+                                    val screenVerticalRecyclerViewAdapterDataListCopy =
+                                        adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
+
+                                    // 삭제할 아이템의 리스트 인덱스 추출
+                                    val itemIdx =
+                                        screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
+                                            if (it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO) {
+                                                it.contentUid == contentUid
+                                            } else {
+                                                false
+                                            }
+                                        }
+
+                                    if (-1 != itemIdx) {
+                                        screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
+                                            itemIdx
+                                        )
+                                    }
+
+                                    viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+                                        screenVerticalRecyclerViewAdapterDataListCopy
+
+                                    // 데이터 접근 락 해제
+                                    viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+
+                                    // 데이터 프로세싱 플래그 해제
+                                    viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                        false
+
+                                    // 아이템 제거 요청 해제
+                                    viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
+                                        null
+                                    viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+                                }
+                            }.start()
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
+                                null
+                            itemDeleteConfirmDialogMbr?.dismiss()
+                            itemDeleteConfirmDialogMbr = null
+                        },
+                        onCanceled = {
+                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
+                                null
+                            itemDeleteConfirmDialogMbr?.dismiss()
+                            itemDeleteConfirmDialogMbr = null
+                        }
+                    )
+                )
+                itemDeleteConfirmDialogMbr?.show()
+            } else {
+                itemDeleteConfirmDialogMbr?.dismiss()
+                itemDeleteConfirmDialogMbr = null
+            }
+        }
     }
 
     // ScreenVerticalRecyclerViewAdapter 의 헤더 데이터 갱신
@@ -960,7 +1064,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         )
     }
 
-    // todo 로드한 아이템 첫 인덱스로 이동
     // ScreenVerticalRecyclerViewAdapter 의 아이템 데이터 갱신
     private fun getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync() {
         // 중복 요청 방지

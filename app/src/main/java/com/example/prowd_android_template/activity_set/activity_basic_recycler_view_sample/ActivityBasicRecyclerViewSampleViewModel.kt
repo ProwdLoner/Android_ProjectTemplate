@@ -82,7 +82,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
         MutableLiveData(null)
 
-    // todo
     // ScreenVerticalRecyclerViewAdapter 아이템 데이터 변경 진행 상태 플래그
     var changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
@@ -98,6 +97,10 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
     var screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
         MutableLiveData(ArrayList())
+
+    // ScreenVerticalRecyclerViewAdapter 아이템 데이터 삭제 요청 (요청이 들어오면 삭제 확인 다이얼로그를 표시)
+    var screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr: MutableLiveData<Long?> =
+        MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------

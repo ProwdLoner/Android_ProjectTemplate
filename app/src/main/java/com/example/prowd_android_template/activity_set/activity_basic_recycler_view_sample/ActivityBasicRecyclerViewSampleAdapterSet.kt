@@ -139,7 +139,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     )
                 }
 
-                // todo 아이템이 늘어나면 추가
+                // 아이템이 늘어나면 추가
 
                 else -> {
                     Header.ViewHolder(
@@ -270,32 +270,27 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     binding.writeDate.text = dateString
 
                     // 아이템 제거 버튼 클릭
-                    // todo 슬라이드 제거 방식 적용
-//                    binding.deleteBtn.setOnClickListener {
-//                        // 어뎁터 주입용 데이터 리스트 클론 생성
-//                        val screenVerticalRecyclerViewAdapterDataListCopy =
-//                            getCurrentItemDeepCopyReplica()
-//
-//                        // todo 아이템을 리포지토리에서 제거 후 완료 여부에 따라 화면에서 제거
-//
-//                        val itemIdx =
-//                            screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
-//                                it.itemUid == entity.itemUid
-//                            }
-//
-//                        screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
-//                            itemIdx
-//                        )
-//
-//                        parentViewModel.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-//                            screenVerticalRecyclerViewAdapterDataListCopy
-//
-//                        // 중복 클릭 방지
-//                        binding.deleteBtn.setOnClickListener { }
-//                    }
+                    binding.deleteBtn.setOnClickListener {
+                        // 중복 클릭 방지
+                        if (parentViewModel.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value != null ||
+                            // 현재 삭제 리퀘스트가 진행중이거나,
+                            parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!
+                        // 데이터 조작 프로세스 진행중
+                        ) {
+                            // 로직 취소
+                            return@setOnClickListener
+                        }
+
+                        parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                            true
+
+                        // 데이터 삭제 요청
+                        parentViewModel.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
+                            entity.contentUid
+                    }
                 }
 
-                // todo 아이템이 늘어나면 추가
+                // 아이템이 늘어나면 추가
             }
         }
 
@@ -365,7 +360,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     }
                 }
 
-                // todo 아이템이 늘어나면 추가
+                // 아이템이 늘어나면 추가
 
                 else -> {
                     oldItem == newItem
@@ -400,7 +395,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     newItem.copy()
                 }
 
-                // todo 아이템이 늘어나면 추가
+                // 아이템이 늘어나면 추가
 
                 else -> {
                     newItem
@@ -512,8 +507,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
             ) : AdapterItemAbstractVO(itemUid)
         }
 
-
-        // todo 아이템이 늘어나면 추가
+        // 아이템이 늘어나면 추가
 
     }
 }
