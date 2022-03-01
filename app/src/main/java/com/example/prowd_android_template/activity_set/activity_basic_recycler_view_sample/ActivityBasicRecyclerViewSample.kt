@@ -14,6 +14,7 @@ import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewS
 import java.net.SocketTimeoutException
 
 // todo 현재 정렬 기준에 * 넣기
+// todo 중복 방지 페이징 처리 가정
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -77,9 +78,13 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 // (ScreenVerticalRecyclerViewAdapter 데이터 로딩)
-                // 아이템 데이터 초기화
+                // 데이터 로딩 상태 초기화
                 // todo : 전체 아이템 리스트 뮤텍스 검증
                 clearScreenVerticalRecyclerViewAdapterItemData()
+                viewModelMbr.isItemShuffledMbr = false
+
+                // 리스트 페이지 초기화
+                viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
 
                 // 헤더 데이터 초기화
                 getScreenVerticalRecyclerViewAdapterHeaderDataAsync()
@@ -87,11 +92,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 // 푸터 데이터 초기화
                 getScreenVerticalRecyclerViewAdapterFooterDataAsync()
 
-                // 리스트 페이지 초기화
-                viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
-                // 1 페이지 다시 가져오기
+                // 아이템 데이터 초기화
                 getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
-                viewModelMbr.isItemShuffledMbr = false
             }
         }
     }
@@ -967,7 +969,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
             }
 
-        // todo 로더 추가시 해당 위치로 이동
         // 아이템 리스트 마지막 인덱스
         // todo footerIdx -1 을 했을 때의 오작동
         var endItemIdx = if (-1 == footerIdx) {
@@ -985,6 +986,12 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         )
         viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
             screenVerticalRecyclerViewAdapterDataListCopy
+
+        // 로더 추가시 푸터까지 스크롤을 내리기(현재 로더가 추가된 아이템 다음이 푸터라서)
+        bindingMbr.screenVerticalRecyclerView.smoothScrollToPosition(
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.currentItemListMbr.size - 1
+        )
+
         viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
 
         // 리포지토리 데이터 요청
