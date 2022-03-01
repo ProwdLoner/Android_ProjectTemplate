@@ -186,8 +186,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         }
     }
 
-
-    // todo
     // (아이템 데이터)
     private val getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr = Semaphore(1)
 
