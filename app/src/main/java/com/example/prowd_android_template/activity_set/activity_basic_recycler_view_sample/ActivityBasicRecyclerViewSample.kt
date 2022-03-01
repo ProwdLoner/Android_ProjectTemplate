@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
@@ -455,37 +457,38 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         bindingMbr.itemSortSpinner.adapter = sortSpinnerAdapter
         bindingMbr.itemSortSpinner.setSelection(viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr)
 
-        // todo
         // 스피너 정렬 기준 변경
-//        bindingMbr.itemSortSpinner.onItemSelectedListener =
-//            object : AdapterView.OnItemSelectedListener {
-//                override fun onItemSelected(
-//                    parent: AdapterView<*>?,
-//                    view: View?,
-//                    position: Int,
-//                    id: Long
-//                ) {
-//                    if (position != viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
-//                        // 정렬 기준을 변경하기
-//                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr =
-//                            position
-//
-//                        // 리스트 페이지 초기화
-//                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
-//
-//                        // 리스트 데이터 초기화
-//                        clearScreenVerticalRecyclerViewAdapterItemData()
-//                        viewModelMbr.isShuffledMbr = false
-//
-//                        getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
-//
-//                    }
-//                }
-//
-//                override fun onNothingSelected(parent: AdapterView<*>?) {
-//
-//                }
-//            }
+        bindingMbr.itemSortSpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    if (position != viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
+                        // 현재 기준과 다를 때,
+
+                        // 정렬 기준을 변경하기
+                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr =
+                            position
+
+                        // 리스트 페이지 초기화
+                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
+
+                        // 리스트 데이터 초기화
+                        clearScreenVerticalRecyclerViewAdapterItemData()
+                        viewModelMbr.isItemShuffledMbr = false
+
+                        getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
+
+                    }
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+
+                }
+            }
 
     }
 
