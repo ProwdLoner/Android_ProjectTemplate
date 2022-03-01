@@ -10,10 +10,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterFooterDataOutputVO
 import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterHeaderDataOutputVO
-import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterItemDataOutputVO
 import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -62,7 +59,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var isDataFirstLoadingMbr = true
 
     // 셔플 여부(새 아이템 추가 위치에 반영)
-    var isShuffledMbr = false
+    var isItemShuffledMbr = false
 
     // ScreenVerticalRecyclerViewAdapter 아이템 접근 세마포어
     var screenVerticalRecyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
@@ -91,10 +88,9 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
 
-    // todo
     // ScreenVerticalRecyclerViewAdapter 푸터 데이터 변경 진행 상태 플래그
-//    var changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
-//        MutableLiveData(false)
+    var changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
 
     // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
     var screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
@@ -150,44 +146,42 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         }
     }
 
-
-    // todo
     // (푸터 데이터)
-//    private val getScreenVerticalRecyclerViewAdapterFooterDataNextPageOnVMAsyncSemaphoreMbr =
-//        Semaphore(1)
-//
-//    // 현재 설정으로 다음 데이터 리스트 요청
-//    fun getScreenVerticalRecyclerViewAdapterFooterDataNextPageOnVMAsync(
-//        onComplete: (ScreenVerticalRecyclerViewAdapterFooterDataOutputVO) -> Unit,
-//        onError: (Throwable) -> Unit
-//    ) {
-//        executorServiceMbr?.execute {
-//            getScreenVerticalRecyclerViewAdapterFooterDataNextPageOnVMAsyncSemaphoreMbr.acquire()
-//
-//            // 원래는 네트워크에서 실제 데이터 리스트 가져오기
-//
-//            // 더미 데이터 가져오기 (json)
-//            val assetManager = applicationMbr.resources.assets
-//            val inputStream =
-//                assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_footer_dummy_data.json")
-//            val jsonString = inputStream.bufferedReader().use { it.readText() }
-//
-//            val jObject = JSONObject(jsonString)
-//            val uid = jObject.getInt("uidInt")
-//            val content = jObject.getString("contentString")
-//
-//            // json 배열 파싱
-//            val dummyData = ScreenVerticalRecyclerViewAdapterFooterDataOutputVO(
-//                uid,
-//                content
-//            )
-//
-//            onComplete(dummyData)
-//
-//            getScreenVerticalRecyclerViewAdapterFooterDataNextPageOnVMAsyncSemaphoreMbr.release()
-//
-//        }
-//    }
+    private val getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr =
+        Semaphore(1)
+
+    // 현재 설정으로 다음 데이터 리스트 요청
+    fun getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsync(
+        onComplete: (ScreenVerticalRecyclerViewAdapterFooterDataOutputVO) -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.acquire()
+
+            // 원래는 네트워크에서 실제 데이터 리스트 가져오기
+
+            // 더미 데이터 가져오기 (json)
+            val assetManager = applicationMbr.resources.assets
+            val inputStream =
+                assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_footer_dummy_data.json")
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
+
+            val jObject = JSONObject(jsonString)
+            val uid = jObject.getLong("uidLong")
+            val content = jObject.getString("contentString")
+
+            // json 배열 파싱
+            val dummyData = ScreenVerticalRecyclerViewAdapterFooterDataOutputVO(
+                uid,
+                content
+            )
+
+            onComplete(dummyData)
+
+            getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.release()
+
+        }
+    }
 
 
     // todo

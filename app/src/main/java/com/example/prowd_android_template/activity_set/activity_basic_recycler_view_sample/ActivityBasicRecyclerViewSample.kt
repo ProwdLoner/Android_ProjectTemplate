@@ -5,8 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
-import android.view.View
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
@@ -15,9 +13,6 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
 import java.net.SocketTimeoutException
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
 
 // todo 현재 정렬 기준에 * 넣기, 리플레시 헤더/푸터 데이터 갱신
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
@@ -86,10 +81,10 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 // 헤더 데이터 로딩
                 getScreenVerticalRecyclerViewAdapterHeaderDataAsync()
 
+                // 푸터 데이터 로딩
+                getScreenVerticalRecyclerViewAdapterFooterDataAsync()
+
                 // todo
-//                // 푸터 데이터 로딩
-//                getScreenVerticalRecyclerViewAdapterFooterDataAsync()
-//
 //                // 아이템 데이터 로딩
 //                getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
             }
@@ -175,16 +170,19 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
             if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!!) {
                 bindingMbr.screenRefreshLayout.isRefreshing = false
+                return@setOnRefreshListener
             }
 
             // 헤더 데이터 초기화
             getScreenVerticalRecyclerViewAdapterHeaderDataAsync()
 
+            // 헤더 데이터 초기화
+            getScreenVerticalRecyclerViewAdapterFooterDataAsync()
 
             // todo
             // 아이템 데이터 초기화
 //            clearScreenVerticalRecyclerViewAdapterItemData()
-//            viewModelMbr.isShuffledMbr = false
+//            viewModelMbr.isItemShuffledMbr = false
             // 리스트 페이지 초기화
 //            viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
 //            // 1 페이지 다시 가져오기
@@ -535,17 +533,25 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             } else {
                 // todo 헤더, 푸터, 아이템 싱크
-                bindingMbr.screenRefreshLayout.isRefreshing = false
+                if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!!) {
+                    bindingMbr.screenRefreshLayout.isRefreshing = false
+                }
             }
         }
 
-        // todo
         // screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr 푸터 데이터 로딩 중 플래그
-//        viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.observe(
-//            this
-//        ) {
-//
-//        }
+        viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.observe(
+            this
+        ) {
+            if (it) {
+
+            } else {
+                // todo 헤더, 푸터, 아이템 싱크
+                if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!!) {
+                    bindingMbr.screenRefreshLayout.isRefreshing = false
+                }
+            }
+        }
 
         // screenVerticalRecyclerViewAdapter 데이터 리스트
         viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
@@ -558,7 +564,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     }
 
     // ScreenVerticalRecyclerViewAdapter 의 헤더 데이터 갱신
-    // todo : 로더 추가
     private fun getScreenVerticalRecyclerViewAdapterHeaderDataAsync() {
         // 중복 요청 방지
         if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!!) {
@@ -620,6 +625,12 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                             // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
                             viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
 
+                            // 어뎁터 주입용 데이터 리스트 클론 생성
+                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
+                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
+                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                            )
+
                             // 헤더 로더가 존재하면 지우기
                             if (screenVerticalRecyclerViewAdapterDataListCopy[0] is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.HeaderLoader.ItemVO) {
                                 screenVerticalRecyclerViewAdapterDataListCopy.removeAt(0)
@@ -633,10 +644,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                 )
                                 tempHeaderMbr = null
                             }
-
-                            // 화면 갱신
-                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-                                screenVerticalRecyclerViewAdapterDataListCopy
 
                             // 헤더 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
                             val headerIdx =
@@ -671,10 +678,10 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                             viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                                 screenVerticalRecyclerViewAdapterDataListCopy
 
-                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
-
                             viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value =
                                 false
+
+                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
                         }
                     }.start()
                 }
@@ -738,76 +745,191 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         )
     }
 
-    // todo
     // ScreenVerticalRecyclerViewAdapter 의 푸터 데이터 갱신
-    // todo : 로더 추가, 리스트 데이터쪽에 세마포어
-//    private fun getScreenVerticalRecyclerViewAdapterFooterDataAsync() {
-//        if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!!) {
-//            return
-//        }
-//
-//        // 푸터 데이터 로딩 플래그 실행
-//        viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
-//            true
-//
-////        adapterSetMbr.screenVerticalRecyclerViewAdapter.showFooterLoader()
-//        // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-//        object :
-//            CountDownTimer(
-//                500L,
-//                100L
-//            ) {
-//            override fun onTick(millisUntilFinished: Long) {
-//
-//            }
-//
-//            override fun onFinish() { // 네트워크 응답이 왔다고 가정
-//                // 데이터 리스트 화면을 변경할 때에 변화가 없도록 락을 걸어줌
-////                adapterSetMbr.screenVerticalRecyclerViewAdapter.deleteFooterLoader()
-//
-//                // 어뎁터 주입용 데이터 리스트 클론 생성
-//                val screenVerticalRecyclerViewAdapterDataListCopy =
-//                    adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-//
-//                // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
-//                val footerIdx =
-//                    screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
-//                        it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
-//                    }
-//
-//                val footerUid = if (-1 != footerIdx) {
-//                    // 헤더가 이미 존재하면 해당 아이디를 가져오기
-//                    screenVerticalRecyclerViewAdapterDataListCopy[footerIdx].itemUid
-//                } else {
-//                    adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
-//                }
-//
-//                if (-1 != footerIdx) {
-//                    // 푸터가 존재하면 가장 뒤에 존재할 푸터를 제거
-//                    screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
-//                        footerIdx
-//                    )
-//                }
-//
-//                // 새로운 데이터 가져오기
-//                val footerData =
-//                    ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO(
-//                        footerUid,
-//                        "푸터 본문입니다."
-//                    )
-//
-//                // 데이터를 가장 뒤에 추가
-//                screenVerticalRecyclerViewAdapterDataListCopy.add(footerData)
-//
-//                // 아이템 갱신
-//                viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-//                    screenVerticalRecyclerViewAdapterDataListCopy
-//
-//                viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
-//                    false
-//            }
-//        }.start()
-//    }
+    private fun getScreenVerticalRecyclerViewAdapterFooterDataAsync() {
+        // 중복 요청 방지
+        if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!!) {
+            return
+        }
+
+        // 데이터 로딩 플래그 실행
+        viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
+            true
+
+        // 로더 출력
+        var tempFooterMbr: ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO? =
+            null
+
+        // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
+        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+        // 어뎁터 주입용 데이터 리스트 클론 생성
+        val screenVerticalRecyclerViewAdapterDataListCopy =
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
+        var footerUid: Long
+
+        // 푸터가 존재하면 삭제하고 피신
+        if (screenVerticalRecyclerViewAdapterDataListCopy.size > 0 &&
+            screenVerticalRecyclerViewAdapterDataListCopy[screenVerticalRecyclerViewAdapterDataListCopy.lastIndex] is
+                    ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
+        ) {
+            tempFooterMbr =
+                screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
+                    screenVerticalRecyclerViewAdapterDataListCopy.lastIndex
+                ) as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
+            footerUid = tempFooterMbr.itemUid
+        } else {
+            footerUid = adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
+        }
+
+        // 로더를 추가하고 화면 갱신
+        screenVerticalRecyclerViewAdapterDataListCopy.add(
+            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.FooterLoader.ItemVO(
+                footerUid
+            )
+        )
+        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+            screenVerticalRecyclerViewAdapterDataListCopy
+        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+
+        // 리포지토리 데이터 요청
+        viewModelMbr.getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsync(
+            onComplete = { getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult ->
+                runOnUiThread {
+                    // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+                    object :
+                        CountDownTimer(
+                            500L,
+                            100L
+                        ) {
+                        override fun onTick(millisUntilFinished: Long) {}
+
+                        override fun onFinish() { // 네트워크 응답이 왔다고 가정
+                            // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
+                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
+                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
+                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                            )
+
+                            // 로더가 존재하면 지우기
+                            if (screenVerticalRecyclerViewAdapterDataListCopy[screenVerticalRecyclerViewAdapterDataListCopy.lastIndex] is
+                                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.FooterLoader.ItemVO
+                            ) {
+                                screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
+                                    screenVerticalRecyclerViewAdapterDataListCopy.lastIndex
+                                )
+                            }
+
+                            // 이전 푸터가 존재하면 패치
+                            if (null != tempFooterMbr) {
+                                screenVerticalRecyclerViewAdapterDataListCopy.add(
+                                    tempFooterMbr!!
+                                )
+                                tempFooterMbr = null
+                            }
+
+                            // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
+                            val footerIdx =
+                                screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
+                                    it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
+                                }
+
+                            footerUid = if (-1 != footerIdx) {
+                                // 헤더가 이미 존재하면 해당 아이디를 가져오기
+                                screenVerticalRecyclerViewAdapterDataListCopy[footerIdx].itemUid
+                            } else {
+                                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
+                            }
+
+                            if (-1 != footerIdx) {
+                                // 푸터가 존재하면 가장 뒤에 존재할 푸터를 제거
+                                screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
+                                    footerIdx
+                                )
+                            }
+
+                            // 새로운 데이터 가져오기
+                            val footerData =
+                                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO(
+                                    footerUid,
+                                    getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult.uid,
+                                    getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult.content
+                                )
+
+                            // 데이터를 가장 뒤에 추가
+                            screenVerticalRecyclerViewAdapterDataListCopy.add(footerData)
+
+                            // 아이템 갱신
+                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+                                screenVerticalRecyclerViewAdapterDataListCopy
+
+                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
+                                false
+
+                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+                        }
+                    }.start()
+                }
+            },
+            onError = { getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult ->
+                runOnUiThread {
+                    // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+                    object :
+                        CountDownTimer(
+                            500L,
+                            100L
+                        ) {
+                        override fun onTick(millisUntilFinished: Long) {}
+
+                        override fun onFinish() { // 네트워크 응답이 왔다고 가정
+                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
+                                false
+
+                            if (getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
+                                viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "네트워크 에러",
+                                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                                        "확인",
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        }
+                                    )
+                            } else { // 그외 에러
+                                viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "서버 에러",
+                                        "현재 서버의 상태가 원활하지 않습니다.\n" +
+                                                "잠시 후 다시 시도해주세요.\n" +
+                                                "\n" +
+                                                "에러 메시지 :\n" +
+                                                "${getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult.message}",
+                                        "확인",
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                null
+
+                                        }
+                                    )
+                            }
+                        }
+                    }.start()
+                }
+            }
+        )
+    }
 
     // todo
     // ScreenVerticalRecyclerViewAdapter 의 아이템 데이터 갱신
