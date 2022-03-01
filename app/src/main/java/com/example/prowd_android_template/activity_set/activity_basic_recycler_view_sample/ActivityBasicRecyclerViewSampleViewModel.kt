@@ -62,6 +62,9 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // 셔플 여부(새 아이템 추가 위치에 반영)
     var isShuffledMbr = false
 
+    // ScreenVerticalRecyclerViewAdapter 아이템 접근 세마포어
+//    var screenVerticalRecyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>

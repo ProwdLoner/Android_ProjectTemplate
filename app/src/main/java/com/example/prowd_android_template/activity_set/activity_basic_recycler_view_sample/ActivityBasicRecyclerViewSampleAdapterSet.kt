@@ -272,12 +272,6 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     // 아이템 제거 버튼 클릭
                     // todo 슬라이드 제거 방식 적용
                     binding.deleteBtn.setOnClickListener {
-                        if (parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
-                            return@setOnClickListener
-                        }
-
-                        parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                            true
                         // 어뎁터 주입용 데이터 리스트 클론 생성
                         val screenVerticalRecyclerViewAdapterDataListCopy =
                             getCurrentItemDeepCopyReplica()
@@ -295,9 +289,6 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
                         parentViewModel.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                             screenVerticalRecyclerViewAdapterDataListCopy
-
-                        parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                            false
 
                         // 중복 클릭 방지
                         binding.deleteBtn.setOnClickListener { }
@@ -421,29 +412,82 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         // ---------------------------------------------------------------------------------------------
         // <공개 메소드 공간>
         // todo 임시로 로더 만들기 및 로더 제거
-        fun showHeaderLoader() {
-
-        }
-
-        fun deleteHeaderLoader() {
-
-        }
-
-        fun showFooterLoader() {
-
-        }
-
-        fun deleteFooterLoader() {
-
-        }
-
-        fun showItemLoader() {
-
-        }
-
-        fun deleteItemLoader() {
-
-        }
+//        private var tempHeaderMbr: AdapterItemAbstractVO? = null
+//        fun showHeaderLoader() {
+//            // 이전에 로더를 실행한 적이 있으면 작동하지 않음
+//            if (currentItemListMbr[0] is HeaderLoader.ItemVO) {
+//                return
+//            }
+//
+//            // 어뎁터 주입용 데이터 리스트 클론 생성
+//            val screenVerticalRecyclerViewAdapterDataListCopy = getCurrentItemDeepCopyReplica()
+//
+//            // 헤더가 존재하면 삭제하고 피신
+//            if (screenVerticalRecyclerViewAdapterDataListCopy[0] is Header.ItemVO) {
+//                tempHeaderMbr = screenVerticalRecyclerViewAdapterDataListCopy.removeAt(0)
+//            }
+//
+//            // 로더를 추가하고 화면 갱신
+//            screenVerticalRecyclerViewAdapterDataListCopy.add(0, HeaderLoader.ItemVO(maxUid))
+//            setNewItemList(screenVerticalRecyclerViewAdapterDataListCopy)
+//        }
+//
+//        fun deleteHeaderLoader() {
+//            // 어뎁터 주입용 데이터 리스트 클론 생성
+//            val screenVerticalRecyclerViewAdapterDataListCopy = getCurrentItemDeepCopyReplica()
+//
+//            // 헤더 로더가 존재하면 지우기
+//            if (screenVerticalRecyclerViewAdapterDataListCopy[0] is HeaderLoader.ItemVO) {
+//                screenVerticalRecyclerViewAdapterDataListCopy.removeAt(0)
+//            }
+//
+//            // 이전 헤더가 존재하면 패치
+//            if (null != tempHeaderMbr) {
+//                screenVerticalRecyclerViewAdapterDataListCopy.add(0, tempHeaderMbr!!)
+//            }
+//
+//            // 화면 갱신
+//            setNewItemList(screenVerticalRecyclerViewAdapterDataListCopy)
+//        }
+//
+//        var tempFooterMbr: AdapterItemAbstractVO? = null
+//        fun showFooterLoader() {
+//            // 이전에 로더를 실행한 적이 있으면 작동하지 않음
+//            if (currentItemListMbr[currentItemListMbr.lastIndex] is FooterLoader.ItemVO) {
+//                return
+//            }
+//
+//            // 어뎁터 주입용 데이터 리스트 클론 생성
+//            val screenVerticalRecyclerViewAdapterDataListCopy = getCurrentItemDeepCopyReplica()
+//
+//            // 푸터 데이터가 존재하면 피신
+//            if (screenVerticalRecyclerViewAdapterDataListCopy[currentItemListMbr.lastIndex] is Footer.ItemVO) {
+//                tempFooterMbr =
+//                    screenVerticalRecyclerViewAdapterDataListCopy.removeAt(currentItemListMbr.lastIndex)
+//            }
+//
+//            // 로더를 추가하고 화면 갱신
+//            screenVerticalRecyclerViewAdapterDataListCopy.add(FooterLoader.ItemVO(maxUid))
+//            setNewItemList(screenVerticalRecyclerViewAdapterDataListCopy)
+//        }
+//
+//        fun deleteFooterLoader() {
+//            // 어뎁터 주입용 데이터 리스트 클론 생성
+//            val screenVerticalRecyclerViewAdapterDataListCopy = getCurrentItemDeepCopyReplica()
+//
+//            // 푸터 로더가 존재하면 제거
+//            if (screenVerticalRecyclerViewAdapterDataListCopy[currentItemListMbr.lastIndex] is FooterLoader.ItemVO) {
+//                screenVerticalRecyclerViewAdapterDataListCopy.removeLast()
+//            }
+//
+//            // 기존 푸터가 존재하면 패치
+//            if (null != tempHeaderMbr) {
+//                screenVerticalRecyclerViewAdapterDataListCopy.add(0, tempHeaderMbr!!)
+//            }
+//
+//            // 화면 갱신
+//            setNewItemList(screenVerticalRecyclerViewAdapterDataListCopy)
+//        }
 
 
         // ---------------------------------------------------------------------------------------------
