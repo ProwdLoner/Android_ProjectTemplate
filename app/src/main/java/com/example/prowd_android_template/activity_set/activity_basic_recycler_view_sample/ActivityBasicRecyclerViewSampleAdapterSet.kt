@@ -272,10 +272,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     // 아이템 제거 버튼 클릭
                     binding.deleteBtn.setOnClickListener {
                         // 중복 클릭 방지
-                        if (parentViewModel.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value != null ||
-                            // 현재 삭제 리퀘스트가 진행중이거나,
-                            parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!
-                        // 데이터 조작 프로세스 진행중
+                        if (parentViewModel.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value != null
+                        // 현재 삭제 리퀘스트가 진행중일 때
                         ) {
                             // 로직 취소
                             return@setOnClickListener

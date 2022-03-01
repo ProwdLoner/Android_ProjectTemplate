@@ -301,6 +301,27 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         }
     }
 
+    // (아이템 데이터 삭제)
+    private val deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr =
+        Semaphore(1)
+
+    fun deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsync(
+        contentUid: Long,
+        onComplete: () -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.acquire()
+
+            // 원래는 네트워크에서 contentUid 의 아이템을 삭제 후 결과를 반환
+
+            onComplete()
+
+            deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
+
+        }
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
