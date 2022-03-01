@@ -12,6 +12,9 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
 import java.net.SocketTimeoutException
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 // todo 현재 정렬 기준에 * 넣기
 // todo 중복 방지 페이징 처리 가정
@@ -198,7 +201,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             viewModelMbr.isItemShuffledMbr = false
         }
 
-        // todo
         // 아이템 셔플 테스트
         bindingMbr.itemShuffleBtn.setOnClickListener {
             if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
@@ -287,157 +289,162 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             )
         }
 
-        // todo
         // add 버튼 = 셔플 상태라면 순서 상관 없이 마지막에 추가, 정렬 상태라면 정렬 기준에 맞도록 추가
-//        bindingMbr.addItemBtn.setOnClickListener {
-//            if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
-//                return@setOnClickListener
-//            }
-//
-//            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-//                true
-//
-//            // 어뎁터 주입용 데이터 리스트 클론 생성
-//            val screenVerticalRecyclerViewAdapterDataListCopy =
-//                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-//
-//            // 헤더 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
-//            val headerIdx =
-//                screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
-//                    it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
-//                }
-//
-//            // 아이템 리스트의 첫번째 인덱스
-//            val firstItemIdx = if (-1 == headerIdx) { // 헤더가 존재하지 않으면,
-//                0
-//            } else { // 헤더가 존재하면,
-//                1
-//            }
-//
-//            // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
-//            val footerIdx =
-//                screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
-//                    it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
-//                }
-//
-//            // 아이템 리스트의 마지막 인덱스
-//            val endItemIdx = if (-1 == footerIdx) {
-//                screenVerticalRecyclerViewAdapterDataListCopy.size - 1
-//            } else {
-//                footerIdx - 1
-//            }
-//
-//            // 추가할 아이템
-//            // 실제 추가할 때에는 리포지토리에 반영하고, uid 등 서버 입력 시점에 정해지는 데이터를 받아오고 그 여부에 따라 화면 갱신
-//            // get UTC now
-//            val utcDataFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
-//            utcDataFormat.timeZone = TimeZone.getTimeZone("UTC")
-//            val utcTimeString = utcDataFormat.format(Date())
-//
-//            val addedItem =
-//                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
-//                    adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
-//                    1,
-//                    "added title ${screenVerticalRecyclerViewAdapterDataListCopy.size}",
-//                    "added content ${screenVerticalRecyclerViewAdapterDataListCopy.size}",
-//                    utcTimeString
-//                )
-//
-//            // 정렬 상태와 상관 없이 가장 뒤에 추가
-//            // 그 다음 아이템 정렬 여부에 따라 정렬 후 반영 -> 추가된 아이템 위치로 스크롤 이동
-//            screenVerticalRecyclerViewAdapterDataListCopy.add(
-//                endItemIdx + 1,
-//                addedItem
-//            )
-//
-//            // 정렬을 위한 아이템 리스트 추출
-//            val itemDataList =
-//                ArrayList(screenVerticalRecyclerViewAdapterDataListCopy.slice(firstItemIdx..endItemIdx + 1))
-//
-//            if (!viewModelMbr.isShuffledMbr) { // 셔플 상태가 아니면 == 정렬 상태라면,
-//                // item 을 기준에 따라 정렬
-//
-//                // 기준에 따른 정렬
-//                when (viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
-//                    0 -> {
-//                        itemDataList.sortWith(compareBy {
-//                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
-//                        })
-//                    }
-//                    1 -> {
-//                        itemDataList.sortWith(compareByDescending {
-//                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
-//                        })
-//                    }
-//                    2 -> {
-//                        itemDataList.sortWith(compareBy {
-//                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
-//                        })
-//                    }
-//                    3 -> {
-//                        itemDataList.sortWith(compareByDescending {
-//                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
-//                        })
-//                    }
-//                    4 -> {
-//                        // 콘텐츠 내림차순 정렬
-//                        itemDataList.sortWith(compareBy {
-//                            val transFormat =
-//                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-//                            val date: Date =
-//                                transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
-//
-//                            date.time
-//                        })
-//                    }
-//                    5 -> {
-//                        // 콘텐츠 오름차순 정렬
-//                        itemDataList.sortWith(compareByDescending {
-//                            val transFormat =
-//                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-//                            val date: Date =
-//                                transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
-//
-//                            date.time
-//                        })
-//                    }
-//                }
-//            }
-//
-//            val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
-//                java.util.ArrayList()
-//
-//            if (headerIdx != -1) {
-//                // 헤더가 존재하면 헤더 데이터를 먼저 추가
-//                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[headerIdx])
-//            }
-//
-//            adapterDataList.addAll(itemDataList)
-//
-//            if (footerIdx != -1) {
-//                // 푸터가 존재하면 푸터 데이터를 마지막에 추가
-//                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx + 1])
-//            }
-//
-//            // 리스트에서 addedItem.itemUid 의 위치를 가져오기
-//            val newItemIdx = adapterDataList.indexOfFirst {
-//                it.itemUid == addedItem.itemUid
-//            }
-//
-//            // 리스트 화면 갱신
-//            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-//                adapterDataList
-//
-//            // 새로 추가된 아이템의 위치로 스크롤 이동
-//            bindingMbr.screenVerticalRecyclerView.scrollToPosition(
-//                newItemIdx
-//            )
-//
-//            adapterSetMbr.screenVerticalRecyclerViewAdapter.blinkIdx = newItemIdx
-//
-//            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-//                false
-//        }
+        // 네트워크에 데이터를 추가하고, 완료된 상태라면 기준에 맞게 로컬에 아이템 추가(실제 서버에 어떤 순서로 저장된지는 리플레시 때에 반영)
+        bindingMbr.addItemBtn.setOnClickListener {
+            if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
+                return@setOnClickListener
+            }
+
+            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                true
+
+            // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
+            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+
+            // 어뎁터 주입용 데이터 리스트 클론 생성
+            val screenVerticalRecyclerViewAdapterDataListCopy =
+                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
+            // 헤더 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
+            val headerIdx =
+                screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
+                    it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
+                }
+
+            // 아이템 리스트의 첫번째 인덱스
+            val firstItemIdx = if (-1 == headerIdx) { // 헤더가 존재하지 않으면,
+                0
+            } else { // 헤더가 존재하면,
+                1
+            }
+
+            // 푸터 인덱스 찾기 = 존재하지 않으면 -1 (리스트에서 하나만 존재한다고 가정)
+            val footerIdx =
+                screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
+                    it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
+                }
+
+            // 아이템 리스트의 마지막 인덱스
+            val endItemIdx = if (-1 == footerIdx) {
+                screenVerticalRecyclerViewAdapterDataListCopy.size - 1
+            } else {
+                footerIdx - 1
+            }
+
+            // 추가할 아이템
+            // 실제 추가할 때에는 리포지토리에 반영하고, uid 등 서버 입력 시점에 정해지는 데이터를 받아오고 성공 여부에 따라 화면 갱신
+            val utcDataFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
+            utcDataFormat.timeZone = TimeZone.getTimeZone("UTC")
+            val utcTimeString = utcDataFormat.format(Date())
+
+            val addedItem =
+                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
+                    adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
+                    1,
+                    "added title ${screenVerticalRecyclerViewAdapterDataListCopy.size}",
+                    "added content ${screenVerticalRecyclerViewAdapterDataListCopy.size}",
+                    utcTimeString
+                )
+
+            // 정렬 상태와 상관 없이 가장 뒤에 추가
+            // 그 다음 아이템 정렬 여부에 따라 정렬 후 반영 -> 추가된 아이템 위치로 스크롤 이동
+            screenVerticalRecyclerViewAdapterDataListCopy.add(
+                endItemIdx + 1,
+                addedItem
+            )
+
+            // 정렬을 위한 아이템 리스트 추출
+            val itemDataList =
+                ArrayList(screenVerticalRecyclerViewAdapterDataListCopy.slice(firstItemIdx..endItemIdx + 1))
+
+            if (!viewModelMbr.isItemShuffledMbr) { // 셔플 상태가 아니면 == 정렬 상태라면,
+                // item 을 기준에 따라 정렬
+
+                // 기준에 따른 정렬
+                when (viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
+                    0 -> {
+                        itemDataList.sortWith(compareBy {
+                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
+                        })
+                    }
+                    1 -> {
+                        itemDataList.sortWith(compareByDescending {
+                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
+                        })
+                    }
+                    2 -> {
+                        itemDataList.sortWith(compareBy {
+                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
+                        })
+                    }
+                    3 -> {
+                        itemDataList.sortWith(compareByDescending {
+                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
+                        })
+                    }
+                    4 -> {
+                        // 콘텐츠 내림차순 정렬
+                        itemDataList.sortWith(compareBy {
+                            val transFormat =
+                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                            val date: Date =
+                                transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
+
+                            date.time
+                        })
+                    }
+                    5 -> {
+                        // 콘텐츠 오름차순 정렬
+                        itemDataList.sortWith(compareByDescending {
+                            val transFormat =
+                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                            val date: Date =
+                                transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
+
+                            date.time
+                        })
+                    }
+                }
+            }
+
+            val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+                java.util.ArrayList()
+
+            if (headerIdx != -1) {
+                // 헤더가 존재하면 헤더 데이터를 먼저 추가
+                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[headerIdx])
+            }
+
+            adapterDataList.addAll(itemDataList)
+
+            if (footerIdx != -1) {
+                // 푸터가 존재하면 푸터 데이터를 마지막에 추가
+                adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy[footerIdx + 1])
+            }
+
+            // 리스트에서 addedItem.itemUid 의 위치를 가져오기
+            val newItemIdx = adapterDataList.indexOfFirst {
+                it.itemUid == addedItem.itemUid
+            }
+
+            // 리스트 화면 갱신
+            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+                adapterDataList
+
+            // 새로 추가된 아이템의 위치로 스크롤 이동
+            bindingMbr.screenVerticalRecyclerView.scrollToPosition(
+                newItemIdx
+            )
+
+            // 아이템 화면 생성 시점에 반짝이도록 설정
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.blinkIdx = newItemIdx
+
+            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                false
+
+            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+        }
 
         // 스피너 설정
         val sortSpinnerAdapter = ArrayAdapter(

@@ -32,7 +32,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
-        private var blinkIdx: Int? = null
+        var blinkIdx: Int? = null
 
 
         // ---------------------------------------------------------------------------------------------
