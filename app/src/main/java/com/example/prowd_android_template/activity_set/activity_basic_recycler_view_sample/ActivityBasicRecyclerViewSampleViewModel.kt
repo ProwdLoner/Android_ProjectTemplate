@@ -10,7 +10,10 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterFooterDataOutputVO
 import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterHeaderDataOutputVO
+import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterItemDataOutputVO
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -81,8 +84,8 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // todo
     // ScreenVerticalRecyclerViewAdapter 아이템 데이터 변경 진행 상태 플래그
-//    var changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
-//        MutableLiveData(false)
+    var changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
 
     // ScreenVerticalRecyclerViewAdapter 헤더 데이터 변경 진행 상태 플래그
     var changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
@@ -185,116 +188,117 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
 
     // todo
-//    // (아이템 데이터)
-//    private val getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr = Semaphore(1)
-//
-//    // ScreenVerticalRecyclerViewAdapter 데이터 현 페이지 (초기화 시에는 데이터 리스트를 초기화 하고 페이지 1부터 다시 받아오기)
-//    var getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
-//
-//    // 한 페이지 아이템 개수 (이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
-//    var getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr: Int = 20
-//
-//    // 현재 설정으로 다음 데이터 리스트 요청
-//    fun getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
-//        pageNum: Int,
-//        onComplete: (ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO>) -> Unit,
-//        onError: (Throwable) -> Unit
-//    ) {
-//        executorServiceMbr?.execute {
-//            getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.acquire()
-//
-//            // 원래는 네트워크에서 실제 데이터 리스트 가져오기
-//            val resultDataList: ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO> = ArrayList()
-//
-//            // 더미 데이터 가져오기 (json)
-//            val assetManager = applicationMbr.resources.assets
-//            val inputStream =
-//                assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_item_dummy_data.json")
-//            val jsonString = inputStream.bufferedReader().use { it.readText() }
-//
-//            val jObject = JSONObject(jsonString)
-//            val dummyDataJsonList = jObject.getJSONArray("dummyDataList")
-//            val dummyDataList = ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO>()
-//
-//            // json 배열 파싱
-//            for (dummyDataListIdx in 0 until dummyDataJsonList.length()) {
-//                val dummyDataObj = dummyDataJsonList.getJSONObject(dummyDataListIdx)
-//                val uid = dummyDataObj.getInt("uidInt")
-//                val title = dummyDataObj.getString("titleString")
-//                val content = dummyDataObj.getString("contentString")
-//                val writeDate = dummyDataObj.getString("writeDateString")
-//                dummyDataList.add(
-//                    ScreenVerticalRecyclerViewAdapterItemDataOutputVO(
-//                        uid,
-//                        title,
-//                        content,
-//                        writeDate
-//                    )
-//                )
-//            }
-//
-//            // 기준에 따른 정렬
-//            when (getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
-//                0 -> {
-//                    // 타이틀 내림차순 정렬
-//                    dummyDataList.sortWith(compareBy { it.title })
-//                }
-//                1 -> {
-//                    // 타이틀 오름차순 정렬
-//                    dummyDataList.sortWith(compareByDescending { it.title })
-//                }
-//                2 -> {
-//                    // 콘텐츠 내림차순 정렬
-//                    dummyDataList.sortWith(compareBy { it.content })
-//                }
-//                3 -> {
-//                    // 콘텐츠 오름차순 정렬
-//                    dummyDataList.sortWith(compareByDescending { it.content })
-//                }
-//                4 -> {
-//                    // 콘텐츠 내림차순 정렬
-//                    dummyDataList.sortWith(compareBy {
-//                        val transFormat =
-//                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-//                        val date: Date = transFormat.parse(it.writeDate)!!
-//
-//                        date.time
-//                    })
-//                }
-//                5 -> {
-//                    // 콘텐츠 오름차순 정렬
-//                    dummyDataList.sortWith(compareByDescending {
-//                        val transFormat =
-//                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-//                        val date: Date = transFormat.parse(it.writeDate)!!
-//
-//                        date.time
-//                    })
-//                }
-//            }
-//
-//            for (dummyDataListIdx in 0 until dummyDataList.size) {
-//                val dummyDataObj = dummyDataList[dummyDataListIdx]
-//
-//                val startIdx =
-//                    (pageNum - 1) *
-//                            getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
-//                val endIdx = startIdx + getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
-//
-//                if (dummyDataListIdx >= endIdx) {
-//                    break
-//                }
-//
-//                if (dummyDataListIdx >= startIdx) {
-//                    resultDataList.add(dummyDataObj)
-//                }
-//            }
-//            onComplete(resultDataList)
-//
-//            getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
-//
-//        }
-//    }
+    // (아이템 데이터)
+    private val getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr = Semaphore(1)
+
+    // ScreenVerticalRecyclerViewAdapter 데이터 현 페이지 (초기화 시에는 데이터 리스트를 초기화 하고 페이지 1부터 다시 받아오기)
+    var getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
+
+    // 한 페이지 아이템 개수 (이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
+    var getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr: Int = 20
+
+    // 현재 설정으로 다음 데이터 리스트 요청
+    fun getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
+        pageNum: Int,
+        onComplete: (ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO>) -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.acquire()
+
+            // 원래는 네트워크에서 실제 데이터 리스트 가져오기
+            val resultDataList: ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO> =
+                ArrayList()
+
+            // 더미 데이터 가져오기 (json)
+            val assetManager = applicationMbr.resources.assets
+            val inputStream =
+                assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_item_dummy_data.json")
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
+
+            val jObject = JSONObject(jsonString)
+            val dummyDataJsonList = jObject.getJSONArray("dummyDataList")
+            val dummyDataList = ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO>()
+
+            // json 배열 파싱
+            for (dummyDataListIdx in 0 until dummyDataJsonList.length()) {
+                val dummyDataObj = dummyDataJsonList.getJSONObject(dummyDataListIdx)
+                val uid = dummyDataObj.getLong("uidLong")
+                val title = dummyDataObj.getString("titleString")
+                val content = dummyDataObj.getString("contentString")
+                val writeDate = dummyDataObj.getString("writeDateString")
+                dummyDataList.add(
+                    ScreenVerticalRecyclerViewAdapterItemDataOutputVO(
+                        uid,
+                        title,
+                        content,
+                        writeDate
+                    )
+                )
+            }
+
+            // 기준에 따른 정렬
+            when (getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
+                0 -> {
+                    // 타이틀 내림차순 정렬
+                    dummyDataList.sortWith(compareBy { it.title })
+                }
+                1 -> {
+                    // 타이틀 오름차순 정렬
+                    dummyDataList.sortWith(compareByDescending { it.title })
+                }
+                2 -> {
+                    // 콘텐츠 내림차순 정렬
+                    dummyDataList.sortWith(compareBy { it.content })
+                }
+                3 -> {
+                    // 콘텐츠 오름차순 정렬
+                    dummyDataList.sortWith(compareByDescending { it.content })
+                }
+                4 -> {
+                    // 콘텐츠 내림차순 정렬
+                    dummyDataList.sortWith(compareBy {
+                        val transFormat =
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val date: Date = transFormat.parse(it.writeDate)!!
+
+                        date.time
+                    })
+                }
+                5 -> {
+                    // 콘텐츠 오름차순 정렬
+                    dummyDataList.sortWith(compareByDescending {
+                        val transFormat =
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val date: Date = transFormat.parse(it.writeDate)!!
+
+                        date.time
+                    })
+                }
+            }
+
+            for (dummyDataListIdx in 0 until dummyDataList.size) {
+                val dummyDataObj = dummyDataList[dummyDataListIdx]
+
+                val startIdx =
+                    (pageNum - 1) *
+                            getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
+                val endIdx = startIdx + getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
+
+                if (dummyDataListIdx >= endIdx) {
+                    break
+                }
+
+                if (dummyDataListIdx >= startIdx) {
+                    resultDataList.add(dummyDataObj)
+                }
+            }
+            onComplete(resultDataList)
+
+            getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
+
+        }
+    }
 
 
     // ---------------------------------------------------------------------------------------------

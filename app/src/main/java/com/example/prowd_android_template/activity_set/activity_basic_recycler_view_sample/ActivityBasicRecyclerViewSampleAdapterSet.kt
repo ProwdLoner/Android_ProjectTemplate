@@ -158,8 +158,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (holder) {
                 is HeaderLoader.ViewHolder -> { // 헤더 로더 아이템 바인딩
-                    val binding = holder.binding
-                    val entity = currentItemListMbr[position] as HeaderLoader.ItemVO
+//                    val binding = holder.binding
+//                    val entity = currentItemListMbr[position] as HeaderLoader.ItemVO
 
                 }
 
@@ -171,8 +171,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                 }
 
                 is FooterLoader.ViewHolder -> { // 푸터 로더 아이템 바인딩
-                    val binding = holder.binding
-                    val entity = currentItemListMbr[position] as FooterLoader.ItemVO
+//                    val binding = holder.binding
+//                    val entity = currentItemListMbr[position] as FooterLoader.ItemVO
 
                 }
 
@@ -184,8 +184,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                 }
 
                 is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩
-                    val binding = holder.binding
-                    val entity = currentItemListMbr[position] as ItemLoader.ItemVO
+//                    val binding = holder.binding
+//                    val entity = currentItemListMbr[position] as ItemLoader.ItemVO
 
                 }
 
@@ -411,44 +411,6 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <공개 메소드 공간>
-//        var tempFooterMbr: AdapterItemAbstractVO? = null
-//        fun showFooterLoader() {
-//            // 이전에 로더를 실행한 적이 있으면 작동하지 않음
-//            if (currentItemListMbr[currentItemListMbr.lastIndex] is FooterLoader.ItemVO) {
-//                return
-//            }
-//
-//            // 어뎁터 주입용 데이터 리스트 클론 생성
-//            val screenVerticalRecyclerViewAdapterDataListCopy = getCurrentItemDeepCopyReplica()
-//
-//            // 푸터 데이터가 존재하면 피신
-//            if (screenVerticalRecyclerViewAdapterDataListCopy[currentItemListMbr.lastIndex] is Footer.ItemVO) {
-//                tempFooterMbr =
-//                    screenVerticalRecyclerViewAdapterDataListCopy.removeAt(currentItemListMbr.lastIndex)
-//            }
-//
-//            // 로더를 추가하고 화면 갱신
-//            screenVerticalRecyclerViewAdapterDataListCopy.add(FooterLoader.ItemVO(maxUid))
-//            setNewItemList(screenVerticalRecyclerViewAdapterDataListCopy)
-//        }
-//
-//        fun deleteFooterLoader() {
-//            // 어뎁터 주입용 데이터 리스트 클론 생성
-//            val screenVerticalRecyclerViewAdapterDataListCopy = getCurrentItemDeepCopyReplica()
-//
-//            // 푸터 로더가 존재하면 제거
-//            if (screenVerticalRecyclerViewAdapterDataListCopy[currentItemListMbr.lastIndex] is FooterLoader.ItemVO) {
-//                screenVerticalRecyclerViewAdapterDataListCopy.removeLast()
-//            }
-//
-//            // 기존 푸터가 존재하면 패치
-//            if (null != tempHeaderMbr) {
-//                screenVerticalRecyclerViewAdapterDataListCopy.add(0, tempHeaderMbr!!)
-//            }
-//
-//            // 화면 갱신
-//            setNewItemList(screenVerticalRecyclerViewAdapterDataListCopy)
-//        }
 
 
         // ---------------------------------------------------------------------------------------------
@@ -483,7 +445,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long,
-                val contentUid : Long,
+                val contentUid: Long,
                 val content: String
             ) : AdapterItemAbstractVO(itemUid)
         }
@@ -513,7 +475,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long,
-                val contentUid : Long,
+                val contentUid: Long,
                 val content: String
             ) : AdapterItemAbstractVO(itemUid)
         }
@@ -543,7 +505,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long,
-                val uid: Int,
+                val contentUid: Long,
                 val title: String,
                 val content: String,
                 val writeDate: String
