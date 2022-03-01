@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.util.Log
 import android.widget.ArrayAdapter
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
@@ -14,7 +13,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
 import java.net.SocketTimeoutException
 
-// todo 현재 정렬 기준에 * 넣기, 리플레시 헤더/푸터 데이터 갱신
+// todo 현재 정렬 기준에 * 넣기
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -78,14 +77,21 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 // (ScreenVerticalRecyclerViewAdapter 데이터 로딩)
-                // 헤더 데이터 로딩
+                // 아이템 데이터 초기화
+                // todo : 전체 아이템 리스트 뮤텍스 검증
+                clearScreenVerticalRecyclerViewAdapterItemData()
+
+                // 헤더 데이터 초기화
                 getScreenVerticalRecyclerViewAdapterHeaderDataAsync()
 
-                // 푸터 데이터 로딩
+                // 푸터 데이터 초기화
                 getScreenVerticalRecyclerViewAdapterFooterDataAsync()
 
-                // 아이템 데이터 로딩
+                // 리스트 페이지 초기화
+                viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
+                // 1 페이지 다시 가져오기
                 getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
+                viewModelMbr.isItemShuffledMbr = false
             }
         }
     }
