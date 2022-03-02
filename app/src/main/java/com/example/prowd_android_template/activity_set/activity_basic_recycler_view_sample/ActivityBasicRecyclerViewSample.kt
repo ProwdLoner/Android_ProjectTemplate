@@ -254,7 +254,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             val itemLastIdx = if (isFooterExist) {
                 screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
             } else {
-                screenVerticalRecyclerViewAdapterDataListCopy.size
+                screenVerticalRecyclerViewAdapterDataListCopy.size - 1
             }
 
             // 아이템 리스트 분리
@@ -349,7 +349,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             val itemLastIdx = if (isFooterExist) {
                 screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
             } else {
-                screenVerticalRecyclerViewAdapterDataListCopy.size
+                screenVerticalRecyclerViewAdapterDataListCopy.size - 1
             }
 
             // 추가할 아이템
@@ -798,44 +798,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value =
             true
 
-        // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
-        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-
-        // (헤더 로더 출력)
-        // 기존 헤더 데이터 피신 변수
-        var tempHeaderMbr: ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO? =
-            null
-
-        // 어뎁터 주입용 데이터 리스트 클론 생성
-        val screenVerticalRecyclerViewAdapterDataListCopy =
-            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-
-        // 헤더가 존재하면 삭제하고 피신
-        var headerVoItemUid: Long =
-            if (screenVerticalRecyclerViewAdapterDataListCopy.size > 0 && // 리스트가 1개 이상이고,
-                screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull() is
-                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
-            // 첫번째 아이템이 헤더 타입일 때
-            ) {
-                // 헤더 데이터 피신
-                tempHeaderMbr =
-                    screenVerticalRecyclerViewAdapterDataListCopy.removeFirst() as
-                            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
-                tempHeaderMbr.itemUid
-            } else {
-                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
-            }
-
-        // 로더를 추가하고 화면 갱신
-        screenVerticalRecyclerViewAdapterDataListCopy.add(
-            0,
-            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.HeaderLoader.ItemVO(
-                headerVoItemUid
-            )
-        )
-        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-            screenVerticalRecyclerViewAdapterDataListCopy
-        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+        // todo (헤더 로더 출력 = 헤더의 아이템을 시머로 숨기기)
 
         // 리포지토리 데이터 요청
         viewModelMbr.getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsync(
@@ -850,23 +813,25 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         override fun onTick(millisUntilFinished: Long) {}
 
                         override fun onFinish() { // 네트워크 응답이 왔다고 가정
+                            // todo 헤더로더 제거
+
                             // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
                             viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
 
                             // 어뎁터 주입용 데이터 리스트 클론 생성
-                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
-                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
+                            val screenVerticalRecyclerViewAdapterDataListCopy =
                                 adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-                            )
 
-                            // 헤더 로더가 존재하면 지우기
-                            headerVoItemUid =
-                                if (screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull() is
-                                            ActivityBasicRecyclerViewSampleAdapterSet.
-                                            ScreenVerticalRecyclerViewAdapter.HeaderLoader.ItemVO
+                            // 헤더가 존재하면 삭제
+                            val headerVoItemUid: Long =
+                                if (screenVerticalRecyclerViewAdapterDataListCopy.size > 0 && // 리스트가 1개 이상이고,
+                                    screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull() is
+                                            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
+                                // 첫번째 아이템이 헤더 타입일 때
                                 ) {
                                     val itemUid =
                                         screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull()!!.itemUid
+                                    // 헤더 데이터 삭제
                                     screenVerticalRecyclerViewAdapterDataListCopy.removeFirst()
                                     itemUid
                                 } else {
@@ -909,32 +874,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         override fun onFinish() { // 네트워크 응답이 왔다고 가정
                             // 상태 초기화
                             viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-                            // 어뎁터 주입용 데이터 리스트 클론 생성
-                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
-                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-                            )
 
-                            // 헤더 로더가 존재하면 지우기
-                            if (screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull() is
-                                        ActivityBasicRecyclerViewSampleAdapterSet.
-                                        ScreenVerticalRecyclerViewAdapter.HeaderLoader.ItemVO
-                            ) {
-                                screenVerticalRecyclerViewAdapterDataListCopy.removeFirst()
-                            }
-
-                            // 이전 헤더가 존재하면 패치
-                            if (null != tempHeaderMbr) {
-                                screenVerticalRecyclerViewAdapterDataListCopy.add(
-                                    0,
-                                    tempHeaderMbr!!
-                                )
-                                tempHeaderMbr = null
-                            }
-
-                            // 화면 반영
-                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-                                screenVerticalRecyclerViewAdapterDataListCopy
+                            // todo 헤더 로더가 존재하면 지우기
 
                             viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value =
                                 false
@@ -996,45 +937,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
             true
 
-        // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
-        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-
-        // (로더 출력)
-        // 기존 푸터 데이터 피신 변수
-        var tempFooterMbr: ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO? =
-            null
-
-        // 어뎁터 주입용 데이터 리스트 클론 생성
-        val screenVerticalRecyclerViewAdapterDataListCopy =
-            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-
-        // 푸터가 존재하면 삭제하고 피신
-        var footerVoItemUid: Long =
-            if (screenVerticalRecyclerViewAdapterDataListCopy.size > 0 && // 리스트가 1개 이상이고,
-                screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
-                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
-            // 마지막 아이템이 푸터 타입일 때
-            ) {
-                // 푸터 데이터 피신
-                tempFooterMbr =
-                    screenVerticalRecyclerViewAdapterDataListCopy.removeLast() as
-                            ActivityBasicRecyclerViewSampleAdapterSet.
-                            ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
-
-                tempFooterMbr.itemUid
-            } else {
-                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
-            }
-
-        // 로더를 추가하고 화면 갱신
-        screenVerticalRecyclerViewAdapterDataListCopy.add(
-            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.FooterLoader.ItemVO(
-                footerVoItemUid
-            )
-        )
-        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-            screenVerticalRecyclerViewAdapterDataListCopy
-        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+        // todo (로더 출력 = 아이템을 시머로 숨기기)
 
         // 리포지토리 데이터 요청
         viewModelMbr.getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsync(
@@ -1049,21 +952,25 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         override fun onTick(millisUntilFinished: Long) {}
 
                         override fun onFinish() { // 네트워크 응답이 왔다고 가정
+                            // todo 헤더로더 제거
+
                             // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
                             viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
-                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-                            )
 
-                            // 로더가 존재하면 지우기
-                            footerVoItemUid =
-                                if (screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
-                                            ActivityBasicRecyclerViewSampleAdapterSet.
-                                            ScreenVerticalRecyclerViewAdapter.FooterLoader.ItemVO
+                            // 어뎁터 주입용 데이터 리스트 클론 생성
+                            val screenVerticalRecyclerViewAdapterDataListCopy =
+                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
+                            // 푸터가 존재하면 삭제
+                            val footerVoItemUid: Long =
+                                if (screenVerticalRecyclerViewAdapterDataListCopy.size > 0 && // 리스트가 1개 이상이고,
+                                    screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
+                                            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
+                                // 마지막 아이템이 푸터 타입일 때
                                 ) {
                                     val itemUid =
                                         screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull()!!.itemUid
+                                    // 데이터 삭제
                                     screenVerticalRecyclerViewAdapterDataListCopy.removeLast()
                                     itemUid
                                 } else {
@@ -1106,31 +1013,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         override fun onFinish() { // 네트워크 응답이 왔다고 가정
                             // 상태 초기화
                             viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-                            // 어뎁터 주입용 데이터 리스트 클론 생성
-                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
-                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-                            )
 
-                            // 로더가 존재하면 지우기
-                            if (screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
-                                        ActivityBasicRecyclerViewSampleAdapterSet.
-                                        ScreenVerticalRecyclerViewAdapter.FooterLoader.ItemVO
-                            ) {
-                                screenVerticalRecyclerViewAdapterDataListCopy.removeLast()
-                            }
-
-                            // 이전 푸터가 존재하면 패치
-                            if (null != tempFooterMbr) {
-                                screenVerticalRecyclerViewAdapterDataListCopy.add(
-                                    tempFooterMbr!!
-                                )
-                                tempFooterMbr = null
-                            }
-
-                            // 화면 반영
-                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-                                screenVerticalRecyclerViewAdapterDataListCopy
+                            // todo 로더가 존재하면 지우기
 
                             viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
                                 false
@@ -1212,7 +1096,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         var itemLastIdx = if (isFooterExist) {
             screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
         } else {
-            screenVerticalRecyclerViewAdapterDataListCopy.size
+            screenVerticalRecyclerViewAdapterDataListCopy.size - 1
         }
 
         // 로더를 추가하고 화면 갱신
@@ -1286,18 +1170,19 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                 )
 
                                 // 푸터 찾기 = 리스트 가장 뒤에 있다고 가정
-                                isFooterExist = if (screenVerticalRecyclerViewAdapterDataListCopy.isNotEmpty()) {
-                                    screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
-                                            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
-                                } else {
-                                    false
-                                }
+                                isFooterExist =
+                                    if (screenVerticalRecyclerViewAdapterDataListCopy.isNotEmpty()) {
+                                        screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
+                                                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
+                                    } else {
+                                        false
+                                    }
 
                                 // 아이템 마지막 인덱스 위치
                                 itemLastIdx = if (isFooterExist) {
                                     screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
                                 } else {
-                                    screenVerticalRecyclerViewAdapterDataListCopy.size
+                                    screenVerticalRecyclerViewAdapterDataListCopy.size - 1
                                 }
 
                                 // 외부 데이터를 어뎁터용 데이터로 변형
