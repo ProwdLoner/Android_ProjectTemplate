@@ -666,6 +666,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                                 viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                                                     screenVerticalRecyclerViewAdapterDataListCopy
 
+                                                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                                    false
+
                                                 // 데이터 접근 락 해제
                                                 viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
 
@@ -680,6 +683,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                 },
                                 onError = { deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult ->
                                     runOnUiThread {
+                                        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                            false
                                         // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                                         object :
                                             CountDownTimer(
@@ -741,12 +746,16 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                 })
                         },
                         onNegBtnClicked = {
+                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                false
                             viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
                                 null
                             itemDeleteConfirmDialogMbr?.dismiss()
                             itemDeleteConfirmDialogMbr = null
                         },
                         onCanceled = {
+                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                false
                             viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
                                 null
                             itemDeleteConfirmDialogMbr?.dismiss()
