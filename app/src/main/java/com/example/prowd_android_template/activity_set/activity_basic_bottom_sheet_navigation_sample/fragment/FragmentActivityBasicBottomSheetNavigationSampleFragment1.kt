@@ -15,7 +15,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // (뷰 바인더 객체)
     private lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
 
-    // (부모 객체)
+    // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
     private lateinit var parentActivity: ActivityBasicBottomSheetNavigationSample
     private lateinit var parentViewModel: ActivityBasicBottomSheetNavigationSampleViewModel
 
