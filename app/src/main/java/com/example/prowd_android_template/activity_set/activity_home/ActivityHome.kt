@@ -144,6 +144,21 @@ class ActivityHome : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // 리사이클러 뷰 샘플 이동 버튼
+        bindingMbr.goToRecyclerViewSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityRecyclerViewSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        // 뷰 페이저 샘플 이동 버튼
+        bindingMbr.goToViewPagerSampleBtn.setOnClickListener {
+            // todo
+        }
+
         // 네트워크 샘플 이동 버튼
         bindingMbr.goToNetworkSampleBtn.setOnClickListener {
             val intent =
@@ -162,16 +177,6 @@ class ActivityHome : AppCompatActivity() {
         // 회원관리 샘플 이동 버튼
         bindingMbr.goToUserManagementSampleBtn.setOnClickListener {
             // TODO
-        }
-
-        // 리사이클러 뷰 샘플 이동 버튼
-        bindingMbr.goToRecyclerViewSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityRecyclerViewSample::class.java
-                )
-            startActivity(intent)
         }
 
         // JNI 샘플 이동 버튼
