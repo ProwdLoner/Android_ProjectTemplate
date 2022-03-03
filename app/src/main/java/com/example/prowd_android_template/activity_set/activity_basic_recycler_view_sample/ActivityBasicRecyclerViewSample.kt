@@ -107,8 +107,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     )
 
                 // 데이터 로딩 상태 초기화
-                // todo
-//                clearScreenVerticalRecyclerViewAdapterItemData()
+                clearScreenVerticalRecyclerViewAdapterItemData()
                 viewModelMbr.isItemShuffledMbr = false
 
                 // 리스트 페이지 초기화
@@ -120,8 +119,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 // 푸터 데이터 초기화
                 getScreenVerticalRecyclerViewAdapterFooterDataAsync()
 
-//                // 아이템 데이터 초기화
-//                getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
+                // 아이템 데이터 초기화
+                getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
             }
         }
     }
@@ -169,8 +168,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 bindingMbr.screenVerticalRecyclerView,
                 true,
                 onScrollHitBottom = { // 뷰 스크롤이 가장 아래쪽에 닿았을 때 = 페이징 타이밍
-                    // todo
-//                    getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
+                    getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
                 }
             ))
 
@@ -213,8 +211,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             }
 
             // 데이터 프로세스 설정 초기화
-            // todo
-//            clearScreenVerticalRecyclerViewAdapterItemData() // 아이템 리스트 비우기
+            clearScreenVerticalRecyclerViewAdapterItemData() // 아이템 리스트 비우기
             viewModelMbr.isItemShuffledMbr = false  // 정렬 상태
             viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1 // 페이지 1
 
@@ -224,9 +221,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             // 푸터 데이터 초기화
             getScreenVerticalRecyclerViewAdapterFooterDataAsync()
 
-            // todo
             // 1 페이지 다시 가져오기
-//            getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
+            getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
         }
 
         // todo
@@ -575,26 +571,25 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             }
         }
 
-        // todo
         // screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr 아이템 데이터 로딩 중 플래그
-//        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.observe(
-//            this
-//        ) {
-//            if (it) { // 아이템 로딩중에는,
-//                // 정렬 스피너 비활성화
-//                bindingMbr.itemSortSpinner.isEnabled = false
-//                bindingMbr.itemSortSpinner.isClickable = false
-//            } else {
-//                // 정렬 스피너 활성화
-//                bindingMbr.itemSortSpinner.isEnabled = true
-//                bindingMbr.itemSortSpinner.isClickable = true
-//                if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!! &&
-//                    !viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!!
-//                ) {
-//                    bindingMbr.screenRefreshLayout.isRefreshing = false
-//                }
-//            }
-//        }
+        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.observe(
+            this
+        ) {
+            if (it) { // 아이템 로딩중에는,
+                // 정렬 스피너 비활성화
+                bindingMbr.itemSortSpinner.isEnabled = false
+                bindingMbr.itemSortSpinner.isClickable = false
+            } else {
+                // 정렬 스피너 활성화
+                bindingMbr.itemSortSpinner.isEnabled = true
+                bindingMbr.itemSortSpinner.isClickable = true
+                if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!! &&
+                    !viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!!
+                ) {
+                    bindingMbr.screenRefreshLayout.isRefreshing = false
+                }
+            }
+        }
 
         // screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr 헤더 데이터 로딩 중 플래그
         viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.observe(
@@ -943,7 +938,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         )
     }
 
-    // todo
     // ScreenVerticalRecyclerViewAdapter 의 푸터 데이터 갱신
     private fun getScreenVerticalRecyclerViewAdapterFooterDataAsync() {
         // 중복 요청 방지
@@ -984,7 +978,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
 
                             // 기존 푸터 아이템 고유 번호 추출 후 삭제
-                            val itemUid = screenVerticalRecyclerViewAdapterDataListCopy.removeLast().itemUid
+                            val itemUid =
+                                screenVerticalRecyclerViewAdapterDataListCopy.removeLast().itemUid
 
                             // 외부 데이터를 어뎁터용 데이터로 변형
                             val footerData =
@@ -1075,288 +1070,225 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         )
     }
 
-    // todo
     // ScreenVerticalRecyclerViewAdapter 의 아이템 데이터 갱신
-//    private fun getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync() {
-//        // 중복 요청 방지
-//        if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
-//            return
-//        }
-//
-//        // 데이터 로딩 플래그 실행
-//        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-//            true
-//
-//        // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
-//        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-//
-//        // (로더 출력)
-//        // 어뎁터 주입용 데이터 리스트 클론 생성
-//        val screenVerticalRecyclerViewAdapterDataListCopy =
-//            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-//
-//        // 푸터 찾기 = 리스트 가장 뒤에 있다고 가정
-//        var isFooterExist = if (screenVerticalRecyclerViewAdapterDataListCopy.isNotEmpty()) {
-//            screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
-//                    ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
-//        } else {
-//            false
-//        }
-//
-//        // 아이템 마지막 인덱스 위치
-//        var itemLastIdx = if (isFooterExist) {
-//            screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
-//        } else {
-//            screenVerticalRecyclerViewAdapterDataListCopy.size - 1
-//        }
-//
-//        // 로더를 추가하고 화면 갱신
-//        screenVerticalRecyclerViewAdapterDataListCopy.add(
-//            itemLastIdx + 1,
-//            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.ItemLoader.ItemVO(
-//                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
-//            )
-//        )
-//
-//        // 화면 갱신
-//        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-//            screenVerticalRecyclerViewAdapterDataListCopy
-//
-//        // 로더 추가시 스크롤을 내리기
-//        bindingMbr.screenVerticalRecyclerView.smoothScrollToPosition(
-//            adapterSetMbr.screenVerticalRecyclerViewAdapter.currentItemListMbr.lastIndex
-//        )
-//
-//        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
-//
-//        // 리포지토리 데이터 요청
-//        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
-//            viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr,
-//            onComplete = { getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult ->
-//                runOnUiThread {
-//                    // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-//                    object :
-//                        CountDownTimer(
-//                            1500L,
-//                            100L
-//                        ) {
-//                        override fun onTick(millisUntilFinished: Long) {}
-//
-//                        override fun onFinish() { // 네트워크 응답이 왔다고 가정
-//                            // 로더 지우기
-//                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-//                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
-//                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-//                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-//                            )
-//
-//                            // 로더가 존재하면 지우기
-//                            val itemVoLoaderIdx =
-//                                screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
-//                                    it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.ItemLoader.ItemVO
-//                                }
-//
-//                            if (-1 != itemVoLoaderIdx) {
-//                                screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
-//                                    itemVoLoaderIdx
-//                                )
-//                            }
-//
-//                            // 아이템 갱신
-//                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-//                                screenVerticalRecyclerViewAdapterDataListCopy
-//
-//                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
-//
-//                            if (0 != getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.size) {
-//                                // 이번 페이지 데이터 리스트가 비어있지 않다면,
-//                                // 다음 페이지 추가
-//                                viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr++
-//
-//                                // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
-//                                viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-//                                screenVerticalRecyclerViewAdapterDataListCopy.clear()
-//                                screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-//                                    adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-//                                )
-//
-//                                // 푸터 찾기 = 리스트 가장 뒤에 있다고 가정
-//                                isFooterExist =
-//                                    if (screenVerticalRecyclerViewAdapterDataListCopy.isNotEmpty()) {
-//                                        screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
-//                                                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
-//                                    } else {
-//                                        false
-//                                    }
-//
-//                                // 아이템 마지막 인덱스 위치
-//                                itemLastIdx = if (isFooterExist) {
-//                                    screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
-//                                } else {
-//                                    screenVerticalRecyclerViewAdapterDataListCopy.size - 1
-//                                }
-//
-//                                // 외부 데이터를 어뎁터용 데이터로 변형
-//                                val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
-//                                    java.util.ArrayList()
-//
-//                                for (data in getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult) {
-//                                    adapterDataList.add(
-//                                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
-//                                            adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
-//                                            data.uid,
-//                                            data.title,
-//                                            data.content,
-//                                            data.writeDate
-//                                        )
-//                                    )
-//                                }
-//
-//                                screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-//                                    itemLastIdx + 1,
-//                                    adapterDataList
-//                                )
-//
-//                                // 아이템 갱신
-//                                viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-//                                    screenVerticalRecyclerViewAdapterDataListCopy
-//
-//                                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-//                                    false
-//
-//                                viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
-//                            } else {
-//                                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-//                                    false
-//                            }
-//                        }
-//                    }.start()
-//                }
-//            },
-//            onError = { getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult ->
-//                runOnUiThread {
-//                    // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-//                    object :
-//                        CountDownTimer(
-//                            500L,
-//                            100L
-//                        ) {
-//                        override fun onTick(millisUntilFinished: Long) {}
-//
-//                        override fun onFinish() { // 네트워크 응답이 왔다고 가정
-//                            // 로더 지우기
-//                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-//                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
-//                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
-//                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-//                            )
-//
-//                            // 로더가 존재하면 지우기
-//                            val itemVoLoaderIdx =
-//                                screenVerticalRecyclerViewAdapterDataListCopy.indexOfLast {
-//                                    it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.ItemLoader.ItemVO
-//                                }
-//
-//                            if (-1 != itemVoLoaderIdx) {
-//                                screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
-//                                    itemVoLoaderIdx
-//                                )
-//                            }
-//
-//                            // 아이템 갱신
-//                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-//                                screenVerticalRecyclerViewAdapterDataListCopy
-//
-//                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-//                                false
-//
-//                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
-//
-//                            if (getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
-//                                viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
-//                                    DialogConfirm.DialogInfoVO(
-//                                        true,
-//                                        "네트워크 에러",
-//                                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-//                                        "확인",
-//                                        onCheckBtnClicked = {
-//                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
-//                                                null
-//                                        },
-//                                        onCanceled = {
-//                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
-//                                                null
-//                                        }
-//                                    )
-//                            } else { // 그외 에러
-//                                viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
-//                                    DialogConfirm.DialogInfoVO(
-//                                        true,
-//                                        "서버 에러",
-//                                        "현재 서버의 상태가 원활하지 않습니다.\n" +
-//                                                "잠시 후 다시 시도해주세요.\n" +
-//                                                "\n" +
-//                                                "에러 메시지 :\n" +
-//                                                "${getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.message}",
-//                                        "확인",
-//                                        onCheckBtnClicked = {
-//                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
-//                                                null
-//                                        },
-//                                        onCanceled = {
-//                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
-//                                                null
-//
-//                                        }
-//                                    )
-//                            }
-//                        }
-//                    }.start()
-//                }
-//            }
-//        )
-//    }
+    private fun getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync() {
+        // 중복 요청 방지
+        if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
+            return
+        }
 
-    // todo
+        // 데이터 로딩 플래그 실행
+        viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+            true
+
+        // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
+        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+
+        // (로더 출력)
+        // 어뎁터 주입용 데이터 리스트 클론 생성
+        val screenVerticalRecyclerViewAdapterDataListCopy =
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
+        // 아이템 마지막 인덱스 위치
+        var itemLastIdx = screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
+
+        // 로더를 추가하고 화면 갱신
+        screenVerticalRecyclerViewAdapterDataListCopy.add(
+            itemLastIdx + 1,
+            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.ItemLoader.ItemVO(
+                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
+            )
+        )
+
+        // 화면 갱신
+        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+            screenVerticalRecyclerViewAdapterDataListCopy
+
+        // 로더 추가시 스크롤을 내리기
+        bindingMbr.screenVerticalRecyclerView.smoothScrollToPosition(
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.currentItemListMbr.lastIndex
+        )
+
+        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+
+        // 리포지토리 데이터 요청
+        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
+            viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr,
+            onComplete = { getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult ->
+                runOnUiThread {
+                    // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+                    object :
+                        CountDownTimer(
+                            1500L,
+                            100L
+                        ) {
+                        override fun onTick(millisUntilFinished: Long) {}
+
+                        override fun onFinish() { // 네트워크 응답이 왔다고 가정
+                            // 로더 지우기
+                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
+                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
+                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                            )
+
+                            // 푸터 바로 앞의 로더 제거
+                            screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
+                                screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
+                            )
+
+                            // 아이템 갱신
+                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+                                screenVerticalRecyclerViewAdapterDataListCopy
+
+                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+
+                            if (0 != getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.size) {
+                                // 이번 페이지 데이터 리스트가 비어있지 않다면,
+                                // 다음 페이지 추가
+                                viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr++
+
+                                // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
+                                viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+                                screenVerticalRecyclerViewAdapterDataListCopy.clear()
+                                screenVerticalRecyclerViewAdapterDataListCopy.addAll(
+                                    adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                                )
+
+                                // 아이템 마지막 인덱스 위치
+                                itemLastIdx =
+                                    screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
+
+                                // 외부 데이터를 어뎁터용 데이터로 변형
+                                val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+                                    java.util.ArrayList()
+
+                                for (data in getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult) {
+                                    adapterDataList.add(
+                                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
+                                            adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
+                                            data.uid,
+                                            data.title,
+                                            data.content,
+                                            data.writeDate
+                                        )
+                                    )
+                                }
+
+                                screenVerticalRecyclerViewAdapterDataListCopy.addAll(
+                                    itemLastIdx + 1,
+                                    adapterDataList
+                                )
+
+                                // 아이템 갱신
+                                viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+                                    screenVerticalRecyclerViewAdapterDataListCopy
+
+                                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                    false
+
+                                viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+                            } else {
+                                viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                    false
+                            }
+                        }
+                    }.start()
+                }
+            },
+            onError = { getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult ->
+                runOnUiThread {
+                    // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+                    object :
+                        CountDownTimer(
+                            500L,
+                            100L
+                        ) {
+                        override fun onTick(millisUntilFinished: Long) {}
+
+                        override fun onFinish() { // 네트워크 응답이 왔다고 가정
+                            // 로더 지우기
+                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+                            screenVerticalRecyclerViewAdapterDataListCopy.clear()
+                            screenVerticalRecyclerViewAdapterDataListCopy.addAll(
+                                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                            )
+
+                            // 푸터 바로 앞의 로더 제거
+                            screenVerticalRecyclerViewAdapterDataListCopy.removeAt(
+                                screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
+                            )
+
+                            // 아이템 갱신
+                            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+                                screenVerticalRecyclerViewAdapterDataListCopy
+
+                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                false
+
+                            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+
+                            if (getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
+                                viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "네트워크 에러",
+                                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                                        "확인",
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        }
+                                    )
+                            } else { // 그외 에러
+                                viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "서버 에러",
+                                        "현재 서버의 상태가 원활하지 않습니다.\n" +
+                                                "잠시 후 다시 시도해주세요.\n" +
+                                                "\n" +
+                                                "에러 메시지 :\n" +
+                                                "${getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.message}",
+                                        "확인",
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                null
+
+                                        }
+                                    )
+                            }
+                        }
+                    }.start()
+                }
+            }
+        )
+    }
+
     // ScreenVerticalRecyclerViewAdapter 데이터 초기화
-//    private fun clearScreenVerticalRecyclerViewAdapterItemData() {
-//        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-//        // 어뎁터 주입용 데이터 리스트 클론 생성
-//        val screenVerticalRecyclerViewAdapterDataListCopy =
-//            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-//
-//        // 헤더 찾기 = 리스트 가장 앞에 있다고 가정
-//        val isHeaderExist = if (screenVerticalRecyclerViewAdapterDataListCopy.isNotEmpty()) {
-//            screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull() is
-//                    ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO
-//        } else {
-//            false
-//        }
-//
-//        // 푸터 찾기 = 리스트 가장 뒤에 있다고 가정
-//        val isFooterExist = if (screenVerticalRecyclerViewAdapterDataListCopy.isNotEmpty()) {
-//            screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull() is
-//                    ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO
-//        } else {
-//            false
-//        }
-//
-//        val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
-//            java.util.ArrayList()
-//
-//        if (isHeaderExist) {
-//            // 헤더가 존재하면 헤더 데이터를 먼저 추가
-//            adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull()!!)
-//        }
-//
-//        if (isFooterExist) {
-//            // 푸터가 존재하면 푸터 데이터를 마지막에 추가
-//            adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull()!!)
-//        }
-//
-//        // 화면 전환
-//        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-//            adapterDataList
-//        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
-//    }
+    private fun clearScreenVerticalRecyclerViewAdapterItemData() {
+        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
+        // 어뎁터 주입용 데이터 리스트 클론 생성
+        val screenVerticalRecyclerViewAdapterDataListCopy =
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
+
+        val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+            java.util.ArrayList()
+
+        adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull()!!)
+        adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull()!!)
+
+        // 화면 전환
+        viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
+            adapterDataList
+        viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
+    }
 }
