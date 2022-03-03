@@ -151,7 +151,6 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                         binding.contentLoader.visibility = View.INVISIBLE
                     }
 
-                    // todo : 로더 및 null 처리
                     binding.content.text = entity.content
                 }
 
@@ -167,7 +166,6 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                         binding.contentLoader.visibility = View.INVISIBLE
                     }
 
-                    // todo : 로더 및 null 처리
                     binding.content.text = entity.content
                 }
 
