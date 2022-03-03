@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- TODO -->
+    <!--    <item android:drawable="@drawable/img_selector_activity_main_bottom_navigation_pets_btn_paw_icon_un_fill_grey" android:state_checked="false" />-->
+    <!--    <item android:drawable="@drawable/img_selector_activity_main_bottom_navigation_pets_btn_paw_icon_fill_blue" android:state_checked="true" />-->
+</selector>
