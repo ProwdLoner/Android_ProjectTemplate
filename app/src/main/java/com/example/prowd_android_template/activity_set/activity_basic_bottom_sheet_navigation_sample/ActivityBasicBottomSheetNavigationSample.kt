@@ -16,7 +16,7 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityBasicBottomSheetNavigationSampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityBasicBottomSheetNavigationSampleViewModel
+    lateinit var viewModelMbr: ActivityBasicBottomSheetNavigationSampleViewModel
 
     // (어뎁터 객체)
     private lateinit var adapterSetMbr: ActivityBasicBottomSheetNavigationSampleAdapterSet
@@ -150,12 +150,16 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
         // 플래그먼트는 화면 회전시 초기화 수준이 아니라 다시 생성
         // 부모 뷰 모델에 화면 정보를 저장하고, 동작 플래그도 저장하여 반영
-        // todo
+
+        // 플래그먼트 생성 (화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것)
+        val fragment1 = ActivityBasicBottomSheetNavigationSampleFragmentFragment1()
+        val fragment2 = ActivityBasicBottomSheetNavigationSampleFragmentFragment2()
+        val fragment3 = ActivityBasicBottomSheetNavigationSampleFragmentFragment3()
         adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
             listOf(
-//                fragmentPetsMbr,
-//                fragmentDogNoseGalleryMbr,
-//                fragmentFavoritesMbr
+                fragment1,
+                fragment2,
+                fragment3
             )
         )
 
