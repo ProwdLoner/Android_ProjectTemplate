@@ -1,20 +1,13 @@
 package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment
 
-import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSampleAdapterSet
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSampleViewModel
-import com.example.prowd_android_template.custom_view.DialogConfirm
-import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
 
 class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
@@ -26,6 +19,9 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     private lateinit var parentActivity: ActivityBasicBottomSheetNavigationSample
     private lateinit var parentViewModel: ActivityBasicBottomSheetNavigationSampleViewModel
 
+
+    // ---------------------------------------------------------------------------------------------
+    // <클래스 생명주기 공간>
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -39,7 +35,6 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
         parentViewModel = parentActivity.viewModelMbr
 
         // (초기 객체 생성)
-        // todo
         createMemberObjects()
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
