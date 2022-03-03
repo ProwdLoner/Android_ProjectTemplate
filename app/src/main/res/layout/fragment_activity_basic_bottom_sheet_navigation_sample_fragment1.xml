@@ -3,12 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSampleFragmentFragment1">
+    tools:context=".activity_set.activity_basic_bottom_sheet_navigation_sample.fragment.FragmentActivityBasicBottomSheetNavigationSampleFragment1">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:text="1" />
 
 </FrameLayout>

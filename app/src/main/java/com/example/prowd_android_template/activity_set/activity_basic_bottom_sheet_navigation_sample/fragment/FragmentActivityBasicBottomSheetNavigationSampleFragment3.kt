@@ -1,14 +1,15 @@
-package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample
+package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
 import com.example.prowd_android_template.R
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSampleViewModel
 
-class ActivityBasicBottomSheetNavigationSampleFragmentFragment1 : Fragment() {
+class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     private lateinit var parentActivity: ActivityBasicBottomSheetNavigationSample
     private lateinit var parentViewModel: ActivityBasicBottomSheetNavigationSampleViewModel
 
@@ -21,7 +22,7 @@ class ActivityBasicBottomSheetNavigationSampleFragmentFragment1 : Fragment() {
         parentViewModel = parentActivity.viewModelMbr
 
         return inflater.inflate(
-            R.layout.fragment_activity_basic_bottom_sheet_navigation_sample_fragment1,
+            R.layout.fragment_activity_basic_bottom_sheet_navigation_sample_fragment3,
             container,
             false
         )
