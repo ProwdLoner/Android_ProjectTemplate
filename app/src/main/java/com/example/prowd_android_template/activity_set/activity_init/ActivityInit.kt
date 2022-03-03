@@ -50,11 +50,11 @@ class ActivityInit : AppCompatActivity() {
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
 
-        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
-        setLiveData()
-
         // (초기 뷰 설정)
         viewSetting()
+
+        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
+        setLiveData()
     }
 
     override fun onResume() {
