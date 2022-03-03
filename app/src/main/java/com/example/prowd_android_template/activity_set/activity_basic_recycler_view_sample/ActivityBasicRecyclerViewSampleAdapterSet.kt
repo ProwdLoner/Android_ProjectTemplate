@@ -1,6 +1,5 @@
 package com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample
 
-import android.app.Activity
 import android.graphics.Rect
 import android.view.LayoutInflater
 import android.view.TouchDelegate
@@ -8,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
@@ -20,7 +20,7 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 ) {
     // 어뎁터 #1
     class ScreenVerticalRecyclerViewAdapter(
-        private val parentViewMbr: Activity,
+        private val parentViewMbr: AppCompatActivity,
         private val parentViewModel: ActivityBasicRecyclerViewSampleViewModel,
         targetView: RecyclerView,
         isVertical: Boolean,

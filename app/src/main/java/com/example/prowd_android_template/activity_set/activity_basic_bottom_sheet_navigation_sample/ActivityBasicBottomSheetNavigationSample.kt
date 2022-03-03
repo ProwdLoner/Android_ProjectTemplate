@@ -3,6 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_basic_bottom_sh
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.MenuItem
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -16,6 +17,9 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     // (뷰 모델 객체)
     private lateinit var viewModelMbr: ActivityBasicBottomSheetNavigationSampleViewModel
+
+    // (어뎁터 객체)
+    private lateinit var adapterSetMbr: ActivityBasicBottomSheetNavigationSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -109,6 +113,12 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         viewModelMbr =
             ViewModelProvider(this)[ActivityBasicBottomSheetNavigationSampleViewModel::class.java]
 
+        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
+        adapterSetMbr = ActivityBasicBottomSheetNavigationSampleAdapterSet(
+            ActivityBasicBottomSheetNavigationSampleAdapterSet.ScreenViewPagerFragmentStateAdapter(
+                this
+            )
+        )
     }
 
     // viewModel 저장용 데이터 초기화
@@ -132,6 +142,41 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        // 프레그먼트 컨테이너 조작 금지
+        bindingMbr.screenViewPager.isUserInputEnabled = false
+
+        // 프레그먼트 어뎁터 연결
+        bindingMbr.screenViewPager.adapter = adapterSetMbr.screenViewPagerFragmentStateAdapter
+
+        // 플래그먼트는 화면 회전시 초기화 수준이 아니라 다시 생성
+        // 부모 뷰 모델에 화면 정보를 저장하고, 동작 플래그도 저장하여 반영
+        // todo
+        adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
+            listOf(
+//                fragmentPetsMbr,
+//                fragmentDogNoseGalleryMbr,
+//                fragmentFavoritesMbr
+            )
+        )
+
+        // bottom navigator 버튼에 따라 화면 프레그먼트 변경 리스너
+        bindingMbr.bottomNav.setOnItemSelectedListener { item: MenuItem ->
+            when (item.itemId) {
+                R.id.fragment1 -> {
+                    bindingMbr.screenViewPager.currentItem = 0
+                    return@setOnItemSelectedListener true
+                }
+                R.id.fragment2 -> {
+                    bindingMbr.screenViewPager.currentItem = 1
+                    return@setOnItemSelectedListener true
+                }
+                R.id.fragment3 -> {
+                    bindingMbr.screenViewPager.currentItem = 2
+                    return@setOnItemSelectedListener true
+                }
+            }
+            false
+        }
 
 
     }
