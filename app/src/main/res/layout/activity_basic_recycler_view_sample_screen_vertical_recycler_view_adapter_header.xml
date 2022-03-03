@@ -9,9 +9,9 @@
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/apple_sd_gothic_neo_sb"
         android:layout_marginStart="20dp"
         android:layout_marginBottom="10dp"
+        android:fontFamily="@font/apple_sd_gothic_neo_sb"
         android:text="헤더 아이템"
         android:textColor="#FF000000"
         android:textSize="16sp"
@@ -22,12 +22,31 @@
         android:id="@+id/content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="5dp"
         android:fontFamily="@font/apple_sd_gothic_neo_r"
-        android:layout_marginStart="20dp"
         android:text=""
         android:textColor="#FF000000"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title" />
+
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/content_loader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@id/content"
+        app:layout_constraintStart_toStartOf="@id/content"
+        app:layout_constraintTop_toTopOf="@id/content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E6E6E6"
+            android:fontFamily="@font/apple_sd_gothic_neo_r"
+            android:text="로딩중로딩중로딩중"
+            android:textColor="#E6E6E6" />
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

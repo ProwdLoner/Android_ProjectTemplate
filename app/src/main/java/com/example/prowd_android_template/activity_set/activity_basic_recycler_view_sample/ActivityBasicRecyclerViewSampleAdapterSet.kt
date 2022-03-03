@@ -34,6 +34,18 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
         // <멤버 변수 공간>
         var blinkIdx: Int? = null
 
+        var isHeaderLoading = false
+            set(value) {
+                notifyItemChanged(0)
+                field = value
+            }
+
+        var isFooterLoading = false
+            set(value) {
+                notifyItemChanged(currentItemListMbr.lastIndex)
+                field = value
+            }
+
 
         // ---------------------------------------------------------------------------------------------
         // <메소드 오버라이딩 공간>
@@ -131,6 +143,15 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     val binding = holder.binding
                     val entity = currentItemListMbr[position] as Header.ItemVO
 
+                    if (isHeaderLoading) {
+                        binding.content.visibility = View.INVISIBLE
+                        binding.contentLoader.visibility = View.VISIBLE
+                    } else {
+                        binding.content.visibility = View.VISIBLE
+                        binding.contentLoader.visibility = View.INVISIBLE
+                    }
+
+                    // todo : 로더 및 null 처리
                     binding.content.text = entity.content
                 }
 
@@ -138,6 +159,15 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
                     val binding = holder.binding
                     val entity = currentItemListMbr[position] as Footer.ItemVO
 
+                    if (isFooterLoading) {
+                        binding.content.visibility = View.INVISIBLE
+                        binding.contentLoader.visibility = View.VISIBLE
+                    } else {
+                        binding.content.visibility = View.VISIBLE
+                        binding.contentLoader.visibility = View.INVISIBLE
+                    }
+
+                    // todo : 로더 및 null 처리
                     binding.content.text = entity.content
                 }
 
@@ -354,8 +384,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long,
-                val contentUid: Long,
-                val content: String
+                val contentUid: Long?,
+                val content: String?
             ) : AdapterItemAbstractVO(itemUid)
         }
 
@@ -370,8 +400,8 @@ class ActivityBasicRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long,
-                val contentUid: Long,
-                val content: String
+                val contentUid: Long?,
+                val content: String?
             ) : AdapterItemAbstractVO(itemUid)
         }
 
