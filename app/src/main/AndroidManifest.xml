@@ -10,6 +10,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_view_pager_sample.ActivityViewPagerSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_basic_retrofit2_sample.ActivityBasicRetrofit2Sample"
             android:exported="false" />
         <activity
