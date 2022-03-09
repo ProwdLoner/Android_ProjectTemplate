@@ -3,7 +3,7 @@ package com.example.prowd_android_template.globalVariableConnector
 import android.app.Application
 import android.content.Context
 
-// 글로벌 메모리로 사용할 SharedPref 래퍼 클래스
+// 글로벌 변수로 사용할 SharedPref 래퍼 클래스
 class GvcLoginInfo(application: Application) {
     // <멤버 변수 공간>
     // SharedPreference 파일명
