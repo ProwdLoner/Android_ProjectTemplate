@@ -98,6 +98,7 @@ class ActivityInit : AppCompatActivity() {
 
     override fun onPause() {
         if (!viewModelMbr.delayGoToNextActivityAsyncCompletedOnceMbr) { // 화면 대기가 끝나지 않았을 때
+            // 다른 화면으로 이동하면 화면 대기 시간이 흐르지 않음
             delayCountDownTimerMbr.cancel()
         }
 
