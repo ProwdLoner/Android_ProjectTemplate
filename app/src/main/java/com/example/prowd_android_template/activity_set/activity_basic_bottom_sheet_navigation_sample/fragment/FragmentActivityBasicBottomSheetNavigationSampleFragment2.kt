@@ -55,11 +55,8 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
         if (!parentViewModel.isChangingConfigurationsMbr && // 화면 회전이 아니면서,
             isVisible // 현재 보이는 상황일 때
         ) {
-            val sessionToken =
-                parentViewModel.loginPrefMbr.getString(
-                    getString(R.string.pref_login),
-                    null
-                )
+            val loginInfo = parentViewModel.gvcLoginInfoMbr.getData()
+            val sessionToken =loginInfo.sessionToken
 
             if (parentViewModel.isFragment2DataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != parentViewModel.fragment2CurrentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
@@ -89,13 +86,10 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!parentViewModel.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
+            val loginInfo = parentViewModel.gvcLoginInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            parentViewModel.fragment2CurrentUserSessionTokenMbr =
-                parentViewModel.loginPrefMbr.getString(
-                    getString(R.string.pref_login_session_token_string),
-                    null
-                )
+            parentViewModel.fragment2CurrentUserSessionTokenMbr =loginInfo.sessionToken
         }
     }
 

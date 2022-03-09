@@ -1,17 +1,16 @@
 package com.example.prowd_android_template.activity_set.activity_init
 
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_home.ActivityHome
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.databinding.ActivityInitBinding
+import com.example.prowd_android_template.globalVariableConnector.GvcLoginInfo
 import java.net.SocketTimeoutException
 
 class ActivityInit : AppCompatActivity() {
@@ -208,26 +207,11 @@ class ActivityInit : AppCompatActivity() {
                             if (!viewModelMbr.checkLoginSessionAsyncOnProgressedMbr) {
                                 // 메소드 실행중이 아닐 때,
 
-                                val loginPref = this@ActivityInit.getSharedPreferences(
-                                    getString(R.string.pref_login),
-                                    Context.MODE_PRIVATE
-                                )
+                                val loginInfo = viewModelMbr.gvcLoginInfoMbr.getData()
 
-                                val loginType: Int =
-                                    loginPref.getInt(
-                                        getString(R.string.pref_login_login_type_int),
-                                        0
-                                    )
-                                val serverId: String? =
-                                    loginPref.getString(
-                                        getString(R.string.pref_login_user_server_id_string),
-                                        null
-                                    )
-                                val serverPw: String? =
-                                    loginPref.getString(
-                                        getString(R.string.pref_login_user_server_pw_string),
-                                        null
-                                    )
+                                val loginType: Int = loginInfo.loginType
+                                val serverId: String? = loginInfo.userServerId
+                                val serverPw: String? = loginInfo.userServerPw
 
                                 viewModelMbr.checkLoginSessionAsync(
                                     ActivityInitViewModel.CheckLoginSessionParameterVO(
@@ -238,30 +222,15 @@ class ActivityInit : AppCompatActivity() {
                                     onComplete = { checkLoginSessionResult ->
                                         runOnUiThread checkLoginSessionAsyncComplete@{
                                             // 검증 후 결과를 sharedPreferences 에 대입
-                                            with(loginPref.edit()) {
-                                                putString(
-                                                    getString(R.string.pref_login_session_token_string),
-                                                    checkLoginSessionResult.sessionToken
-                                                )
-                                                putString(
-                                                    getString(R.string.pref_login_user_nick_name_string),
-                                                    checkLoginSessionResult.userNickName
-                                                )
-                                                putInt(
-                                                    getString(R.string.pref_login_login_type_int),
-                                                    checkLoginSessionResult.loginType
-                                                )
-                                                putString(
-                                                    getString(R.string.pref_login_user_server_id_string),
-                                                    checkLoginSessionResult.userServerId
-                                                )
-                                                putString(
-                                                    getString(R.string.pref_login_user_server_pw_string),
+                                            viewModelMbr.gvcLoginInfoMbr.setData(
+                                                GvcLoginInfo.LoginInfo(
+                                                    checkLoginSessionResult.sessionToken,
+                                                    checkLoginSessionResult.userNickName,
+                                                    checkLoginSessionResult.loginType,
+                                                    checkLoginSessionResult.userServerId,
                                                     checkLoginSessionResult.userServerPw
                                                 )
-
-                                                apply()
-                                            }
+                                            )
 
                                             // 다음 엑티비티로 이동
                                             goToNextActivity()

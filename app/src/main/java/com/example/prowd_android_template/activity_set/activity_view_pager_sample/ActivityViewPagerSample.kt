@@ -1,14 +1,11 @@
 package com.example.prowd_android_template.activity_set.activity_view_pager_sample
 
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
 import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample
-import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSampleViewModel
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityViewPagerSampleBinding
@@ -19,7 +16,7 @@ class ActivityViewPagerSample : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityViewPagerSampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityRecyclerViewSampleViewModel
+    private lateinit var viewModelMbr: ActivityViewPagerSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -58,12 +55,9 @@ class ActivityViewPagerSample : AppCompatActivity() {
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
+            val loginInfo = viewModelMbr.gvcLoginInfoMbr.getData()
 
-            val sessionToken =
-                viewModelMbr.loginPrefMbr.getString(
-                    getString(R.string.pref_login),
-                    null
-                )
+            val sessionToken = loginInfo.sessionToken
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
@@ -110,26 +104,17 @@ class ActivityViewPagerSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityRecyclerViewSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityViewPagerSampleViewModel::class.java]
 
     }
 
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-            // 로그인 데이터 객체 생성
-            viewModelMbr.loginPrefMbr = this.getSharedPreferences(
-                getString(R.string.pref_login),
-                Context.MODE_PRIVATE
-            )
+            val loginInfo = viewModelMbr.gvcLoginInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr =
-                viewModelMbr.loginPrefMbr.getString(
-                    getString(R.string.pref_login_session_token_string),
-                    null
-                )
+            viewModelMbr.currentUserSessionTokenMbr = loginInfo.sessionToken
         }
     }
 
