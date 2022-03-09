@@ -1,6 +1,5 @@
 package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample
 
-import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
@@ -61,7 +60,7 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val loginInfo = viewModelMbr.gvcLoginInfoMbr.getData()
+            val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
             val sessionToken =loginInfo.sessionToken
 
@@ -124,7 +123,7 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-            val loginInfo = viewModelMbr.gvcLoginInfoMbr.getData()
+            val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
             viewModelMbr.currentUserSessionTokenMbr =loginInfo.sessionToken

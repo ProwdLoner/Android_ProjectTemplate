@@ -1,6 +1,5 @@
 package com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample
 
-import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -9,7 +8,6 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -76,7 +74,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val loginInfo = viewModelMbr.gvcLoginInfoMbr.getData()
+            val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
             val sessionToken =loginInfo.sessionToken
 
@@ -174,7 +172,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-            val loginInfo = viewModelMbr.gvcLoginInfoMbr.getData()
+            val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
             viewModelMbr.currentUserSessionTokenMbr =loginInfo.sessionToken
