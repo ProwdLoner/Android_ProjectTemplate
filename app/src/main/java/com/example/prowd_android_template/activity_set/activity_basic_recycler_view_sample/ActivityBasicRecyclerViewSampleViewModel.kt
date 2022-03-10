@@ -31,7 +31,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    var gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -65,41 +65,41 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var isItemShuffledMbr = false
 
     // ScreenVerticalRecyclerViewAdapter 아이템 접근 세마포어
-    var screenVerticalRecyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
+    val screenVerticalRecyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
 
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
     // 네트워크 에러 다이얼로그 출력 정보
-    var networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
+    val networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
         MutableLiveData(null)
 
     // 서버 에러 다이얼로그 출력 정보
-    var serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
+    val serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
         MutableLiveData(null)
 
     // 로딩 다이얼로그 출력 정보
-    var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
+    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
         MutableLiveData(null)
 
     // ScreenVerticalRecyclerViewAdapter 아이템 데이터 변경 진행 상태 플래그
-    var changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
+    val changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
 
     // ScreenVerticalRecyclerViewAdapter 헤더 데이터 변경 진행 상태 플래그
-    var changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
+    val changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
 
     // ScreenVerticalRecyclerViewAdapter 푸터 데이터 변경 진행 상태 플래그
-    var changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
+    val changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
 
     // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
-    var screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
+    val screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
         MutableLiveData(ArrayList())
 
     // ScreenVerticalRecyclerViewAdapter 아이템 데이터 삭제 요청 (요청이 들어오면 삭제 확인 다이얼로그를 표시)
-    var screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr: MutableLiveData<Long?> =
+    val screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr: MutableLiveData<Long?> =
         MutableLiveData(null)
 
 

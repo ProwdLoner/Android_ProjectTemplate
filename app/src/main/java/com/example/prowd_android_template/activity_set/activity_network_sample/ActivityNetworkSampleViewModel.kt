@@ -21,7 +21,7 @@ class ActivityNetworkSampleViewModel(application: Application) : AndroidViewMode
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    var gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -38,15 +38,15 @@ class ActivityNetworkSampleViewModel(application: Application) : AndroidViewMode
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
     // 네트워크 에러 다이얼로그 출력 정보
-    var networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
+    val networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
         MutableLiveData(null)
 
     // 서버 에러 다이얼로그 출력 정보
-    var serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
+    val serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
         MutableLiveData(null)
 
     // 로딩 다이얼로그 출력 정보
-    var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
+    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
         MutableLiveData(null)
 
 

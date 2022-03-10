@@ -22,7 +22,7 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    var gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
 
     // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
@@ -38,15 +38,15 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
     // 로딩 다이얼로그 출력 정보
-    var progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
+    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
         MutableLiveData(null)
 
     // 선택 다이얼로그 출력 정보
-    var binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+    val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
         MutableLiveData(null)
 
     // 확인 다이얼로그 출력 정보
-    var confirmDialogInfoLiveDataMb: MutableLiveData<DialogConfirm.DialogInfoVO?> =
+    val confirmDialogInfoLiveDataMb: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
 
