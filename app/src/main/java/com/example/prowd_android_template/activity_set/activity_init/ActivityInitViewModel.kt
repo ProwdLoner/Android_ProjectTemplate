@@ -21,12 +21,12 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    var gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
 
     // (데이터)
     // 대기시간 (밀리초)
     var countDownRestMilliSecMbr = 1000L
-    var countDownIntervalMbr = 1L
+    val countDownIntervalMbr = 1L
 
     // (플래그 데이터)
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
@@ -38,23 +38,26 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     // 앱 기본 대기 시간이 끝났을 때
     var delayGoToNextActivityAsyncCompletedOnceMbr = false
 
+    // (뷰 세마포어)
+    val goToNextActivitySemaphoreMbr = Semaphore(1)
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
     // 네트워크 에러 다이얼로그 출력 정보
-    var networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+    val networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
         MutableLiveData(null)
 
     // 서버 에러 다이얼로그 출력 정보
-    var serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+    val serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
         MutableLiveData(null)
 
     // 업데이트 다이얼로그 출력 정보
-    var versionUpdateDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+    val versionUpdateDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
         MutableLiveData(null)
 
     // 카운트 다운 숫자 데이터
-    var countDownNumberLiveDataMbr: MutableLiveData<Int> =
+    val countDownNumberLiveDataMbr: MutableLiveData<Int> =
         MutableLiveData((countDownRestMilliSecMbr.toFloat() / 1000f).toInt())
 
 

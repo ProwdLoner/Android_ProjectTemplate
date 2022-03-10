@@ -368,6 +368,7 @@ class ActivityInit : AppCompatActivity() {
     }
 
     private fun goToNextActivity() {
+        viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
         if (viewModelMbr.delayGoToNextActivityAsyncCompletedOnceMbr && // 앱 대기 시간이 끝났을 때
             viewModelMbr.checkAppVersionAsyncCompletedOnceMbr && // 앱 버전 검증이 끝났을 때
             viewModelMbr.checkLoginSessionAsyncCompletedOnceMbr // 로그인 검증이 끝났을 때
@@ -380,6 +381,7 @@ class ActivityInit : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+        viewModelMbr.goToNextActivitySemaphoreMbr.release()
     }
 
     // 라이브 데이터 설정
