@@ -3,6 +3,9 @@ package com.example.prowd_android_template.activity_set.activity_basic_bottom_sh
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1.FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment2.FragmentActivityBasicBottomSheetNavigationSampleFragment2VmData
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment3.FragmentActivityBasicBottomSheetNavigationSampleFragment3VmData
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.globalVariableConnector.GvcCurrentLoginSessionInfo
@@ -35,28 +38,15 @@ class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
-    // [Fragment1 데이터]
-    // 데이터 수집 등, 첫번째에만 발동
-    var isFragment1DataFirstLoadingMbr = true
+    // (Fragment 화면 데이터)
+    // Fragment1
+    var fragment1Data = FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData()
 
-    // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
-    var fragment1CurrentUserSessionTokenMbr: String? = null
+    // Fragment2
+    var fragment2Data = FragmentActivityBasicBottomSheetNavigationSampleFragment2VmData()
 
-
-    // [Fragment2 데이터]
-    // 데이터 수집 등, 첫번째에만 발동
-    var isFragment2DataFirstLoadingMbr = true
-
-    // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
-    var fragment2CurrentUserSessionTokenMbr: String? = null
-
-
-    // [Fragment3 데이터]
-    // 데이터 수집 등, 첫번째에만 발동
-    var isFragment3DataFirstLoadingMbr = true
-
-    // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
-    var fragment3CurrentUserSessionTokenMbr: String? = null
+    // Fragment3
+    var fragment3Data = FragmentActivityBasicBottomSheetNavigationSampleFragment3VmData()
 
 
     // ---------------------------------------------------------------------------------------------

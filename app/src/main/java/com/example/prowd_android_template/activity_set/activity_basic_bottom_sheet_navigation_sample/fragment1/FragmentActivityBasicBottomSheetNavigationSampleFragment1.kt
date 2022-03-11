@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment
+package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -7,12 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSampleViewModel
-import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
+import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
 
-class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
+class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
+    private lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
 
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
     private lateinit var parentActivity: ActivityBasicBottomSheetNavigationSample
@@ -27,7 +27,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     ): View {
         // (뷰 바인딩)
         bindingMbr =
-            FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding.inflate(layoutInflater)
+            FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding.inflate(layoutInflater)
 
         // (부모 객체 저장)
         parentActivity = requireActivity() as ActivityBasicBottomSheetNavigationSample
@@ -57,12 +57,12 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
             val loginInfo = parentViewModel.gvcCurrentLoginSessionInfoMbr.getData()
             val sessionToken =loginInfo.sessionToken
 
-            if (parentViewModel.isFragment3DataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-                sessionToken != parentViewModel.fragment3CurrentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
+            if (parentViewModel.fragment1Data.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
+                sessionToken != parentViewModel.fragment1Data.fragment1CurrentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
             ) {
                 // 진입 플래그 변경
-                parentViewModel.isFragment3DataFirstLoadingMbr = false
-                parentViewModel.fragment3CurrentUserSessionTokenMbr = sessionToken
+                parentViewModel.fragment1Data.isDataFirstLoadingMbr = false
+                parentViewModel.fragment1Data.fragment1CurrentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
             }
@@ -88,7 +88,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
             val loginInfo = parentViewModel.gvcCurrentLoginSessionInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            parentViewModel.fragment3CurrentUserSessionTokenMbr =loginInfo.sessionToken
+            parentViewModel.fragment1Data.fragment1CurrentUserSessionTokenMbr =loginInfo.sessionToken
         }
     }
 
