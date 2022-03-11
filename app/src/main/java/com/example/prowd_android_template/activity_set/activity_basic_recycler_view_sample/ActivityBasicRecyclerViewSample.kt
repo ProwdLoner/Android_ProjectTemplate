@@ -24,6 +24,7 @@ import kotlin.collections.ArrayList
 // todo : 아이템 업데이트
 // todo : add data 엑티비티에서 작성하여 결과를 받아오는 형식으로 변경
 // todo : 클릭해서 이동하기, 해당 액티비티 활동에 따른 반응
+// todo : 딜레이 타이머를 뷰모델로 이동
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -77,7 +78,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
             val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
-            val sessionToken =loginInfo.sessionToken
+            val sessionToken = loginInfo.sessionToken
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
@@ -174,7 +175,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr =loginInfo.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr = loginInfo.sessionToken
         }
     }
 
@@ -448,10 +449,20 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 // 정렬 스피너 비활성화
                 bindingMbr.itemSortSpinner.isEnabled = false
                 bindingMbr.itemSortSpinner.isClickable = false
+
+                // 아이템 추가 버튼 비활성화
+                bindingMbr.addItemBtn.isEnabled = false
+                bindingMbr.addItemBtn.isClickable = false
             } else {
                 // 정렬 스피너 활성화
                 bindingMbr.itemSortSpinner.isEnabled = true
                 bindingMbr.itemSortSpinner.isClickable = true
+
+                // 아이템 추가 버튼 활성화
+                bindingMbr.addItemBtn.isEnabled = true
+                bindingMbr.addItemBtn.isClickable = true
+
+                // 아래 조건이 모두 충족되면 리플래시 로더 제거
                 if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!! &&
                     !viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!!
                 ) {
@@ -467,6 +478,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             if (it) { // 데이터 로딩중에는,
 
             } else {
+                // 아래 조건이 모두 충족되면 리플래시 로더 제거
                 if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!! &&
                     !viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!
                 ) {
@@ -482,6 +494,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             if (it) { // 데이터 로딩중에는,
 
             } else {
+                // 아래 조건이 모두 충족되면 리플래시 로더 제거
                 if (!viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!! &&
                     !viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!
                 ) {
@@ -651,18 +664,22 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                 })
                         },
                         onNegBtnClicked = {
-                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                                false
+                            // 아이템 제거 요청 해제
                             viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
                                 null
+                            // 아이템 데이터 접근 플래그 해제
+                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                false
                             itemDeleteConfirmDialogMbr?.dismiss()
                             itemDeleteConfirmDialogMbr = null
                         },
                         onCanceled = {
-                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                                false
+                            // 아이템 제거 요청 해제
                             viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
                                 null
+                            // 아이템 데이터 접근 플래그 해제
+                            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                                false
                             itemDeleteConfirmDialogMbr?.dismiss()
                             itemDeleteConfirmDialogMbr = null
                         }
