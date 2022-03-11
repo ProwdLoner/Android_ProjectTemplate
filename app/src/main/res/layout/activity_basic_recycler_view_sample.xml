@@ -50,21 +50,8 @@
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
                 android:text="add\nItem"
                 android:textSize="11sp"
-                app:layout_constraintEnd_toStartOf="@id/item_shuffle_btn"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/activity_title" />
-
-            <Button
-                android:id="@+id/item_shuffle_btn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:layout_marginEnd="5dp"
-                android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="Item\nshuffle"
-                android:textSize="11sp"
                 app:layout_constraintEnd_toStartOf="@id/go_to_top_btn"
-                app:layout_constraintStart_toEndOf="@id/add_item_btn"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/activity_title" />
 
             <Button
@@ -77,7 +64,7 @@
                 android:text="go to\ntop"
                 android:textSize="11sp"
                 app:layout_constraintEnd_toStartOf="@id/go_to_bottom_btn"
-                app:layout_constraintStart_toEndOf="@id/item_shuffle_btn"
+                app:layout_constraintStart_toEndOf="@id/add_item_btn"
                 app:layout_constraintTop_toBottomOf="@id/activity_title" />
 
             <Button

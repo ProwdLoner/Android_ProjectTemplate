@@ -103,7 +103,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
                 // 데이터 로딩 상태 초기화
                 clearScreenVerticalRecyclerViewAdapterItemData()
-                viewModelMbr.isItemShuffledMbr = false
 
                 // 리스트 페이지 초기화
                 viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
@@ -166,7 +165,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
                 }
             ))
-
     }
 
     // viewModel 저장용 데이터 초기화
@@ -188,6 +186,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
         // 화면 리플레시
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
+            // 아직 데이터 로딩중이라면 리플레시 버튼 제거
             if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value!! ||
                 viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value!! ||
                 viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!
@@ -198,7 +197,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             // 데이터 프로세스 설정 초기화
             clearScreenVerticalRecyclerViewAdapterItemData() // 아이템 리스트 비우기
-            viewModelMbr.isItemShuffledMbr = false  // 정렬 상태
             viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1 // 페이지 1
 
             // 헤더 데이터 초기화
@@ -209,59 +207,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             // 1 페이지 다시 가져오기
             getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
-        }
-
-        // 아이템 셔플 테스트
-        bindingMbr.itemShuffleBtn.setOnClickListener {
-            if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
-                return@setOnClickListener
-            }
-
-            // 아이템 데이터 로딩 플래그 실행
-            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                true
-
-            // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
-            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-
-            // 어뎁터 주입용 데이터 리스트 클론 생성
-            val screenVerticalRecyclerViewAdapterDataListCopy =
-                adapterSetMbr.screenVerticalRecyclerViewAdapter.getCurrentItemDeepCopyReplica()
-
-            // 아이템 첫번째 인덱스 위치
-            val itemFirstIdx = 1
-
-            // 아이템 마지막 인덱스 위치
-            val itemLastIdx =
-                screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
-
-            // 아이템 리스트 분리
-            val itemDataList =
-                screenVerticalRecyclerViewAdapterDataListCopy.slice(itemFirstIdx..itemLastIdx)
-            // 아이템 셔플
-            val sortedItemDataList = itemDataList.shuffled()
-
-            val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
-                java.util.ArrayList()
-
-            adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy.firstOrNull()!!)
-
-            adapterDataList.addAll(sortedItemDataList)
-
-            adapterDataList.add(screenVerticalRecyclerViewAdapterDataListCopy.lastOrNull()!!)
-
-            // 화면 갱신
-            viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
-                adapterDataList
-
-            // 아이템 비정렬 상태
-            viewModelMbr.isItemShuffledMbr = true
-
-            // 아이템 데이터 로딩 플래그 종료
-            viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
-                false
-
-            viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
         }
 
         // 위로 이동 버튼
@@ -326,53 +271,51 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             val itemDataList =
                 ArrayList(screenVerticalRecyclerViewAdapterDataListCopy.slice(itemFirstIdx..itemLastIdx + 1))
 
-            if (!viewModelMbr.isItemShuffledMbr) { // 셔플 상태가 아니면 == 정렬 상태라면,
-                // item 을 기준에 따라 정렬
+            // item 을 기준에 따라 정렬
 
-                // 기준에 따른 정렬
-                when (viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
-                    0 -> {
-                        itemDataList.sortWith(compareBy {
-                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
-                        })
-                    }
-                    1 -> {
-                        itemDataList.sortWith(compareByDescending {
-                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
-                        })
-                    }
-                    2 -> {
-                        itemDataList.sortWith(compareBy {
-                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
-                        })
-                    }
-                    3 -> {
-                        itemDataList.sortWith(compareByDescending {
-                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
-                        })
-                    }
-                    4 -> {
-                        // 콘텐츠 내림차순 정렬
-                        itemDataList.sortWith(compareBy {
-                            val transFormat =
-                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                            val date: Date =
-                                transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
+            // 기준에 따른 정렬
+            when (viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
+                0 -> {
+                    itemDataList.sortWith(compareBy {
+                        (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
+                    })
+                }
+                1 -> {
+                    itemDataList.sortWith(compareByDescending {
+                        (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
+                    })
+                }
+                2 -> {
+                    itemDataList.sortWith(compareBy {
+                        (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
+                    })
+                }
+                3 -> {
+                    itemDataList.sortWith(compareByDescending {
+                        (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
+                    })
+                }
+                4 -> {
+                    // 콘텐츠 내림차순 정렬
+                    itemDataList.sortWith(compareBy {
+                        val transFormat =
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val date: Date =
+                            transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
 
-                            date.time
-                        })
-                    }
-                    5 -> {
-                        // 콘텐츠 오름차순 정렬
-                        itemDataList.sortWith(compareByDescending {
-                            val transFormat =
-                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                            val date: Date =
-                                transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
+                        date.time
+                    })
+                }
+                5 -> {
+                    // 콘텐츠 오름차순 정렬
+                    itemDataList.sortWith(compareByDescending {
+                        val transFormat =
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val date: Date =
+                            transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
 
-                            date.time
-                        })
-                    }
+                        date.time
+                    })
                 }
             }
 
@@ -437,7 +380,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
                         // 리스트 데이터 초기화
                         clearScreenVerticalRecyclerViewAdapterItemData()
-                        viewModelMbr.isItemShuffledMbr = false
 
                         getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
 

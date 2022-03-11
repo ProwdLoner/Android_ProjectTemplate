@@ -61,9 +61,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
-    // 셔플 여부(새 아이템 추가 위치에 반영)
-    var isItemShuffledMbr = false
-
     // ScreenVerticalRecyclerViewAdapter 아이템 접근 세마포어
     val screenVerticalRecyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
 
