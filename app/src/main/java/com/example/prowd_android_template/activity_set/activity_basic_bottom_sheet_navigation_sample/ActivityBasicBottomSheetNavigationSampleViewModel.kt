@@ -25,7 +25,8 @@ class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val gvcCurrentLoginSessionInfoMbr: GvcCurrentLoginSessionInfo =
+        GvcCurrentLoginSessionInfo(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -62,6 +63,10 @@ class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application
     // 로딩 다이얼로그 출력 정보
     val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
         MutableLiveData(null)
+
+    // 플래그먼트 클릭 위치 정보
+    // 플래그먼트간 정보 공유 테스트용
+    val fragmentClickedPositionLiveDataMbr: MutableLiveData<Int> = MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------

@@ -94,11 +94,21 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        bindingMbr.fragmentClickBtn.setOnClickListener {
+            parentViewModel.fragmentClickedPositionLiveDataMbr.value = 2
+        }
 
     }
 
     // 라이브 데이터 설정
     private fun setLiveData() {
+        parentViewModel.fragmentClickedPositionLiveDataMbr.observe(parentActivity){
+            if (null == it){
+                bindingMbr.clickedByValueTxt.text = "클릭 없음"
+            }else{
+                bindingMbr.clickedByValueTxt.text = "${it}번 플래그먼트"
+            }
+        }
 
     }
 }
