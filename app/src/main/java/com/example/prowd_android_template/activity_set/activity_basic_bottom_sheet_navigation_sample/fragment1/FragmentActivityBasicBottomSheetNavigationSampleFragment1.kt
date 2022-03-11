@@ -58,11 +58,11 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
             val sessionToken =loginInfo.sessionToken
 
             if (parentViewModel.fragment1Data.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-                sessionToken != parentViewModel.fragment1Data.fragment1CurrentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
+                sessionToken != parentViewModel.fragment1Data.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
             ) {
                 // 진입 플래그 변경
                 parentViewModel.fragment1Data.isDataFirstLoadingMbr = false
-                parentViewModel.fragment1Data.fragment1CurrentUserSessionTokenMbr = sessionToken
+                parentViewModel.fragment1Data.currentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
             }
@@ -88,7 +88,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
             val loginInfo = parentViewModel.gvcCurrentLoginSessionInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            parentViewModel.fragment1Data.fragment1CurrentUserSessionTokenMbr =loginInfo.sessionToken
+            parentViewModel.fragment1Data.currentUserSessionTokenMbr =loginInfo.sessionToken
         }
     }
 

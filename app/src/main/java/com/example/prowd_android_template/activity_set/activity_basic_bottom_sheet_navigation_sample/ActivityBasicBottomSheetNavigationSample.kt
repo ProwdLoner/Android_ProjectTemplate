@@ -145,6 +145,7 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         val fragment1 = FragmentActivityBasicBottomSheetNavigationSampleFragment1()
         val fragment2 = FragmentActivityBasicBottomSheetNavigationSampleFragment2()
         val fragment3 = FragmentActivityBasicBottomSheetNavigationSampleFragment3()
+
         adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
             listOf(
                 fragment1,
@@ -171,7 +172,6 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
             }
             false
         }
-
 
     }
 
