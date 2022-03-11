@@ -23,6 +23,7 @@ import kotlin.collections.ArrayList
 // todo : 전체 아이템 리스트 뮤텍스 검증
 // todo : 아이템 업데이트
 // todo : add data 엑티비티에서 작성하여 결과를 받아오는 형식으로 변경
+// todo : 클릭해서 이동하기, 해당 액티비티 활동에 따른 반응
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -221,7 +222,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             )
         }
 
-        // add 버튼 = 셔플 상태라면 순서 상관 없이 마지막에 추가, 정렬 상태라면 정렬 기준에 맞도록 추가
+        // add 버튼 = 정렬 상태라면 정렬 기준에 맞도록 추가
         // 네트워크에 데이터를 추가하고, 완료된 상태라면 기준에 맞게 로컬에 아이템 추가(실제 서버에 어떤 순서로 저장된지는 리플레시 때에 반영)
         bindingMbr.addItemBtn.setOnClickListener {
             if (viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value!!) {
@@ -230,6 +231,23 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                 true
+
+            // 추가할 아이템
+            // 실제 추가할 때에는 리포지토리에 반영하고, uid 등 서버 입력 시점에 정해지는 데이터를 받아오고 성공 여부에 따라 화면 갱신
+            val utcDataFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
+            utcDataFormat.timeZone = TimeZone.getTimeZone("UTC")
+            val utcTimeString = utcDataFormat.format(Date())
+
+            val itemUid = adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
+
+            val newItem =
+                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
+                    itemUid,
+                    1,
+                    "added title $itemUid",
+                    "added content $itemUid",
+                    utcTimeString
+                )
 
             // 멀티 스레드 공유 데이터 리스트 변경시 접근 세마포어 적용(데이터 레플리카를 가져와서 가공하고 반영할 때까지 블록)
             viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
@@ -245,26 +263,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             val itemLastIdx =
                 screenVerticalRecyclerViewAdapterDataListCopy.lastIndex - 1
 
-            // 추가할 아이템
-            // 실제 추가할 때에는 리포지토리에 반영하고, uid 등 서버 입력 시점에 정해지는 데이터를 받아오고 성공 여부에 따라 화면 갱신
-            val utcDataFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
-            utcDataFormat.timeZone = TimeZone.getTimeZone("UTC")
-            val utcTimeString = utcDataFormat.format(Date())
-
-            val addedItem =
-                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
-                    adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
-                    1,
-                    "added title ${screenVerticalRecyclerViewAdapterDataListCopy.size}",
-                    "added content ${screenVerticalRecyclerViewAdapterDataListCopy.size}",
-                    utcTimeString
-                )
-
             // 정렬 상태와 상관 없이 가장 뒤에 추가
             // 그 다음 아이템 정렬 여부에 따라 정렬 후 반영 -> 추가된 아이템 위치로 스크롤 이동
             screenVerticalRecyclerViewAdapterDataListCopy.add(
                 itemLastIdx + 1,
-                addedItem
+                newItem
             )
 
             // 정렬을 위한 아이템 리스트 추출
@@ -330,7 +333,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
             // 리스트에서 addedItem.itemUid 의 위치를 가져오기
             val newItemIdx = adapterDataList.indexOfFirst {
-                it.itemUid == addedItem.itemUid
+                it.itemUid == newItem.itemUid
             }
 
             // 아이템 화면 생성 시점에 반짝이도록 설정
