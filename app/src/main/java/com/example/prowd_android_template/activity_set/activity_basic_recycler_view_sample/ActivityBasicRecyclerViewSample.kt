@@ -19,11 +19,10 @@ import kotlin.collections.ArrayList
 
 // todo : 현재 정렬 기준에 * 넣기
 // todo : 중복 방지 페이징 처리 가정(서버에는 page 가 아니라 현 페이지의 마지막 uid 를 제공하여, 그 뒤의 n 개의 데이터를 받아오기)
-// todo : 전체 아이템 리스트 뮤텍스 검증
 // todo : 아이템 업데이트
 // todo : add data 엑티비티에서 작성하여 결과를 받아오는 형식으로 변경
 // todo : 클릭해서 이동하기, 해당 액티비티 활동에 따른 반응
-// todo : 아이템 로딩시 삭제 버튼 비활성화
+// todo : 아이템 로딩시 추가 삭제 버튼 비활성화 -> 세마포어를 사용한 싱크 맞추기
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
