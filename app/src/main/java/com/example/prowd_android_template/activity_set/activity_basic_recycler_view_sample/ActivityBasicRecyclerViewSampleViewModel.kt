@@ -31,7 +31,8 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val gvcCurrentLoginSessionInfoMbr: GvcCurrentLoginSessionInfo =
+        GvcCurrentLoginSessionInfo(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -127,7 +128,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.acquire()
 
-            if (isViewDevModeMbr){
+            if (isViewDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                 Thread.sleep(500)
 
@@ -153,7 +154,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
                 getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.release()
 
-            }else{
+            } else {
 
                 // TODO : 실제 리포지토리 처리
                 getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.release()
@@ -174,7 +175,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.acquire()
 
-            if (isViewDevModeMbr){
+            if (isViewDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                 Thread.sleep(500)
 
@@ -199,7 +200,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 onComplete(dummyData)
 
                 getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.release()
-            }else{
+            } else {
 
                 // TODO : 실제 리포지토리 처리
                 getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.release()
@@ -227,7 +228,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.acquire()
 
-            if (isViewDevModeMbr){
+            if (isViewDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                 Thread.sleep(1500)
 
@@ -308,7 +309,8 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                     val startIdx =
                         (pageNum - 1) *
                                 getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
-                    val endIdx = startIdx + getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
+                    val endIdx =
+                        startIdx + getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
 
                     if (dummyDataListIdx >= endIdx) {
                         break
@@ -322,7 +324,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
                 getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
 
-            }else{
+            } else {
                 // TODO : 실제 리포지토리 처리
 
                 getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
@@ -342,7 +344,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         executorServiceMbr?.execute {
             deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.acquire()
 
-            if (isViewDevModeMbr){
+            if (isViewDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                 Thread.sleep(500)
 
@@ -351,7 +353,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 onComplete()
 
                 deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
-            }else{
+            } else {
                 // TODO : 실제 리포지토리 처리
                 deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
             }
