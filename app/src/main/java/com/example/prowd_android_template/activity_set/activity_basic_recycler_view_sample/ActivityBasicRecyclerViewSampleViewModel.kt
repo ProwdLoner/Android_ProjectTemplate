@@ -309,7 +309,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                     }
                 }
 
-                // todo null 비교
                 val startIdx = if (null == getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr) {
                     -1
                 } else {
@@ -324,7 +323,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                     resultDataList.add(dummyDataList[dummyDataListIdx])
 
                     ++addedItemCount
-                    if (addedItemCount == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr){
+                    if (addedItemCount == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr) {
                         break
                     }
                 }

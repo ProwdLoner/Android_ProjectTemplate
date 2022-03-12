@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit
 // [레트로핏 빌더] : 한 IP 에 대한 접근 객체
 object RetrofitClientBuilder {
     // <멤버 변수 공간>
-    private const val connectTimeOutMilliSecondMbr = 3000L
-    private const val readTimeOutMilliSecondMbr = 3000L
-    private const val writeTimeOutMilliSecondMbr = 3000L
-    private const val retryOnConnectionFailureMbr = false
+    private const val connectTimeOutMilliSecondMbr = 5000L
+    private const val readTimeOutMilliSecondMbr = 5000L
+    private const val writeTimeOutMilliSecondMbr = 5000L
+    private const val retryOnConnectionFailureMbr = true
 
 
     // ---------------------------------------------------------------------------------------------
