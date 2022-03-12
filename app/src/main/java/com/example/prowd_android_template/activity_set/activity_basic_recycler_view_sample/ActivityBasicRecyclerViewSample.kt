@@ -18,7 +18,6 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 // todo : 현재 정렬 기준에 * 넣기
-// todo : 중복 방지 페이징 처리 가정(서버에는 page 가 아니라 현 페이지의 마지막 uid 를 제공하여, 그 뒤의 n 개의 데이터를 받아오기)
 // todo : 아이템 업데이트
 // todo : add data 엑티비티에서 작성하여 결과를 받아오는 형식으로 변경
 // todo : 클릭해서 이동하기, 해당 액티비티 활동에 따른 반응
@@ -101,11 +100,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         )
                     )
 
-                // 데이터 로딩 상태 초기화
+                // 리스트 데이터 초기화
                 clearScreenVerticalRecyclerViewAdapterItemData()
-
-                // 리스트 페이지 초기화
-                viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
+                viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr = null
 
                 // 헤더 데이터 초기화
                 getScreenVerticalRecyclerViewAdapterHeaderDataAsync()
@@ -195,9 +192,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 return@setOnRefreshListener
             }
 
-            // 데이터 프로세스 설정 초기화
-            clearScreenVerticalRecyclerViewAdapterItemData() // 아이템 리스트 비우기
-            viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1 // 페이지 1
+            // 리스트 데이터 초기화
+            clearScreenVerticalRecyclerViewAdapterItemData()
+            viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr = null
 
             // 헤더 데이터 초기화
             getScreenVerticalRecyclerViewAdapterHeaderDataAsync()
@@ -377,11 +374,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr =
                             position
 
-                        // 리스트 페이지 초기화
-                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
-
                         // 리스트 데이터 초기화
                         clearScreenVerticalRecyclerViewAdapterItemData()
+                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr = null
 
                         getScreenVerticalRecyclerViewAdapterItemDataNextPageAsync()
 
@@ -931,7 +926,6 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
         // 리포지토리 데이터 요청
         viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
-            viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr,
             onComplete = { getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult ->
                 runOnUiThread {
                     // 로더 지우기
@@ -953,7 +947,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     if (0 != getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.size) {
                         // 이번 페이지 데이터 리스트가 비어있지 않다면,
                         // 다음 페이지 추가
-                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr++
+                        viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr =
+                            getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.last().uid
 
                         // 아이템 마지막 인덱스 위치
                         itemLastIdx =

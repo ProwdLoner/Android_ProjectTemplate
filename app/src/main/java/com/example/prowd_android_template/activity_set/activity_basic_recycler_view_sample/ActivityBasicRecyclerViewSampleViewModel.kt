@@ -38,23 +38,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
     var currentUserSessionTokenMbr: String? = null
 
-    // 정렬 기준 스피너 항목
-    val sortSpinnerColumnArrayMbr =
-        arrayOf(
-            "title (abc)",
-            "title (desc)",
-            "content (abc)",
-            "content (desc)",
-            "writeDate (abc)",
-            "writeDate (desc)"
-        )
-
-    // 페이지 정렬 기준
-    // (sortSpinnerColumnArray 의 인덱스 번호.
-    // 이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
-    // 초기 정렬 기준 설정
-    var getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr: Int = 3
-
     // (플래그 데이터)
     // 뷰 개발 모드 플래그 (= 더미 데이터를 사용)
     private val isViewDevModeMbr = true
@@ -214,19 +197,41 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     private val getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr = Semaphore(1)
 
     // ScreenVerticalRecyclerViewAdapter 데이터 현 페이지 (초기화 시에는 데이터 리스트를 초기화 하고 페이지 1부터 다시 받아오기)
-    var getScreenVerticalRecyclerViewAdapterItemDataCurrentPageMbr = 1
+    var getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr: Long? = null
 
     // 한 페이지 아이템 개수 (이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
-    var getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr: Int = 20
+    var getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr: Int = 20
+
+    // 정렬 기준 스피너 항목
+    val sortSpinnerColumnArrayMbr =
+        arrayOf(
+            "title (abc)",
+            "title (desc)",
+            "content (abc)",
+            "content (desc)",
+            "writeDate (abc)",
+            "writeDate (desc)"
+        )
+
+    // 페이지 정렬 기준
+    // (sortSpinnerColumnArray 의 인덱스 번호.
+    // 이것을 변경하면, 데이터 리스트를 초기화 하고, 페이지 1부터 다시 받아오기)
+    // 초기 정렬 기준 설정
+    var getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr: Int = 5
 
     // 현재 설정으로 다음 데이터 리스트 요청
     fun getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
-        pageNum: Int,
         onComplete: (ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO>) -> Unit,
         onError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.acquire()
+
+            // 원하는 리스트 사이즈가 0이라면 그냥 리턴
+            if (0 == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr) {
+                onComplete(ArrayList())
+                return@execute
+            }
 
             if (isViewDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
@@ -244,6 +249,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
                 val jObject = JSONObject(jsonString)
                 val dummyDataJsonList = jObject.getJSONArray("dummyDataList")
+
                 val dummyDataList = ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO>()
 
                 // json 배열 파싱
@@ -303,21 +309,23 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                     }
                 }
 
-                for (dummyDataListIdx in 0 until dummyDataList.size) {
-                    val dummyDataObj = dummyDataList[dummyDataListIdx]
-
-                    val startIdx =
-                        (pageNum - 1) *
-                                getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
-                    val endIdx =
-                        startIdx + getScreenVerticalRecyclerViewAdapterItemDataPageItemSizeMbr
-
-                    if (dummyDataListIdx >= endIdx) {
-                        break
+                // todo null 비교
+                val startIdx = if (null == getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr) {
+                    -1
+                } else {
+                    dummyDataList.indexOfFirst {
+                        it.uid == getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr
                     }
+                } + 1
 
-                    if (dummyDataListIdx >= startIdx) {
-                        resultDataList.add(dummyDataObj)
+                var addedItemCount = 0
+
+                for (dummyDataListIdx in startIdx until dummyDataList.size) {
+                    resultDataList.add(dummyDataList[dummyDataListIdx])
+
+                    ++addedItemCount
+                    if (addedItemCount == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr){
+                        break
                     }
                 }
                 onComplete(resultDataList)
