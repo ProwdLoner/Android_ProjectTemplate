@@ -309,12 +309,8 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                     }
                 }
 
-                val startIdx = if (null == getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr) {
-                    -1
-                } else {
-                    dummyDataList.indexOfFirst {
-                        it.uid == getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr
-                    }
+                val startIdx = dummyDataList.indexOfFirst {
+                    it.uid == getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr
                 } + 1
 
                 var addedItemCount = 0

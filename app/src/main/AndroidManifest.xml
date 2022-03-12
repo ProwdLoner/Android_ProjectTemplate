@@ -10,6 +10,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_basic_recycler_view_sample_editor.ActivityBasicRecyclerViewSampleEditor"
+            android:windowSoftInputMode="adjustPan"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample"
             android:exported="false" />
         <activity
