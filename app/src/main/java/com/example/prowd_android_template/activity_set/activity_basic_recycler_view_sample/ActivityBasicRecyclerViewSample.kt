@@ -23,9 +23,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
-// todo : 현재 정렬 기준에 * 넣기
-// todo : 클릭해서 이동하기, 아이템 업데이트
-// todo : delete 를 지우기 : delete 로직은 자세히 보기에서 댓글 예제로
+// 기본 리사이클러 뷰 샘플
+// 동작 확인 완료 : 실제 서버 - 클라이언트로 사용하기 위해선 리포지토리 등을 커스텀 할 것.
+// 아이템 제거, 이동이 아닌 아이템 내용 변경을 위해서는 동일 주소를 가진 객체를 사용할 것이 아니라, 주소가 다른 클론을 생성해서 변경해야 함을 주의
 class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
