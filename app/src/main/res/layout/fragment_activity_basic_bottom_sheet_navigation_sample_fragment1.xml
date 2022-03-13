@@ -36,7 +36,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="1번"
+                android:text="기본 바텀 네비게이터 샘플 1번"
                 android:textColor="#FF000000"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"

@@ -3,6 +3,10 @@ package com.example.prowd_android_template.activity_set.activity_basic_tab_layou
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1.FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment2.FragmentActivityBasicBottomSheetNavigationSampleFragment2VmData
+import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.fragment1.FragmentActivityBasicTabLayoutSampleFragment1VmData
+import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.fragment2.FragmentActivityBasicTabLayoutSampleFragment2VmData
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.globalVariableConnector.GvcCurrentLoginSessionInfo
@@ -35,6 +39,13 @@ class ActivityBasicTabLayoutSampleViewModel(application: Application) :
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
+    // (Fragment 화면 데이터)
+    // Fragment1
+    var fragment1Data = FragmentActivityBasicTabLayoutSampleFragment1VmData()
+
+    // Fragment2
+    var fragment2Data = FragmentActivityBasicTabLayoutSampleFragment2VmData()
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
@@ -49,6 +60,10 @@ class ActivityBasicTabLayoutSampleViewModel(application: Application) :
     // 로딩 다이얼로그 출력 정보
     val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
         MutableLiveData(null)
+
+    // 플래그먼트 클릭 위치 정보
+    // 플래그먼트간 정보 공유 테스트용
+    val fragmentClickedPositionLiveDataMbr: MutableLiveData<Int> = MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------
