@@ -1,16 +1,18 @@
 package com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample_editor
 
-import android.content.Intent
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Parcelable
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSampleViewModel
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleEditorBinding
-import com.example.prowd_android_template.databinding.ActivityRecyclerViewSampleBinding
+import kotlinx.parcelize.Parcelize
+import java.net.SocketTimeoutException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -106,7 +108,8 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityBasicRecyclerViewSampleEditorViewModel::class.java]
+        viewModelMbr =
+            ViewModelProvider(this)[ActivityBasicRecyclerViewSampleEditorViewModel::class.java]
 
     }
 
@@ -122,9 +125,115 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 기본 리사이클러 뷰 테스트 버튼
-        //todo add
+        // 초기 업로드 버튼 세팅
+        setContentUploadBtn()
 
+        // 글자를 입력할 때마다 초기 업로드 버튼 세팅
+        bindingMbr.contentTitleEditor.addTextChangedListener {
+            setContentUploadBtn()
+        }
+        bindingMbr.contentEditor.addTextChangedListener {
+            setContentUploadBtn()
+        }
+    }
+
+    // 업로드 버튼 세팅
+    private fun setContentUploadBtn() {
+        val contentTitleTxtSize = bindingMbr.contentTitleEditor.text.toString().length
+        val contentTxtSize = bindingMbr.contentEditor.text.toString().length
+
+        // 업로드 버튼 활성 / 비활성화 = 모든 텍스트가 한글자 이상일 때
+        if (0 < contentTitleTxtSize && 0 < contentTxtSize) {
+            bindingMbr.contentUploadBtn.setBackgroundColor(Color.parseColor("#FF5B92E4"))
+            bindingMbr.contentUploadBtn.setOnClickListener {
+                val contentTitleTxt = bindingMbr.contentTitleEditor.text.toString()
+                val contentTxt = bindingMbr.contentEditor.text.toString()
+                val utcDataFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
+                utcDataFormat.timeZone = TimeZone.getTimeZone("UTC")
+                val writeTime = utcDataFormat.format(Date())
+
+                // 로딩 다이얼로그 생성
+                viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                    DialogProgressLoading.DialogInfoVO(
+                        false,
+                        "처리중입니다.",
+                        null
+                    )
+
+                viewModelMbr.addScreenVerticalRecyclerViewAdapterItemDataOnVMAsync(
+                    contentTitleTxt,
+                    contentTxt,
+                    writeTime,
+                    onComplete = {
+                        runOnUiThread {
+                            // 로딩 다이얼로그 제거
+                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+
+                            val resultIntent = intent
+                            resultIntent.putExtra(
+                                "result", ResultVo(
+                                    it,
+                                    contentTitleTxt,
+                                    contentTxt,
+                                    writeTime
+                                )
+                            )
+                            setResult(RESULT_OK, resultIntent)
+                            finish()
+                        }
+                    },
+                    onError = { addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult ->
+                        runOnUiThread {
+                            // 로딩 다이얼로그 제거
+                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+
+                            if (addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
+                                viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "네트워크 에러",
+                                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                                        "확인",
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        }
+                                    )
+                            } else { // 그외 에러
+                                viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "서버 에러",
+                                        "현재 서버의 상태가 원활하지 않습니다.\n" +
+                                                "잠시 후 다시 시도해주세요.\n" +
+                                                "\n" +
+                                                "에러 메시지 :\n" +
+                                                "${addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult.message}",
+                                        "확인",
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                null
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                null
+
+                                        }
+                                    )
+                            }
+                        }
+                    }
+                )
+
+            }
+        } else {
+            bindingMbr.contentUploadBtn.setBackgroundColor(Color.parseColor("#FFE6E6E6"))
+            bindingMbr.contentUploadBtn.setOnClickListener { }
+        }
     }
 
     // 라이브 데이터 설정
@@ -171,4 +280,15 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
             }
         }
     }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <중첩 클래스 공간>
+    @Parcelize
+    data class ResultVo(
+        val itemContentUid: Long,
+        val itemTitle: String,
+        val itemContentBody: String,
+        val writeTime: String
+    ) : Parcelable
 }

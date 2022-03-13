@@ -9,6 +9,7 @@ import com.example.prowd_android_template.globalVariableConnector.GvcCurrentLogi
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
 
 class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
     AndroidViewModel(application) {
@@ -22,7 +23,8 @@ class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val gvcCurrentLoginSessionInfoMbr: GvcCurrentLoginSessionInfo =
+        GvcCurrentLoginSessionInfo(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -34,6 +36,9 @@ class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
 
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
+
+    // 뷰 개발 모드 플래그 (= 더미 데이터를 사용)
+    private val isViewDevModeMbr = true
 
 
     // ---------------------------------------------------------------------------------------------
@@ -62,6 +67,36 @@ class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
+    // (아이템 데이터 추가)
+    private val addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr =
+        Semaphore(1)
+
+    fun addScreenVerticalRecyclerViewAdapterItemDataOnVMAsync(
+        contentTitleTxt: String,
+        contentTxt: String,
+        writeTime: String,
+        onComplete: (Long) -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.acquire()
+
+            if (isViewDevModeMbr) {
+                // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+                Thread.sleep(500)
+
+                // 원래는 네트워크에서 아이템을 추가 후 결과로 해당 아이템의 uid 를 반환
+                val itemUid = 1L
+                onComplete(itemUid)
+
+                addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
+            } else {
+                // TODO : 실제 리포지토리 처리
+                addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
+            }
+
+        }
+    }
 
 
     // ---------------------------------------------------------------------------------------------

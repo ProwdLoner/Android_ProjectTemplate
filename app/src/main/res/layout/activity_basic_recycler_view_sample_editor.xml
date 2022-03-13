@@ -57,8 +57,9 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scrollbars="vertical">
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical"
+            app:layout_constraintTop_toTopOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -67,7 +68,7 @@
                 <androidx.cardview.widget.CardView
                     android:id="@+id/card_container"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="20dp"
                     android:layout_marginEnd="20dp"
@@ -107,17 +108,17 @@
                         <EditText
                             android:id="@+id/content_editor"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="250dp"
                             android:background="@drawable/layer_list_layout_activity_basic_recycler_view_sample_editor_content_editor"
                             android:fontFamily="@font/apple_sd_gothic_neo_r"
                             android:gravity="top"
                             android:hint="본문"
                             android:importantForAutofill="no"
-                            android:inputType="textCapSentences|textAutoCorrect"
-                            android:minHeight="120dp"
+                            android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
                             android:paddingStart="20dp"
                             android:paddingTop="20dp"
                             android:paddingEnd="20dp"
+                            android:scrollbars="vertical"
                             android:textColor="#FF000000"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
@@ -131,6 +132,8 @@
                             android:layout_marginTop="10dp"
                             android:layout_marginBottom="10dp"
                             android:background="#FFE6E6E6"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
