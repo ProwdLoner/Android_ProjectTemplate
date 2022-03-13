@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
-import com.example.prowd_android_template.activity_set.activity_network_sample.ActivityNetworkSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_view_pager_sample.ActivityViewPagerSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -150,66 +149,6 @@ class ActivityHome : AppCompatActivity() {
                     ActivityViewPagerSample::class.java
                 )
             startActivity(intent)
-        }
-
-        // 네트워크 샘플 이동 버튼
-        bindingMbr.goToNetworkSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityNetworkSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 데이터베이스 샘플 이동 버튼
-        bindingMbr.goToDatabaseSampleBtn.setOnClickListener {
-            // TODO
-        }
-
-        // 회원관리 샘플 이동 버튼
-        bindingMbr.goToUserManagementSampleBtn.setOnClickListener {
-            // TODO
-        }
-
-        // JNI 샘플 이동 버튼
-        bindingMbr.goToJniSampleBtn.setOnClickListener {
-            // TODO
-        }
-
-        // 카메라 샘플 이동 버튼
-        bindingMbr.goToCameraSampleBtn.setOnClickListener {
-            // TODO
-        }
-
-        // 이미지 샘플 이동 버튼
-        bindingMbr.goToImageSampleBtn.setOnClickListener {
-            // TODO
-        }
-
-        // 동영상 샘플 이동 버튼
-        bindingMbr.goToVideoSampleBtn.setOnClickListener {
-            // TODO
-        }
-
-        // 오디오 샘플 이동 버튼
-        bindingMbr.goToAudioSampleBtn.setOnClickListener {
-            // TODO
-        }
-
-        // 머신러닝 샘플 이동 버튼
-        bindingMbr.goToMachineLearningSampleBtn.setOnClickListener {
-            // TODO
-        }
-
-        // 지도 샘플 이동 버튼
-        bindingMbr.goToMapSampleBtn.setOnClickListener {
-            //TODO
-        }
-
-        // 달력 샘플 이동 버튼
-        bindingMbr.goToCalendarSampleBtn.setOnClickListener {
-            // TODO
         }
 
     }
