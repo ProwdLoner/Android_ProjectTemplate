@@ -117,9 +117,7 @@ class ActivityBasicRetrofit2Sample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.requestBtn.setOnClickListener {
-            // todo : 네트워크 요청
-        }
+
     }
 
     // 라이브 데이터 설정

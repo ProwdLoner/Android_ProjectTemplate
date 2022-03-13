@@ -4,19 +4,19 @@
     <item
         android:id="@+id/fragment1"
         android:enabled="true"
-        android:icon="@drawable/selector_menu_activity_basic_bottom_sheet_navigation_sample_bottom_nav_icon_fragment1"
+        android:icon="@drawable/img_menu_activity_basic_bottom_sheet_navigation_sample_bottom_nav_fragment1_icon"
         android:title="1번" />
 
     <item
         android:id="@+id/fragment2"
         android:enabled="true"
-        android:icon="@drawable/selector_menu_activity_basic_bottom_sheet_navigation_sample_bottom_nav_icon_fragment2"
+        android:icon="@drawable/img_menu_activity_basic_bottom_sheet_navigation_sample_bottom_nav_fragment2_icon"
         android:title="2번" />
 
     <item
         android:id="@+id/fragment3"
         android:enabled="true"
-        android:icon="@drawable/selector_menu_activity_basic_bottom_sheet_navigation_sample_bottom_nav_icon_fragment3"
+        android:icon="@drawable/img_menu_activity_basic_bottom_sheet_navigation_sample_bottom_nav_fragment3_icon"
         android:title="3번" />
 
 </menu>
