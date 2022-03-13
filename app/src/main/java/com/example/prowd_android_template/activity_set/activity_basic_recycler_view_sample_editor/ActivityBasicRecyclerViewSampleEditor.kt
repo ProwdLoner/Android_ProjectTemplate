@@ -20,7 +20,7 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityBasicRecyclerViewSampleEditorBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityBasicRecyclerViewSampleEditorViewModel
+    lateinit var viewModelMbr: ActivityBasicRecyclerViewSampleEditorViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그

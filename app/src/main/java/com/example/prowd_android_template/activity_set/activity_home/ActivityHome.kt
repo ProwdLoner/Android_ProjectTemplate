@@ -18,7 +18,7 @@ class ActivityHome : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityHomeBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityHomeViewModel
+    lateinit var viewModelMbr: ActivityHomeViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그

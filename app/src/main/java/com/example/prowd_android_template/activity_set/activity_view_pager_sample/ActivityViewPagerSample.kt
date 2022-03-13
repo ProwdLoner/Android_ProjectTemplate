@@ -16,7 +16,7 @@ class ActivityViewPagerSample : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityViewPagerSampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityViewPagerSampleViewModel
+    lateinit var viewModelMbr: ActivityViewPagerSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그

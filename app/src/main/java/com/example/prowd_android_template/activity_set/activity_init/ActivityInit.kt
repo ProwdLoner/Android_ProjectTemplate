@@ -19,7 +19,7 @@ class ActivityInit : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityInitBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityInitViewModel
+    lateinit var viewModelMbr: ActivityInitViewModel
 
     // (다이얼로그 객체)
     // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)

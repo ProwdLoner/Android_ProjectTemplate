@@ -15,7 +15,7 @@ class ActivityRecyclerViewSample : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityRecyclerViewSampleViewModel
+    lateinit var viewModelMbr: ActivityRecyclerViewSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그

@@ -13,7 +13,7 @@ class ActivityBasicRetrofit2Sample : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityBasicRetrofit2SampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityBasicRetrofit2SampleViewModel
+    lateinit var viewModelMbr: ActivityBasicRetrofit2SampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -54,7 +54,7 @@ class ActivityBasicRetrofit2Sample : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
             val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
-            val sessionToken =loginInfo.sessionToken
+            val sessionToken = loginInfo.sessionToken
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
@@ -111,7 +111,7 @@ class ActivityBasicRetrofit2Sample : AppCompatActivity() {
             val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr =loginInfo.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr = loginInfo.sessionToken
         }
     }
 

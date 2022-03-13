@@ -15,7 +15,7 @@ class ActivityNetworkSample : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityNetworkSampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityNetworkSampleViewModel
+    lateinit var viewModelMbr: ActivityNetworkSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -113,7 +113,7 @@ class ActivityNetworkSample : AppCompatActivity() {
             val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr =loginInfo.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr = loginInfo.sessionToken
         }
     }
 

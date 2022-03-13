@@ -32,7 +32,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     private lateinit var bindingMbr: ActivityBasicRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
-    private lateinit var viewModelMbr: ActivityBasicRecyclerViewSampleViewModel
+    lateinit var viewModelMbr: ActivityBasicRecyclerViewSampleViewModel
 
     // (어뎁터 객체)
     private lateinit var adapterSetMbr: ActivityBasicRecyclerViewSampleAdapterSet
