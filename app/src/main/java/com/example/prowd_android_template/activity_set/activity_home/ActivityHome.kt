@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.activity_set.activity_gvc_sample.ActivityGvcSample
+import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_view_pager_sample.ActivityViewPagerSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -158,6 +159,16 @@ class ActivityHome : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityGvcSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        // jni 샘플 이동 버튼
+        bindingMbr.goToJniSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityJniSample::class.java
                 )
             startActivity(intent)
         }

@@ -10,6 +10,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_jni_sample.ActivityJniSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_gvc_sample_controller.ActivityGvcSampleController"
             android:exported="false" />
         <activity
