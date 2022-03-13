@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_home.ActivityHome
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.databinding.ActivityInitBinding
-import com.example.prowd_android_template.globalVariableConnector.GvcCurrentLoginSessionInfo
+import com.example.prowd_android_template.common_global_variable_connector.CurrentLoginSessionInfoGvc
 import java.net.SocketTimeoutException
 
 class ActivityInit : AppCompatActivity() {
@@ -207,7 +207,7 @@ class ActivityInit : AppCompatActivity() {
                             if (!viewModelMbr.checkLoginSessionAsyncOnProgressedMbr) {
                                 // 메소드 실행중이 아닐 때,
 
-                                val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
+                                val loginInfo = viewModelMbr.currentLoginSessionInfoGvcMbr.getData()
 
                                 val loginType: Int = loginInfo.loginType
                                 val serverId: String? = loginInfo.userServerId
@@ -222,8 +222,8 @@ class ActivityInit : AppCompatActivity() {
                                     onComplete = { checkLoginSessionResult ->
                                         runOnUiThread checkLoginSessionAsyncComplete@{
                                             // 검증 후 결과를 sharedPreferences 에 대입
-                                            viewModelMbr.gvcCurrentLoginSessionInfoMbr.setData(
-                                                GvcCurrentLoginSessionInfo.LoginInfo(
+                                            viewModelMbr.currentLoginSessionInfoGvcMbr.setData(
+                                                CurrentLoginSessionInfoGvc.ColumnVo(
                                                     checkLoginSessionResult.sessionToken,
                                                     checkLoginSessionResult.userNickName,
                                                     checkLoginSessionResult.loginType,

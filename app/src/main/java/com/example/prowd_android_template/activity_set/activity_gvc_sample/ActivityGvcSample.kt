@@ -1,27 +1,35 @@
-package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample
+package com.example.prowd_android_template.activity_set.activity_gvc_sample
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.MenuItem
+import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1.FragmentActivityBasicBottomSheetNavigationSampleFragment1
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment2.FragmentActivityBasicBottomSheetNavigationSampleFragment2
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment3.FragmentActivityBasicBottomSheetNavigationSampleFragment3
+import com.example.prowd_android_template.activity_set.activity_gvc_sample_controller.ActivityGvcSampleController
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityBasicBottomSheetNavigationSampleBinding
+import com.example.prowd_android_template.databinding.ActivityGvcSampleBinding
 
-class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
+
+// GVC 란?
+// Global Variable Connector 로,
+// static 변수를 사용했을 때에 메모리에 상주하는 문제, 그리고 OS 정책에 따라 멋대로 초기화되는 문제에 대비하기 위해,
+// Shared Preference 를 보다 쉽게 사용해주도록 하는 래핑 클래스입니다.
+
+// 단순히 다른 액티비티에서 result 만 얻어올 것이라면 resultLauncher 를 사용하면 되는데,
+// 이는 바로 이후의 액티비티에 한정되는 것으로,
+
+// 만약 히스토리에 남겨진 상태에서 이후 불특정 액티비티의 작용을 받으려면 GVC 를 사용하면 됩니다.
+// 로그인 세션 범용 GVC 가 대표적으로,
+// 액티비티 종속 GVC 는, 예를들면 즐겨찾기 목록 화면이라 가정하면, 다른 상세보기 화면에서 즐겨찾기를 했을 때에,
+// 즐겨찾기 목록을 갱신하고자 한다면 목록 화면에서 GVC 를 감시하고, 상세보기에서 GVC 상태를 변경하는 방식으로 사용합니다.
+class ActivityGvcSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicBottomSheetNavigationSampleBinding
+    private lateinit var bindingMbr: ActivityGvcSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityBasicBottomSheetNavigationSampleViewModel
-
-    // (어뎁터 객체)
-    private lateinit var adapterSetMbr: ActivityBasicBottomSheetNavigationSampleAdapterSet
+    lateinit var viewModelMbr: ActivityGvcSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -40,7 +48,7 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityBasicBottomSheetNavigationSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityGvcSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -57,6 +65,23 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // 액티비티 GVC 가져오기
+        val messageInfoVo = viewModelMbr.thisActivityGvcMbr.getData()
+
+        // gvc 에 저장된 데이터 표현 후 비워주기
+        // gvc 가 플래그로 사용됨
+        if (messageInfoVo.message1 != null || messageInfoVo.message2 != null) {
+            val myToast = Toast.makeText(
+                this,
+                "message1 : ${messageInfoVo.message1}, message2 : ${messageInfoVo.message2}",
+                Toast.LENGTH_SHORT
+            )
+            myToast.show()
+
+            viewModelMbr.thisActivityGvcMbr.setData(
+                ActivityGvcSampleGvc.ColumnVo(null, null)
+            )
+        }
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
@@ -109,15 +134,8 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr =
-            ViewModelProvider(this)[ActivityBasicBottomSheetNavigationSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityGvcSampleViewModel::class.java]
 
-        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityBasicBottomSheetNavigationSampleAdapterSet(
-            ActivityBasicBottomSheetNavigationSampleAdapterSet.ScreenViewPagerFragmentStateAdapter(
-                this
-            )
-        )
     }
 
     // viewModel 저장용 데이터 초기화
@@ -132,47 +150,15 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 프레그먼트 컨테이너 조작 금지
-        bindingMbr.screenViewPager.isUserInputEnabled = false
-
-        // 프레그먼트 어뎁터 연결
-        bindingMbr.screenViewPager.adapter = adapterSetMbr.screenViewPagerFragmentStateAdapter
-
-        // 플래그먼트는 화면 회전시 초기화 수준이 아니라 다시 생성
-        // 부모 뷰 모델에 화면 정보를 저장하고, 동작 플래그도 저장하여 반영
-
-        // 플래그먼트 생성 (화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것)
-        val fragment1 = FragmentActivityBasicBottomSheetNavigationSampleFragment1()
-        val fragment2 = FragmentActivityBasicBottomSheetNavigationSampleFragment2()
-        val fragment3 = FragmentActivityBasicBottomSheetNavigationSampleFragment3()
-
-        adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
-            listOf(
-                fragment1,
-                fragment2,
-                fragment3
-            )
-        )
-
-        // bottom navigator 버튼에 따라 화면 프레그먼트 변경 리스너
-        bindingMbr.bottomNav.setOnItemSelectedListener { item: MenuItem ->
-            when (item.itemId) {
-                R.id.fragment1 -> {
-                    bindingMbr.screenViewPager.currentItem = 0
-                    return@setOnItemSelectedListener true
-                }
-                R.id.fragment2 -> {
-                    bindingMbr.screenViewPager.currentItem = 1
-                    return@setOnItemSelectedListener true
-                }
-                R.id.fragment3 -> {
-                    bindingMbr.screenViewPager.currentItem = 2
-                    return@setOnItemSelectedListener true
-                }
-            }
-            false
+        // 전역 변수 조작 화면으로 이동
+        bindingMbr.goToGvcControlActivityBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityGvcSampleController::class.java
+                )
+            startActivity(intent)
         }
-
     }
 
     // 라이브 데이터 설정

@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
-import com.example.prowd_android_template.globalVariableConnector.GvcCurrentLoginSessionInfo
+import com.example.prowd_android_template.common_global_variable_connector.CurrentLoginSessionInfoGvc
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -21,7 +21,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val currentLoginSessionInfoGvcMbr : CurrentLoginSessionInfoGvc = CurrentLoginSessionInfoGvc(application)
 
     // (데이터)
     // 대기시간 (밀리초)

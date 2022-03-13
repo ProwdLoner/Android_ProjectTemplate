@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
+import com.example.prowd_android_template.activity_set.activity_gvc_sample.ActivityGvcSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_view_pager_sample.ActivityViewPagerSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -56,7 +57,7 @@ class ActivityHome : AppCompatActivity() {
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
+            val loginInfo = viewModelMbr.currentLoginSessionInfoGvcMbr.getData()
 
             val sessionToken = loginInfo.sessionToken
 
@@ -112,7 +113,7 @@ class ActivityHome : AppCompatActivity() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-            val loginInfo = viewModelMbr.gvcCurrentLoginSessionInfoMbr.getData()
+            val loginInfo = viewModelMbr.currentLoginSessionInfoGvcMbr.getData()
 
             // 현 액티비티 진입 유저 저장
             viewModelMbr.currentUserSessionTokenMbr = loginInfo.sessionToken
@@ -147,6 +148,16 @@ class ActivityHome : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityViewPagerSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        // 앱 전역 접근 가능 변수 사용 샘플 이동 버튼
+        bindingMbr.goToGvcSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityGvcSample::class.java
                 )
             startActivity(intent)
         }

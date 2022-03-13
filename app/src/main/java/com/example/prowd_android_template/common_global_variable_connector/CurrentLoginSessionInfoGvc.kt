@@ -1,11 +1,11 @@
-package com.example.prowd_android_template.globalVariableConnector
+package com.example.prowd_android_template.common_global_variable_connector
 
 import android.app.Application
 import android.content.Context
 
 // (글로벌 변수로 사용할 SharedPref 래퍼 클래스)
 // 현재 로그인 세션 정보
-class GvcCurrentLoginSessionInfo(application: Application) {
+class CurrentLoginSessionInfoGvc(application: Application) {
     // <멤버 변수 공간>
     // SharedPreference 파일명
     private val spNameMbr = "GvcCurrentLoginSessionInfo"
@@ -19,7 +19,7 @@ class GvcCurrentLoginSessionInfo(application: Application) {
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    fun getData(): LoginInfo {
+    fun getData(): ColumnVo {
         val sessionToken = spMbr.getString(
             colNameSessionTokenMbr,
             null
@@ -45,7 +45,7 @@ class GvcCurrentLoginSessionInfo(application: Application) {
             null
         )
 
-        return LoginInfo(
+        return ColumnVo(
             sessionToken,
             userNickName,
             loginType,
@@ -54,7 +54,7 @@ class GvcCurrentLoginSessionInfo(application: Application) {
         )
     }
 
-    fun setData(inputData: LoginInfo) {
+    fun setData(inputData: ColumnVo) {
         with(spMbr.edit()) {
             putString(
                 colNameSessionTokenMbr,
@@ -85,7 +85,7 @@ class GvcCurrentLoginSessionInfo(application: Application) {
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
     // 로그인 정보 객체
-    data class LoginInfo(
+    data class ColumnVo(
         val sessionToken: String?,
         val userNickName: String?,
         val loginType: Int,

@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.globalVariableConnector.GvcCurrentLoginSessionInfo
+import com.example.prowd_android_template.common_global_variable_connector.CurrentLoginSessionInfoGvc
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -22,7 +22,7 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    val gvcCurrentLoginSessionInfoMbr : GvcCurrentLoginSessionInfo = GvcCurrentLoginSessionInfo(application)
+    val currentLoginSessionInfoGvcMbr : CurrentLoginSessionInfoGvc = CurrentLoginSessionInfoGvc(application)
 
     // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false

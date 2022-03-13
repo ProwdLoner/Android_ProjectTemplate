@@ -1,27 +1,20 @@
-package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample
+package com.example.prowd_android_template.activity_set.activity_gvc_sample_controller
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.MenuItem
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1.FragmentActivityBasicBottomSheetNavigationSampleFragment1
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment2.FragmentActivityBasicBottomSheetNavigationSampleFragment2
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment3.FragmentActivityBasicBottomSheetNavigationSampleFragment3
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityBasicBottomSheetNavigationSampleBinding
+import com.example.prowd_android_template.databinding.ActivityGvcSampleControllerBinding
 
-class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
+// 메시지 세팅 버튼을 누르고 ActivityGvcSample 로 돌아가면, 해당 메시지가 토스트로 출력 됨
+class ActivityGvcSampleController : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicBottomSheetNavigationSampleBinding
+    private lateinit var bindingMbr: ActivityGvcSampleControllerBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityBasicBottomSheetNavigationSampleViewModel
-
-    // (어뎁터 객체)
-    private lateinit var adapterSetMbr: ActivityBasicBottomSheetNavigationSampleAdapterSet
+    lateinit var viewModelMbr: ActivityGvcSampleControllerViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -40,7 +33,7 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityBasicBottomSheetNavigationSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityGvcSampleControllerBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -109,15 +102,8 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr =
-            ViewModelProvider(this)[ActivityBasicBottomSheetNavigationSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityGvcSampleControllerViewModel::class.java]
 
-        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityBasicBottomSheetNavigationSampleAdapterSet(
-            ActivityBasicBottomSheetNavigationSampleAdapterSet.ScreenViewPagerFragmentStateAdapter(
-                this
-            )
-        )
     }
 
     // viewModel 저장용 데이터 초기화
@@ -132,45 +118,48 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 프레그먼트 컨테이너 조작 금지
-        bindingMbr.screenViewPager.isUserInputEnabled = false
+        // 메시지1 세팅 버튼
+        bindingMbr.setGvcMessage1.setOnClickListener {
+            // 메시지 입력 전이라면 메시지를 입력, 메시지 입력 상태라면 메시지를 비우기
+            if ("" == bindingMbr.message1Txt.text.toString()) {
+                val message1 = "메시지1"
 
-        // 프레그먼트 어뎁터 연결
-        bindingMbr.screenViewPager.adapter = adapterSetMbr.screenViewPagerFragmentStateAdapter
+                viewModelMbr.activityGvcSampleGvcMbr.setMessage1(
+                    message1
+                )
 
-        // 플래그먼트는 화면 회전시 초기화 수준이 아니라 다시 생성
-        // 부모 뷰 모델에 화면 정보를 저장하고, 동작 플래그도 저장하여 반영
+                bindingMbr.message1Txt.text = message1
+            } else {
+                val message1 = null
 
-        // 플래그먼트 생성 (화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것)
-        val fragment1 = FragmentActivityBasicBottomSheetNavigationSampleFragment1()
-        val fragment2 = FragmentActivityBasicBottomSheetNavigationSampleFragment2()
-        val fragment3 = FragmentActivityBasicBottomSheetNavigationSampleFragment3()
+                viewModelMbr.activityGvcSampleGvcMbr.setMessage1(
+                    message1
+                )
 
-        adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
-            listOf(
-                fragment1,
-                fragment2,
-                fragment3
-            )
-        )
-
-        // bottom navigator 버튼에 따라 화면 프레그먼트 변경 리스너
-        bindingMbr.bottomNav.setOnItemSelectedListener { item: MenuItem ->
-            when (item.itemId) {
-                R.id.fragment1 -> {
-                    bindingMbr.screenViewPager.currentItem = 0
-                    return@setOnItemSelectedListener true
-                }
-                R.id.fragment2 -> {
-                    bindingMbr.screenViewPager.currentItem = 1
-                    return@setOnItemSelectedListener true
-                }
-                R.id.fragment3 -> {
-                    bindingMbr.screenViewPager.currentItem = 2
-                    return@setOnItemSelectedListener true
-                }
+                bindingMbr.message1Txt.text = message1
             }
-            false
+        }
+
+        // 메시지2 세팅 버튼
+        bindingMbr.setGvcMessage2.setOnClickListener {
+            // 메시지 입력 전이라면 메시지를 입력, 메시지 입력 상태라면 메시지를 비우기
+            if ("" == bindingMbr.message2Txt.text.toString()) {
+                val message2 = "메시지2"
+
+                viewModelMbr.activityGvcSampleGvcMbr.setMessage2(
+                    message2
+                )
+
+                bindingMbr.message2Txt.text = message2
+            } else {
+                val message2 = null
+
+                viewModelMbr.activityGvcSampleGvcMbr.setMessage2(
+                    message2
+                )
+
+                bindingMbr.message2Txt.text = message2
+            }
         }
 
     }

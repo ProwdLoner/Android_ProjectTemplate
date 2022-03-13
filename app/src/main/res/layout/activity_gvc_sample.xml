@@ -34,7 +34,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="모두의 오픈소스!"
+                android:text="전역 접근 변수 샘플"
                 android:textColor="#FF000000"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -64,51 +64,15 @@
                 android:layout_height="wrap_content">
 
                 <Button
-                    android:id="@+id/go_to_dialog_sample_btn"
+                    android:id="@+id/go_to_gvc_control_activity_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="다이얼로그 샘플"
+                    android:text="전역 변수 조작"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
-
-                <Button
-                    android:id="@+id/go_to_recycler_view_sample_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="리사이클러 뷰 샘플"
-                    android:textColor="#FF000000"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_dialog_sample_btn" />
-
-                <Button
-                    android:id="@+id/go_to_view_pager_sample_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="뷰 페이저 샘플"
-                    android:textColor="#FF000000"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_recycler_view_sample_btn" />
-
-                <Button
-                    android:id="@+id/go_to_gvc_sample_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="전역 접근 변수 샘플"
-                    android:textColor="#FF000000"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_view_pager_sample_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>

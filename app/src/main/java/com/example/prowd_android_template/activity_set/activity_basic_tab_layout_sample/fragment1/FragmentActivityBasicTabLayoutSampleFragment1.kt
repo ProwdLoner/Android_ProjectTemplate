@@ -5,12 +5,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSampleViewModel
 import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample
 import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSampleViewModel
-import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
 import com.example.prowd_android_template.databinding.FragmentActivityBasicTabLayoutSample1Binding
 
 class FragmentActivityBasicTabLayoutSampleFragment1 : Fragment() {
@@ -58,7 +54,7 @@ class FragmentActivityBasicTabLayoutSampleFragment1 : Fragment() {
         if (!parentViewModel.isChangingConfigurationsMbr && // 화면 회전이 아니면서,
             isVisible // 현재 보이는 상황일 때
         ) {
-            val loginInfo = parentViewModel.gvcCurrentLoginSessionInfoMbr.getData()
+            val loginInfo = parentViewModel.currentLoginSessionInfoGvcMbr.getData()
             val sessionToken =loginInfo.sessionToken
 
             if (parentViewModel.fragment1Data.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
@@ -89,7 +85,7 @@ class FragmentActivityBasicTabLayoutSampleFragment1 : Fragment() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!parentViewModel.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-            val loginInfo = parentViewModel.gvcCurrentLoginSessionInfoMbr.getData()
+            val loginInfo = parentViewModel.currentLoginSessionInfoGvcMbr.getData()
 
             // 현 액티비티 진입 유저 저장
             parentViewModel.fragment1Data.currentUserSessionTokenMbr =loginInfo.sessionToken

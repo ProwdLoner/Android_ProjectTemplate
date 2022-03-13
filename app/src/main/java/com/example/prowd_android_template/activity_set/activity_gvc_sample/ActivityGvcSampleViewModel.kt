@@ -1,11 +1,8 @@
-package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample
+package com.example.prowd_android_template.activity_set.activity_gvc_sample
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1.FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment2.FragmentActivityBasicBottomSheetNavigationSampleFragment2VmData
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment3.FragmentActivityBasicBottomSheetNavigationSampleFragment3VmData
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_global_variable_connector.CurrentLoginSessionInfoGvc
@@ -13,7 +10,7 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application) :
+class ActivityGvcSampleViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
     private val applicationMbr = application
@@ -25,8 +22,8 @@ class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
-    val currentLoginSessionInfoGvcMbr: CurrentLoginSessionInfoGvc =
-        CurrentLoginSessionInfoGvc(application)
+    val currentLoginSessionInfoGvcMbr : CurrentLoginSessionInfoGvc = CurrentLoginSessionInfoGvc(application)
+    val thisActivityGvcMbr : ActivityGvcSampleGvc = ActivityGvcSampleGvc(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -38,16 +35,6 @@ class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application
 
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
-
-    // (Fragment 화면 데이터)
-    // Fragment1
-    var fragment1Data = FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData()
-
-    // Fragment2
-    var fragment2Data = FragmentActivityBasicBottomSheetNavigationSampleFragment2VmData()
-
-    // Fragment3
-    var fragment3Data = FragmentActivityBasicBottomSheetNavigationSampleFragment3VmData()
 
 
     // ---------------------------------------------------------------------------------------------
@@ -63,10 +50,6 @@ class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application
     // 로딩 다이얼로그 출력 정보
     val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
         MutableLiveData(null)
-
-    // 플래그먼트 클릭 위치 정보
-    // 플래그먼트간 정보 공유 테스트용
-    val fragmentClickedPositionLiveDataMbr: MutableLiveData<Int> = MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------
