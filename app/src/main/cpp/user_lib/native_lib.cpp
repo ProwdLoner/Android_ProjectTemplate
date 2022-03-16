@@ -25,10 +25,10 @@
 extern "C"
 JNIEXPORT jstring Java_com_example_prowd_1android_1template_native_1wrapper_NativeLib_stringFromJNI(
         JNIEnv *env, jobject thiz) {
-    LOGE("stringFromJNI_start");
+    LOGI("stringFromJNI_start");
 
     std::string hello = "Hello from C++";
 
-    LOGE("stringFromJNI_end");
+    LOGI("stringFromJNI_end");
     return env->NewStringUTF(hello.c_str());
 }

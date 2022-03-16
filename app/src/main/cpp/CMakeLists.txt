@@ -8,7 +8,7 @@ project("basic_project_structure_sample_android_kotlin")
 add_library(
         native_lib # 자바용 라이브러리 이름
         SHARED # 종류
-        native_lib.cpp # CPP 라이브러리 파일
+        user_lib/native_lib.cpp # CPP 라이브러리 파일
 )
 
 # 라이브러리 탐색
