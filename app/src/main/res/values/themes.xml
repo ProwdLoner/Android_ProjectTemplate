@@ -11,9 +11,6 @@
         <!-- 액션바 텍스트 색 -->
         <item name="android:textColorPrimary">#FF000000</item>
 
-        <!-- 화면 백그라운드 색 -->
-        <item name="android:colorBackground">#FFFFFFFF</item>
-
         <!-- 소프트 네비게이션 바 색 -->
         <item name="android:navigationBarColor">#FF000000</item>
 
@@ -35,36 +32,9 @@
     </style>
 
     <!-- 스플래시 화면 테마 -->
-    <style name="Theme.ActivityInit" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <!-- 상태바 -->
-        <item name="android:statusBarColor" tools:targetApi="l">#FF3D7DDC</item>
-        <item name="colorPrimaryVariant">#FF3D7DDC</item>
-
-        <!-- 액션바 배경색 -->
-        <item name="colorPrimary">#FFFFFFFF</item>
-
-        <!-- 액션바 텍스트 색 -->
-        <item name="android:textColorPrimary">#FF000000</item>
-
-        <!-- 화면 백그라운드 색 -->
-        <item name="android:colorBackground">#FF3D7DDC</item>
+    <style name="Theme.ActivityInit" parent="Theme.Application">
 
         <!-- 소프트 네비게이션 바 색 -->
         <item name="android:navigationBarColor">#FF3D7DDC</item>
-
-        <!-- 버튼 색 -->
-        <item name="colorOnPrimary">#FF4fc2f7</item>
-
-        <!-- 선택 아이템 색 -->
-        <item name="colorSecondary">#64b5f6</item>
-
-        <!-- 아이템 아이콘 색 -->
-        <item name="colorOnSecondary">#FF000000</item>
-
-        <!-- 탭 배경 색 -->
-        <item name="colorSurface">#FFFFFFFF</item>
-
-        <!-- 탭 아이콘 색 -->
-        <item name="colorOnSurface">#FFcbcbcb</item>
     </style>
 </resources>
