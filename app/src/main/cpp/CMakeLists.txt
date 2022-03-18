@@ -11,9 +11,16 @@ find_library(
         log
 )
 
-# (외부 라이브러리 추가)
+# (서드 라이브러리 추가)
+# test1_lib
+include_directories(${CMAKE_SOURCE_DIR}/libs/test1_lib/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/test1_lib)
 
-# (유저 라이브러리 추가)
+# test2_lib
+include_directories(${CMAKE_SOURCE_DIR}/libs/test2_lib/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/test2_lib)
+
+# (래퍼 라이브러리 추가)
 # test1
 add_library(
         native_wrapper_test1 # 자바용 라이브러리 이름
@@ -23,6 +30,7 @@ add_library(
 
 target_link_libraries(
         native_wrapper_test1
+        test1_lib
         ${log-lib}
 )
 
@@ -35,5 +43,6 @@ add_library(
 
 target_link_libraries(
         native_wrapper_test2
+        test2_lib
         ${log-lib}
 )
