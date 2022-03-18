@@ -1,8 +1,8 @@
 package com.example.prowd_android_template.native_wrapper
 
-object NativeLib {
+object NativeWrapperTest1 {
     init {
-        System.loadLibrary("native_lib")
+        System.loadLibrary("native_wrapper_test1")
     }
 
     // [래핑 함수]

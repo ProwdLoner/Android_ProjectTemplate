@@ -1,17 +1,13 @@
 package com.example.prowd_android_template.activity_set.activity_jni_sample
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSampleViewModel
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityJniSampleBinding
-import com.example.prowd_android_template.databinding.ActivityRecyclerViewSampleBinding
-import com.example.prowd_android_template.native_wrapper.NativeLib
+import com.example.prowd_android_template.native_wrapper.NativeWrapperTest1
+import com.example.prowd_android_template.native_wrapper.NativeWrapperTest2
 
 class ActivityJniSample : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -123,10 +119,18 @@ class ActivityJniSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.justHelloJniTestBtn.setOnClickListener {
-            val jniResponse = NativeLib.stringFromJNI()
+        // test1.cpp 테스트 버튼
+        bindingMbr.helloFromTest1Btn.setOnClickListener {
+            val jniResponse = NativeWrapperTest1.stringFromJNI()
 
-            bindingMbr.justHelloJniTestResultValue.text = jniResponse
+            bindingMbr.helloFromTest1ResultValue.text = jniResponse
+        }
+
+        // test2.cpp 테스트 버튼
+        bindingMbr.helloFromTest2Btn.setOnClickListener {
+            val jniResponse = NativeWrapperTest2.stringFromJNI()
+
+            bindingMbr.helloFromTest2ResultValue.text = jniResponse
         }
 
     }
