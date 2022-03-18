@@ -35,7 +35,7 @@ Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperTest1_str
     int testInt = getLibraryInt();
 
     std::string hello =
-            "Hello from test1\nand\n" + std::to_string(testInt) + " From test1_third_lib";
+            "'Hello' from test1\nand\n'" + std::to_string(testInt) + "' From test1_third_lib";
 
     LOGI("stringFromJNI_end");
     return env->NewStringUTF(hello.c_str());

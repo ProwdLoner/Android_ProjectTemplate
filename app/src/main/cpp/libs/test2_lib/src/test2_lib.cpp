@@ -4,5 +4,5 @@
 #include "test2_lib.h"
 
 int getLibraryInt(){
-    return 200;
+    return 20;
 }
