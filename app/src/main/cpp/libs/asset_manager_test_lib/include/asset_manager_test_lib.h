@@ -5,6 +5,9 @@
 #ifndef PROWD_ANDROID_TEMPLATE_TEST_LIB_H
 #define PROWD_ANDROID_TEMPLATE_TEST_LIB_H
 
+#include <android/asset_manager_jni.h>
+#include <string>
+
 #endif //PROWD_ANDROID_TEMPLATE_TEST_LIB_H
 
-int getLibraryInt();
+std::string getAssetTextString();

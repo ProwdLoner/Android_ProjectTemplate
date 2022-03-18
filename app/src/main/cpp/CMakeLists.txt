@@ -12,37 +12,37 @@ find_library(
 )
 
 # (서드 라이브러리 추가)
-# test1_lib
-include_directories(${CMAKE_SOURCE_DIR}/libs/test1_lib/include)
-add_subdirectory(${CMAKE_SOURCE_DIR}/libs/test1_lib)
+# jni_string_test_lib
+include_directories(${CMAKE_SOURCE_DIR}/libs/jni_string_test_lib/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/jni_string_test_lib)
 
-# test2_lib
-include_directories(${CMAKE_SOURCE_DIR}/libs/test2_lib/include)
-add_subdirectory(${CMAKE_SOURCE_DIR}/libs/test2_lib)
+# asset_manager_test_lib
+include_directories(${CMAKE_SOURCE_DIR}/libs/asset_manager_test_lib/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/asset_manager_test_lib)
 
 # (래퍼 라이브러리 추가)
-# test1
+# native_wrapper_test1.cpp
 add_library(
-        native_wrapper_test1 # 자바용 라이브러리 이름
+        native_wrapper_jni_string_test # 자바용 라이브러리 이름
         SHARED # 종류
-        wrappers/native_wrapper_test1.cpp # CPP 라이브러리 파일
+        wrappers/native_wrapper_jni_string_test.cpp # CPP 라이브러리 파일
 )
 
 target_link_libraries(
-        native_wrapper_test1
-        test1_lib
+        native_wrapper_jni_string_test
+        jni_string_test_lib
         ${log-lib}
 )
 
-# test2
+# native_wrapper_asset_manager_test.cpp
 add_library(
-        native_wrapper_test2 # 자바용 라이브러리 이름
+        native_wrapper_asset_manager_test # 자바용 라이브러리 이름
         SHARED # 종류
-        wrappers/native_wrapper_test2.cpp # CPP 라이브러리 파일
+        wrappers/native_wrapper_asset_manager_test.cpp # CPP 라이브러리 파일
 )
 
 target_link_libraries(
-        native_wrapper_test2
-        test2_lib
+        native_wrapper_asset_manager_test
+        asset_manager_test_lib
         ${log-lib}
 )

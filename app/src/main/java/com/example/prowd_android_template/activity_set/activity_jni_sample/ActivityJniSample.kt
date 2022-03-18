@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityJniSampleBinding
-import com.example.prowd_android_template.native_wrapper.NativeWrapperTest1
-import com.example.prowd_android_template.native_wrapper.NativeWrapperTest2
+import com.example.prowd_android_template.native_wrapper.NativeWrapperJniStringTest
+import com.example.prowd_android_template.native_wrapper.NativeWrapperAssetManagerTest
 
 class ActivityJniSample : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -120,17 +120,20 @@ class ActivityJniSample : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         // test1.cpp 테스트 버튼
-        bindingMbr.helloFromTest1Btn.setOnClickListener {
-            val jniResponse = NativeWrapperTest1.stringFromJNI()
+        bindingMbr.helloFromTestBtn.setOnClickListener {
+            val jniResponse = NativeWrapperJniStringTest.getJniString()
 
-            bindingMbr.helloFromTest1ResultValue.text = jniResponse
+            bindingMbr.helloFromTestResultValue.text = jniResponse
         }
 
         // test2.cpp 테스트 버튼
-        bindingMbr.helloFromTest2Btn.setOnClickListener {
-            val jniResponse = NativeWrapperTest2.stringFromJNI()
+        bindingMbr.textFromAssetsTestBtn.setOnClickListener {
+            val jniResponse = NativeWrapperAssetManagerTest.getAssetTextString(
+                assets,
+                "jni_test.txt"
+            )
 
-            bindingMbr.helloFromTest2ResultValue.text = jniResponse
+            bindingMbr.textFromAssetsTestResultValue.text = jniResponse
         }
 
     }
