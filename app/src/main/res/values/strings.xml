@@ -15,6 +15,4 @@
     <!-- layout_activity_init -->
     <string name="layout_activity_init_splash_logo_content_description">대표 아이콘</string>
     <string name="layout_activity_init_welcome_message_text">모두의 오픈 소스!</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -143,8 +143,8 @@ class ActivityDialogSample : AppCompatActivity() {
             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                 DialogBinaryChoose.DialogInfoVO(
                     true,
-                    "네트워크 에러",
-                    "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                    "선택 다이얼로그 테스트",
+                    "Yes or No?",
                     null,
                     null,
                     onPosBtnClicked = {
@@ -185,8 +185,8 @@ class ActivityDialogSample : AppCompatActivity() {
             viewModelMbr.confirmDialogInfoLiveDataMb.value =
                 DialogConfirm.DialogInfoVO(
                     true,
-                    "서버 에러",
-                    "현재 서버의 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                    "확인 다이얼로그 테스트",
+                    "Check Dialog",
                     null,
                     onCheckBtnClicked = {
                         val myToast = Toast.makeText(
