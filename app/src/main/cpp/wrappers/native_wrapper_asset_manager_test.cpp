@@ -4,7 +4,7 @@
 
 // Android
 #include <android/log.h>
-//#include <android/asset_manager_jni.h>
+#include <android/asset_manager_jni.h>
 //#include <android/bitmap.h>
 
 // (서드 라이브러리)
@@ -32,9 +32,40 @@ Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperAssetMana
         jstring file_name) {
     LOGI("getAssetTextString_start");
 
-    // 서드 라이브러리 요청
-    std::string testInt = getAssetTextString();
+    // 파일명 파싱
+    const char *asset_file_name = env->GetStringUTFChars(file_name, nullptr);
+    env->ReleaseStringUTFChars(file_name, asset_file_name);
+
+    // aaset 파일 접근
+    AAssetManager *native_asset = AAssetManager_fromJava(env, asset_manager);
+    AAsset *assetFile = AAssetManager_open(native_asset, asset_file_name, AASSET_MODE_BUFFER);
+
+    // 파일 데이터 길이
+    auto file_length = static_cast<size_t>(AAsset_getLength(assetFile));
+
+    // 파일 데이터 to Char 변수 생성 (malloc 사용 -> 해소 필요)
+    char *file_data = (char *) malloc(file_length);
+
+    // 파일 데이터 가져오기
+    AAsset_read(assetFile, file_data, file_length);
+
+    // 객체 해소
+    AAsset_close(assetFile);
+
+    // char to string
+    std::string asset_text(file_data);
+
+    //free malloc
+    free(file_data);
+
+    // 서드 라이브러리 텍스트 요청
+    std::string thirdLibString = getAssetTextString();
+
+    std::string asset_file_name_string(asset_file_name);
+    std::string resultString =
+            "file_name :\n\t" + asset_file_name_string + "\nfile_value :\n\t" + asset_text + "(" +
+            thirdLibString + ")";
 
     LOGI("getAssetTextString_end");
-    return env->NewStringUTF(testInt.c_str());
+    return env->NewStringUTF(resultString.c_str());
 }

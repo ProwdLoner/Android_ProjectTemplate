@@ -101,12 +101,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
                     android:text="Asset Text\nFrom JNI"
                     android:textColor="#FF000000"
-                    android:layout_marginTop="10dp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/hello_from_test_btn"/>
+                    app:layout_constraintTop_toBottomOf="@id/hello_from_test_btn" />
 
                 <TextView
                     android:id="@+id/text_from_assets_test_result_label"
@@ -126,7 +126,6 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
                     android:textColor="#FF000000"
-                    app:layout_constraintBottom_toBottomOf="@id/text_from_assets_test_result_label"
                     app:layout_constraintStart_toEndOf="@id/text_from_assets_test_result_label"
                     app:layout_constraintTop_toTopOf="@id/text_from_assets_test_result_label" />
 
