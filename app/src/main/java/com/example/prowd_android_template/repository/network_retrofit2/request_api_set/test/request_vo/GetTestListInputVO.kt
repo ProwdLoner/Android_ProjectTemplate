@@ -2,7 +2,7 @@ package com.example.prowd_android_template.repository.network_retrofit2.request_
 
 data class GetTestListInputVO(
     @Transient
-    val headerMap: Map<String, String>,
+    val headerMap: Map<String, String?>,
 
     @Transient
     val page: Int

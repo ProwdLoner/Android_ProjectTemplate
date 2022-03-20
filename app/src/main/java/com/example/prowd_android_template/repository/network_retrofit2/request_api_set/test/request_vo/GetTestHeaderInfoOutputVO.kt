@@ -3,19 +3,11 @@ package com.example.prowd_android_template.repository.network_retrofit2.request_
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 
-data class PostTestListInputVO(
-    @Transient
-    val headerMap: Map<String, String?>,
-
-    @SerializedName("seq")
+data class GetTestHeaderInfoOutputVO(
+    @SerializedName("uid")
     @Expose
-    val seq : Int,
-
-    @SerializedName("title")
-    @Expose
-    val title: String,
-
+    val uid: Long,
     @SerializedName("content")
     @Expose
-    val content : String
+    val content: String
 )

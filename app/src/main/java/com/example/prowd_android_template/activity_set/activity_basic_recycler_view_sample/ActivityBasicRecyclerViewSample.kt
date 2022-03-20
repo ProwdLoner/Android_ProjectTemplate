@@ -18,6 +18,8 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
+import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.GetTestFooterInfoInputVO
+import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.GetTestHeaderInfoInputVO
 import java.net.SocketTimeoutException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -715,7 +717,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     val itemUid =
                         screenVerticalRecyclerViewAdapterDataListCopy.removeFirst().itemUid
 
-                    // 외부 데이터를 어뎁터용 데이터로 변형
+                    // 외부 데이터를 어뎁터용 데이터로 변형 (구조뿐 아닌 화면에 보여질 타입까지 설정 = VO 클래스 종류 선정)
                     val headerData =
                         ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO(
                             itemUid,
@@ -962,11 +964,13 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                         screenVerticalRecyclerViewAdapterDataListCopy
 
-                    if (0 != getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.size) {
+                    if (null != getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult &&
+                        0 != getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.testList.size
+                    ) {
                         // 이번 페이지 데이터 리스트가 비어있지 않다면,
                         // 다음 페이지 추가
                         viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr =
-                            getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.last().uid
+                            getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.testList.last().uid
 
                         // 아이템 마지막 인덱스 위치
                         itemLastIdx =
@@ -976,7 +980,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         val adapterDataList: java.util.ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
                             java.util.ArrayList()
 
-                        for (data in getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult) {
+                        for (data in getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.testList) {
                             adapterDataList.add(
                                 ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
                                     adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,

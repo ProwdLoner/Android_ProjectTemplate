@@ -8,9 +8,7 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_global_variable_connector.CurrentLoginSessionInfoGvc
 import com.example.prowd_android_template.repository.RepositorySet
-import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterFooterDataOutputVO
-import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterHeaderDataOutputVO
-import com.example.prowd_android_template.value_object.ScreenVerticalRecyclerViewAdapterItemDataOutputVO
+import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.*
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
@@ -105,7 +103,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // 현재 설정으로 다음 데이터 리스트 요청
     fun getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsync(
-        onComplete: (ScreenVerticalRecyclerViewAdapterHeaderDataOutputVO) -> Unit,
+        onComplete: (GetTestHeaderInfoOutputVO) -> Unit,
         onError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
@@ -128,7 +126,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 val content = jObject.getString("contentString")
 
                 // json 배열 파싱
-                val dummyData = ScreenVerticalRecyclerViewAdapterHeaderDataOutputVO(
+                val dummyData = GetTestHeaderInfoOutputVO(
                     uid,
                     content
                 )
@@ -138,6 +136,10 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.release()
 
             } else {
+                // 네트워크 입력값
+                val inputVo = GetTestHeaderInfoInputVO(
+                    mapOf("session_token" to currentUserSessionTokenMbr)
+                )
 
                 // TODO : 실제 리포지토리 처리
                 getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.release()
@@ -152,7 +154,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // 현재 설정으로 다음 데이터 리스트 요청
     fun getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsync(
-        onComplete: (ScreenVerticalRecyclerViewAdapterFooterDataOutputVO) -> Unit,
+        onComplete: (GetTestFooterInfoOutputVO) -> Unit,
         onError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
@@ -175,7 +177,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 val content = jObject.getString("contentString")
 
                 // json 배열 파싱
-                val dummyData = ScreenVerticalRecyclerViewAdapterFooterDataOutputVO(
+                val dummyData = GetTestFooterInfoOutputVO(
                     uid,
                     content
                 )
@@ -184,6 +186,10 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
                 getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.release()
             } else {
+                // 네트워크 입력값
+                val inputVo = GetTestFooterInfoInputVO(
+                    mapOf("session_token" to currentUserSessionTokenMbr)
+                )
 
                 // TODO : 실제 리포지토리 처리
                 getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.release()
@@ -221,7 +227,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // 현재 설정으로 다음 데이터 리스트 요청
     fun getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsync(
-        onComplete: (ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO>) -> Unit,
+        onComplete: (GetTestItemInfoListOutputVO?) -> Unit,
         onError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
@@ -229,7 +235,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
             // 원하는 리스트 사이즈가 0이라면 그냥 리턴
             if (0 == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr) {
-                onComplete(ArrayList())
+                onComplete(null)
                 return@execute
             }
 
@@ -238,8 +244,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 Thread.sleep(1500)
 
                 // 원래는 네트워크에서 실제 데이터 리스트 가져오기
-                val resultDataList: ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO> =
-                    ArrayList()
 
                 // 더미 데이터 가져오기 (json)
                 val assetManager = applicationMbr.resources.assets
@@ -250,7 +254,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 val jObject = JSONObject(jsonString)
                 val dummyDataJsonList = jObject.getJSONArray("dummyDataList")
 
-                val dummyDataList = ArrayList<ScreenVerticalRecyclerViewAdapterItemDataOutputVO>()
+                val dummyDataList = ArrayList<GetTestItemInfoListOutputVO.TestInfo>()
 
                 // json 배열 파싱
                 for (dummyDataListIdx in 0 until dummyDataJsonList.length()) {
@@ -260,7 +264,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                     val content = dummyDataObj.getString("contentString")
                     val writeDate = dummyDataObj.getString("writeDateString")
                     dummyDataList.add(
-                        ScreenVerticalRecyclerViewAdapterItemDataOutputVO(
+                        GetTestItemInfoListOutputVO.TestInfo(
                             uid,
                             title,
                             content,
@@ -315,8 +319,13 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
                 var addedItemCount = 0
 
+                val resultDataList = GetTestItemInfoListOutputVO(
+                    100,
+                    ArrayList()
+                )
+
                 for (dummyDataListIdx in startIdx until dummyDataList.size) {
-                    resultDataList.add(dummyDataList[dummyDataListIdx])
+                    resultDataList.testList.add(dummyDataList[dummyDataListIdx])
 
                     ++addedItemCount
                     if (addedItemCount == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr) {
@@ -328,8 +337,15 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
 
             } else {
-                // TODO : 실제 리포지토리 처리
+                // 네트워크 입력값
+                val inputVo = GetTestItemInfoListInputVO(
+                    mapOf("session_token" to currentUserSessionTokenMbr),
+                    getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr,
+                    getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr,
+                    getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr
+                )
 
+                // TODO : 실제 리포지토리 처리
                 getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
             }
         }
