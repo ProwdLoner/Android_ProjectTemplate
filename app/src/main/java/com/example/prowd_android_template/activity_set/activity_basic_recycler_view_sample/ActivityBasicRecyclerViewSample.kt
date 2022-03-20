@@ -18,8 +18,6 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
-import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.GetTestFooterInfoInputVO
-import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.GetTestHeaderInfoInputVO
 import java.net.SocketTimeoutException
 import java.text.SimpleDateFormat
 import java.util.*

@@ -1,7 +1,7 @@
-package com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test
+package com.example.prowd_android_template.network_request_api_set.test
 
-import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.PutTestListInputVO
-import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.PostTestListInputVO
+import com.example.prowd_android_template.network_request_api_set.test.request_vo.PutTestListInputVO
+import com.example.prowd_android_template.network_request_api_set.test.request_vo.PostTestListInputVO
 import retrofit2.Response
 import retrofit2.http.*
 

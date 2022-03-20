@@ -8,7 +8,7 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_global_variable_connector.CurrentLoginSessionInfoGvc
 import com.example.prowd_android_template.repository.RepositorySet
-import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.*
+import com.example.prowd_android_template.network_request_api_set.test.request_vo.*
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*

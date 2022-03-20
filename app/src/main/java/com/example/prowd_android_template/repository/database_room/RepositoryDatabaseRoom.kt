@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.repository.database_room
 
 import android.content.Context
-import com.example.prowd_android_template.repository.database_room.database_set.app.AppDatabase
 import java.util.concurrent.Semaphore
 
 class RepositoryDatabaseRoom private constructor(context: Context) {

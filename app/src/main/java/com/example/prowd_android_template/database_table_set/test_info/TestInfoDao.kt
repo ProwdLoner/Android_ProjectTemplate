@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.repository.database_room.database_set.app.table_set.test_info
+package com.example.prowd_android_template.database_table_set.test_info
 
 import androidx.room.*
 
