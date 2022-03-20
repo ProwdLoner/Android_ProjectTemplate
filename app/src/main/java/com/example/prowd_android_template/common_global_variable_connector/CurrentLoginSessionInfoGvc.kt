@@ -16,65 +16,105 @@ class CurrentLoginSessionInfoGvc(application: Application) {
         Context.MODE_PRIVATE
     )
 
+    // SharedPreference 키 네임
+    private val sessionTokenKeyMbr = "CurrentLoginSessionInfoGvc_sessionTokenKeyMbr"
+    private val userNickNameKeyMbr = "CurrentLoginSessionInfoGvc_userNickNameKeyMbr"
+    private val nameLoginTypeKeyMbr = "CurrentLoginSessionInfoGvc_nameLoginTypeKeyMbr"
+    private val nameUserServerIdKeyMbr = "CurrentLoginSessionInfoGvc_nameUserServerIdKeyMbr"
+    private val nameUserServerPwKeyMbr = "CurrentLoginSessionInfoGvc_nameUserServerPwKeyMbr"
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    fun getData(): ColumnVo {
-        val sessionToken = spMbr.getString(
-            colNameSessionTokenMbr,
+    // (sessionToken)
+    fun getSessionToken(): String? {
+        return spMbr.getString(
+            sessionTokenKeyMbr,
             null
-        )
-
-        val userNickName = spMbr.getString(
-            colNameUserNickNameMbr,
-            null
-        )
-
-        val loginType = spMbr.getInt(
-            colNameLoginTypeMbr,
-            0
-        )
-
-        val userServerId = spMbr.getString(
-            colNameUserServerIdMbr,
-            null
-        )
-
-        val userServerPw = spMbr.getString(
-            colNameUserServerPwMbr,
-            null
-        )
-
-        return ColumnVo(
-            sessionToken,
-            userNickName,
-            loginType,
-            userServerId,
-            userServerPw
         )
     }
 
-    fun setData(inputData: ColumnVo) {
+    fun setSessionToken(inputData: String?) {
         with(spMbr.edit()) {
             putString(
-                colNameSessionTokenMbr,
-                inputData.sessionToken
+                sessionTokenKeyMbr,
+                inputData
             )
+
+            apply()
+        }
+    }
+
+    // (userNickName)
+    fun getUserNickName(): String? {
+        return spMbr.getString(
+            userNickNameKeyMbr,
+            null
+        )
+    }
+
+    fun setUserNickName(inputData: String?) {
+        with(spMbr.edit()) {
             putString(
-                colNameUserNickNameMbr,
-                inputData.userNickName
+                userNickNameKeyMbr,
+                inputData
             )
+
+            apply()
+        }
+    }
+
+    // (loginType)
+    fun getLoginType(): Int {
+        return spMbr.getInt(
+            nameLoginTypeKeyMbr,
+            0
+        )
+    }
+
+    fun setLoginType(inputData: Int) {
+        with(spMbr.edit()) {
             putInt(
-                colNameLoginTypeMbr,
-                inputData.loginType
+                nameLoginTypeKeyMbr,
+                inputData
             )
+
+            apply()
+        }
+    }
+
+    // (userServerId)
+    fun getUserServerId(): String? {
+        return spMbr.getString(
+            nameUserServerIdKeyMbr,
+            null
+        )
+    }
+
+    fun setUserServerId(inputData: String?) {
+        with(spMbr.edit()) {
             putString(
-                colNameUserServerIdMbr,
-                inputData.userServerId
+                nameUserServerIdKeyMbr,
+                inputData
             )
+
+            apply()
+        }
+    }
+
+    // (userServerPw)
+    fun getUserServerPw(): String? {
+        return spMbr.getString(
+            nameUserServerPwKeyMbr,
+            null
+        )
+    }
+
+    fun setUserServerPw(inputData: String?) {
+        with(spMbr.edit()) {
             putString(
-                colNameUserServerPwMbr,
-                inputData.userServerPw
+                nameUserServerPwKeyMbr,
+                inputData
             )
 
             apply()
@@ -84,26 +124,5 @@ class CurrentLoginSessionInfoGvc(application: Application) {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    // 로그인 정보 객체
-    data class ColumnVo(
-        val sessionToken: String?,
-        val userNickName: String?,
-        val loginType: Int,
-        // loginType :
-        //  0 = un_login,
-        //  1 = my_server,
-        //  2 = google,
-        //  3 = kakao,
-        //  4 = naver
-        val userServerId: String?,
-        val userServerPw: String?
-    )
-
-    // SharedPreference 컬럼명
-    private val colNameSessionTokenMbr = "CurrentLoginSessionInfoGvc_colNameSessionTokenMbr"
-    private val colNameUserNickNameMbr = "CurrentLoginSessionInfoGvc_colNameUserNickNameMbr"
-    private val colNameLoginTypeMbr = "CurrentLoginSessionInfoGvc_colNameLoginTypeMbr"
-    private val colNameUserServerIdMbr = "CurrentLoginSessionInfoGvc_colNameUserServerIdMbr"
-    private val colNameUserServerPwMbr = "CurrentLoginSessionInfoGvc_colNameUserServerPwMbr"
 
 }

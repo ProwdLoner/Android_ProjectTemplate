@@ -54,8 +54,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
         if (!parentViewModel.isChangingConfigurationsMbr && // 화면 회전이 아니면서,
             isVisible // 현재 보이는 상황일 때
         ) {
-            val loginInfo = parentViewModel.currentLoginSessionInfoGvcMbr.getData()
-            val sessionToken =loginInfo.sessionToken
+            val sessionToken = parentViewModel.currentLoginSessionInfoGvcMbr.getSessionToken()
 
             if (parentViewModel.fragment2Data.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != parentViewModel.fragment2Data.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
@@ -85,10 +84,9 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!parentViewModel.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-            val loginInfo = parentViewModel.currentLoginSessionInfoGvcMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            parentViewModel.fragment2Data.currentUserSessionTokenMbr =loginInfo.sessionToken
+            parentViewModel.fragment2Data.currentUserSessionTokenMbr = parentViewModel.currentLoginSessionInfoGvcMbr.getSessionToken()
         }
     }
 
@@ -102,10 +100,10 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
 
     // 라이브 데이터 설정
     private fun setLiveData() {
-        parentViewModel.fragmentClickedPositionLiveDataMbr.observe(parentActivity){
-            if (null == it){
+        parentViewModel.fragmentClickedPositionLiveDataMbr.observe(parentActivity) {
+            if (null == it) {
                 bindingMbr.clickedByValueTxt.text = "클릭 없음"
-            }else{
+            } else {
                 bindingMbr.clickedByValueTxt.text = "${it}번 플래그먼트"
             }
         }

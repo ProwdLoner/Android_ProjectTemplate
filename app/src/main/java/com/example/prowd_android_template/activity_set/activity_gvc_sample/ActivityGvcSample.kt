@@ -65,29 +65,24 @@ class ActivityGvcSample : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 액티비티 GVC 가져오기
-        val messageInfoVo = viewModelMbr.thisActivityGvcMbr.getData()
 
         // gvc 에 저장된 데이터 표현 후 비워주기
         // gvc 가 플래그로 사용됨
-        if (messageInfoVo.message1 != null || messageInfoVo.message2 != null) {
+        if (viewModelMbr.thisActivityGvcMbr.getMessage1() != null || viewModelMbr.thisActivityGvcMbr.getMessage2() != null) {
             val myToast = Toast.makeText(
                 this,
-                "message1 : ${messageInfoVo.message1}, message2 : ${messageInfoVo.message2}",
+                "message1 : ${viewModelMbr.thisActivityGvcMbr.getMessage1()}, message2 : ${viewModelMbr.thisActivityGvcMbr.getMessage2()}",
                 Toast.LENGTH_SHORT
             )
             myToast.show()
 
-            viewModelMbr.thisActivityGvcMbr.setData(
-                ActivityGvcSampleGvc.ColumnVo(null, null)
-            )
+            viewModelMbr.thisActivityGvcMbr.setMessage1(null)
+            viewModelMbr.thisActivityGvcMbr.setMessage2(null)
         }
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val loginInfo = viewModelMbr.currentLoginSessionInfoGvcMbr.getData()
-
-            val sessionToken = loginInfo.sessionToken
+            val sessionToken = viewModelMbr.currentLoginSessionInfoGvcMbr.getSessionToken()
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
@@ -141,10 +136,10 @@ class ActivityGvcSample : AppCompatActivity() {
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-            val loginInfo = viewModelMbr.currentLoginSessionInfoGvcMbr.getData()
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = loginInfo.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr =
+                viewModelMbr.currentLoginSessionInfoGvcMbr.getSessionToken()
         }
     }
 

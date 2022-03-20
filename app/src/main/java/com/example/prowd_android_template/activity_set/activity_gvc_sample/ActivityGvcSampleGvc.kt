@@ -16,57 +16,47 @@ class ActivityGvcSampleGvc(application: Application) {
         Context.MODE_PRIVATE
     )
 
+    // SharedPreference 키 네임
+    private val message1KeyMbr = "ActivityGvcSampleGvc_message1KeyMbr"
+    private val message2KeyMbr = "ActivityGvcSampleGvc_message2KeyMbr"
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    fun getData(): ColumnVo {
-        val message1 = spMbr.getString(
-            colMessage1Mbr,
+    // (message1)
+    fun getMessage1(): String? {
+        return spMbr.getString(
+            message1KeyMbr,
             null
-        )
-
-        val message2 = spMbr.getString(
-            colMessage2Mbr,
-            null
-        )
-
-        return ColumnVo(
-            message1,
-            message2
         )
     }
 
-    fun setData(inputData: ColumnVo) {
+    fun setMessage1(inputData: String?) {
         with(spMbr.edit()) {
             putString(
-                colMessage1Mbr,
-                inputData.message1
-            )
-            putString(
-                colMessage2Mbr,
-                inputData.message2
+                message1KeyMbr,
+                inputData
             )
 
             apply()
         }
     }
 
-    fun setMessage1(message1: String?) {
-        with(spMbr.edit()) {
-            putString(
-                colMessage1Mbr,
-                message1
-            )
-            apply()
-        }
+    // (message2)
+    fun getMessage2(): String? {
+        return spMbr.getString(
+            message2KeyMbr,
+            null
+        )
     }
 
-    fun setMessage2(message2: String?) {
+    fun setMessage2(inputData: String?) {
         with(spMbr.edit()) {
             putString(
-                colMessage2Mbr,
-                message2
+                message2KeyMbr,
+                inputData
             )
+
             apply()
         }
     }
@@ -74,14 +64,5 @@ class ActivityGvcSampleGvc(application: Application) {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    // 로그인 정보 객체
-    data class ColumnVo(
-        val message1: String?,
-        val message2: String?
-    )
-
-    // SharedPreference 컬럼명
-    private val colMessage1Mbr = "ActivityGvcSampleGvc_colMessage1Mbr"
-    private val colMessage2Mbr = "ActivityGvcSampleGvc_colMessage2Mbr"
 
 }
