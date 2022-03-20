@@ -8,7 +8,7 @@ import android.content.Context
 class CurrentLoginSessionInfoGvc(application: Application) {
     // <멤버 변수 공간>
     // SharedPreference 파일명
-    private val spNameMbr = "GvcCurrentLoginSessionInfo"
+    private val spNameMbr = "CurrentLoginSessionInfoGvc"
 
     // SharedPreference 접근 객체
     private val spMbr = application.getSharedPreferences(
@@ -100,10 +100,10 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     )
 
     // SharedPreference 컬럼명
-    private val colNameSessionTokenMbr = "GvcCurrentLoginSessionInfoSessionToken"
-    private val colNameUserNickNameMbr = "GvcCurrentLoginSessionInfoUserNickName"
-    private val colNameLoginTypeMbr = "GvcCurrentLoginSessionInfoLoginType"
-    private val colNameUserServerIdMbr = "GvcCurrentLoginSessionInfoUserServerId"
-    private val colNameUserServerPwMbr = "GvcCurrentLoginSessionInfoUserServerPw"
+    private val colNameSessionTokenMbr = "CurrentLoginSessionInfoGvc_colNameSessionTokenMbr"
+    private val colNameUserNickNameMbr = "CurrentLoginSessionInfoGvc_colNameUserNickNameMbr"
+    private val colNameLoginTypeMbr = "CurrentLoginSessionInfoGvc_colNameLoginTypeMbr"
+    private val colNameUserServerIdMbr = "CurrentLoginSessionInfoGvc_colNameUserServerIdMbr"
+    private val colNameUserServerPwMbr = "CurrentLoginSessionInfoGvc_colNameUserServerPwMbr"
 
 }

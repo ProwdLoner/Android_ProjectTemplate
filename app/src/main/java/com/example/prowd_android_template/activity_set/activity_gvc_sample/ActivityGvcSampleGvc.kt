@@ -81,7 +81,7 @@ class ActivityGvcSampleGvc(application: Application) {
     )
 
     // SharedPreference 컬럼명
-    private val colMessage1Mbr = "ActivityGvcSampleGvcMessage1"
-    private val colMessage2Mbr = "ActivityGvcSampleGvcMessage2"
+    private val colMessage1Mbr = "ActivityGvcSampleGvc_colMessage1Mbr"
+    private val colMessage2Mbr = "ActivityGvcSampleGvc_colMessage2Mbr"
 
 }
