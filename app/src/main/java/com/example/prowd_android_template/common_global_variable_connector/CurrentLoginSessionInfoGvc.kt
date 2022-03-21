@@ -65,6 +65,8 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     }
 
     // (loginType)
+    // 코드
+    // 0 : 비회원, 1 : 자체 서버, 2 : google, 3 : kakao, 4 : naver
     fun getLoginType(): Int {
         return spMbr.getInt(
             nameLoginTypeKeyMbr,
