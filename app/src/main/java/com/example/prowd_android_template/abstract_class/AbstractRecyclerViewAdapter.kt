@@ -10,8 +10,7 @@ abstract class AbstractRecyclerViewAdapter(
     targetView: RecyclerView,
     isVertical: Boolean,
     onScrollHitBottom: () -> Unit
-) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트
     val currentItemListMbr: ArrayList<AdapterItemAbstractVO> =
