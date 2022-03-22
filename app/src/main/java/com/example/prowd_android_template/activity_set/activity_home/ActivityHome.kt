@@ -115,7 +115,8 @@ class ActivityHome : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoGvcMbr.getSessionToken()
+            viewModelMbr.currentUserSessionTokenMbr =
+                viewModelMbr.currentLoginSessionInfoGvcMbr.getSessionToken()
         }
     }
 
@@ -169,6 +170,16 @@ class ActivityHome : AppCompatActivity() {
                     ActivityJniSample::class.java
                 )
             startActivity(intent)
+        }
+
+        // 카메라 샘플 이동 버튼
+        bindingMbr.goToCameraSampleBtn.setOnClickListener {
+//            val intent =
+//                Intent(
+//                    this,
+//                    ActivityJniSample::class.java
+//                )
+//            startActivity(intent)
         }
 
     }
