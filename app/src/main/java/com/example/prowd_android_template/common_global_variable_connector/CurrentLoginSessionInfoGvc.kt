@@ -23,67 +23,67 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     private val nameUserServerIdKeyMbr = "CurrentLoginSessionInfoGvc_nameUserServerIdKeyMbr"
     private val nameUserServerPwKeyMbr = "CurrentLoginSessionInfoGvc_nameUserServerPwKeyMbr"
 
-
-    // ---------------------------------------------------------------------------------------------
-    // <공개 메소드 공간>
     // (sessionToken)
-    fun getSessionToken(): String? {
-        return spMbr.getString(
-            sessionTokenKeyMbr,
-            null
-        )
-    }
-
-    fun setSessionToken(inputData: String?) {
-        with(spMbr.edit()) {
-            putString(
+    var sessionToken: String?
+        get() {
+            return spMbr.getString(
                 sessionTokenKeyMbr,
-                inputData
+                null
             )
-
-            apply()
         }
-    }
+        set(value) {
+            with(spMbr.edit()) {
+                putString(
+                    sessionTokenKeyMbr,
+                    value
+                )
+                apply()
+            }
+        }
 
     // (userNickName)
-    fun getUserNickName(): String? {
-        return spMbr.getString(
-            userNickNameKeyMbr,
-            null
-        )
-    }
-
-    fun setUserNickName(inputData: String?) {
-        with(spMbr.edit()) {
-            putString(
+    var userNickName: String?
+        get() {
+            return spMbr.getString(
                 userNickNameKeyMbr,
-                inputData
+                null
             )
-
-            apply()
         }
-    }
+        set(value) {
+            with(spMbr.edit()) {
+                putString(
+                    userNickNameKeyMbr,
+                    value
+                )
+
+                apply()
+            }
+        }
 
     // (loginType)
     // 코드
     // 0 : 비회원, 1 : 자체 서버, 2 : google, 3 : kakao, 4 : naver
-    fun getLoginType(): Int {
-        return spMbr.getInt(
-            nameLoginTypeKeyMbr,
-            0
-        )
-    }
-
-    fun setLoginType(inputData: Int) {
-        with(spMbr.edit()) {
-            putInt(
+    var loginType: Int
+        get() {
+            return spMbr.getInt(
                 nameLoginTypeKeyMbr,
-                inputData
+                0
             )
-
-            apply()
         }
-    }
+        set(value) {
+            with(spMbr.edit()) {
+                putInt(
+                    nameLoginTypeKeyMbr,
+                    value
+                )
+
+                apply()
+            }
+        }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <공개 메소드 공간>
 
     // (userServerId)
     fun getUserServerId(): String? {

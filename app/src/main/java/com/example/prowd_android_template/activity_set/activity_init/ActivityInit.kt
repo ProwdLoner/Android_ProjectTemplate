@@ -207,7 +207,7 @@ class ActivityInit : AppCompatActivity() {
                                 // 메소드 실행중이 아닐 때,
 
                                 val loginType: Int =
-                                    viewModelMbr.currentLoginSessionInfoGvcMbr.getLoginType()
+                                    viewModelMbr.currentLoginSessionInfoGvcMbr.loginType
                                 val serverId: String? =
                                     viewModelMbr.currentLoginSessionInfoGvcMbr.getUserServerId()
                                 val serverPw: String? =
@@ -222,15 +222,9 @@ class ActivityInit : AppCompatActivity() {
                                     onComplete = { checkLoginSessionResult ->
                                         runOnUiThread checkLoginSessionAsyncComplete@{
                                             // 검증 후 결과를 sharedPreferences 에 대입
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.setSessionToken(
-                                                checkLoginSessionResult.sessionToken
-                                            )
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.setUserNickName(
-                                                checkLoginSessionResult.userNickName
-                                            )
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.setLoginType(
-                                                checkLoginSessionResult.loginType
-                                            )
+                                            viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken = checkLoginSessionResult.sessionToken
+                                            viewModelMbr.currentLoginSessionInfoGvcMbr.userNickName = checkLoginSessionResult.userNickName
+                                            viewModelMbr.currentLoginSessionInfoGvcMbr.loginType = checkLoginSessionResult.loginType
                                             viewModelMbr.currentLoginSessionInfoGvcMbr.setUserServerId(
                                                 checkLoginSessionResult.userServerId
                                             )
