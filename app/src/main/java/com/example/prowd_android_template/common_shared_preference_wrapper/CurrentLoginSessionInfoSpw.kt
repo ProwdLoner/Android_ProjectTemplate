@@ -1,15 +1,15 @@
-package com.example.prowd_android_template.common_global_variable_connector
+package com.example.prowd_android_template.common_shared_preference_wrapper
 
 import android.app.Application
 import android.content.Context
 
-// (글로벌 변수로 사용할 SharedPref 래퍼 클래스)
+// (SharedPref 래퍼 클래스)
 // 현재 로그인 세션 정보
-class CurrentLoginSessionInfoGvc(application: Application) {
+class CurrentLoginSessionInfoSpw(application: Application) {
     // <멤버 변수 공간>
     // SharedPreference 접근 객체
     private val spMbr = application.getSharedPreferences(
-        "CurrentLoginSessionInfoGvc",
+        "CurrentLoginSessionInfoSpw",
         Context.MODE_PRIVATE
     )
 
@@ -17,14 +17,14 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     var sessionToken: String?
         get() {
             return spMbr.getString(
-                "CurrentLoginSessionInfoGvc_sessionToken",
+                "CurrentLoginSessionInfoSpw_sessionToken",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "CurrentLoginSessionInfoGvc_sessionToken",
+                    "CurrentLoginSessionInfoSpw_sessionToken",
                     value
                 )
                 apply()
@@ -35,14 +35,14 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     var userNickName: String?
         get() {
             return spMbr.getString(
-                "CurrentLoginSessionInfoGvc_userNickName",
+                "CurrentLoginSessionInfoSpw_userNickName",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "CurrentLoginSessionInfoGvc_userNickName",
+                    "CurrentLoginSessionInfoSpw_userNickName",
                     value
                 )
                 apply()
@@ -55,14 +55,14 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     var loginType: Int
         get() {
             return spMbr.getInt(
-                "CurrentLoginSessionInfoGvc_loginType",
+                "CurrentLoginSessionInfoSpw_loginType",
                 0
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putInt(
-                    "CurrentLoginSessionInfoGvc_loginType",
+                    "CurrentLoginSessionInfoSpw_loginType",
                     value
                 )
                 apply()
@@ -73,14 +73,14 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     var userServerId: String?
         get(): String? {
             return spMbr.getString(
-                "CurrentLoginSessionInfoGvc_userServerId",
+                "CurrentLoginSessionInfoSpw_userServerId",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "CurrentLoginSessionInfoGvc_userServerId",
+                    "CurrentLoginSessionInfoSpw_userServerId",
                     value
                 )
                 apply()
@@ -91,14 +91,14 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     var userServerPw: String?
         get(): String? {
             return spMbr.getString(
-                "CurrentLoginSessionInfoGvc_userServerPw",
+                "CurrentLoginSessionInfoSpw_userServerPw",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "CurrentLoginSessionInfoGvc_userServerPw",
+                    "CurrentLoginSessionInfoSpw_userServerPw",
                     value
                 )
                 apply()

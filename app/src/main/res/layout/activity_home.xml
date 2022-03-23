@@ -99,18 +99,6 @@
                     app:layout_constraintTop_toBottomOf="@id/go_to_recycler_view_sample_list_btn" />
 
                 <Button
-                    android:id="@+id/go_to_gvc_sample_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="전역 접근 변수 샘플"
-                    android:textColor="#FF000000"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_view_pager_sample_list_btn" />
-
-                <Button
                     android:id="@+id/go_to_jni_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -120,7 +108,7 @@
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_gvc_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/go_to_view_pager_sample_list_btn" />
 
                 <Button
                     android:id="@+id/go_to_camera_sample_list_btn"

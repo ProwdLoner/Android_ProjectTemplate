@@ -207,11 +207,11 @@ class ActivityInit : AppCompatActivity() {
                                 // 메소드 실행중이 아닐 때,
 
                                 val loginType: Int =
-                                    viewModelMbr.currentLoginSessionInfoGvcMbr.loginType
+                                    viewModelMbr.currentLoginSessionInfoSpwMbr.loginType
                                 val serverId: String? =
-                                    viewModelMbr.currentLoginSessionInfoGvcMbr.userServerId
+                                    viewModelMbr.currentLoginSessionInfoSpwMbr.userServerId
                                 val serverPw: String? =
-                                    viewModelMbr.currentLoginSessionInfoGvcMbr.userServerPw
+                                    viewModelMbr.currentLoginSessionInfoSpwMbr.userServerPw
 
                                 viewModelMbr.checkLoginSessionAsync(
                                     ActivityInitViewModel.CheckLoginSessionParameterVO(
@@ -222,11 +222,11 @@ class ActivityInit : AppCompatActivity() {
                                     onComplete = { checkLoginSessionResult ->
                                         runOnUiThread checkLoginSessionAsyncComplete@{
                                             // 검증 후 결과를 sharedPreferences 에 대입
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken = checkLoginSessionResult.sessionToken
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.userNickName = checkLoginSessionResult.userNickName
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.loginType = checkLoginSessionResult.loginType
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.userServerId = checkLoginSessionResult.userServerId
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.userServerPw = checkLoginSessionResult.userServerPw
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken = checkLoginSessionResult.sessionToken
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userNickName = checkLoginSessionResult.userNickName
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.loginType = checkLoginSessionResult.loginType
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerId = checkLoginSessionResult.userServerId
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerPw = checkLoginSessionResult.userServerPw
 
                                             // 다음 엑티비티로 이동
                                             goToNextActivity()

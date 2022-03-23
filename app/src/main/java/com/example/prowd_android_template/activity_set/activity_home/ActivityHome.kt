@@ -6,7 +6,6 @@ import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_camera_sample_list.ActivityCameraSampleList
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
-import com.example.prowd_android_template.activity_set.activity_gvc_sample.ActivityGvcSample
 import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList
 import com.example.prowd_android_template.activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleList
@@ -60,7 +59,7 @@ class ActivityHome : AppCompatActivity() {
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
 
-            val sessionToken = viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
@@ -117,7 +116,7 @@ class ActivityHome : AppCompatActivity() {
 
             // 현 액티비티 진입 유저 저장
             viewModelMbr.currentUserSessionTokenMbr =
-                viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken
+                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
 
@@ -149,16 +148,6 @@ class ActivityHome : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityViewPagerSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 앱 전역 접근 가능 변수 사용 샘플 이동 버튼
-        bindingMbr.goToGvcSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityGvcSample::class.java
                 )
             startActivity(intent)
         }

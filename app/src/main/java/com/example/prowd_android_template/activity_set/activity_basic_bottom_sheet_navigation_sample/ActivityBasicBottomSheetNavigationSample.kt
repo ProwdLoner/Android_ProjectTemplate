@@ -60,7 +60,7 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val sessionToken = viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
@@ -123,7 +123,7 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
 

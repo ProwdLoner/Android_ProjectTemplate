@@ -16,12 +16,6 @@
             android:name=".activity_set.activity_jni_sample.ActivityJniSample"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_gvc_sample_controller.ActivityGvcSampleController"
-            android:exported="false" />
-        <activity
-            android:name=".activity_set.activity_gvc_sample.ActivityGvcSample"
-            android:exported="false" />
-        <activity
             android:name=".activity_set.activity_basic_recycler_view_sample_editor.ActivityBasicRecyclerViewSampleEditor"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
