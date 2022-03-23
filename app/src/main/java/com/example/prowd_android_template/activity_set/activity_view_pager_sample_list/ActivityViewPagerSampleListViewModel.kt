@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_recycler_view_sample
+package com.example.prowd_android_template.activity_set.activity_view_pager_sample_list
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -10,7 +10,7 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ActivityRecyclerViewSampleViewModel(application: Application) :
+class ActivityViewPagerSampleListViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
     private val applicationMbr = application

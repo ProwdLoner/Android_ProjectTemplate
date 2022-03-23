@@ -1,22 +1,21 @@
-package com.example.prowd_android_template.activity_set.activity_view_pager_sample
+package com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
-import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample
+import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityViewPagerSampleBinding
+import com.example.prowd_android_template.databinding.ActivityRecyclerViewSampleListBinding
 
-class ActivityViewPagerSample : AppCompatActivity() {
+class ActivityRecyclerViewSampleList : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityViewPagerSampleBinding
+    private lateinit var bindingMbr: ActivityRecyclerViewSampleListBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityViewPagerSampleViewModel
+    lateinit var viewModelMbr: ActivityRecyclerViewSampleListViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -35,7 +34,7 @@ class ActivityViewPagerSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityViewPagerSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityRecyclerViewSampleListBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -102,7 +101,7 @@ class ActivityViewPagerSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityViewPagerSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityRecyclerViewSampleListViewModel::class.java]
 
     }
 
@@ -111,29 +110,18 @@ class ActivityViewPagerSample : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr =
-                viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken
         }
     }
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 기본 바텀 네비게이터 샘플 버튼
-        bindingMbr.goToBasicBottomSheetNavigationSampleBtn.setOnClickListener {
+        // 기본 리사이클러 뷰 테스트 버튼
+        bindingMbr.goToBasicRecyclerViewSampleBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
-                    ActivityBasicBottomSheetNavigationSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 기본 탭 레이아웃 샘플 버튼
-        bindingMbr.goToBasicTabLayoutSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicTabLayoutSample::class.java
+                    ActivityBasicRecyclerViewSample::class.java
                 )
             startActivity(intent)
         }

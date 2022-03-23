@@ -7,8 +7,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.activity_set.activity_gvc_sample.ActivityGvcSample
 import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
-import com.example.prowd_android_template.activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_view_pager_sample.ActivityViewPagerSample
+import com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList
+import com.example.prowd_android_template.activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleList
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityHomeBinding
@@ -137,7 +137,7 @@ class ActivityHome : AppCompatActivity() {
             val intent =
                 Intent(
                     this,
-                    ActivityRecyclerViewSample::class.java
+                    ActivityRecyclerViewSampleList::class.java
                 )
             startActivity(intent)
         }
@@ -147,7 +147,7 @@ class ActivityHome : AppCompatActivity() {
             val intent =
                 Intent(
                     this,
-                    ActivityViewPagerSample::class.java
+                    ActivityViewPagerSampleList::class.java
                 )
             startActivity(intent)
         }

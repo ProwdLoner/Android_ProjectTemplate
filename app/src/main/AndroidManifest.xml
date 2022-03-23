@@ -29,13 +29,13 @@
             android:name=".activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_view_pager_sample.ActivityViewPagerSample"
+            android:name=".activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleList"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_recycler_view_sample.ActivityRecyclerViewSample"
+            android:name=".activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_dialog_sample.ActivityDialogSample"
