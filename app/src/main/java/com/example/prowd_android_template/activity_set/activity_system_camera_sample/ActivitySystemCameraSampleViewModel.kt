@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list
+package com.example.prowd_android_template.activity_set.activity_system_camera_sample
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -6,11 +6,12 @@ import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ActivityRecyclerViewSampleListViewModel(application: Application) :
+class ActivitySystemCameraSampleViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
     private val applicationMbr = application
@@ -49,6 +50,10 @@ class ActivityRecyclerViewSampleListViewModel(application: Application) :
 
     // 로딩 다이얼로그 출력 정보
     val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
+        MutableLiveData(null)
+
+    // 카메라 권한 설정 액티비티 이동 동의 다이얼로그 출력 정보
+    val goToCameraPermissionConfigDialogLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO> =
         MutableLiveData(null)
 
 

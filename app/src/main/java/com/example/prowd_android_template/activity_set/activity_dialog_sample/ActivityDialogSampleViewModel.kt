@@ -22,6 +22,7 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
+    // 현 로그인 정보 접근 객체
     val currentLoginSessionInfoSpwMbr : CurrentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(application)
 
     // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황

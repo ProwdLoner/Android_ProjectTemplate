@@ -34,7 +34,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="카메라 샘플 목록"
+                android:text="다이얼로그 샘플"
                 android:textColor="#FF000000"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -64,17 +64,30 @@
                 android:layout_height="wrap_content">
 
                 <Button
-                    android:id="@+id/go_to_system_camera_sample_btn"
+                    android:id="@+id/system_camera_test_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="기본 카메라 샘플\n(시스템 카메라 사용)"
+                    android:text="시스템 카메라 테스트"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="카메라 이미지"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/system_camera_test_btn" />
+
+                <!-- TODO : 비율이 변하는 이미지 뷰 커스텀텀 -->
+
+           </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

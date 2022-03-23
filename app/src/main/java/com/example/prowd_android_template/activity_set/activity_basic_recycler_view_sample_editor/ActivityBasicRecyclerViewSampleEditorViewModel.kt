@@ -23,6 +23,7 @@ class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
+    // 현 로그인 정보 접근 객체
     val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
         CurrentLoginSessionInfoSpw(application)
 

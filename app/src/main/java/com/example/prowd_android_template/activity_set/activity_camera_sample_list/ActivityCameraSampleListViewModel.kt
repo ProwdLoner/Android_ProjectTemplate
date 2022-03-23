@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list
+package com.example.prowd_android_template.activity_set.activity_camera_sample_list
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -10,7 +10,7 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ActivityRecyclerViewSampleListViewModel(application: Application) :
+class ActivityCameraSampleListViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
     private val applicationMbr = application
