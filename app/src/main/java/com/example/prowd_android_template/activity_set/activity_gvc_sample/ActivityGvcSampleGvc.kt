@@ -7,59 +7,47 @@ import android.content.Context
 // 액티비티에 종속된 것으로, 해당 액티비티의 onResume 에서 해석되어 동작을 제어하는 용도
 class ActivityGvcSampleGvc(application: Application) {
     // <멤버 변수 공간>
-    // SharedPreference 파일명
-    private val spNameMbr = "ActivityGvcSampleGvc"
-
     // SharedPreference 접근 객체
     private val spMbr = application.getSharedPreferences(
-        spNameMbr,
+        "ActivityGvcSampleGvc",
         Context.MODE_PRIVATE
     )
 
-    // SharedPreference 키 네임
-    private val message1KeyMbr = "ActivityGvcSampleGvc_message1KeyMbr"
-    private val message2KeyMbr = "ActivityGvcSampleGvc_message2KeyMbr"
-
-
-    // ---------------------------------------------------------------------------------------------
-    // <공개 메소드 공간>
     // (message1)
-    fun getMessage1(): String? {
-        return spMbr.getString(
-            message1KeyMbr,
-            null
-        )
-    }
-
-    fun setMessage1(inputData: String?) {
-        with(spMbr.edit()) {
-            putString(
-                message1KeyMbr,
-                inputData
+    var message1: String?
+        get(): String? {
+            return spMbr.getString(
+                "ActivityGvcSampleGvc_message1",
+                null
             )
-
-            apply()
         }
-    }
+        set(value) {
+            with(spMbr.edit()) {
+                putString(
+                    "ActivityGvcSampleGvc_message1",
+                    value
+                )
+                apply()
+            }
+        }
 
     // (message2)
-    fun getMessage2(): String? {
-        return spMbr.getString(
-            message2KeyMbr,
-            null
-        )
-    }
-
-    fun setMessage2(inputData: String?) {
-        with(spMbr.edit()) {
-            putString(
-                message2KeyMbr,
-                inputData
+    var message2: String?
+        get(): String? {
+            return spMbr.getString(
+                "ActivityGvcSampleGvc_message2KeyMbr",
+                null
             )
-
-            apply()
         }
-    }
+        set(value) {
+            with(spMbr.edit()) {
+                putString(
+                    "ActivityGvcSampleGvc_message2KeyMbr",
+                    value
+                )
+                apply()
+            }
+        }
 
 
     // ---------------------------------------------------------------------------------------------

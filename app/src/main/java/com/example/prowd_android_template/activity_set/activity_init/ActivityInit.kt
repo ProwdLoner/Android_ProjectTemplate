@@ -209,9 +209,9 @@ class ActivityInit : AppCompatActivity() {
                                 val loginType: Int =
                                     viewModelMbr.currentLoginSessionInfoGvcMbr.loginType
                                 val serverId: String? =
-                                    viewModelMbr.currentLoginSessionInfoGvcMbr.getUserServerId()
+                                    viewModelMbr.currentLoginSessionInfoGvcMbr.userServerId
                                 val serverPw: String? =
-                                    viewModelMbr.currentLoginSessionInfoGvcMbr.getUserServerPw()
+                                    viewModelMbr.currentLoginSessionInfoGvcMbr.userServerPw
 
                                 viewModelMbr.checkLoginSessionAsync(
                                     ActivityInitViewModel.CheckLoginSessionParameterVO(
@@ -225,12 +225,8 @@ class ActivityInit : AppCompatActivity() {
                                             viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken = checkLoginSessionResult.sessionToken
                                             viewModelMbr.currentLoginSessionInfoGvcMbr.userNickName = checkLoginSessionResult.userNickName
                                             viewModelMbr.currentLoginSessionInfoGvcMbr.loginType = checkLoginSessionResult.loginType
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.setUserServerId(
-                                                checkLoginSessionResult.userServerId
-                                            )
-                                            viewModelMbr.currentLoginSessionInfoGvcMbr.setUserServerPw(
-                                                checkLoginSessionResult.userServerPw
-                                            )
+                                            viewModelMbr.currentLoginSessionInfoGvcMbr.userServerId = checkLoginSessionResult.userServerId
+                                            viewModelMbr.currentLoginSessionInfoGvcMbr.userServerPw = checkLoginSessionResult.userServerPw
 
                                             // 다음 엑티비티로 이동
                                             goToNextActivity()

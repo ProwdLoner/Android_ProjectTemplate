@@ -7,34 +7,24 @@ import android.content.Context
 // 현재 로그인 세션 정보
 class CurrentLoginSessionInfoGvc(application: Application) {
     // <멤버 변수 공간>
-    // SharedPreference 파일명
-    private val spNameMbr = "CurrentLoginSessionInfoGvc"
-
     // SharedPreference 접근 객체
     private val spMbr = application.getSharedPreferences(
-        spNameMbr,
+        "CurrentLoginSessionInfoGvc",
         Context.MODE_PRIVATE
     )
-
-    // SharedPreference 키 네임
-    private val sessionTokenKeyMbr = "CurrentLoginSessionInfoGvc_sessionTokenKeyMbr"
-    private val userNickNameKeyMbr = "CurrentLoginSessionInfoGvc_userNickNameKeyMbr"
-    private val nameLoginTypeKeyMbr = "CurrentLoginSessionInfoGvc_nameLoginTypeKeyMbr"
-    private val nameUserServerIdKeyMbr = "CurrentLoginSessionInfoGvc_nameUserServerIdKeyMbr"
-    private val nameUserServerPwKeyMbr = "CurrentLoginSessionInfoGvc_nameUserServerPwKeyMbr"
 
     // (sessionToken)
     var sessionToken: String?
         get() {
             return spMbr.getString(
-                sessionTokenKeyMbr,
+                "CurrentLoginSessionInfoGvc_sessionToken",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    sessionTokenKeyMbr,
+                    "CurrentLoginSessionInfoGvc_sessionToken",
                     value
                 )
                 apply()
@@ -45,17 +35,16 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     var userNickName: String?
         get() {
             return spMbr.getString(
-                userNickNameKeyMbr,
+                "CurrentLoginSessionInfoGvc_userNickName",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    userNickNameKeyMbr,
+                    "CurrentLoginSessionInfoGvc_userNickName",
                     value
                 )
-
                 apply()
             }
         }
@@ -66,17 +55,52 @@ class CurrentLoginSessionInfoGvc(application: Application) {
     var loginType: Int
         get() {
             return spMbr.getInt(
-                nameLoginTypeKeyMbr,
+                "CurrentLoginSessionInfoGvc_loginType",
                 0
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putInt(
-                    nameLoginTypeKeyMbr,
+                    "CurrentLoginSessionInfoGvc_loginType",
                     value
                 )
+                apply()
+            }
+        }
 
+    // (userServerId)
+    var userServerId: String?
+        get(): String? {
+            return spMbr.getString(
+                "CurrentLoginSessionInfoGvc_userServerId",
+                null
+            )
+        }
+        set(value) {
+            with(spMbr.edit()) {
+                putString(
+                    "CurrentLoginSessionInfoGvc_userServerId",
+                    value
+                )
+                apply()
+            }
+        }
+
+    // (userServerPw)
+    var userServerPw: String?
+        get(): String? {
+            return spMbr.getString(
+                "CurrentLoginSessionInfoGvc_userServerPw",
+                null
+            )
+        }
+        set(value) {
+            with(spMbr.edit()) {
+                putString(
+                    "CurrentLoginSessionInfoGvc_userServerPw",
+                    value
+                )
                 apply()
             }
         }
@@ -84,44 +108,6 @@ class CurrentLoginSessionInfoGvc(application: Application) {
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-
-    // (userServerId)
-    fun getUserServerId(): String? {
-        return spMbr.getString(
-            nameUserServerIdKeyMbr,
-            null
-        )
-    }
-
-    fun setUserServerId(inputData: String?) {
-        with(spMbr.edit()) {
-            putString(
-                nameUserServerIdKeyMbr,
-                inputData
-            )
-
-            apply()
-        }
-    }
-
-    // (userServerPw)
-    fun getUserServerPw(): String? {
-        return spMbr.getString(
-            nameUserServerPwKeyMbr,
-            null
-        )
-    }
-
-    fun setUserServerPw(inputData: String?) {
-        with(spMbr.edit()) {
-            putString(
-                nameUserServerPwKeyMbr,
-                inputData
-            )
-
-            apply()
-        }
-    }
 
 
     // ---------------------------------------------------------------------------------------------

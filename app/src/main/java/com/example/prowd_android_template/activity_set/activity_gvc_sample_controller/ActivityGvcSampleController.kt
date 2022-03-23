@@ -109,7 +109,8 @@ class ActivityGvcSampleController : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr =
+                viewModelMbr.currentLoginSessionInfoGvcMbr.sessionToken
         }
     }
 
@@ -121,17 +122,13 @@ class ActivityGvcSampleController : AppCompatActivity() {
             if ("" == bindingMbr.message1Txt.text.toString()) {
                 val message1 = "메시지1"
 
-                viewModelMbr.activityGvcSampleGvcMbr.setMessage1(
-                    message1
-                )
+                viewModelMbr.activityGvcSampleGvcMbr.message1 = message1
 
                 bindingMbr.message1Txt.text = message1
             } else {
                 val message1 = null
 
-                viewModelMbr.activityGvcSampleGvcMbr.setMessage1(
-                    message1
-                )
+                viewModelMbr.activityGvcSampleGvcMbr.message1 = message1
 
                 bindingMbr.message1Txt.text = message1
             }
@@ -143,17 +140,13 @@ class ActivityGvcSampleController : AppCompatActivity() {
             if ("" == bindingMbr.message2Txt.text.toString()) {
                 val message2 = "메시지2"
 
-                viewModelMbr.activityGvcSampleGvcMbr.setMessage2(
-                    message2
-                )
+                viewModelMbr.activityGvcSampleGvcMbr.message2 = message2
 
                 bindingMbr.message2Txt.text = message2
             } else {
                 val message2 = null
 
-                viewModelMbr.activityGvcSampleGvcMbr.setMessage2(
-                    message2
-                )
+                viewModelMbr.activityGvcSampleGvcMbr.message2 = message2
 
                 bindingMbr.message2Txt.text = message2
             }

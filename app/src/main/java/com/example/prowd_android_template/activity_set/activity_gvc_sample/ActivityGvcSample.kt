@@ -68,16 +68,16 @@ class ActivityGvcSample : AppCompatActivity() {
 
         // gvc 에 저장된 데이터 표현 후 비워주기
         // gvc 가 플래그로 사용됨
-        if (viewModelMbr.thisActivityGvcMbr.getMessage1() != null || viewModelMbr.thisActivityGvcMbr.getMessage2() != null) {
+        if (viewModelMbr.thisActivityGvcMbr.message1 != null || viewModelMbr.thisActivityGvcMbr.message2 != null) {
             val myToast = Toast.makeText(
                 this,
-                "message1 : ${viewModelMbr.thisActivityGvcMbr.getMessage1()}, message2 : ${viewModelMbr.thisActivityGvcMbr.getMessage2()}",
+                "message1 : ${viewModelMbr.thisActivityGvcMbr.message1}, message2 : ${viewModelMbr.thisActivityGvcMbr.message2}",
                 Toast.LENGTH_SHORT
             )
             myToast.show()
 
-            viewModelMbr.thisActivityGvcMbr.setMessage1(null)
-            viewModelMbr.thisActivityGvcMbr.setMessage2(null)
+            viewModelMbr.thisActivityGvcMbr.message1 = null
+            viewModelMbr.thisActivityGvcMbr.message2 = null
         }
 
         // (데이터 갱신 시점 적용)
