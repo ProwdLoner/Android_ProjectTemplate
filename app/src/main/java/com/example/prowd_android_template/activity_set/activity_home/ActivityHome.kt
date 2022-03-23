@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
+import com.example.prowd_android_template.activity_set.activity_camera_sample_list.ActivityCameraSampleList
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.activity_set.activity_gvc_sample.ActivityGvcSample
 import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
@@ -132,8 +133,8 @@ class ActivityHome : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // 리사이클러 뷰 샘플 이동 버튼
-        bindingMbr.goToRecyclerViewSampleBtn.setOnClickListener {
+        // 리사이클러 뷰 샘플 목록 이동 버튼
+        bindingMbr.goToRecyclerViewSampleListBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
@@ -142,8 +143,8 @@ class ActivityHome : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // 뷰 페이저 샘플 이동 버튼
-        bindingMbr.goToViewPagerSampleBtn.setOnClickListener {
+        // 뷰 페이저 샘플 목록 이동 버튼
+        bindingMbr.goToViewPagerSampleListBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
@@ -172,14 +173,14 @@ class ActivityHome : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // 카메라 샘플 이동 버튼
-        bindingMbr.goToCameraSampleBtn.setOnClickListener {
-//            val intent =
-//                Intent(
-//                    this,
-//                    ActivityJniSample::class.java
-//                )
-//            startActivity(intent)
+        // 카메라 샘플 목록 이동 버튼
+        bindingMbr.goToCameraSampleListBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityCameraSampleList::class.java
+                )
+            startActivity(intent)
         }
 
     }
