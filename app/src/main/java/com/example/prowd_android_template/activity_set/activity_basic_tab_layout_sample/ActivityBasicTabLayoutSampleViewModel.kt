@@ -58,7 +58,7 @@ class ActivityBasicTabLayoutSampleViewModel(application: Application) :
         MutableLiveData(null)
 
     // 확인 다이얼로그 출력 정보
-    val confirmDialogInfoLiveDataMb: MutableLiveData<DialogConfirm.DialogInfoVO?> =
+    val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
     // 플래그먼트 클릭 위치 정보

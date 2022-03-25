@@ -179,7 +179,7 @@ class ActivityDialogSample : AppCompatActivity() {
 
         // 확인 다이얼로그 테스트 버튼
         bindingMbr.testConfirmDialogBtn.setOnClickListener {
-            viewModelMbr.confirmDialogInfoLiveDataMb.value =
+            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                 DialogConfirm.DialogInfoVO(
                     true,
                     "확인 다이얼로그 테스트",
@@ -193,7 +193,7 @@ class ActivityDialogSample : AppCompatActivity() {
                         )
                         myToast.show()
 
-                        viewModelMbr.confirmDialogInfoLiveDataMb.value = null
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
                     },
                     onCanceled = {
                         val myToast = Toast.makeText(
@@ -203,7 +203,7 @@ class ActivityDialogSample : AppCompatActivity() {
                         )
                         myToast.show()
 
-                        viewModelMbr.confirmDialogInfoLiveDataMb.value = null
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
                     }
                 )
         }
@@ -245,7 +245,7 @@ class ActivityDialogSample : AppCompatActivity() {
         }
 
         // 확인 다이얼로그 출력 플래그
-        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
+        viewModelMbr.confirmDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
                 confirmDialogMbr?.dismiss()
 

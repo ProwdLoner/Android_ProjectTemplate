@@ -33,7 +33,7 @@ class DialogConfirm constructor(
         // 취소 불가 설정
         setCancelable(dialogInfoMbr.isCancelable)
         setOnCancelListener {
-            dialogInfoMbr.onCanceled?.run()
+            dialogInfoMbr.onCanceled.run()
         }
 
         // 확인 버튼 텍스트 설정
@@ -63,7 +63,7 @@ class DialogConfirm constructor(
         // (리스너 설정)
         // 확인 버튼 클릭
         bindingMbr.confirmButton.setOnClickListener {
-            dialogInfoMbr.onCheckBtnClicked?.run()
+            dialogInfoMbr.onCheckBtnClicked.run()
             this.dismiss()
         }
     }
@@ -83,7 +83,7 @@ class DialogConfirm constructor(
         var title: String,
         var content: String,
         var checkBtnTxt: String?,
-        var onCheckBtnClicked: Runnable?,
-        var onCanceled: Runnable?
+        var onCheckBtnClicked: Runnable,
+        var onCanceled: Runnable
     )
 }

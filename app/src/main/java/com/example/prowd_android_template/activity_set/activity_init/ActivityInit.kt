@@ -417,7 +417,7 @@ class ActivityInit : AppCompatActivity() {
         }
 
         // 확인 다이얼로그 출력 플래그
-        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
+        viewModelMbr.confirmDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
                 confirmDialogMbr?.dismiss()
 

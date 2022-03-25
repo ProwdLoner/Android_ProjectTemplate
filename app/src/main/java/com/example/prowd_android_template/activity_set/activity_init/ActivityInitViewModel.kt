@@ -56,7 +56,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
         MutableLiveData(null)
 
     // 확인 다이얼로그 출력 정보
-    val confirmDialogInfoLiveDataMb: MutableLiveData<DialogConfirm.DialogInfoVO?> =
+    val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
     // 카운트 다운 숫자 데이터

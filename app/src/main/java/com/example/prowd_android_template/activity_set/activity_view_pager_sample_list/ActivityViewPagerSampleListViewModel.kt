@@ -49,7 +49,7 @@ class ActivityViewPagerSampleListViewModel(application: Application) :
         MutableLiveData(null)
 
     // 확인 다이얼로그 출력 정보
-    val confirmDialogInfoLiveDataMb: MutableLiveData<DialogConfirm.DialogInfoVO?> =
+    val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
 

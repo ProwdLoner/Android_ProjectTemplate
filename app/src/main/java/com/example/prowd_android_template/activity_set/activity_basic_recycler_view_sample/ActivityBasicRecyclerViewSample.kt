@@ -541,7 +541,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                 DialogProgressLoading.DialogInfoVO(
                                     false,
                                     "데이터를 삭제하는 중입니다.",
-                                    onCanceled = null
+                                    onCanceled = {
+                                        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+                                    }
                                 )
 
                             // 데이터 삭제 : 네트워크에 요청 후 정상 응답이 오면 삭제

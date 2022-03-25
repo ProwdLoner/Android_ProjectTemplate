@@ -32,7 +32,7 @@ class DialogBinaryChoose constructor(
         // 취소 불가 설정
         setCancelable(dialogInfoMbr.isCancelable)
         setOnCancelListener {
-            dialogInfoMbr.onCanceled?.run()
+            dialogInfoMbr.onCanceled.run()
         }
 
         if (null != dialogInfoMbr.posBtnTxt) {
@@ -71,12 +71,12 @@ class DialogBinaryChoose constructor(
 
         // (리스너 설정)
         bindingMbr.positiveBtn.setOnClickListener {
-            dialogInfoMbr.onPosBtnClicked?.run()
+            dialogInfoMbr.onPosBtnClicked.run()
             this.dismiss()
         }
 
         bindingMbr.negativeBtn.setOnClickListener {
-            dialogInfoMbr.onNegBtnClicked?.run()
+            dialogInfoMbr.onNegBtnClicked.run()
             this.dismiss()
         }
     }
@@ -98,8 +98,8 @@ class DialogBinaryChoose constructor(
         var content: String,
         var posBtnTxt: String?,
         var negBtnTxt: String?,
-        var onPosBtnClicked: Runnable?,
-        var onNegBtnClicked: Runnable?,
-        var onCanceled:Runnable?
+        var onPosBtnClicked: Runnable,
+        var onNegBtnClicked: Runnable,
+        var onCanceled:Runnable
     )
 }

@@ -31,7 +31,7 @@ class DialogProgressLoading constructor(
         // 취소 불가 설정
         setCancelable(dialogInfoMbr.isCancelable)
         setOnCancelListener {
-            dialogInfoMbr.onCanceled?.run()
+            dialogInfoMbr.onCanceled.run()
         }
 
         window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -66,6 +66,6 @@ class DialogProgressLoading constructor(
     data class DialogInfoVO(
         var isCancelable : Boolean,
         var progressMsg : String?,
-        var onCanceled : Runnable?
+        var onCanceled : Runnable
     )
 }

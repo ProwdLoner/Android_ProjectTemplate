@@ -3,8 +3,10 @@ package com.example.prowd_android_template.activity_set.activity_camera_sample_l
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
@@ -34,8 +36,12 @@ class ActivityCameraSampleList : AppCompatActivity() {
     private var confirmDialogMbr: DialogConfirm? = null
 
     // (권한 요청 객체)
+    // 외부 저장소 읽기 권한 요청
+    private lateinit var readExternalStoragePermissionRequestMbr: ActivityResultLauncher<String>
+
+    // (ActivityResultLauncher 객체)
     // 외부 저장소 읽기 권한 설정 액티비티 이동 복귀 객체
-    private lateinit var readExternalStoragePermissionSettingResultLauncher: ActivityResultLauncher<String>
+    private lateinit var readExternalStoragePermissionSettingResultLauncherMbr: ActivityResultLauncher<Intent>
 
 
     // ---------------------------------------------------------------------------------------------
@@ -53,6 +59,8 @@ class ActivityCameraSampleList : AppCompatActivity() {
         createViewModelDataObjects()
         // (권한 요청 객체 생성)
         createPermissionObjects()
+        // (ActivityResultLauncher 객체 생성)
+        createActivityResultLauncher()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -130,7 +138,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
     // 권한 요청 객체 생성
     private fun createPermissionObjects() {
         // 외부 저장소 읽기 권한
-        readExternalStoragePermissionSettingResultLauncher =
+        readExternalStoragePermissionRequestMbr =
             registerForActivityResult(
                 ActivityResultContracts.RequestPermission()
             ) { isGranted: Boolean ->
@@ -144,15 +152,121 @@ class ActivityCameraSampleList : AppCompatActivity() {
                     startActivity(intent)
                 } else if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     // 다시 묻지 않기 선택
-                    // todo
+
+                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                        DialogBinaryChoose.DialogInfoVO(
+                            true,
+                            "권한 요청",
+                            "해당 서비스를 이용하기 위해선\n" +
+                                    "외부 저장장치 접근 권한이 필요합니다.\n" +
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                // 권한 설정 화면으로 이동
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                intent.data = Uri.fromParts("package", packageName, null)
+                                readExternalStoragePermissionSettingResultLauncherMbr.launch(intent)
+                            },
+                            onNegBtnClicked = {
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "권한 요청",
+                                        "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                                        },
+                                        onCanceled = {
+
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                                        }
+                                    )
+                            },
+                            onCanceled = {
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "권한 요청",
+                                        "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                                        },
+                                        onCanceled = {
+
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                                        }
+                                    )
+                            }
+                        )
 
                 } else {
                     // 단순 거부
-                    // todo
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                        DialogConfirm.DialogInfoVO(
+                            true,
+                            "권한 요청",
+                            "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
+                            null,
+                            onCheckBtnClicked = {
 
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                            },
+                            onCanceled = {
+
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                            }
+                        )
                 }
             }
+    }
 
+    private fun createActivityResultLauncher() {
+        // 외부 저장소 읽기 권한 설정 후 복귀
+        readExternalStoragePermissionSettingResultLauncherMbr = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            // 권한 확인
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            ) { // 권한 승인 상태
+                // 액티비티 이동
+                val intent =
+                    Intent(
+                        this,
+                        ActivitySystemCameraSample::class.java
+                    )
+                startActivity(intent)
+            } else { // 권한 비승인 상태
+                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                    DialogConfirm.DialogInfoVO(
+                        true,
+                        "권한 요청",
+                        "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
+                        null,
+                        onCheckBtnClicked = {
+
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                        },
+                        onCanceled = {
+
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                        }
+                    )
+            }
+        }
     }
 
     // 초기 뷰 설정
@@ -174,7 +288,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
                 startActivity(intent)
             } else { // 권한 비승인 상태
                 // 권한 요청
-                readExternalStoragePermissionSettingResultLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                readExternalStoragePermissionRequestMbr.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
             }
         }
     }
@@ -214,7 +328,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
         }
 
         // 확인 다이얼로그 출력 플래그
-        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
+        viewModelMbr.confirmDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
                 confirmDialogMbr?.dismiss()
 
