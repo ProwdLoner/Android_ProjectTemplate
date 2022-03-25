@@ -8,6 +8,7 @@ import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1.FragmentActivityBasicBottomSheetNavigationSampleFragment1
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment2.FragmentActivityBasicBottomSheetNavigationSampleFragment2
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment3.FragmentActivityBasicBottomSheetNavigationSampleFragment3
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicBottomSheetNavigationSampleBinding
@@ -27,11 +28,11 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
 
-    // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private var networkErrorDialogMbr: DialogConfirm? = null
+    // 선택 다이얼로그
+    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
-    // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private var serverErrorDialogMbr: DialogConfirm? = null
+    // 확인 다이얼로그
+    private var confirmDialogMbr: DialogConfirm? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -90,9 +91,9 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr?.dismiss()
-        serverErrorDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+        binaryChooseDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -177,6 +178,8 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
+                progressLoadingDialogMbr?.dismiss()
+
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
                     it
@@ -188,31 +191,35 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
             }
         }
 
-        // 네트워크 에러 다이얼로그 출력 플래그
-        viewModelMbr.networkErrorDialogInfoLiveDataMbr.observe(this) {
+        // 선택 다이얼로그 출력 플래그
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                networkErrorDialogMbr = DialogConfirm(
+                binaryChooseDialogMbr?.dismiss()
+
+                binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
                     it
                 )
-                networkErrorDialogMbr?.show()
+                binaryChooseDialogMbr?.show()
             } else {
-                networkErrorDialogMbr?.dismiss()
-                networkErrorDialogMbr = null
+                binaryChooseDialogMbr?.dismiss()
+                binaryChooseDialogMbr = null
             }
         }
 
-        // 서버 에러 다이얼로그 출력 플래그
-        viewModelMbr.serverErrorDialogInfoLiveDataMbr.observe(this) {
+        // 확인 다이얼로그 출력 플래그
+        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
             if (it != null) {
-                serverErrorDialogMbr = DialogConfirm(
+                confirmDialogMbr?.dismiss()
+
+                confirmDialogMbr = DialogConfirm(
                     this,
                     it
                 )
-                serverErrorDialogMbr?.show()
+                confirmDialogMbr?.show()
             } else {
-                serverErrorDialogMbr?.dismiss()
-                serverErrorDialogMbr = null
+                confirmDialogMbr?.dismiss()
+                confirmDialogMbr = null
             }
         }
     }

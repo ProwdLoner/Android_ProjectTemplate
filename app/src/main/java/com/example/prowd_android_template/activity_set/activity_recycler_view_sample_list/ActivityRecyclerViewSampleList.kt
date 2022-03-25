@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityRecyclerViewSampleListBinding
@@ -21,11 +22,11 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
 
-    // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private var networkErrorDialogMbr: DialogConfirm? = null
+    // 선택 다이얼로그
+    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
-    // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private var serverErrorDialogMbr: DialogConfirm? = null
+    // 확인 다이얼로그
+    private var confirmDialogMbr: DialogConfirm? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -84,9 +85,9 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr?.dismiss()
-        serverErrorDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+        binaryChooseDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -133,6 +134,8 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
+                progressLoadingDialogMbr?.dismiss()
+
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
                     it
@@ -144,31 +147,35 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
             }
         }
 
-        // 네트워크 에러 다이얼로그 출력 플래그
-        viewModelMbr.networkErrorDialogInfoLiveDataMbr.observe(this) {
+        // 선택 다이얼로그 출력 플래그
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                networkErrorDialogMbr = DialogConfirm(
+                binaryChooseDialogMbr?.dismiss()
+
+                binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
                     it
                 )
-                networkErrorDialogMbr?.show()
+                binaryChooseDialogMbr?.show()
             } else {
-                networkErrorDialogMbr?.dismiss()
-                networkErrorDialogMbr = null
+                binaryChooseDialogMbr?.dismiss()
+                binaryChooseDialogMbr = null
             }
         }
 
-        // 서버 에러 다이얼로그 출력 플래그
-        viewModelMbr.serverErrorDialogInfoLiveDataMbr.observe(this) {
+        // 확인 다이얼로그 출력 플래그
+        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
             if (it != null) {
-                serverErrorDialogMbr = DialogConfirm(
+                confirmDialogMbr?.dismiss()
+
+                confirmDialogMbr = DialogConfirm(
                     this,
                     it
                 )
-                serverErrorDialogMbr?.show()
+                confirmDialogMbr?.show()
             } else {
-                serverErrorDialogMbr?.dismiss()
-                serverErrorDialogMbr = null
+                confirmDialogMbr?.dismiss()
+                confirmDialogMbr = null
             }
         }
     }

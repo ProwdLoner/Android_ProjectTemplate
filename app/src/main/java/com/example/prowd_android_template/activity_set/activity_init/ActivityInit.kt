@@ -9,6 +9,8 @@ import android.os.CountDownTimer
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_home.ActivityHome
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
+import com.example.prowd_android_template.custom_view.DialogConfirm
+import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityInitBinding
 import java.net.SocketTimeoutException
 
@@ -21,14 +23,14 @@ class ActivityInit : AppCompatActivity() {
     lateinit var viewModelMbr: ActivityInitViewModel
 
     // (다이얼로그 객체)
-    // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private var networkErrorDialogMbr: DialogBinaryChoose? = null
+    // 로딩 다이얼로그
+    private var progressLoadingDialogMbr: DialogProgressLoading? = null
 
-    // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private var serverErrorDialogMbr: DialogBinaryChoose? = null
+    // 선택 다이얼로그
+    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
-    // 업데이트 요청 다이얼로그(앱 실행 최소 버전 미달 시점에 요청)
-    private var versionUpdateDialogMbr: DialogBinaryChoose? = null
+    // 확인 다이얼로그
+    private var confirmDialogMbr: DialogConfirm? = null
 
     // 카운터 객체
     private lateinit var delayCountDownTimerMbr: CountDownTimer
@@ -118,9 +120,9 @@ class ActivityInit : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr?.dismiss()
-        serverErrorDialogMbr?.dismiss()
-        versionUpdateDialogMbr?.dismiss()
+        progressLoadingDialogMbr?.dismiss()
+        binaryChooseDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -161,7 +163,7 @@ class ActivityInit : AppCompatActivity() {
                 onComplete = { needUpdate ->
                     runOnUiThread checkAppVersionAsyncComplete@{
                         if (needUpdate) { // 업데이트 필요
-                            viewModelMbr.versionUpdateDialogInfoLiveDataMbr.value =
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                 DialogBinaryChoose.DialogInfoVO(
                                     true,
                                     "업데이트 안내",
@@ -185,18 +187,18 @@ class ActivityInit : AppCompatActivity() {
                                                 )
                                             )
                                         } finally {
-                                            viewModelMbr.versionUpdateDialogInfoLiveDataMbr.value =
+                                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                 null
                                             finish()
                                         }
                                     },
                                     onNegBtnClicked = { // 부정
-                                        viewModelMbr.versionUpdateDialogInfoLiveDataMbr.value =
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        viewModelMbr.versionUpdateDialogInfoLiveDataMbr.value =
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                             null
                                         finish()
                                     }
@@ -235,7 +237,7 @@ class ActivityInit : AppCompatActivity() {
                                     onError = { checkLoginSessionAsyncError ->
                                         runOnUiThread checkLoginSessionAsyncError@{
                                             if (checkLoginSessionAsyncError is SocketTimeoutException) { // 타임아웃 에러
-                                                viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                     DialogBinaryChoose.DialogInfoVO(
                                                         true,
                                                         "네트워크 에러",
@@ -243,25 +245,25 @@ class ActivityInit : AppCompatActivity() {
                                                         "다시시도",
                                                         "종료",
                                                         onPosBtnClicked = {
-                                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                                 null
 
                                                             // 로직 다시 실행
                                                             doActivityInit()
                                                         },
                                                         onNegBtnClicked = {
-                                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                                 null
                                                             finish()
                                                         },
                                                         onCanceled = {
-                                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                                 null
                                                             finish()
                                                         }
                                                     )
                                             } else { // 그외 에러
-                                                viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                     DialogBinaryChoose.DialogInfoVO(
                                                         true,
                                                         "서버 에러",
@@ -273,19 +275,19 @@ class ActivityInit : AppCompatActivity() {
                                                         "다시시도",
                                                         "종료",
                                                         onPosBtnClicked = {
-                                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                                 null
 
                                                             // 로직 다시 실행
                                                             doActivityInit()
                                                         },
                                                         onNegBtnClicked = {
-                                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                                 null
                                                             finish()
                                                         },
                                                         onCanceled = {
-                                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                                                 null
                                                             finish()
                                                         }
@@ -301,7 +303,7 @@ class ActivityInit : AppCompatActivity() {
                 onError = { checkAppVersionAsyncError ->
                     runOnUiThread checkAppVersionAsyncError@{
                         if (checkAppVersionAsyncError is SocketTimeoutException) { // 타임아웃 에러
-                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                 DialogBinaryChoose.DialogInfoVO(
                                     true,
                                     "네트워크 에러",
@@ -309,25 +311,25 @@ class ActivityInit : AppCompatActivity() {
                                     "다시시도",
                                     "종료",
                                     onPosBtnClicked = {
-                                        viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                             null
 
                                         // 로직 다시 실행
                                         doActivityInit()
                                     },
                                     onNegBtnClicked = {
-                                        viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                             null
                                         finish()
                                     }
                                 )
                         } else {
-                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                 DialogBinaryChoose.DialogInfoVO(
                                     true,
                                     "서버 에러",
@@ -339,19 +341,19 @@ class ActivityInit : AppCompatActivity() {
                                     "다시시도",
                                     "종료",
                                     onPosBtnClicked = {
-                                        viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                             null
 
                                         // 로직 다시 실행
                                         doActivityInit()
                                     },
                                     onNegBtnClicked = {
-                                        viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                             null
                                         finish()
                                     }
@@ -382,45 +384,51 @@ class ActivityInit : AppCompatActivity() {
 
     // 라이브 데이터 설정
     private fun setLiveData() {
-        // 업데이트 다이얼로그 출력 플래그
-        viewModelMbr.versionUpdateDialogInfoLiveDataMbr.observe(this) {
+        // 로딩 다이얼로그 출력 플래그
+        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                versionUpdateDialogMbr = DialogBinaryChoose(
+                progressLoadingDialogMbr?.dismiss()
+
+                progressLoadingDialogMbr = DialogProgressLoading(
                     this,
                     it
                 )
-                versionUpdateDialogMbr?.show()
+                progressLoadingDialogMbr?.show()
             } else {
-                versionUpdateDialogMbr?.dismiss()
-                versionUpdateDialogMbr = null
+                progressLoadingDialogMbr?.dismiss()
+                progressLoadingDialogMbr = null
             }
         }
 
-        // 네트워크 에러 다이얼로그 출력 플래그
-        viewModelMbr.networkErrorDialogInfoLiveDataMbr.observe(this) {
+        // 선택 다이얼로그 출력 플래그
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                networkErrorDialogMbr = DialogBinaryChoose(
+                binaryChooseDialogMbr?.dismiss()
+
+                binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
                     it
                 )
-                networkErrorDialogMbr?.show()
+                binaryChooseDialogMbr?.show()
             } else {
-                networkErrorDialogMbr?.dismiss()
-                networkErrorDialogMbr = null
+                binaryChooseDialogMbr?.dismiss()
+                binaryChooseDialogMbr = null
             }
         }
 
-        // 서버 에러 다이얼로그 출력 플래그
-        viewModelMbr.serverErrorDialogInfoLiveDataMbr.observe(this) {
+        // 확인 다이얼로그 출력 플래그
+        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
             if (it != null) {
-                serverErrorDialogMbr = DialogBinaryChoose(
+                confirmDialogMbr?.dismiss()
+
+                confirmDialogMbr = DialogConfirm(
                     this,
                     it
                 )
-                serverErrorDialogMbr?.show()
+                confirmDialogMbr?.show()
             } else {
-                serverErrorDialogMbr?.dismiss()
-                serverErrorDialogMbr = null
+                confirmDialogMbr?.dismiss()
+                confirmDialogMbr = null
             }
         }
 

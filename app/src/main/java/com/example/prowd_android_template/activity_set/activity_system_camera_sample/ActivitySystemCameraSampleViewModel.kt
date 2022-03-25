@@ -40,20 +40,16 @@ class ActivitySystemCameraSampleViewModel(application: Application) :
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
-    // 네트워크 에러 다이얼로그 출력 정보
-    val networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
-        MutableLiveData(null)
-
-    // 서버 에러 다이얼로그 출력 정보
-    val serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
-        MutableLiveData(null)
-
     // 로딩 다이얼로그 출력 정보
-    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
+    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
         MutableLiveData(null)
 
-    // 카메라 권한 설정 액티비티 이동 동의 다이얼로그 출력 정보
-    val goToCameraPermissionConfigDialogLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO> =
+    // 선택 다이얼로그 출력 정보
+    val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+        MutableLiveData(null)
+
+    // 확인 다이얼로그 출력 정보
+    val confirmDialogInfoLiveDataMb: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
 

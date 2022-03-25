@@ -7,6 +7,7 @@ import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAda
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.network_request_api_set.test.request_vo.*
 import org.json.JSONObject
@@ -53,16 +54,16 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
-    // 네트워크 에러 다이얼로그 출력 정보
-    val networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
-        MutableLiveData(null)
-
-    // 서버 에러 다이얼로그 출력 정보
-    val serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
-        MutableLiveData(null)
-
     // 로딩 다이얼로그 출력 정보
-    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
+    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
+        MutableLiveData(null)
+
+    // 선택 다이얼로그 출력 정보
+    val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+        MutableLiveData(null)
+
+    // 확인 다이얼로그 출력 정보
+    val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
     // ScreenVerticalRecyclerViewAdapter 아이템 데이터 변경 진행 상태 플래그

@@ -215,6 +215,8 @@ class ActivityDialogSample : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
+                progressLoadingDialogMbr?.dismiss()
+
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
                     it
@@ -229,6 +231,8 @@ class ActivityDialogSample : AppCompatActivity() {
         // 선택 다이얼로그 출력 플래그
         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
+                binaryChooseDialogMbr?.dismiss()
+
                 binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
                     it
@@ -243,6 +247,8 @@ class ActivityDialogSample : AppCompatActivity() {
         // 확인 다이얼로그 출력 플래그
         viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
             if (it != null) {
+                confirmDialogMbr?.dismiss()
+
                 confirmDialogMbr = DialogConfirm(
                     this,
                     it

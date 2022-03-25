@@ -41,14 +41,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
 
-    // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private var networkErrorDialogMbr: DialogConfirm? = null
+    // 선택 다이얼로그
+    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
-    // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private var serverErrorDialogMbr: DialogConfirm? = null
-
-    // 아이템 삭제 다이얼로그
-    private var itemDeleteConfirmDialogMbr: DialogBinaryChoose? = null
+    // 확인 다이얼로그
+    private var confirmDialogMbr: DialogConfirm? = null
 
     // (ResultLauncher 객체)
     private lateinit var resultFromActivityBasicRecyclerViewSampleEditor: ActivityResultLauncher<Intent>
@@ -137,10 +134,9 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr?.dismiss()
-        serverErrorDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
-        itemDeleteConfirmDialogMbr?.dismiss()
+        binaryChooseDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -410,6 +406,8 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
+                progressLoadingDialogMbr?.dismiss()
+
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
                     it
@@ -421,31 +419,35 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             }
         }
 
-        // 네트워크 에러 다이얼로그 출력 플래그
-        viewModelMbr.networkErrorDialogInfoLiveDataMbr.observe(this) {
+        // 선택 다이얼로그 출력 플래그
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                networkErrorDialogMbr = DialogConfirm(
+                binaryChooseDialogMbr?.dismiss()
+
+                binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
                     it
                 )
-                networkErrorDialogMbr?.show()
+                binaryChooseDialogMbr?.show()
             } else {
-                networkErrorDialogMbr?.dismiss()
-                networkErrorDialogMbr = null
+                binaryChooseDialogMbr?.dismiss()
+                binaryChooseDialogMbr = null
             }
         }
 
-        // 서버 에러 다이얼로그 출력 플래그
-        viewModelMbr.serverErrorDialogInfoLiveDataMbr.observe(this) {
+        // 확인 다이얼로그 출력 플래그
+        viewModelMbr.confirmDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                serverErrorDialogMbr = DialogConfirm(
+                confirmDialogMbr?.dismiss()
+
+                confirmDialogMbr = DialogConfirm(
                     this,
                     it
                 )
-                serverErrorDialogMbr?.show()
+                confirmDialogMbr?.show()
             } else {
-                serverErrorDialogMbr?.dismiss()
-                serverErrorDialogMbr = null
+                confirmDialogMbr?.dismiss()
+                confirmDialogMbr = null
             }
         }
 
@@ -521,8 +523,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
             this
         ) { contentUid ->
             if (null != contentUid) {
-                itemDeleteConfirmDialogMbr = DialogBinaryChoose(
-                    this,
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                     DialogBinaryChoose.DialogInfoVO(
                         true,
                         "데이터 삭제",
@@ -530,8 +531,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                         "삭제",
                         "취소",
                         onPosBtnClicked = {
-                            itemDeleteConfirmDialogMbr?.dismiss()
-                            itemDeleteConfirmDialogMbr = null
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
                             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                                 true
@@ -607,23 +607,23 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
 
                                         if (deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
-                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                                 DialogConfirm.DialogInfoVO(
                                                     true,
                                                     "네트워크 에러",
                                                     "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
                                                     "확인",
                                                     onCheckBtnClicked = {
-                                                        viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                                             null
                                                     },
                                                     onCanceled = {
-                                                        viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                                             null
                                                     }
                                                 )
                                         } else { // 그외 에러
-                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                                 DialogConfirm.DialogInfoVO(
                                                     true,
                                                     "서버 에러",
@@ -634,11 +634,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                                             "${deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult.message}",
                                                     "확인",
                                                     onCheckBtnClicked = {
-                                                        viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                                             null
                                                     },
                                                     onCanceled = {
-                                                        viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                                             null
 
                                                     }
@@ -655,8 +655,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                             // 아이템 데이터 접근 플래그 해제
                             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                                 false
-                            itemDeleteConfirmDialogMbr?.dismiss()
-                            itemDeleteConfirmDialogMbr = null
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
                         },
                         onCanceled = {
                             // 아이템 제거 요청 해제
@@ -665,15 +664,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                             // 아이템 데이터 접근 플래그 해제
                             viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                                 false
-                            itemDeleteConfirmDialogMbr?.dismiss()
-                            itemDeleteConfirmDialogMbr = null
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
                         }
                     )
-                )
-                itemDeleteConfirmDialogMbr?.show()
             } else {
-                itemDeleteConfirmDialogMbr?.dismiss()
-                itemDeleteConfirmDialogMbr = null
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
             }
         }
     }
@@ -746,23 +741,23 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
 
                     if (getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
-                        viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                             DialogConfirm.DialogInfoVO(
                                 true,
                                 "네트워크 에러",
                                 "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
                                 "확인",
                                 onCheckBtnClicked = {
-                                    viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 },
                                 onCanceled = {
-                                    viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 }
                             )
                     } else { // 그외 에러
-                        viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                             DialogConfirm.DialogInfoVO(
                                 true,
                                 "서버 에러",
@@ -773,11 +768,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                         "${getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncResult.message}",
                                 "확인",
                                 onCheckBtnClicked = {
-                                    viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 },
                                 onCanceled = {
-                                    viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
 
                                 }
@@ -856,23 +851,23 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
 
                     if (getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
-                        viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                             DialogConfirm.DialogInfoVO(
                                 true,
                                 "네트워크 에러",
                                 "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
                                 "확인",
                                 onCheckBtnClicked = {
-                                    viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 },
                                 onCanceled = {
-                                    viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 }
                             )
                     } else { // 그외 에러
-                        viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                             DialogConfirm.DialogInfoVO(
                                 true,
                                 "서버 에러",
@@ -883,11 +878,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                         "${getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult.message}",
                                 "확인",
                                 onCheckBtnClicked = {
-                                    viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 },
                                 onCanceled = {
-                                    viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
 
                                 }
@@ -1036,23 +1031,23 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
 
                     if (getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
-                        viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                             DialogConfirm.DialogInfoVO(
                                 true,
                                 "네트워크 에러",
                                 "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
                                 "확인",
                                 onCheckBtnClicked = {
-                                    viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 },
                                 onCanceled = {
-                                    viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 }
                             )
                     } else { // 그외 에러
-                        viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                             DialogConfirm.DialogInfoVO(
                                 true,
                                 "서버 에러",
@@ -1063,11 +1058,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                         "${getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.message}",
                                 "확인",
                                 onCheckBtnClicked = {
-                                    viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
                                 },
                                 onCanceled = {
-                                    viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                         null
 
                                 }

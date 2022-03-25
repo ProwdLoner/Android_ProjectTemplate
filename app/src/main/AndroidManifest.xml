@@ -2,9 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.prowd_android_template">
     <!-- 필요 디바이스 기능 -->
-<!--    <uses-feature-->
-<!--        android:name="android.hardware.camera"-->
-<!--        android:required="true" />-->
+    <!--    <uses-feature-->
+    <!--        android:name="android.hardware.camera"-->
+    <!--        android:required="true" />-->
 
     <!-- 필요 권한 설정 -->
     <uses-permission android:name="android.permission.CAMERA" />

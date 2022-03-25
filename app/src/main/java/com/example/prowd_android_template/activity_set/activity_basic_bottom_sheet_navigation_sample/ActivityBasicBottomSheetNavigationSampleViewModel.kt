@@ -9,6 +9,7 @@ import com.example.prowd_android_template.activity_set.activity_basic_bottom_she
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -53,16 +54,16 @@ class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
-    // 네트워크 에러 다이얼로그 출력 정보
-    val networkErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
-        MutableLiveData(null)
-
-    // 서버 에러 다이얼로그 출력 정보
-    val serverErrorDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO> =
-        MutableLiveData(null)
-
     // 로딩 다이얼로그 출력 정보
-    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO> =
+    val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
+        MutableLiveData(null)
+
+    // 선택 다이얼로그 출력 정보
+    val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+        MutableLiveData(null)
+
+    // 확인 다이얼로그 출력 정보
+    val confirmDialogInfoLiveDataMb: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
     // 플래그먼트 클릭 위치 정보

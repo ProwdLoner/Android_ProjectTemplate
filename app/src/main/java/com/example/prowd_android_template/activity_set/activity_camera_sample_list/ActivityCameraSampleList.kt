@@ -1,11 +1,16 @@
 package com.example.prowd_android_template.activity_set.activity_camera_sample_list
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_system_camera_sample.ActivitySystemCameraSample
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityCameraSampleListBinding
@@ -22,11 +27,15 @@ class ActivityCameraSampleList : AppCompatActivity() {
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
 
-    // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private var networkErrorDialogMbr: DialogConfirm? = null
+    // 선택 다이얼로그
+    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
-    // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private var serverErrorDialogMbr: DialogConfirm? = null
+    // 확인 다이얼로그
+    private var confirmDialogMbr: DialogConfirm? = null
+
+    // (권한 요청 객체)
+    // 외부 저장소 읽기 권한 설정 액티비티 이동 복귀 객체
+    private lateinit var readExternalStoragePermissionSettingResultLauncher: ActivityResultLauncher<String>
 
 
     // ---------------------------------------------------------------------------------------------
@@ -42,6 +51,8 @@ class ActivityCameraSampleList : AppCompatActivity() {
         createMemberObjects()
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
+        // (권한 요청 객체 생성)
+        createPermissionObjects()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -85,9 +96,9 @@ class ActivityCameraSampleList : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr?.dismiss()
-        serverErrorDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+        binaryChooseDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -111,19 +122,60 @@ class ActivityCameraSampleList : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr =
+                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
+    }
+
+    // 권한 요청 객체 생성
+    private fun createPermissionObjects() {
+        // 외부 저장소 읽기 권한
+        readExternalStoragePermissionSettingResultLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (isGranted) { // 권한 승인
+                    // 액티비티 이동
+                    val intent =
+                        Intent(
+                            this,
+                            ActivitySystemCameraSample::class.java
+                        )
+                    startActivity(intent)
+                } else if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    // 다시 묻지 않기 선택
+                    // todo
+
+                } else {
+                    // 단순 거부
+                    // todo
+
+                }
+            }
+
     }
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        // 시스템 카메라 샘플 이동 버튼
         bindingMbr.goToSystemCameraSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
+            // 시스템 카메라 액티비티 필요 권한
+            if (ActivityCompat.checkSelfPermission(
                     this,
-                    ActivitySystemCameraSample::class.java
-                )
-            startActivity(intent)
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            ) { // 권한 승인 상태
+                // 액티비티 이동
+                val intent =
+                    Intent(
+                        this,
+                        ActivitySystemCameraSample::class.java
+                    )
+                startActivity(intent)
+            } else { // 권한 비승인 상태
+                // 권한 요청
+                readExternalStoragePermissionSettingResultLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
         }
     }
 
@@ -132,6 +184,8 @@ class ActivityCameraSampleList : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
+                progressLoadingDialogMbr?.dismiss()
+
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
                     it
@@ -143,31 +197,35 @@ class ActivityCameraSampleList : AppCompatActivity() {
             }
         }
 
-        // 네트워크 에러 다이얼로그 출력 플래그
-        viewModelMbr.networkErrorDialogInfoLiveDataMbr.observe(this) {
+        // 선택 다이얼로그 출력 플래그
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                networkErrorDialogMbr = DialogConfirm(
+                binaryChooseDialogMbr?.dismiss()
+
+                binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
                     it
                 )
-                networkErrorDialogMbr?.show()
+                binaryChooseDialogMbr?.show()
             } else {
-                networkErrorDialogMbr?.dismiss()
-                networkErrorDialogMbr = null
+                binaryChooseDialogMbr?.dismiss()
+                binaryChooseDialogMbr = null
             }
         }
 
-        // 서버 에러 다이얼로그 출력 플래그
-        viewModelMbr.serverErrorDialogInfoLiveDataMbr.observe(this) {
+        // 확인 다이얼로그 출력 플래그
+        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
             if (it != null) {
-                serverErrorDialogMbr = DialogConfirm(
+                confirmDialogMbr?.dismiss()
+
+                confirmDialogMbr = DialogConfirm(
                     this,
                     it
                 )
-                serverErrorDialogMbr?.show()
+                confirmDialogMbr?.show()
             } else {
-                serverErrorDialogMbr?.dismiss()
-                serverErrorDialogMbr = null
+                confirmDialogMbr?.dismiss()
+                confirmDialogMbr = null
             }
         }
     }

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Parcelable
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
+import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleEditorBinding
@@ -26,11 +27,11 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
 
-    // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private var networkErrorDialogMbr: DialogConfirm? = null
+    // 선택 다이얼로그
+    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
-    // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private var serverErrorDialogMbr: DialogConfirm? = null
+    // 확인 다이얼로그
+    private var confirmDialogMbr: DialogConfirm? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -89,9 +90,9 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr?.dismiss()
-        serverErrorDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+        binaryChooseDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -185,23 +186,23 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
                             viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
 
                             if (addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
-                                viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                viewModelMbr.confirmDialogInfoLiveDataMb.value =
                                     DialogConfirm.DialogInfoVO(
                                         true,
                                         "네트워크 에러",
                                         "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
                                         "확인",
                                         onCheckBtnClicked = {
-                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                            viewModelMbr.confirmDialogInfoLiveDataMb.value =
                                                 null
                                         },
                                         onCanceled = {
-                                            viewModelMbr.networkErrorDialogInfoLiveDataMbr.value =
+                                            viewModelMbr.confirmDialogInfoLiveDataMb.value =
                                                 null
                                         }
                                     )
                             } else { // 그외 에러
-                                viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                viewModelMbr.confirmDialogInfoLiveDataMb.value =
                                     DialogConfirm.DialogInfoVO(
                                         true,
                                         "서버 에러",
@@ -212,11 +213,11 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
                                                 "${addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult.message}",
                                         "확인",
                                         onCheckBtnClicked = {
-                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                            viewModelMbr.confirmDialogInfoLiveDataMb.value =
                                                 null
                                         },
                                         onCanceled = {
-                                            viewModelMbr.serverErrorDialogInfoLiveDataMbr.value =
+                                            viewModelMbr.confirmDialogInfoLiveDataMb.value =
                                                 null
 
                                         }
@@ -238,6 +239,8 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
+                progressLoadingDialogMbr?.dismiss()
+
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
                     it
@@ -249,31 +252,35 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
             }
         }
 
-        // 네트워크 에러 다이얼로그 출력 플래그
-        viewModelMbr.networkErrorDialogInfoLiveDataMbr.observe(this) {
+        // 선택 다이얼로그 출력 플래그
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                networkErrorDialogMbr = DialogConfirm(
+                binaryChooseDialogMbr?.dismiss()
+
+                binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
                     it
                 )
-                networkErrorDialogMbr?.show()
+                binaryChooseDialogMbr?.show()
             } else {
-                networkErrorDialogMbr?.dismiss()
-                networkErrorDialogMbr = null
+                binaryChooseDialogMbr?.dismiss()
+                binaryChooseDialogMbr = null
             }
         }
 
-        // 서버 에러 다이얼로그 출력 플래그
-        viewModelMbr.serverErrorDialogInfoLiveDataMbr.observe(this) {
+        // 확인 다이얼로그 출력 플래그
+        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
             if (it != null) {
-                serverErrorDialogMbr = DialogConfirm(
+                confirmDialogMbr?.dismiss()
+
+                confirmDialogMbr = DialogConfirm(
                     this,
                     it
                 )
-                serverErrorDialogMbr?.show()
+                confirmDialogMbr?.show()
             } else {
-                serverErrorDialogMbr?.dismiss()
-                serverErrorDialogMbr = null
+                confirmDialogMbr?.dismiss()
+                confirmDialogMbr = null
             }
         }
     }

@@ -28,14 +28,11 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
 
-    // 네트워크 에러 다이얼로그(타임아웃 등 retrofit 반환 에러)
-    private var networkErrorDialogMbr: DialogConfirm? = null
+    // 선택 다이얼로그
+    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
-    // 서버 에러 다이얼로그(정해진 서버 반환 코드 외의 상황)
-    private var serverErrorDialogMbr: DialogConfirm? = null
-
-    // 카메라 권한 설정 액티비티 이동 동의 다이얼로그
-    private var goToCameraPermissionConfigDialogMbr: DialogBinaryChoose? = null
+    // 확인 다이얼로그
+    private var confirmDialogMbr: DialogConfirm? = null
 
     // (ResultLauncher 객체)
     // 카메라 권한 설정 액티비티 이동 객체
@@ -102,10 +99,9 @@ class ActivitySystemCameraSample : AppCompatActivity() {
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        networkErrorDialogMbr?.dismiss()
-        serverErrorDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
-        goToCameraPermissionConfigDialogMbr?.dismiss()
+        binaryChooseDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -152,7 +148,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
                 } else if (!shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
                     // 다시 묻지 않기 선택
                     // 권한 설정을 수동으로 하겠는지를 물어보기
-                    viewModelMbr.goToCameraPermissionConfigDialogLiveDataMbr.value =
+                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                         DialogBinaryChoose.DialogInfoVO(
                             true,
                             "카메라 사용 권한",
@@ -166,14 +162,20 @@ class ActivitySystemCameraSample : AppCompatActivity() {
                                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                 intent.data = Uri.fromParts("package", packageName, null)
                                 goToCameraPermissionConfigResultLauncherMbr.launch(intent)
+
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
                             },
                             onNegBtnClicked = {
                                 // 이동 부정
                                 // todo
+
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
                             },
                             onCanceled = {
                                 // 취소 = 이동 부정
                                 // todo
+
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
                             }
                         )
                 } else {
@@ -223,6 +225,8 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
+                progressLoadingDialogMbr?.dismiss()
+
                 progressLoadingDialogMbr = DialogProgressLoading(
                     this,
                     it
@@ -234,44 +238,35 @@ class ActivitySystemCameraSample : AppCompatActivity() {
             }
         }
 
-        // 네트워크 에러 다이얼로그 출력 플래그
-        viewModelMbr.networkErrorDialogInfoLiveDataMbr.observe(this) {
+        // 선택 다이얼로그 출력 플래그
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                networkErrorDialogMbr = DialogConfirm(
+                binaryChooseDialogMbr?.dismiss()
+
+                binaryChooseDialogMbr = DialogBinaryChoose(
                     this,
                     it
                 )
-                networkErrorDialogMbr?.show()
+                binaryChooseDialogMbr?.show()
             } else {
-                networkErrorDialogMbr?.dismiss()
-                networkErrorDialogMbr = null
+                binaryChooseDialogMbr?.dismiss()
+                binaryChooseDialogMbr = null
             }
         }
 
-        // 서버 에러 다이얼로그 출력 플래그
-        viewModelMbr.serverErrorDialogInfoLiveDataMbr.observe(this) {
+        // 확인 다이얼로그 출력 플래그
+        viewModelMbr.confirmDialogInfoLiveDataMb.observe(this) {
             if (it != null) {
-                serverErrorDialogMbr = DialogConfirm(
-                    this,
-                    it
-                )
-                serverErrorDialogMbr?.show()
-            } else {
-                serverErrorDialogMbr?.dismiss()
-                serverErrorDialogMbr = null
-            }
-        }
+                confirmDialogMbr?.dismiss()
 
-        viewModelMbr.goToCameraPermissionConfigDialogLiveDataMbr.observe(this) {
-            if (it != null) {
-                goToCameraPermissionConfigDialogMbr = DialogBinaryChoose(
+                confirmDialogMbr = DialogConfirm(
                     this,
                     it
                 )
-                goToCameraPermissionConfigDialogMbr?.show()
+                confirmDialogMbr?.show()
             } else {
-                goToCameraPermissionConfigDialogMbr?.dismiss()
-                goToCameraPermissionConfigDialogMbr = null
+                confirmDialogMbr?.dismiss()
+                confirmDialogMbr = null
             }
         }
     }
