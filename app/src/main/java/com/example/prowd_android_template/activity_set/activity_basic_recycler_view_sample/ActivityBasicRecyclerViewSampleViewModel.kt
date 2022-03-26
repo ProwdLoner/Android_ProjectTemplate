@@ -39,9 +39,6 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     var currentUserSessionTokenMbr: String? = null
 
     // (플래그 데이터)
-    // 뷰 개발 모드 플래그 (= 더미 데이터를 사용)
-    private val isClientDevModeMbr = true
-
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
 
@@ -102,6 +99,8 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // (헤더 데이터)
     private val getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr =
         Semaphore(1)
+    var getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncOnProgressedMbr = false
+        private set
 
     // 현재 설정으로 다음 데이터 리스트 요청
     fun getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsync(
@@ -110,42 +109,52 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     ) {
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.acquire()
+            getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncOnProgressedMbr = true
 
-            if (isClientDevModeMbr) {
-                // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-                Thread.sleep(500)
+            // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+            Thread.sleep(500)
 
-                // 원래는 네트워크에서 실제 데이터 리스트 가져오기
+            // 원래는 네트워크에서 실제 데이터 리스트 가져오기
 
-                // 더미 데이터 가져오기 (json)
-                val assetManager = applicationMbr.resources.assets
-                val inputStream =
-                    assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_header_dummy_data.json")
-                val jsonString = inputStream.bufferedReader().use { it.readText() }
+            try {
+                // 서버 요청
+                // 서버 반환값
+                val networkResponseCode = 200
 
-                val jObject = JSONObject(jsonString)
-                val uid = jObject.getLong("uidLong")
-                val content = jObject.getString("contentString")
+                when (networkResponseCode) {
+                    200 -> { // 정상 응답이라 결정한 코드
+                        // 더미 데이터 가져오기 (json)
+                        val assetManager = applicationMbr.resources.assets
+                        val inputStream =
+                            assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_header_dummy_data.json")
+                        val jsonString = inputStream.bufferedReader().use { it.readText() }
 
-                // json 배열 파싱
-                val dummyData = GetTestHeaderInfoOutputVO(
-                    uid,
-                    content
-                )
+                        val jObject = JSONObject(jsonString)
+                        val uid = jObject.getLong("uidLong")
+                        val content = jObject.getString("contentString")
 
-                onComplete(dummyData)
+                        // json 배열 파싱
+                        val dummyData = GetTestHeaderInfoOutputVO(
+                            uid,
+                            content
+                        )
 
-                getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.release()
+                        onComplete(dummyData)
 
-            } else {
-                // 네트워크 입력값
-                val inputVo = GetTestHeaderInfoInputVO(
-                    mapOf("session_token" to currentUserSessionTokenMbr)
-                )
-
-                // TODO : 실제 리포지토리 처리
+                        getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncOnProgressedMbr =
+                            false
+                        getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.release()
+                    }
+                    else -> { // 정의된 응답 코드 외의 응답일 때 = 크래쉬를 발생
+                        throw Throwable("$networkResponseCode")
+                    }
+                }
+            } catch (t: Throwable) {
+                onError(t)
+                getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncOnProgressedMbr = false
                 getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.release()
             }
+
 
         }
     }
@@ -153,6 +162,8 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     // (푸터 데이터)
     private val getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr =
         Semaphore(1)
+    var getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncOnProgressedMbr = false
+        private set
 
     // 현재 설정으로 다음 데이터 리스트 요청
     fun getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsync(
@@ -161,48 +172,57 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     ) {
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.acquire()
+            getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncOnProgressedMbr = true
 
-            if (isClientDevModeMbr) {
-                // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-                Thread.sleep(500)
+            // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+            Thread.sleep(500)
 
-                // 원래는 네트워크에서 실제 데이터 리스트 가져오기
+            try {
+                // 서버 요청
+                // 서버 반환값
+                val networkResponseCode = 200
 
-                // 더미 데이터 가져오기 (json)
-                val assetManager = applicationMbr.resources.assets
-                val inputStream =
-                    assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_footer_dummy_data.json")
-                val jsonString = inputStream.bufferedReader().use { it.readText() }
+                when (networkResponseCode) {
+                    200 -> { // 정상 응답이라 결정한 코드
 
-                val jObject = JSONObject(jsonString)
-                val uid = jObject.getLong("uidLong")
-                val content = jObject.getString("contentString")
+                        // 더미 데이터 가져오기 (json)
+                        val assetManager = applicationMbr.resources.assets
+                        val inputStream =
+                            assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_footer_dummy_data.json")
+                        val jsonString = inputStream.bufferedReader().use { it.readText() }
 
-                // json 배열 파싱
-                val dummyData = GetTestFooterInfoOutputVO(
-                    uid,
-                    content
-                )
+                        val jObject = JSONObject(jsonString)
+                        val uid = jObject.getLong("uidLong")
+                        val content = jObject.getString("contentString")
 
-                onComplete(dummyData)
+                        // json 배열 파싱
+                        val dummyData = GetTestFooterInfoOutputVO(
+                            uid,
+                            content
+                        )
 
+                        onComplete(dummyData)
+
+                        getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncOnProgressedMbr =
+                            false
+                        getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.release()
+                    }
+                    else -> { // 정의된 응답 코드 외의 응답일 때 = 크래쉬를 발생
+                        throw Throwable("$networkResponseCode")
+                    }
+                }
+            } catch (t: Throwable) {
+                onError(t)
+                getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncOnProgressedMbr = false
                 getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.release()
-            } else {
-                // 네트워크 입력값
-                val inputVo = GetTestFooterInfoInputVO(
-                    mapOf("session_token" to currentUserSessionTokenMbr)
-                )
-
-                // TODO : 실제 리포지토리 처리
-                getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.release()
-
             }
-
         }
     }
 
     // (아이템 데이터)
     private val getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr = Semaphore(1)
+    var getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncOnProgressedMbr = false
+        private set
 
     // ScreenVerticalRecyclerViewAdapter 데이터 현 페이지 (초기화 시에는 데이터 리스트를 초기화 하고 페이지 1부터 다시 받아오기)
     var getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr: Long? = null
@@ -234,128 +254,138 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     ) {
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.acquire()
+            getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncOnProgressedMbr = true
 
             // 원하는 리스트 사이즈가 0이라면 그냥 리턴
             if (0 == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr) {
                 onComplete(null)
+                getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncOnProgressedMbr = false
+                getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
+
                 return@execute
             }
 
-            if (isClientDevModeMbr) {
-                // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-                Thread.sleep(1500)
+            // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+            Thread.sleep(1500)
 
-                // 원래는 네트워크에서 실제 데이터 리스트 가져오기
+            try {
+                // 서버 요청
+                // 서버 반환값
+                val networkResponseCode = 200
 
-                // 더미 데이터 가져오기 (json)
-                val assetManager = applicationMbr.resources.assets
-                val inputStream =
-                    assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_item_dummy_data.json")
-                val jsonString = inputStream.bufferedReader().use { it.readText() }
+                when (networkResponseCode) {
+                    200 -> { // 정상 응답이라 결정한 코드
+                        // 더미 데이터 가져오기 (json)
+                        val assetManager = applicationMbr.resources.assets
+                        val inputStream =
+                            assetManager.open("activity_basic_recycler_view_sample_screen_vertical_recycler_view_adapter_item_dummy_data.json")
+                        val jsonString = inputStream.bufferedReader().use { it.readText() }
 
-                val jObject = JSONObject(jsonString)
-                val dummyDataJsonList = jObject.getJSONArray("dummyDataList")
+                        val jObject = JSONObject(jsonString)
+                        val dummyDataJsonList = jObject.getJSONArray("dummyDataList")
 
-                val dummyDataList = ArrayList<GetTestItemInfoListOutputVO.TestInfo>()
+                        val dummyDataList = ArrayList<GetTestItemInfoListOutputVO.TestInfo>()
 
-                // json 배열 파싱
-                for (dummyDataListIdx in 0 until dummyDataJsonList.length()) {
-                    val dummyDataObj = dummyDataJsonList.getJSONObject(dummyDataListIdx)
-                    val uid = dummyDataObj.getLong("uidLong")
-                    val title = dummyDataObj.getString("titleString")
-                    val content = dummyDataObj.getString("contentString")
-                    val writeDate = dummyDataObj.getString("writeDateString")
-                    dummyDataList.add(
-                        GetTestItemInfoListOutputVO.TestInfo(
-                            uid,
-                            title,
-                            content,
-                            writeDate
+                        // json 배열 파싱
+                        for (dummyDataListIdx in 0 until dummyDataJsonList.length()) {
+                            val dummyDataObj = dummyDataJsonList.getJSONObject(dummyDataListIdx)
+                            val uid = dummyDataObj.getLong("uidLong")
+                            val title = dummyDataObj.getString("titleString")
+                            val content = dummyDataObj.getString("contentString")
+                            val writeDate = dummyDataObj.getString("writeDateString")
+                            dummyDataList.add(
+                                GetTestItemInfoListOutputVO.TestInfo(
+                                    uid,
+                                    title,
+                                    content,
+                                    writeDate
+                                )
+                            )
+                        }
+
+                        // 기준에 따른 정렬
+                        when (getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
+                            0 -> {
+                                // 타이틀 내림차순 정렬
+                                dummyDataList.sortWith(compareBy { it.title })
+                            }
+                            1 -> {
+                                // 타이틀 오름차순 정렬
+                                dummyDataList.sortWith(compareByDescending { it.title })
+                            }
+                            2 -> {
+                                // 콘텐츠 내림차순 정렬
+                                dummyDataList.sortWith(compareBy { it.content })
+                            }
+                            3 -> {
+                                // 콘텐츠 오름차순 정렬
+                                dummyDataList.sortWith(compareByDescending { it.content })
+                            }
+                            4 -> {
+                                // 콘텐츠 내림차순 정렬
+                                dummyDataList.sortWith(compareBy {
+                                    val transFormat =
+                                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                                    val date: Date = transFormat.parse(it.writeDate)!!
+
+                                    date.time
+                                })
+                            }
+                            5 -> {
+                                // 콘텐츠 오름차순 정렬
+                                dummyDataList.sortWith(compareByDescending {
+                                    val transFormat =
+                                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                                    val date: Date = transFormat.parse(it.writeDate)!!
+
+                                    date.time
+                                })
+                            }
+                        }
+
+                        val startIdx = dummyDataList.indexOfFirst {
+                            it.uid == getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr
+                        } + 1
+
+                        var addedItemCount = 0
+
+                        val resultDataList = GetTestItemInfoListOutputVO(
+                            100,
+                            ArrayList()
                         )
-                    )
-                }
 
-                // 기준에 따른 정렬
-                when (getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
-                    0 -> {
-                        // 타이틀 내림차순 정렬
-                        dummyDataList.sortWith(compareBy { it.title })
-                    }
-                    1 -> {
-                        // 타이틀 오름차순 정렬
-                        dummyDataList.sortWith(compareByDescending { it.title })
-                    }
-                    2 -> {
-                        // 콘텐츠 내림차순 정렬
-                        dummyDataList.sortWith(compareBy { it.content })
-                    }
-                    3 -> {
-                        // 콘텐츠 오름차순 정렬
-                        dummyDataList.sortWith(compareByDescending { it.content })
-                    }
-                    4 -> {
-                        // 콘텐츠 내림차순 정렬
-                        dummyDataList.sortWith(compareBy {
-                            val transFormat =
-                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                            val date: Date = transFormat.parse(it.writeDate)!!
+                        for (dummyDataListIdx in startIdx until dummyDataList.size) {
+                            resultDataList.testList.add(dummyDataList[dummyDataListIdx])
 
-                            date.time
-                        })
-                    }
-                    5 -> {
-                        // 콘텐츠 오름차순 정렬
-                        dummyDataList.sortWith(compareByDescending {
-                            val transFormat =
-                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                            val date: Date = transFormat.parse(it.writeDate)!!
+                            ++addedItemCount
+                            if (addedItemCount == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr) {
+                                break
+                            }
+                        }
+                        onComplete(resultDataList)
 
-                            date.time
-                        })
+                        getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncOnProgressedMbr =
+                            false
+                        getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
+                    }
+                    else -> { // 정의된 응답 코드 외의 응답일 때 = 크래쉬를 발생
+                        throw Throwable("$networkResponseCode")
                     }
                 }
-
-                val startIdx = dummyDataList.indexOfFirst {
-                    it.uid == getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr
-                } + 1
-
-                var addedItemCount = 0
-
-                val resultDataList = GetTestItemInfoListOutputVO(
-                    100,
-                    ArrayList()
-                )
-
-                for (dummyDataListIdx in startIdx until dummyDataList.size) {
-                    resultDataList.testList.add(dummyDataList[dummyDataListIdx])
-
-                    ++addedItemCount
-                    if (addedItemCount == getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr) {
-                        break
-                    }
-                }
-                onComplete(resultDataList)
-
-                getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
-
-            } else {
-                // 네트워크 입력값
-                val inputVo = GetTestItemInfoListInputVO(
-                    mapOf("session_token" to currentUserSessionTokenMbr),
-                    getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr,
-                    getScreenVerticalRecyclerViewAdapterItemDataPageItemListSizeMbr,
-                    getScreenVerticalRecyclerViewAdapterItemDataLastUidMbr
-                )
-
-                // TODO : 실제 리포지토리 처리
+            } catch (t: Throwable) {
+                onError(t)
+                getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncOnProgressedMbr = false
                 getScreenVerticalRecyclerViewAdapterDataAsyncSemaphoreMbr.release()
             }
+
         }
     }
 
     // (아이템 데이터 삭제)
     private val deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr =
         Semaphore(1)
+    var deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr = false
+        private set
 
     fun deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsync(
         contentUid: Long,
@@ -364,20 +394,36 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
     ) {
         executorServiceMbr?.execute {
             deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.acquire()
+            deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr = true
 
-            if (isClientDevModeMbr) {
-                // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-                Thread.sleep(500)
+            // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+            Thread.sleep(500)
 
-                // 원래는 네트워크에서 contentUid 의 아이템을 삭제 후 결과를 반환
+            try {
+                // 서버 요청
+                // 서버 반환값
+                val networkResponseCode = 200
 
-                onComplete()
+                when (networkResponseCode) {
+                    200 -> { // 정상 응답이라 결정한 코드
 
-                deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
-            } else {
-                // TODO : 실제 리포지토리 처리
+                        onComplete()
+                        deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr =
+                            false
+                        deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
+                    }
+                    else -> { // 정의된 응답 코드 외의 응답일 때 = 크래쉬를 발생
+                        throw Throwable("$networkResponseCode")
+                    }
+                }
+            } catch (t: Throwable) {
+                onError(t)
+                deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr = false
                 deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
             }
+
+            deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr = false
+            deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
 
         }
     }

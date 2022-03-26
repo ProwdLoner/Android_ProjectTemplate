@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_init
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -98,8 +97,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     var checkAppVersionAsyncCompletedOnceMbr = false
         private set
-    var checkAppVersionAsyncResultMbr: Boolean? = null
-        private set
+    private var checkAppVersionAsyncResultMbr: Boolean? = null
 
     fun checkAppVersionAsync(
         onComplete: (Boolean) -> Unit,
@@ -125,8 +123,10 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
             val currVersionSplit = currentVersion.split(".")
 
             try {
-                // todo : 서버에서 받아오기 (강제 업데이트가 필요한 버전)
+                // 서버 요청
+                // 응답 코드
                 val networkResponseCode = 200
+                // 서버 반환값 (강제 업데이트가 필요한 버전)
                 val serverMinUpdateVersion = "1.0.0" // 업데이트 최소 버전 = ex : "1.0.0"
 
                 when (networkResponseCode) {
@@ -163,9 +163,8 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     var checkLoginSessionAsyncCompletedOnceMbr = false
         private set
-    var checkLoginSessionAsyncResultMbr:
+    private var checkLoginSessionAsyncResultMbr:
             CheckLoginSessionResultVO? = null
-        private set
 
     fun checkLoginSessionAsync(
         parameterVO: CheckLoginSessionParameterVO,
@@ -204,7 +203,8 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                 1 -> { // 자체 서버 로그인 상태
                     // 로그인 요청 후 세션 토큰을 받아오기
                     try {
-                        // todo : 실제 서버 요청
+                        // 서버 요청
+                        // 응답 코드
                         val networkResponseCode = 200
 
                         // 서버 반환 정보
@@ -260,7 +260,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                 2 -> { // 구글 로그인 상태
                     // 로그인 요청 후 세션 토큰을 받아오기
                     try {
-                        // todo : 실제 서버 요청
+                        // 서버 요청
                         val networkResponseCode = 200
 
                         // 서버 반환 정보
@@ -316,7 +316,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                 3 -> { // 카카오 로그인 상태
                     // 로그인 요청 후 세션 토큰을 받아오기
                     try {
-                        // todo : 실제 서버 요청
+                        // 서버 요청
                         val networkResponseCode = 200
 
                         // 서버 반환 정보
@@ -372,7 +372,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                 4 -> { // 네이버 로그인 상태
                     // 로그인 요청 후 세션 토큰을 받아오기
                     try {
-                        // todo : 실제 서버 요청
+                        // 서버 요청
                         val networkResponseCode = 200
 
                         when (networkResponseCode) {
@@ -428,14 +428,12 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    // todo
     // 디바이스 정보 서버 반영
     private val postDeviceInfoAsyncSemaphoreMbr = Semaphore(1)
     var postDeviceInfoAsyncOnProgressedMbr = false
         private set
 
-    var postDeviceInfoAsyncCompletedOnceMbr = false
-        private set
+    private var postDeviceInfoAsyncCompletedOnceMbr = false
 
     fun postDeviceInfoAsync(
         pushPermissionGranted: Boolean,
@@ -458,13 +456,12 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
             }
 
             try {
-                // todo : 서버에 정보 전달
+                // 서버 요청
                 // 서버 반환값
                 val networkResponseCode = 200
 
                 when (networkResponseCode) {
                     200 -> { // 정상 응답이라 결정한 코드
-
 
                         onComplete()
                         postDeviceInfoAsyncCompletedOnceMbr = true
@@ -480,9 +477,6 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                 postDeviceInfoAsyncOnProgressedMbr = false
                 postDeviceInfoAsyncSemaphoreMbr.release()
             }
-
-            // todo
-
         }
     }
 
