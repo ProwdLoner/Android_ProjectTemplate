@@ -7,7 +7,6 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,9 +40,6 @@ class ActivityPermissionSample : AppCompatActivity() {
     // (권한 요청 객체)
     private lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
 
-    // (권한 설정 이동 객체)
-    private lateinit var permissionResultLauncherMbr: ActivityResultLauncher<Intent>
-
     // (다이얼로그 객체)
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
@@ -53,6 +49,12 @@ class ActivityPermissionSample : AppCompatActivity() {
 
     // 확인 다이얼로그
     private var confirmDialogMbr: DialogConfirm? = null
+
+    // (ActivityResultLauncher 객체)
+    private lateinit var permissionResultLauncherMbr: ActivityResultLauncher<Intent>
+
+    // 복귀 후 실행 콜백
+    private var permissionResultLauncherCallbackMbr: (() -> Unit)? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -71,7 +73,7 @@ class ActivityPermissionSample : AppCompatActivity() {
         // (권한 요청 객체 생성)
         createPermissionObjects()
         // (ActivityResultLauncher 객체 생성)
-        createPermissionResultLauncher()
+        createActivityResultLauncher()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -85,6 +87,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
+            // 권한 스위치 상태 변경
+            setSwitchView()
+
             val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
@@ -200,6 +205,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
+                                        permissionResultLauncherCallbackMbr = { }
                                         permissionResultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
@@ -265,6 +271,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
+                                        permissionResultLauncherCallbackMbr = { }
                                         permissionResultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
@@ -293,8 +300,6 @@ class ActivityPermissionSample : AppCompatActivity() {
                                 !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
 
                     if (isFineGranted || isCoarseGranted) { // 권한 승인
-
-                        Log.e("fine", isFineGranted.toString())
 
                         viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                             DialogConfirm.DialogInfoVO(
@@ -372,6 +377,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
+                                        permissionResultLauncherCallbackMbr = { }
                                         permissionResultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
@@ -445,6 +451,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
+                                        permissionResultLauncherCallbackMbr = { }
                                         permissionResultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
@@ -452,7 +459,8 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                                         // 뷰 상태 되돌리기
                                         bindingMbr.locationPermissionDetailSwitch.isChecked = false
-                                        bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
+                                        bindingMbr.locationPermissionDetailContainer.visibility =
+                                            View.VISIBLE
                                     },
                                     onCanceled = {
                                         // 취소 불가
@@ -465,111 +473,19 @@ class ActivityPermissionSample : AppCompatActivity() {
             }
     }
 
-    // permissionResultLauncher 생성
-    private fun createPermissionResultLauncher() {
+    // (ActivityResultLauncher 객체 생성)
+    private fun createActivityResultLauncher() {
         // 앱 권한 설정 후 복귀
         permissionResultLauncherMbr = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
-            // 푸시 권한 설정 여부 반영
-            bindingMbr.pushPermissionSwitch.isChecked =
-                viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted
-
-            // 외부 저장소 읽기 권한 설정 여부 반영
-            bindingMbr.externalStorageReadPermissionSwitch.isChecked =
-                ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
-
-            // 카메라 접근 권한 설정 여부 반영
-            bindingMbr.cameraPermissionSwitch.isChecked =
-                ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.CAMERA
-                ) == PackageManager.PERMISSION_GRANTED
-
-            val fineLocationGranted = ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-            val coarseLocationGranted =
-                ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-
-            when {
-                fineLocationGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
-                    bindingMbr.locationPermissionSwitch.isChecked = true
-                    bindingMbr.locationPermissionDetailSwitch.isChecked = true
-                    bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
-                }
-                coarseLocationGranted -> {// 위치 권한 coarse 만 승인
-                    // 정확도 보정 설정 보여주기
-                    bindingMbr.locationPermissionSwitch.isChecked = true
-                    bindingMbr.locationPermissionDetailSwitch.isChecked = false
-                    bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
-                }
-                else -> {// 위치 권한 모두 거부
-                    bindingMbr.locationPermissionSwitch.isChecked = false
-                    bindingMbr.locationPermissionDetailSwitch.isChecked = false
-                    bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
-                }
-            }
+            permissionResultLauncherCallbackMbr?.let { it1 -> it1() }
+            permissionResultLauncherCallbackMbr = null
         }
     }
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 푸시 권한 설정 여부 반영
-        bindingMbr.pushPermissionSwitch.isChecked =
-            viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted
-
-        // 외부 저장소 읽기 권한 설정 여부 반영
-        bindingMbr.externalStorageReadPermissionSwitch.isChecked =
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-
-        // 카메라 접근 권한 설정 여부 반영
-        bindingMbr.cameraPermissionSwitch.isChecked =
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-
-        val fineLocationGranted = ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val coarseLocationGranted =
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-        when {
-            fineLocationGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
-                bindingMbr.locationPermissionSwitch.isChecked = true
-                bindingMbr.locationPermissionDetailSwitch.isChecked = true
-                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
-            }
-            coarseLocationGranted -> {// 위치 권한 coarse 만 승인
-                // 정확도 보정 설정 보여주기
-                bindingMbr.locationPermissionSwitch.isChecked = true
-                bindingMbr.locationPermissionDetailSwitch.isChecked = false
-                bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
-            }
-            else -> {// 위치 권한 모두 거부
-                bindingMbr.locationPermissionSwitch.isChecked = false
-                bindingMbr.locationPermissionDetailSwitch.isChecked = false
-                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
-            }
-        }
 
         // (리스너 설정)
         // 푸시 권한
@@ -664,6 +580,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
+                            permissionResultLauncherCallbackMbr = { }
                             permissionResultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
@@ -700,6 +617,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
+                            permissionResultLauncherCallbackMbr = { }
                             permissionResultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
@@ -741,6 +659,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
+                            permissionResultLauncherCallbackMbr = { }
                             permissionResultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
@@ -755,8 +674,6 @@ class ActivityPermissionSample : AppCompatActivity() {
             }
         }
 
-        // todo
-        // todo : 위치 정보 정확과 대략 연동 (정확에 체크되었을 때에는 대략도 같이 체크, 대략을 체크 해제하면 정확도 체크 해제)
         // 위치 정보 조회 권한 (정확)
         bindingMbr.locationPermissionDetailSwitch.setOnClickListener {
             if (bindingMbr.locationPermissionDetailSwitch.isChecked) { // 체크시
@@ -821,6 +738,56 @@ class ActivityPermissionSample : AppCompatActivity() {
             } else {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
+            }
+        }
+    }
+
+    private fun setSwitchView() {
+        // 푸시 권한 설정 여부 반영
+        bindingMbr.pushPermissionSwitch.isChecked =
+            viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted
+
+        // 외부 저장소 읽기 권한 설정 여부 반영
+        bindingMbr.externalStorageReadPermissionSwitch.isChecked =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+
+        // 카메라 접근 권한 설정 여부 반영
+        bindingMbr.cameraPermissionSwitch.isChecked =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+
+        val fineLocationGranted = ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val coarseLocationGranted =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        when {
+            fineLocationGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
+                bindingMbr.locationPermissionSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
+            }
+            coarseLocationGranted -> {// 위치 권한 coarse 만 승인
+                // 정확도 보정 설정 보여주기
+                bindingMbr.locationPermissionSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
+            }
+            else -> {// 위치 권한 모두 거부
+                bindingMbr.locationPermissionSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
             }
         }
     }
