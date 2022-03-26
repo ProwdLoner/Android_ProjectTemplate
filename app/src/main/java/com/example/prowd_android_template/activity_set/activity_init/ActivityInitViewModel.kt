@@ -1,10 +1,12 @@
 package com.example.prowd_android_template.activity_set.activity_init
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.common_shared_preference_wrapper.CustomDevicePermissionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.repository.RepositorySet
@@ -24,10 +26,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     // (SharedPreference 객체)
     // 현 화면 정보 접근 객체
-    val thisSpwMbr : ActivityInitSpw = ActivityInitSpw(application)
+    val thisSpwMbr: ActivityInitSpw = ActivityInitSpw(application)
 
     // 현 로그인 정보 접근 객체
-    val currentLoginSessionInfoSpwMbr : CurrentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(application)
+    val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
+        CurrentLoginSessionInfoSpw(application)
+
+    // 디바이스 커스텀 권한 정보 접근 객체
+    val customDevicePermissionInfoSpwMbr: CustomDevicePermissionInfoSpw =
+        CustomDevicePermissionInfoSpw(application)
 
     // (데이터)
     // 대기시간 (밀리초)
@@ -44,11 +51,11 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     // 앱 기본 대기 시간이 끝났을 때
     var delayGoToNextActivityAsyncCompletedOnceMbr = false
 
-    var isCheckAppPermissionsCompletedOnceMbr : Boolean = false
-    var isCheckAppPermissionsOnProgressMbr : Boolean = false
+    var isCheckAppPermissionsCompletedOnceMbr: Boolean = false
+    var isCheckAppPermissionsOnProgressMbr: Boolean = false
 
-    var isSendDeviceInfoToServerCompletedOnceMbr : Boolean = false
-    var isSendDeviceInfoToServerOnProgressMbr : Boolean = false
+    var isSendDeviceInfoToServerCompletedOnceMbr: Boolean = false
+    var isSendDeviceInfoToServerOnProgressMbr: Boolean = false
 
     // (뷰 세마포어)
     val goToNextActivitySemaphoreMbr = Semaphore(1)
@@ -418,6 +425,72 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                     }
                 }
             }
+        }
+    }
+
+    // todo
+    // 디바이스 정보 서버 반영
+    private val postDeviceInfoAsyncSemaphoreMbr = Semaphore(1)
+    var postDeviceInfoAsyncOnProgressedMbr = false
+        private set
+
+    var postDeviceInfoAsyncCompletedOnceMbr = false
+        private set
+
+    fun postDeviceInfoAsync(
+        pushPermissionGranted: Boolean,
+        cameraPermissionGranted: Boolean,
+        readExternalStoragePermissionGranted: Boolean,
+        locationPermissionType: Int,
+        onComplete: () -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        Log.e("pushPermissionGranted", pushPermissionGranted.toString())
+        Log.e("cameraPermissionGranted", cameraPermissionGranted.toString())
+        Log.e(
+            "readExternalStoragePermissionGranted",
+            readExternalStoragePermissionGranted.toString()
+        )
+        Log.e("locationPermissionType", locationPermissionType.toString())
+
+        executorServiceMbr?.execute {
+            postDeviceInfoAsyncSemaphoreMbr.acquire()
+            postDeviceInfoAsyncOnProgressedMbr = true
+
+            if (postDeviceInfoAsyncCompletedOnceMbr) { // 이전에 완료된 경우
+                onComplete()
+                postDeviceInfoAsyncOnProgressedMbr = false
+                postDeviceInfoAsyncSemaphoreMbr.release()
+
+                return@execute
+            }
+
+            try {
+                // todo : 서버에 정보 전달
+                // 서버 반환값
+                val networkResponseCode = 200
+
+                when (networkResponseCode) {
+                    200 -> { // 정상 응답이라 결정한 코드
+
+
+                        onComplete()
+                        postDeviceInfoAsyncCompletedOnceMbr = true
+                        postDeviceInfoAsyncOnProgressedMbr = false
+                        postDeviceInfoAsyncSemaphoreMbr.release()
+                    }
+                    else -> { // 정의된 응답 코드 외의 응답일 때 = 크래쉬를 발생
+                        throw Throwable("$networkResponseCode")
+                    }
+                }
+            } catch (t: Throwable) {
+                onError(t)
+                postDeviceInfoAsyncOnProgressedMbr = false
+                postDeviceInfoAsyncSemaphoreMbr.release()
+            }
+
+            // todo
+
         }
     }
 
