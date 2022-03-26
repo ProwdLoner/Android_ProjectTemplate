@@ -40,7 +40,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
 
     // (플래그 데이터)
     // 뷰 개발 모드 플래그 (= 더미 데이터를 사용)
-    private val isViewDevModeMbr = true
+    private val isClientDevModeMbr = true
 
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
@@ -111,7 +111,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncSemaphoreMbr.acquire()
 
-            if (isViewDevModeMbr) {
+            if (isClientDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                 Thread.sleep(500)
 
@@ -162,7 +162,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         executorServiceMbr?.execute {
             getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncSemaphoreMbr.acquire()
 
-            if (isViewDevModeMbr) {
+            if (isClientDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                 Thread.sleep(500)
 
@@ -241,7 +241,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
                 return@execute
             }
 
-            if (isViewDevModeMbr) {
+            if (isClientDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                 Thread.sleep(1500)
 
@@ -365,7 +365,7 @@ class ActivityBasicRecyclerViewSampleViewModel(application: Application) :
         executorServiceMbr?.execute {
             deleteScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.acquire()
 
-            if (isViewDevModeMbr) {
+            if (isClientDevModeMbr) {
                 // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
                 Thread.sleep(500)
 
