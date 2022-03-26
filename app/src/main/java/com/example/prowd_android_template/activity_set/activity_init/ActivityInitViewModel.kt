@@ -445,14 +445,6 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
         onComplete: () -> Unit,
         onError: (Throwable) -> Unit
     ) {
-        Log.e("pushPermissionGranted", pushPermissionGranted.toString())
-        Log.e("cameraPermissionGranted", cameraPermissionGranted.toString())
-        Log.e(
-            "readExternalStoragePermissionGranted",
-            readExternalStoragePermissionGranted.toString()
-        )
-        Log.e("locationPermissionType", locationPermissionType.toString())
-
         executorServiceMbr?.execute {
             postDeviceInfoAsyncSemaphoreMbr.acquire()
             postDeviceInfoAsyncOnProgressedMbr = true
