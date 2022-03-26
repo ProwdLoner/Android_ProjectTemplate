@@ -8,11 +8,9 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.common_shared_preference_wrapper.CustomDevicePermissionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
-import com.example.prowd_android_template.network_request_api_set.test.request_vo.GetTestHeaderInfoInputVO
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.Semaphore
 
 class ActivityPermissionSampleViewModel(application: Application) :
     AndroidViewModel(application) {
@@ -37,10 +35,6 @@ class ActivityPermissionSampleViewModel(application: Application) :
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
     var currentUserSessionTokenMbr: String? = null
-
-    // (플래그 데이터)
-    // 뷰 개발 모드 플래그 (= 더미 데이터를 사용)
-    private val isClientDevModeMbr = true
 
     // (플래그 데이터)
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황

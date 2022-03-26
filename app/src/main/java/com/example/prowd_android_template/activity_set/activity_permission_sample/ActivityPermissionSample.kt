@@ -7,6 +7,8 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
+import android.view.View
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
@@ -39,6 +41,9 @@ class ActivityPermissionSample : AppCompatActivity() {
     // (권한 요청 객체)
     private lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
 
+    // (권한 설정 이동 객체)
+    private lateinit var permissionResultLauncherMbr: ActivityResultLauncher<Intent>
+
     // (다이얼로그 객체)
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
@@ -48,10 +53,6 @@ class ActivityPermissionSample : AppCompatActivity() {
 
     // 확인 다이얼로그
     private var confirmDialogMbr: DialogConfirm? = null
-
-    // (ActivityResultLauncher 객체)
-    // 외부 저장소 읽기 권한 설정 액티비티 이동 복귀 객체
-    private lateinit var readExternalStoragePermissionSettingResultLauncherMbr: ActivityResultLauncher<Intent>
 
 
     // ---------------------------------------------------------------------------------------------
@@ -70,7 +71,7 @@ class ActivityPermissionSample : AppCompatActivity() {
         // (권한 요청 객체 생성)
         createPermissionObjects()
         // (ActivityResultLauncher 객체 생성)
-        createActivityResultLauncher()
+        createPermissionResultLauncher()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -157,94 +158,59 @@ class ActivityPermissionSample : AppCompatActivity() {
                         !shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
 
                     if (isGranted) { // 권한 승인
-                        // 액티비티 이동
-                        // todo 스위치 체크 상태 변경, 서버에 정보 갱신
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                            DialogConfirm.DialogInfoVO(
+                                true,
+                                "외부 저장소 읽기 권한",
+                                "외부 저장소 읽기 권한이 승인 되었습니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+
+                                },
+                                onCanceled = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+
+                                }
+                            )
 
                     } else { // 권한 거부
                         if (!neverAskAgain) {
                             // 단순 거부
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "권한 요청",
-                                    "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                                        // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-                                    },
-                                    onCanceled = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                                        // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-                                    }
-                                )
+
+                            // 뷰 상태 되돌리기
+                            bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
+
                         } else {
                             // 다시 묻지 않기 선택
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
                                 DialogBinaryChoose.DialogInfoVO(
-                                    true,
+                                    false,
                                     "권한 요청",
-                                    "해당 서비스를 이용하기 위해선\n" +
-                                            "외부 저장장치 접근 권한이 필요합니다.\n" +
-                                            "권한 설정 화면으로 이동하시겠습니까?",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
                                     null,
                                     null,
                                     onPosBtnClicked = {
                                         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                                        // 권한 설정 화면으로 이동
+                                        // 권한 설정 페이지 이동
                                         val intent =
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                        intent.data = Uri.fromParts("package", packageName, null)
-                                        readExternalStoragePermissionSettingResultLauncherMbr.launch(
-                                            intent
-                                        )
+                                        val uri = Uri.fromParts("package", packageName, null)
+                                        intent.data = uri
+                                        permissionResultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
                                         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                            DialogConfirm.DialogInfoVO(
-                                                true,
-                                                "권한 요청",
-                                                "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
-                                                null,
-                                                onCheckBtnClicked = {
-
-                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                        null
-                                                    // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-                                                },
-                                                onCanceled = {
-
-                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                        null
-                                                    // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-                                                }
-                                            )
+                                        // 뷰 상태 되돌리기
+                                        bindingMbr.externalStorageReadPermissionSwitch.isChecked =
+                                            false
                                     },
                                     onCanceled = {
-                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                            DialogConfirm.DialogInfoVO(
-                                                true,
-                                                "권한 요청",
-                                                "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
-                                                null,
-                                                onCheckBtnClicked = {
-
-                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                        null
-                                                    // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-                                                },
-                                                onCanceled = {
-
-                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                        null
-                                                    // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-                                                }
-                                            )
+                                        // 취소 불가
                                     }
                                 )
                         }
@@ -252,42 +218,232 @@ class ActivityPermissionSample : AppCompatActivity() {
                 } else if (permissions.size == 1 && // 개별 권한 요청
                     permissions.containsKey(Manifest.permission.CAMERA)
                 ) { // 카메라 권한
+                    val isGranted = permissions[Manifest.permission.CAMERA]!!
+                    val neverAskAgain =
+                        !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
 
+                    if (isGranted) { // 권한 승인
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                            DialogConfirm.DialogInfoVO(
+                                true,
+                                "카메라 사용 권한",
+                                "카메라 사용 권한이 승인 되었습니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+
+                                },
+                                onCanceled = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+
+                                }
+                            )
+
+                    } else { // 권한 거부
+                        if (!neverAskAgain) {
+                            // 단순 거부
+
+                            // 뷰 상태 되돌리기
+                            bindingMbr.cameraPermissionSwitch.isChecked = false
+
+                        } else {
+                            // 다시 묻지 않기 선택
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                        // 권한 설정 페이지 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        val uri = Uri.fromParts("package", packageName, null)
+                                        intent.data = uri
+                                        permissionResultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                        // 뷰 상태 되돌리기
+                                        bindingMbr.cameraPermissionSwitch.isChecked =
+                                            false
+                                    },
+                                    onCanceled = {
+                                        // 취소 불가
+                                    }
+                                )
+                        }
+                    }
+
+                } else if (permissions.size == 2 && // 개별 권한 요청
+                    permissions.containsKey(Manifest.permission.ACCESS_FINE_LOCATION) ||
+                    permissions.containsKey(Manifest.permission.ACCESS_COARSE_LOCATION)
+                ) { // 위치 권한
+                    val isFineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION]!!
+                    val isCoarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION]!!
+
+                    val neverAskAgain =
+                        !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) ||
+                                !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
+
+                    if (isFineGranted || isCoarseGranted) { // 권한 승인
+
+                        Log.e("fine", isFineGranted.toString())
+
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                            DialogConfirm.DialogInfoVO(
+                                true,
+                                "위치 정보 조회 권한",
+                                "위치 정보 조회 권한이 승인 되었습니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+
+                                    when {
+                                        isFineGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
+                                            bindingMbr.locationPermissionSwitch.isChecked = true
+                                            bindingMbr.locationPermissionDetailSwitch.isChecked =
+                                                true
+                                            bindingMbr.locationPermissionDetailContainer.visibility =
+                                                View.GONE
+                                        }
+                                        isCoarseGranted -> {// 위치 권한 coarse 만 승인
+                                            // 정확도 보정 설정 보여주기
+                                            bindingMbr.locationPermissionSwitch.isChecked = true
+                                            bindingMbr.locationPermissionDetailSwitch.isChecked =
+                                                false
+                                            bindingMbr.locationPermissionDetailContainer.visibility =
+                                                View.VISIBLE
+                                        }
+                                    }
+                                },
+                                onCanceled = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+
+                                    when {
+                                        isFineGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
+                                            bindingMbr.locationPermissionSwitch.isChecked = true
+                                            bindingMbr.locationPermissionDetailSwitch.isChecked =
+                                                true
+                                            bindingMbr.locationPermissionDetailContainer.visibility =
+                                                View.GONE
+                                        }
+                                        isCoarseGranted -> {// 위치 권한 coarse 만 승인
+                                            // 정확도 보정 설정 보여주기
+                                            bindingMbr.locationPermissionSwitch.isChecked = true
+                                            bindingMbr.locationPermissionDetailSwitch.isChecked =
+                                                false
+                                            bindingMbr.locationPermissionDetailContainer.visibility =
+                                                View.VISIBLE
+                                        }
+                                    }
+                                }
+                            )
+
+                    } else { // 권한 거부
+                        if (!neverAskAgain) {
+                            // 단순 거부
+                            bindingMbr.locationPermissionSwitch.isChecked = false
+                            bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                            bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
+
+                        } else {
+                            // 다시 묻지 않기 선택
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                        // 권한 설정 페이지 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        val uri = Uri.fromParts("package", packageName, null)
+                                        intent.data = uri
+                                        permissionResultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                        bindingMbr.locationPermissionSwitch.isChecked = false
+                                        bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                                        bindingMbr.locationPermissionDetailContainer.visibility =
+                                            View.GONE
+                                    },
+                                    onCanceled = {
+                                        // 취소 불가
+                                    }
+                                )
+                        }
+                    }
                 }
             }
     }
 
-    // ActivityResultLauncher 생성
-    private fun createActivityResultLauncher() {
-        // 외부 저장소 읽기 권한 설정 후 복귀
-        readExternalStoragePermissionSettingResultLauncherMbr = registerForActivityResult(
+    // permissionResultLauncher 생성
+    private fun createPermissionResultLauncher() {
+        // 앱 권한 설정 후 복귀
+        permissionResultLauncherMbr = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
-            // 권한 확인
-            if (ActivityCompat.checkSelfPermission(
+            // 푸시 권한 설정 여부 반영
+            bindingMbr.pushPermissionSwitch.isChecked =
+                viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted
+
+            // 외부 저장소 읽기 권한 설정 여부 반영
+            bindingMbr.externalStorageReadPermissionSwitch.isChecked =
+                ActivityCompat.checkSelfPermission(
                     this,
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED
-            ) { // 권한 승인
-                // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-            } else { // 권한 비승인
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                    DialogConfirm.DialogInfoVO(
-                        true,
-                        "권한 요청",
-                        "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
-                        null,
-                        onCheckBtnClicked = {
 
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                            // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-                        },
-                        onCanceled = {
+            // 카메라 접근 권한 설정 여부 반영
+            bindingMbr.cameraPermissionSwitch.isChecked =
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
 
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                            // todo 스위치 체크 상태 변경, 서버에 정보 갱신
-                        }
-                    )
+            val fineLocationGranted = ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val coarseLocationGranted =
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+
+            when {
+                fineLocationGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
+                    bindingMbr.locationPermissionSwitch.isChecked = true
+                    bindingMbr.locationPermissionDetailSwitch.isChecked = true
+                    bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
+                }
+                coarseLocationGranted -> {// 위치 권한 coarse 만 승인
+                    // 정확도 보정 설정 보여주기
+                    bindingMbr.locationPermissionSwitch.isChecked = true
+                    bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                    bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
+                }
+                else -> {// 위치 권한 모두 거부
+                    bindingMbr.locationPermissionSwitch.isChecked = false
+                    bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                    bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
+                }
             }
         }
     }
@@ -323,39 +479,31 @@ class ActivityPermissionSample : AppCompatActivity() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
 
-        if (!fineLocationGranted && !coarseLocationGranted) { // 위치 권한 모두 거부
-            // 모두 false
-            bindingMbr.fineLocationPermissionSwitch.isChecked = false
-            bindingMbr.coarseLocationPermissionSwitch.isChecked = false
-        } else if (fineLocationGranted) { // 위치 권한 fine 승인
-            // coarse 까지 같이 true
-            bindingMbr.fineLocationPermissionSwitch.isChecked = true
-            bindingMbr.coarseLocationPermissionSwitch.isChecked = true
-        } else { // 위치 권한 coarse 만 승인
-            // coarse 만 true
-            bindingMbr.fineLocationPermissionSwitch.isChecked = false
-            bindingMbr.coarseLocationPermissionSwitch.isChecked = true
+        when {
+            fineLocationGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
+                bindingMbr.locationPermissionSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
+            }
+            coarseLocationGranted -> {// 위치 권한 coarse 만 승인
+                // 정확도 보정 설정 보여주기
+                bindingMbr.locationPermissionSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
+            }
+            else -> {// 위치 권한 모두 거부
+                bindingMbr.locationPermissionSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
+            }
         }
 
         // (리스너 설정)
         // 푸시 권한
-        // todo 버튼 비활성화
         bindingMbr.pushPermissionSwitch.setOnClickListener {
             if (bindingMbr.pushPermissionSwitch.isChecked) { // 체크시
-                // 서버에 반영 (로딩다이얼로그 표시, 끝나면 아래 다이얼로그 표시, 에러시 처리 없음 = init 시에 다시 시도됨)
-                viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                    DialogProgressLoading.DialogInfoVO(
-                        false,
-                        "권한 변경을 반영합니다.",
-                        onCanceled = {
-                            // 취소 불가
-                        }
-                    )
-
                 // 로컬 저장소에 저장
                 viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted = true
-
-                viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
 
                 // 권한 설정 메시지
                 viewModelMbr.confirmDialogInfoLiveDataMbr.value =
@@ -373,7 +521,6 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                         }
                     )
-
             } else {
                 // 체크 해제시
                 // 권한 해제 다이얼로그
@@ -387,22 +534,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                         onPosBtnClicked = {
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                            // 서버에 반영 (로딩다이얼로그 표시, 끝나면 아래 다이얼로그 표시, 에러시 처리 없음 = init 시에 다시 시도됨)
-                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                DialogProgressLoading.DialogInfoVO(
-                                    false,
-                                    "권한 변경을 반영합니다.",
-                                    onCanceled = {
-                                        // 취소 불가
-                                    }
-                                )
-
                             // 로컬 저장소에 저장
                             viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted =
                                 false
-
-                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                null
 
                             // 권한 설정 메시지
                             viewModelMbr.confirmDialogInfoLiveDataMbr.value =
@@ -419,6 +553,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                                     onCanceled = {
                                         viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                             null
+
                                     }
                                 )
                         },
@@ -426,170 +561,130 @@ class ActivityPermissionSample : AppCompatActivity() {
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
                             bindingMbr.pushPermissionSwitch.isChecked = true
-
                         },
                         onCanceled = {
                             // 취소 불가
                         }
                     )
-
             }
         }
 
-        // todo
         // 외부 저장소 읽기 권한
         bindingMbr.externalStorageReadPermissionSwitch.setOnClickListener {
-            if (bindingMbr.externalStorageReadPermissionSwitch.isChecked) {
-                // 체크시
-
-                // 시스템 권한은 설정에서 독자적으로 변경이 가능하므로 서버에 반영하지 않는 방향으로 서비스를 만들것.
-                // 서버의 정보 제공에 필요한 권한이라면, 파라미터로 조절할 것.
-                // 예를들어 위치 반영 정보라면, 위치권한 승인 상태라면 파라미터로 좌표값을 보내고, 미승인 상태라면 좌표값을 null 로 보내어 구분
-
-                // 로컬 저장소에 저장
-
-                // 권한 설정 메시지
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "외부 저장소 읽기 권한",
-                    "외부 저장소 읽기 권한이 승인 되었습니다.",
-                    null,
-                    onCheckBtnClicked = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                    },
-                    onCanceled = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    }
-                )
-
+            if (bindingMbr.externalStorageReadPermissionSwitch.isChecked) { // 체크시
+                // 권한 요청
+                permissionRequestMbr.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE))
             } else {
                 // 체크 해제시
+                // 권한 해제 다이얼로그
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                    DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "외부 저장소 읽기 권한 해제",
+                        "외부 저장소 읽기 권한을 해제하시겠습니까?\n(권한 설정 화면으로 이동합니다.)",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                // 서버에 반영 (완료시 아래 로직 실행, 에러시 체크 상태 복구)
+                            // 권한 설정 페이지 이동
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            val uri = Uri.fromParts("package", packageName, null)
+                            intent.data = uri
+                            permissionResultLauncherMbr.launch(intent)
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                // 로컬 저장소에 저장
-
-                // 권한 설정 메시지
-
-
+                            bindingMbr.externalStorageReadPermissionSwitch.isChecked = true
+                        },
+                        onCanceled = {
+                            // 취소 불가
+                        }
+                    )
             }
         }
 
-        // todo
-        // 카메라 접근 권한
+        // 카메라 사용 권한
         bindingMbr.cameraPermissionSwitch.setOnClickListener {
-            if (bindingMbr.cameraPermissionSwitch.isChecked) {
-                // 체크시
-
-                // 서버에 반영 (완료시 아래 로직 실행, 에러시 체크 상태 복구)
-
-                // 로컬 저장소에 저장
-
-                // 권한 설정 메시지
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "카메라 접근 권한",
-                    "카메라 접근 권한이 승인 되었습니다.",
-                    null,
-                    onCheckBtnClicked = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                    },
-                    onCanceled = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    }
-                )
-
+            if (bindingMbr.cameraPermissionSwitch.isChecked) { // 체크시
+                // 권한 요청
+                permissionRequestMbr.launch(arrayOf(Manifest.permission.CAMERA))
             } else {
                 // 체크 해제시
+                // 권한 해제 다이얼로그
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                    DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "카메라 사용 권한 해제",
+                        "카메라 사용 권한을 해제하시겠습니까?\n(권한 설정 화면으로 이동합니다.)",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                // 서버에 반영 (완료시 아래 로직 실행, 에러시 체크 상태 복구)
+                            // 권한 설정 페이지 이동
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            val uri = Uri.fromParts("package", packageName, null)
+                            intent.data = uri
+                            permissionResultLauncherMbr.launch(intent)
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                // 로컬 저장소에 저장
+                            bindingMbr.cameraPermissionSwitch.isChecked = true
+                        },
+                        onCanceled = {
+                            // 취소 불가
+                        }
+                    )
+            }
+        }
 
-                // 권한 설정 메시지
+        // 위치 정보 조회 권한
+        bindingMbr.locationPermissionSwitch.setOnClickListener {
+            if (bindingMbr.locationPermissionSwitch.isChecked) { // 체크시
+                // 권한 요청
+                permissionRequestMbr.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                )
+            } else {
+                // 체크 해제시
+                // 권한 해제 다이얼로그
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                    DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "위치 정보 조회 권한 해제",
+                        "위치 정보 조회 권한을 해제하시겠습니까?\n(권한 설정 화면으로 이동합니다.)",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
+                            // 권한 설정 페이지 이동
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            val uri = Uri.fromParts("package", packageName, null)
+                            intent.data = uri
+                            permissionResultLauncherMbr.launch(intent)
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
+                            bindingMbr.locationPermissionSwitch.isChecked = true
+                        },
+                        onCanceled = {
+                            // 취소 불가
+                        }
+                    )
             }
         }
 
         // todo
         // todo : 위치 정보 정확과 대략 연동 (정확에 체크되었을 때에는 대략도 같이 체크, 대략을 체크 해제하면 정확도 체크 해제)
         // 위치 정보 조회 권한 (정확)
-        bindingMbr.fineLocationPermissionSwitch.setOnClickListener {
-            if (bindingMbr.fineLocationPermissionSwitch.isChecked) {
-                // 체크시
-
-                // 서버에 반영 (완료시 아래 로직 실행, 에러시 체크 상태 복구)
-
-                // 로컬 저장소에 저장
-
-                // 권한 설정 메시지
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "위치 정보 조회 권한 (정확)",
-                    "위치 정보 조회 권한 (정확)이 승인 되었습니다.",
-                    null,
-                    onCheckBtnClicked = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                    },
-                    onCanceled = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    }
-                )
-
-            } else {
-                // 체크 해제시
-
-                // 서버에 반영 (완료시 아래 로직 실행, 에러시 체크 상태 복구)
-
-                // 로컬 저장소에 저장
-
-                // 권한 설정 메시지
-
-
-            }
-        }
-
-        // todo
-        // 위치 정보 조회 권한 (대략)
-        bindingMbr.coarseLocationPermissionSwitch.setOnClickListener {
-            if (bindingMbr.coarseLocationPermissionSwitch.isChecked) {
-                // 체크시
-
-                // 서버에 반영 (완료시 아래 로직 실행, 에러시 체크 상태 복구)
-
-                // 로컬 저장소에 저장
-
-                // 권한 설정 메시지
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "위치 정보 조회 권한 (대략)",
-                    "위치 정보 조회 권한 (대략)이 승인 되었습니다.",
-                    null,
-                    onCheckBtnClicked = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                    },
-                    onCanceled = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    }
-                )
-
-            } else {
-                // 체크 해제시
-
-                // 서버에 반영 (완료시 아래 로직 실행, 에러시 체크 상태 복구)
-
-                // 로컬 저장소에 저장
-
-                // 권한 설정 메시지
-
-
-            }
-        }
 
     }
 

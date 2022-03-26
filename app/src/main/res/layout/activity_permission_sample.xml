@@ -159,19 +159,19 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/fine_location_permission_container"
+                    android:id="@+id/location_permission_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
                     app:layout_constraintTop_toBottomOf="@id/camera_permission_container">
 
                     <TextView
-                        android:id="@+id/fine_location_permission_label"
+                        android:id="@+id/location_permission_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="20dp"
                         android:fontFamily="@font/apple_sd_gothic_neo_r"
-                        android:text="위치 정보 조회 권한 (정확)"
+                        android:text="위치 정보 조회 권한"
                         android:textColor="#FF000000"
                         android:textSize="13sp"
                         app:layout_constraintBottom_toBottomOf="parent"
@@ -179,7 +179,7 @@
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <androidx.appcompat.widget.SwitchCompat
-                        android:id="@+id/fine_location_permission_switch"
+                        android:id="@+id/location_permission_switch"
                         android:layout_width="wrap_content"
                         android:layout_height="20dp"
                         android:layout_marginEnd="20dp"
@@ -191,19 +191,20 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/coarse_location_permission_container"
+                    android:id="@+id/location_permission_detail_container"
+                    android:visibility="gone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="15dp"
-                    app:layout_constraintTop_toBottomOf="@id/fine_location_permission_container">
+                    app:layout_constraintTop_toBottomOf="@id/location_permission_container">
 
                     <TextView
-                        android:id="@+id/coarse_location_permission_label"
+                        android:id="@+id/location_permission_detail_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="20dp"
                         android:fontFamily="@font/apple_sd_gothic_neo_r"
-                        android:text="위치 정보 조회 권한 (대략)"
+                        android:text="위치 정보 정확도 향상"
                         android:textColor="#FF000000"
                         android:textSize="13sp"
                         app:layout_constraintBottom_toBottomOf="parent"
@@ -211,7 +212,7 @@
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <androidx.appcompat.widget.SwitchCompat
-                        android:id="@+id/coarse_location_permission_switch"
+                        android:id="@+id/location_permission_detail_switch"
                         android:layout_width="wrap_content"
                         android:layout_height="20dp"
                         android:layout_marginEnd="20dp"
