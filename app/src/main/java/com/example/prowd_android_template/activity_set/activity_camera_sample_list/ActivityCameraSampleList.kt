@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
@@ -44,7 +45,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
     private lateinit var permissionResultLauncherMbr: ActivityResultLauncher<Intent>
 
     // 복귀 후 실행 콜백
-    private var permissionResultLauncherCallbackMbr: (() -> Unit)? = null
+    private var permissionResultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -282,7 +283,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
         permissionResultLauncherMbr = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
-            permissionResultLauncherCallbackMbr?.let { it1 -> it1() }
+            permissionResultLauncherCallbackMbr?.let { it1 -> it1(it) }
             permissionResultLauncherCallbackMbr = null
         }
     }

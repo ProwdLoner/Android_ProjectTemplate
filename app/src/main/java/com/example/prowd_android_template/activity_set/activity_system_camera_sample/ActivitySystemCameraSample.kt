@@ -1,21 +1,32 @@
 package com.example.prowd_android_template.activity_set.activity_system_camera_sample
 
 import android.Manifest
+import android.R.attr.data
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
-import android.provider.Settings
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.os.Environment
+import android.provider.MediaStore
+import android.provider.Settings
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivitySystemCameraSampleBinding
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 class ActivitySystemCameraSample : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -43,7 +54,13 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     private lateinit var permissionResultLauncherMbr: ActivityResultLauncher<Intent>
 
     // 복귀 후 실행 콜백
-    private var permissionResultLauncherCallbackMbr: (() -> Unit)? = null
+    private var permissionResultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+
+    // 시스템 카메라 이동 복귀 객체
+    private lateinit var systemCameraResultLauncherMbr: ActivityResultLauncher<Intent>
+
+    // 복귀 후 실행 콜백
+    private var systemCameraResultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -272,8 +289,16 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         permissionResultLauncherMbr = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
-            permissionResultLauncherCallbackMbr?.let { it1 -> it1() }
+            permissionResultLauncherCallbackMbr?.let { it1 -> it1(it) }
             permissionResultLauncherCallbackMbr = null
+        }
+
+        // 시스템 카메라 이동 복귀
+        systemCameraResultLauncherMbr = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            systemCameraResultLauncherCallbackMbr?.let { it1 -> it1(it) }
+            systemCameraResultLauncherCallbackMbr = null
         }
     }
 
@@ -289,7 +314,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
                 viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
                     true,
                     "장치 접근",
-                    "현재 카메라 장치에 접근할 수 없습니다.\n장치 상태를 확인해주세요.",
+                    "카메라를 사용할 수 없습니다.\n장치 상태를 확인해주세요.",
                     null,
                     onCheckBtnClicked = {
                         viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
@@ -353,8 +378,49 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         }
     }
 
+    // 시스템 카메라 시작 : 카메라 관련 권한이 충족된 상태
+    // todo api 낮은 폰 에러 아마 write 권한 추정 deprecate 코드 수정
+    // todo 갤러리에 추가 버튼 및 갤러리 이미지 보여주기 및 갤러리 이미지 지우기 및 커스텀 갤러리명 생성
     private fun startSystemCamera() {
-        // todo
-        Log.e("start", "camera")
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+
+        if (takePictureIntent.resolveActivity(packageManager) != null) {
+            // 사진 저장 파일 생성
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val imageFileName = "JPEG_" + timeStamp + "_"
+            val storageDir =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val photoFile = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",  /* suffix */
+                storageDir /* directory */
+            )
+
+            val photoURI = FileProvider.getUriForFile(
+                this,
+                "com.example.prowd_android_template",
+                photoFile
+            )
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+
+            systemCameraResultLauncherCallbackMbr = {
+                if (it.resultCode == RESULT_OK) {
+                    // 저장된 파일 이미지 보기
+                    // todo : 클릭시 상세보기 지원
+                    Glide.with(this)
+                        .load(photoFile)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.fileImg)
+
+                    // 사진 파일을 갤러리로 이동
+                    val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                    val contentUri = Uri.fromFile(photoFile)
+                    mediaScanIntent.data = contentUri
+                    this.sendBroadcast(mediaScanIntent)
+                }
+            }
+
+            systemCameraResultLauncherMbr.launch(takePictureIntent)
+        }
     }
 }
