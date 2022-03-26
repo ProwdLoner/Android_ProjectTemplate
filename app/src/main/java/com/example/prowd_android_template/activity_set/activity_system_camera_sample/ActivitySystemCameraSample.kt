@@ -35,7 +35,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     lateinit var viewModelMbr: ActivitySystemCameraSampleViewModel
 
     // (권한 요청 객체)
-    private lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
+    lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -50,14 +50,10 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     // (ResultLauncher 객체)
     // 권한 설정 화면 이동 복귀 객체
     private lateinit var permissionResultLauncherMbr: ActivityResultLauncher<Intent>
-
-    // 복귀 후 실행 콜백
     private var permissionResultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
     // 시스템 카메라 이동 복귀 객체
     private lateinit var systemCameraResultLauncherMbr: ActivityResultLauncher<Intent>
-
-    // 복귀 후 실행 콜백
     private var systemCameraResultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
 
