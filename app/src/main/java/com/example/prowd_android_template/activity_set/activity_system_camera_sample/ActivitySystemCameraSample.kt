@@ -371,8 +371,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     }
 
     // 시스템 카메라 시작 : 카메라 관련 권한이 충족된 상태
-    // todo api 낮은 폰 에러 아마 write 권한 추정 deprecate 코드 수정
-    // todo 갤러리에 추가 버튼 및 갤러리 이미지 보여주기 및 갤러리 이미지 지우기 및 커스텀 갤러리명 생성
+    // todo 갤러리에 추가 버튼 구현, 갤러리 이미지 보여주기, 갤러리 이미지 지우기, 커스텀 갤러리명 사용, 이미지 클릭시 상세보기 지원
     private fun startSystemCamera() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
@@ -383,9 +382,9 @@ class ActivitySystemCameraSample : AppCompatActivity() {
             val storageDir =
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val photoFile = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",  /* suffix */
-                storageDir /* directory */
+                imageFileName,
+                ".jpg",
+                storageDir
             )
 
             val photoURI = FileProvider.getUriForFile(
@@ -398,7 +397,6 @@ class ActivitySystemCameraSample : AppCompatActivity() {
             systemCameraResultLauncherCallbackMbr = {
                 if (it.resultCode == RESULT_OK) {
                     // 저장된 파일 이미지 보기
-                    // todo : 클릭시 상세보기 지원
                     Glide.with(this)
                         .load(photoFile)
                         .transform(CenterCrop())
