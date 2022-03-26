@@ -231,6 +231,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
             }
     }
 
+    // ActivityResultLauncher 생성
     private fun createActivityResultLauncher() {
         // 외부 저장소 읽기 권한 설정 후 복귀
         readExternalStoragePermissionSettingResultLauncherMbr = registerForActivityResult(

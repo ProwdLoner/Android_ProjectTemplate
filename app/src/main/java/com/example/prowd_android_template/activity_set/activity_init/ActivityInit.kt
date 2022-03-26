@@ -1,11 +1,14 @@
 package com.example.prowd_android_template.activity_set.activity_init
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_home.ActivityHome
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -22,6 +25,9 @@ class ActivityInit : AppCompatActivity() {
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityInitViewModel
 
+    // (권한 요청 객체)
+    private lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
+
     // (다이얼로그 객체)
     // 로딩 다이얼로그
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
@@ -34,6 +40,13 @@ class ActivityInit : AppCompatActivity() {
 
     // 카운터 객체
     private lateinit var delayCountDownTimerMbr: CountDownTimer
+
+    private val applicationPermissionArrayMbr = arrayOf(
+        Manifest.permission.CAMERA,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    )
 
 
     // ---------------------------------------------------------------------------------------------
@@ -49,6 +62,8 @@ class ActivityInit : AppCompatActivity() {
         createMemberObjects()
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
+        // (권한 요청 객체 생성)
+        createPermissionObjects()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -148,6 +163,22 @@ class ActivityInit : AppCompatActivity() {
         }
     }
 
+    // 권한 요청 객체 생성
+    // 아래 코드 중복 부분은, 학습용으로 권한 요청 양식을 보여주기 위해 남겨놓은 것. 추후 제거해도 됨
+    private fun createPermissionObjects() {
+        permissionRequestMbr =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+                // 앱 권한 체크 플래그 변경
+                viewModelMbr.isCheckAppPermissionsOnProgressMbr = false
+                viewModelMbr.isCheckAppPermissionsCompletedOnceMbr = true
+                viewModelMbr.thisSpwMbr.isPermissionInitShownBefore = true
+
+                // 앱 내부 모든 필요 권한들에 대해 서버 반영
+                sendDeviceInfoToServer()
+
+            }
+    }
+
     // 초기 뷰 설정
     private fun viewSetting() {
 
@@ -224,14 +255,19 @@ class ActivityInit : AppCompatActivity() {
                                     onComplete = { checkLoginSessionResult ->
                                         runOnUiThread checkLoginSessionAsyncComplete@{
                                             // 검증 후 결과를 sharedPreferences 에 대입
-                                            viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken = checkLoginSessionResult.sessionToken
-                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userNickName = checkLoginSessionResult.userNickName
-                                            viewModelMbr.currentLoginSessionInfoSpwMbr.loginType = checkLoginSessionResult.loginType
-                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerId = checkLoginSessionResult.userServerId
-                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerPw = checkLoginSessionResult.userServerPw
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken =
+                                                checkLoginSessionResult.sessionToken
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userNickName =
+                                                checkLoginSessionResult.userNickName
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.loginType =
+                                                checkLoginSessionResult.loginType
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerId =
+                                                checkLoginSessionResult.userServerId
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerPw =
+                                                checkLoginSessionResult.userServerPw
 
-                                            // 다음 엑티비티로 이동
-                                            goToNextActivity()
+                                            // (앱 권한 처리 : 앱 설치시 한번만 실행)
+                                            checkAppPermissions()
                                         }
                                     },
                                     onError = { checkLoginSessionAsyncError ->
@@ -365,11 +401,123 @@ class ActivityInit : AppCompatActivity() {
         }
     }
 
+    // 앱 권한 체크 실행
+    private fun checkAppPermissions() {
+        if (viewModelMbr.isCheckAppPermissionsOnProgressMbr) { // 현재 내부 처리가 동작중이라면 return
+            return
+        }
+
+        viewModelMbr.isCheckAppPermissionsOnProgressMbr = true
+
+        if (viewModelMbr.isCheckAppPermissionsCompletedOnceMbr || // 이전에 완료된 경우
+            viewModelMbr.thisSpwMbr.isPermissionInitShownBefore // 이전에 권한 체크를 했던 경우(= 앱 최초 실행이 아닐 때)
+        ) {
+
+            viewModelMbr.isCheckAppPermissionsOnProgressMbr = false
+            viewModelMbr.isCheckAppPermissionsCompletedOnceMbr = true
+            viewModelMbr.thisSpwMbr.isPermissionInitShownBefore = true
+
+            // 디바이스 정보 서버 반영
+            sendDeviceInfoToServer()
+
+            return
+        }
+
+        // 1. 앱 내부 모든 필요 권한들에 대한 메시지 띄워주기
+        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+            DialogConfirm.DialogInfoVO(
+                true,
+                "앱 필요 권한 요청",
+                "이 앱을 실행하려면\n아래와 같은 권한이 필요합니다.\n" +
+                        "\n1. 푸시 권한 :\n유용한 정보를 얻을 수 있습니다.\n" +
+                        "\n2. 카메라 사용 권한 :\n사진 찍기 서비스에 사용됩니다.\n" +
+                        "\n3. 위치 정보 접근 권한 :\n위치 기반 컨텐츠 제공에 사용됩니다.\n" +
+                        "\n4. 외부 저장소 접근 권한 :\n갤러리 등, 디바이스 내부 정보 사용에 사용됩니다.",
+                null,
+                onCheckBtnClicked = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                        null
+
+                    requestAppPermissions()
+
+                },
+                onCanceled = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                        null
+
+                    requestAppPermissions()
+
+                }
+            )
+    }
+
+    // 앱 권한 요청 실행
+    private fun requestAppPermissions() {
+        // 앱 내부 모든 필요 권한들을 묻기
+
+        // (커스텀 권한 요청)
+        // 푸시 권한 요청
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
+            false,
+            "푸시 권한 요청",
+            "이벤트 수신을 위해\n푸시 알람을 받으시겠습니까?",
+            null,
+            null,
+            onPosBtnClicked = {
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+                // 디바이스 권한 요청
+                permissionRequestMbr.launch(applicationPermissionArrayMbr)
+
+            },
+            onNegBtnClicked = {
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+                // 디바이스 권한 요청
+                permissionRequestMbr.launch(applicationPermissionArrayMbr)
+
+            },
+            onCanceled = {
+                // cancel 불가
+            }
+        )
+    }
+
+    // 권한 등 디바이스 정보 서버 반영
+    private fun sendDeviceInfoToServer() {
+        if (viewModelMbr.isSendDeviceInfoToServerOnProgressMbr) { // 현재 내부 처리가 동작중이라면 return
+            return
+        }
+
+        viewModelMbr.isSendDeviceInfoToServerOnProgressMbr = true
+
+        if (viewModelMbr.isSendDeviceInfoToServerCompletedOnceMbr // 이전에 완료된 경우
+        ) {
+            // 플래그 완료
+            viewModelMbr.isSendDeviceInfoToServerOnProgressMbr = false
+            viewModelMbr.isSendDeviceInfoToServerCompletedOnceMbr = true
+
+            // 다음 엑티비티로 이동
+            goToNextActivity()
+
+            return
+        }
+
+        // todo 서버 반영
+
+
+        // 플래그 완료
+        viewModelMbr.isSendDeviceInfoToServerOnProgressMbr = false
+        viewModelMbr.isSendDeviceInfoToServerCompletedOnceMbr = true
+        // 다음 엑티비티로 이동
+        goToNextActivity()
+    }
+
     private fun goToNextActivity() {
         viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
         if (viewModelMbr.delayGoToNextActivityAsyncCompletedOnceMbr && // 앱 대기 시간이 끝났을 때
             viewModelMbr.checkAppVersionAsyncCompletedOnceMbr && // 앱 버전 검증이 끝났을 때
-            viewModelMbr.checkLoginSessionAsyncCompletedOnceMbr // 로그인 검증이 끝났을 때
+            viewModelMbr.checkLoginSessionAsyncCompletedOnceMbr && // 로그인 검증이 끝났을 때
+            viewModelMbr.isCheckAppPermissionsCompletedOnceMbr && // 앱 권한 체크가 끝났을 때
+            viewModelMbr.isSendDeviceInfoToServerCompletedOnceMbr // 디바이스 정보 서버 반영이 끝났을 때
         ) {
             val intent =
                 Intent(

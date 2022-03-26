@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_camera_sample_list.ActivityCameraSampleList
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
+import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList
 import com.example.prowd_android_template.activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleList
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -123,6 +124,16 @@ class ActivityHome : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        // 권한 샘플 이동 버튼
+        bindingMbr.goToPermissionSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityPermissionSample::class.java
+                )
+            startActivity(intent)
+        }
+
         // 다이얼로그 샘플 이동 버튼
         bindingMbr.goToDialogSampleBtn.setOnClickListener {
             val intent =

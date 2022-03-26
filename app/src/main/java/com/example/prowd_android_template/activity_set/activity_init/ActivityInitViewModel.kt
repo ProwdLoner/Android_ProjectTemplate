@@ -23,13 +23,16 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (SharedPreference 객체)
+    // 현 화면 정보 접근 객체
+    val thisSpwMbr : ActivityInitSpw = ActivityInitSpw(application)
+
     // 현 로그인 정보 접근 객체
     val currentLoginSessionInfoSpwMbr : CurrentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(application)
 
     // (데이터)
     // 대기시간 (밀리초)
     var countDownRestMilliSecMbr = 1000L
-    val countDownIntervalMbr = 1L
+    val countDownIntervalMbr = 100L
 
     // (플래그 데이터)
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
@@ -40,6 +43,12 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     // 앱 기본 대기 시간이 끝났을 때
     var delayGoToNextActivityAsyncCompletedOnceMbr = false
+
+    var isCheckAppPermissionsCompletedOnceMbr : Boolean = false
+    var isCheckAppPermissionsOnProgressMbr : Boolean = false
+
+    var isSendDeviceInfoToServerCompletedOnceMbr : Boolean = false
+    var isSendDeviceInfoToServerOnProgressMbr : Boolean = false
 
     // (뷰 세마포어)
     val goToNextActivitySemaphoreMbr = Semaphore(1)
