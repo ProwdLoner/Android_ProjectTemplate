@@ -53,9 +53,6 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     var isCheckAppPermissionsCompletedOnceMbr: Boolean = false
     var isCheckAppPermissionsOnProgressMbr: Boolean = false
 
-    var isSendDeviceInfoToServerCompletedOnceMbr: Boolean = false
-    var isSendDeviceInfoToServerOnProgressMbr: Boolean = false
-
     // (뷰 세마포어)
     val goToNextActivitySemaphoreMbr = Semaphore(1)
 
@@ -424,58 +421,6 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                         checkLoginSessionAsyncSemaphoreMbr.release()
                     }
                 }
-            }
-        }
-    }
-
-    // 디바이스 정보 서버 반영
-    private val postDeviceInfoAsyncSemaphoreMbr = Semaphore(1)
-    var postDeviceInfoAsyncOnProgressedMbr = false
-        private set
-
-    private var postDeviceInfoAsyncCompletedOnceMbr = false
-
-    fun postDeviceInfoAsync(
-        pushPermissionGranted: Boolean,
-        cameraPermissionGranted: Boolean,
-        readExternalStoragePermissionGranted: Boolean,
-        locationPermissionType: Int,
-        onComplete: () -> Unit,
-        onError: (Throwable) -> Unit
-    ) {
-        executorServiceMbr?.execute {
-            postDeviceInfoAsyncSemaphoreMbr.acquire()
-            postDeviceInfoAsyncOnProgressedMbr = true
-
-            if (postDeviceInfoAsyncCompletedOnceMbr) { // 이전에 완료된 경우
-                onComplete()
-                postDeviceInfoAsyncOnProgressedMbr = false
-                postDeviceInfoAsyncSemaphoreMbr.release()
-
-                return@execute
-            }
-
-            try {
-                // 서버 요청
-                // 서버 반환값
-                val networkResponseCode = 200
-
-                when (networkResponseCode) {
-                    200 -> { // 정상 응답이라 결정한 코드
-
-                        onComplete()
-                        postDeviceInfoAsyncCompletedOnceMbr = true
-                        postDeviceInfoAsyncOnProgressedMbr = false
-                        postDeviceInfoAsyncSemaphoreMbr.release()
-                    }
-                    else -> { // 정의된 응답 코드 외의 응답일 때 = 크래쉬를 발생
-                        throw Throwable("$networkResponseCode")
-                    }
-                }
-            } catch (t: Throwable) {
-                onError(t)
-                postDeviceInfoAsyncOnProgressedMbr = false
-                postDeviceInfoAsyncSemaphoreMbr.release()
             }
         }
     }

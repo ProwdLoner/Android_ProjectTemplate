@@ -77,35 +77,6 @@ class ActivityPermissionSampleViewModel(application: Application) :
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
 
-    // 푸시 권한 서버 반영
-    private val putPushPermissionAsyncSemaphoreMbr = Semaphore(1)
-    var putPushPermissionAsyncOnProgressedMbr = false
-        private set
-
-    fun putPushPermissionAsync(
-        pushPermissionGranted: Boolean,
-        onComplete: () -> Unit,
-        onError: (Throwable) -> Unit
-    ) {
-        executorServiceMbr?.execute {
-            putPushPermissionAsyncSemaphoreMbr.acquire()
-
-            if (isClientDevModeMbr) {
-                // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-                Thread.sleep(500)
-
-                onComplete()
-
-                putPushPermissionAsyncSemaphoreMbr.release()
-            }else{
-
-                // TODO : 실제 리포지토리 처리
-                putPushPermissionAsyncSemaphoreMbr.release()
-            }
-
-        }
-    }
-
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>

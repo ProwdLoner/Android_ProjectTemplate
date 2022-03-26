@@ -11,20 +11,23 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_system_camera_sample.ActivitySystemCameraSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityPermissionSampleBinding
 
-
 // 권한 규칙 :
 // 1. 앱 전체 권한은 앱 처음 실행시 스플래시 화면에서 한번 요청하기
 // 2. 서비스 필수 권한은 해당 서비스 사용 이전에 클리어하기(위치 정보 사용 액티비티 진입시, 진입 시점에 위치권한이 승인이 되어야 진입 되도록 하기)
 // 3. 권한이 승인되어 이동이 되었어도, 해당 액티비티에서 해당 권한을 직접 사용하는 부분에서 처리하기
-//     잠깐 설정에 가서 권한을 취소하고 오더라도 에러가 없도록. 이와 같은 경우, 권한이 없을 때는 다이얼로그 표시 후 뒤로가기
-// 4. 서버에 권한 정보를 전할때는, 스플래시 화면과 해당 권한 변경 시점
+//    잠깐 설정에 가서 권한을 취소하고 오더라도 에러가 없도록. 이와 같은 경우, 권한이 없을 때는 다이얼로그 표시 후 뒤로가기
+// 4. 서버에 권한상태를 전할 필요는 없음.
+//    1계정 여러 디바이스가 존재할수 있으니 저장할 데이터도 많아짐.
+//    카메라 권한과 같은건 서버에서 알 필요가 없고,
+//    위치 서비스를 위한 위치 권한은, 좌표값을 null 로 보내주는 방법으로 서버에서 데이터 추려오는 기준으로 사용.
+//    푸시 권한은 내부적으로 처리를 하면 됨.
 // 5. 계정만 바뀌었을 때에는 수동으로 변경하지 않는 이상 권한 변경은 없음. (기존 기기에 저장된 권한이 계속 이어짐)
+//    고로 설정 화면에서 이를 조정하는 스위치를 준비해주는 것도 좋은 방법.
 class ActivityPermissionSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -352,53 +355,24 @@ class ActivityPermissionSample : AppCompatActivity() {
                 // 로컬 저장소에 저장
                 viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted = true
 
-                viewModelMbr.putPushPermissionAsync(
-                    true,
-                    onComplete = {
-                        runOnUiThread {
-                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+                viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
 
-                            // 권한 설정 메시지
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "푸시 권한",
-                                    "푸시 권한이 승인 되었습니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                // 권한 설정 메시지
+                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                    DialogConfirm.DialogInfoVO(
+                        true,
+                        "푸시 권한",
+                        "푸시 권한이 승인 되었습니다.",
+                        null,
+                        onCheckBtnClicked = {
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
 
-                                    },
-                                    onCanceled = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                        },
+                        onCanceled = {
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
 
-                                    }
-                                )
                         }
-                    },
-                    onError = {
-                        runOnUiThread {
-                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-
-                            // 권한 설정 메시지
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "푸시 권한",
-                                    "푸시 권한이 승인 되었습니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                                    },
-                                    onCanceled = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                                    }
-                                )
-                        }
-                    }
-                )
+                    )
 
             } else {
                 // 체크 해제시
@@ -427,56 +401,26 @@ class ActivityPermissionSample : AppCompatActivity() {
                             viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted =
                                 false
 
-                            // todo
-                            viewModelMbr.putPushPermissionAsync(
-                                false,
-                                onComplete = {
-                                    runOnUiThread {
-                                        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                                null
 
-                                        // 권한 설정 메시지
+                            // 권한 설정 메시지
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "푸시 권한",
+                                    "푸시 권한이 해제 되었습니다.",
+                                    null,
+                                    onCheckBtnClicked = {
                                         viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                            DialogConfirm.DialogInfoVO(
-                                                true,
-                                                "푸시 권한",
-                                                "푸시 권한이 해제 되었습니다.",
-                                                null,
-                                                onCheckBtnClicked = {
-                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                        null
+                                            null
 
-                                                },
-                                                onCanceled = {
-                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                        null
-                                                }
-                                            )
-                                    }
-                                },
-                                onError = {
-                                    runOnUiThread {
-                                        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-
-                                        // 권한 설정 메시지
+                                    },
+                                    onCanceled = {
                                         viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                            DialogConfirm.DialogInfoVO(
-                                                true,
-                                                "푸시 권한",
-                                                "푸시 권한이 해제 되었습니다.",
-                                                null,
-                                                onCheckBtnClicked = {
-                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                        null
-
-                                                },
-                                                onCanceled = {
-                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                        null
-                                                }
-                                            )
+                                            null
                                     }
-                                }
-                            )
+                                )
                         },
                         onNegBtnClicked = {
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null

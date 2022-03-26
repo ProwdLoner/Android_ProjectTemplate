@@ -3,14 +3,12 @@ package com.example.prowd_android_template.activity_set.activity_init
 import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_home.ActivityHome
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -176,8 +174,8 @@ class ActivityInit : AppCompatActivity() {
                 viewModelMbr.isCheckAppPermissionsCompletedOnceMbr = true
                 viewModelMbr.thisSpwMbr.isPermissionInitShownBefore = true
 
-                // 앱 내부 모든 필요 권한들에 대해 서버 반영
-                sendDeviceInfoToServer()
+                // 다음 엑티비티로 이동
+                goToNextActivity()
 
             }
     }
@@ -420,8 +418,8 @@ class ActivityInit : AppCompatActivity() {
             viewModelMbr.isCheckAppPermissionsCompletedOnceMbr = true
             viewModelMbr.thisSpwMbr.isPermissionInitShownBefore = true
 
-            // 디바이스 정보 서버 반영
-            sendDeviceInfoToServer()
+            // 다음 엑티비티로 이동
+            goToNextActivity()
 
             return
         }
@@ -490,161 +488,12 @@ class ActivityInit : AppCompatActivity() {
         )
     }
 
-    // 권한 등 디바이스 정보 서버 반영
-    private fun sendDeviceInfoToServer() {
-        if (viewModelMbr.isSendDeviceInfoToServerOnProgressMbr) { // 현재 내부 처리가 동작중이라면 return
-            return
-        }
-
-        viewModelMbr.isSendDeviceInfoToServerOnProgressMbr = true
-
-        if (viewModelMbr.isSendDeviceInfoToServerCompletedOnceMbr // 이전에 완료된 경우
-        ) {
-            // 플래그 완료
-            viewModelMbr.isSendDeviceInfoToServerOnProgressMbr = false
-            viewModelMbr.isSendDeviceInfoToServerCompletedOnceMbr = true
-
-            // 다음 엑티비티로 이동
-            goToNextActivity()
-
-            return
-        }
-
-        if (!viewModelMbr.postDeviceInfoAsyncOnProgressedMbr) {
-            // 메소드 실행중이 아닐 때,
-
-            // 서버 인자 선언
-            // 위치 권한 타입
-            // 0 : 권한 없음, 1 : coarse 권한, 2 : fine 권한
-            val locationPermissionType: Int
-
-            // 서버 인자 준비
-            val isPushPermissionGranted: Boolean =
-                viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted
-
-            val isCameraPermissionGranted: Boolean = ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-
-            val isReadExternalStoragePermissionGranted: Boolean =
-                ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
-
-            val isAccessCoarseLocationPermissionGranted = ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-
-            val isAccessFineLocationPermissionGranted = ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-            locationPermissionType = when {
-                isAccessFineLocationPermissionGranted -> {
-                    2
-                }
-                isAccessCoarseLocationPermissionGranted -> {
-                    1
-                }
-                else -> {
-                    0
-                }
-            }
-
-            // 디바이스 정보 서버 반영
-            viewModelMbr.postDeviceInfoAsync(
-                isPushPermissionGranted,
-                isCameraPermissionGranted,
-                isReadExternalStoragePermissionGranted,
-                locationPermissionType,
-                onComplete = {
-                    runOnUiThread {
-                        // 플래그 완료
-                        viewModelMbr.isSendDeviceInfoToServerOnProgressMbr = false
-                        viewModelMbr.isSendDeviceInfoToServerCompletedOnceMbr = true
-
-                        // 다음 엑티비티로 이동
-                        goToNextActivity()
-                    }
-                },
-                onError = { postDeviceInfoAsyncError ->
-                    runOnUiThread postDeviceInfoAsyncError@{
-                        if (postDeviceInfoAsyncError is SocketTimeoutException) { // 타임아웃 에러
-                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                                DialogBinaryChoose.DialogInfoVO(
-                                    true,
-                                    "네트워크 에러",
-                                    "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                                    "다시시도",
-                                    "종료",
-                                    onPosBtnClicked = {
-                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                                            null
-
-                                        // 로직 다시 실행
-                                        doActivityInit()
-                                    },
-                                    onNegBtnClicked = {
-                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                                            null
-                                        finish()
-                                    },
-                                    onCanceled = {
-                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                                            null
-                                        finish()
-                                    }
-                                )
-                        } else { // 그외 에러
-                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                                DialogBinaryChoose.DialogInfoVO(
-                                    true,
-                                    "서버 에러",
-                                    "현재 서버의 상태가 원활하지 않습니다.\n" +
-                                            "잠시 후 다시 시도해주세요.\n" +
-                                            "\n" +
-                                            "에러 메시지 :\n" +
-                                            "${postDeviceInfoAsyncError.message}",
-                                    "다시시도",
-                                    "종료",
-                                    onPosBtnClicked = {
-                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                                            null
-
-                                        // 로직 다시 실행
-                                        doActivityInit()
-                                    },
-                                    onNegBtnClicked = {
-                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                                            null
-                                        finish()
-                                    },
-                                    onCanceled = {
-                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                                            null
-                                        finish()
-                                    }
-                                )
-                        }
-                    }
-
-                }
-            )
-        }
-    }
-
     private fun goToNextActivity() {
         viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
         if (viewModelMbr.delayGoToNextActivityAsyncCompletedOnceMbr && // 앱 대기 시간이 끝났을 때
             viewModelMbr.checkAppVersionAsyncCompletedOnceMbr && // 앱 버전 검증이 끝났을 때
             viewModelMbr.checkLoginSessionAsyncCompletedOnceMbr && // 로그인 검증이 끝났을 때
-            viewModelMbr.isCheckAppPermissionsCompletedOnceMbr && // 앱 권한 체크가 끝났을 때
-            viewModelMbr.isSendDeviceInfoToServerCompletedOnceMbr // 디바이스 정보 서버 반영이 끝났을 때
+            viewModelMbr.isCheckAppPermissionsCompletedOnceMbr // 앱 권한 체크가 끝났을 때
         ) {
             val intent =
                 Intent(

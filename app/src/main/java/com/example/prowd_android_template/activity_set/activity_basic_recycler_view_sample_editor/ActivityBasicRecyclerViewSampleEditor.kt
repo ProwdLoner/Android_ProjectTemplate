@@ -117,16 +117,105 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr =
+                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
 
     // 초기 뷰 설정
     private fun viewSetting() {
         // 초기 업로드 버튼 세팅
+        bindingMbr.contentUploadBtn.setOnClickListener {
+            val contentTitleTxt = bindingMbr.contentTitleEditor.text.toString()
+            val contentTxt = bindingMbr.contentEditor.text.toString()
+            val utcDataFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
+            utcDataFormat.timeZone = TimeZone.getTimeZone("UTC")
+            val writeTime = utcDataFormat.format(Date())
+
+            // 로딩 다이얼로그 생성
+            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "처리중입니다.",
+                    onCanceled = {
+                        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+                    }
+                )
+
+            // 서버에 생성 요청
+            viewModelMbr.addScreenVerticalRecyclerViewAdapterItemDataOnVMAsync(
+                contentTitleTxt,
+                contentTxt,
+                writeTime,
+                onComplete = {
+                    runOnUiThread {
+                        // 로딩 다이얼로그 제거
+                        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+
+                        val resultIntent = intent
+                        resultIntent.putExtra(
+                            "result", ResultVo(
+                                it,
+                                contentTitleTxt,
+                                contentTxt,
+                                writeTime
+                            )
+                        )
+                        setResult(RESULT_OK, resultIntent)
+                        finish()
+                    }
+                },
+                onError = { addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult ->
+                    runOnUiThread {
+                        // 로딩 다이얼로그 제거
+                        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+
+                        if (addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 에러",
+                                    "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
+                                    "확인",
+                                    onCheckBtnClicked = {
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            null
+                                    },
+                                    onCanceled = {
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            null
+                                    }
+                                )
+                        } else { // 그외 에러
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "서버 에러",
+                                    "현재 서버의 상태가 원활하지 않습니다.\n" +
+                                            "잠시 후 다시 시도해주세요.\n" +
+                                            "\n" +
+                                            "에러 메시지 :\n" +
+                                            "${addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult.message}",
+                                    "확인",
+                                    onCheckBtnClicked = {
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            null
+                                    },
+                                    onCanceled = {
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            null
+
+                                    }
+                                )
+                        }
+                    }
+                }
+            )
+        }
+
         setContentUploadBtn()
 
-        // 글자를 입력할 때마다 초기 업로드 버튼 세팅
+        // 글자를 입력할 때마다 업로드 버튼 활성화 세팅
         bindingMbr.contentTitleEditor.addTextChangedListener {
             setContentUploadBtn()
         }
@@ -142,98 +231,15 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
 
         // 업로드 버튼 활성 / 비활성화 = 모든 텍스트가 한글자 이상일 때
         if (0 < contentTitleTxtSize && 0 < contentTxtSize) {
+            // 버튼 활성
             bindingMbr.contentUploadBtn.setBackgroundColor(Color.parseColor("#FF5B92E4"))
-            bindingMbr.contentUploadBtn.setOnClickListener {
-                val contentTitleTxt = bindingMbr.contentTitleEditor.text.toString()
-                val contentTxt = bindingMbr.contentEditor.text.toString()
-                val utcDataFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault())
-                utcDataFormat.timeZone = TimeZone.getTimeZone("UTC")
-                val writeTime = utcDataFormat.format(Date())
-
-                // 로딩 다이얼로그 생성
-                viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                    DialogProgressLoading.DialogInfoVO(
-                        false,
-                        "처리중입니다.",
-                        onCanceled = {
-                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-                        }
-                    )
-
-                // 서버에 생성 요청
-                viewModelMbr.addScreenVerticalRecyclerViewAdapterItemDataOnVMAsync(
-                    contentTitleTxt,
-                    contentTxt,
-                    writeTime,
-                    onComplete = {
-                        runOnUiThread {
-                            // 로딩 다이얼로그 제거
-                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-
-                            val resultIntent = intent
-                            resultIntent.putExtra(
-                                "result", ResultVo(
-                                    it,
-                                    contentTitleTxt,
-                                    contentTxt,
-                                    writeTime
-                                )
-                            )
-                            setResult(RESULT_OK, resultIntent)
-                            finish()
-                        }
-                    },
-                    onError = { addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult ->
-                        runOnUiThread {
-                            // 로딩 다이얼로그 제거
-                            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-
-                            if (addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult is SocketTimeoutException) { // 타임아웃 에러
-                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                    DialogConfirm.DialogInfoVO(
-                                        true,
-                                        "네트워크 에러",
-                                        "현재 네트워크 상태가 원활하지 않습니다.\n잠시 후 다시 시도해주세요.",
-                                        "확인",
-                                        onCheckBtnClicked = {
-                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                null
-                                        },
-                                        onCanceled = {
-                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                null
-                                        }
-                                    )
-                            } else { // 그외 에러
-                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                    DialogConfirm.DialogInfoVO(
-                                        true,
-                                        "서버 에러",
-                                        "현재 서버의 상태가 원활하지 않습니다.\n" +
-                                                "잠시 후 다시 시도해주세요.\n" +
-                                                "\n" +
-                                                "에러 메시지 :\n" +
-                                                "${addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncResult.message}",
-                                        "확인",
-                                        onCheckBtnClicked = {
-                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                null
-                                        },
-                                        onCanceled = {
-                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                null
-
-                                        }
-                                    )
-                            }
-                        }
-                    }
-                )
-
-            }
+            bindingMbr.contentUploadBtn.isEnabled = true
+            bindingMbr.contentUploadBtn.isClickable = true
         } else {
+            // 버튼 비활성
             bindingMbr.contentUploadBtn.setBackgroundColor(Color.parseColor("#FFE6E6E6"))
-            bindingMbr.contentUploadBtn.setOnClickListener { }
+            bindingMbr.contentUploadBtn.isEnabled = false
+            bindingMbr.contentUploadBtn.isClickable = false
         }
     }
 
