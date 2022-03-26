@@ -43,6 +43,7 @@ class ActivityInit : AppCompatActivity() {
     // 카운터 객체
     private lateinit var delayCountDownTimerMbr: CountDownTimer
 
+    // 앱 사용 권한 모음
     private val applicationPermissionArrayMbr = arrayOf(
         Manifest.permission.CAMERA,
         Manifest.permission.ACCESS_FINE_LOCATION,
