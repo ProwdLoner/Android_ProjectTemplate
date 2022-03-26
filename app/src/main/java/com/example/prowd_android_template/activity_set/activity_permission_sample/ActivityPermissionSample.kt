@@ -388,6 +388,79 @@ class ActivityPermissionSample : AppCompatActivity() {
                                 )
                         }
                     }
+                } else if (permissions.size == 1 && // 개별 권한 요청
+                    permissions.containsKey(Manifest.permission.ACCESS_FINE_LOCATION)
+                ) { // 위치 권한 정확성 향상
+                    val isGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION]!!
+                    val neverAskAgain =
+                        !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
+
+                    if (isGranted) { // 권한 승인
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                            DialogConfirm.DialogInfoVO(
+                                true,
+                                "위치 권한 정확성 향상",
+                                "위치 권한 정확성이 향상 되었습니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+
+                                    // 향상 메뉴 숨기기
+                                    bindingMbr.locationPermissionDetailContainer.visibility =
+                                        View.GONE
+                                },
+                                onCanceled = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+
+                                    // 향상 메뉴 숨기기
+                                    bindingMbr.locationPermissionDetailContainer.visibility =
+                                        View.GONE
+                                }
+                            )
+
+                    } else { // 권한 거부
+                        if (!neverAskAgain) {
+                            // 단순 거부
+
+                            // 뷰 상태 되돌리기
+                            bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                            bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
+
+                        } else {
+                            // 다시 묻지 않기 선택
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                        // 권한 설정 페이지 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        val uri = Uri.fromParts("package", packageName, null)
+                                        intent.data = uri
+                                        permissionResultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                        // 뷰 상태 되돌리기
+                                        bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                                        bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
+                                    },
+                                    onCanceled = {
+                                        // 취소 불가
+                                    }
+                                )
+                        }
+                    }
+
                 }
             }
     }
@@ -685,6 +758,19 @@ class ActivityPermissionSample : AppCompatActivity() {
         // todo
         // todo : 위치 정보 정확과 대략 연동 (정확에 체크되었을 때에는 대략도 같이 체크, 대략을 체크 해제하면 정확도 체크 해제)
         // 위치 정보 조회 권한 (정확)
+        bindingMbr.locationPermissionDetailSwitch.setOnClickListener {
+            if (bindingMbr.locationPermissionDetailSwitch.isChecked) { // 체크시
+                // 권한 요청
+                permissionRequestMbr.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                )
+            } else {
+                // 체크 해제시
+                // 정확도 향상시엔 항목을 숨길 것이기에 해제 불가
+            }
+        }
 
     }
 
