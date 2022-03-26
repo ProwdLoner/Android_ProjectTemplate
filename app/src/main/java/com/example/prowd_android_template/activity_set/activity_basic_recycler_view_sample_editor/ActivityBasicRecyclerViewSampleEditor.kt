@@ -160,6 +160,7 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
                         }
                     )
 
+                // 서버에 생성 요청
                 viewModelMbr.addScreenVerticalRecyclerViewAdapterItemDataOnVMAsync(
                     contentTitleTxt,
                     contentTxt,

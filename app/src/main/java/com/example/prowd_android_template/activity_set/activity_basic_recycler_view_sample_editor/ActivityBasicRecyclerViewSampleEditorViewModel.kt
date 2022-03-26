@@ -39,9 +39,6 @@ class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
-    // 뷰 개발 모드 플래그 (= 더미 데이터를 사용)
-    private val isViewDevModeMbr = true
-
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
@@ -72,6 +69,8 @@ class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
     // (아이템 데이터 추가)
     private val addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr =
         Semaphore(1)
+    var addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr = false
+        private set
 
     fun addScreenVerticalRecyclerViewAdapterItemDataOnVMAsync(
         contentTitleTxt: String,
@@ -82,18 +81,33 @@ class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
     ) {
         executorServiceMbr?.execute {
             addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.acquire()
+            addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr = true
 
-            if (isViewDevModeMbr) {
-                // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
-                Thread.sleep(500)
+            // 디버그용 딜레이 시간 설정(네트워크 응답 시간이라 가정)
+            Thread.sleep(500)
 
-                // 원래는 네트워크에서 아이템을 추가 후 결과로 해당 아이템의 uid 를 반환
-                val itemUid = 1L
-                onComplete(itemUid)
+            try {
+                // 서버 요청
+                // 서버 반환값
+                val networkResponseCode = 200
 
-                addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
-            } else {
-                // TODO : 실제 리포지토리 처리
+                when (networkResponseCode) {
+                    200 -> { // 정상 응답이라 결정한 코드
+
+                        // 원래는 네트워크에서 아이템을 추가 후 결과로 해당 아이템의 uid 를 반환
+                        val itemUid = 1L
+                        onComplete(itemUid)
+
+                        addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr = false
+                        addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
+                    }
+                    else -> { // 정의된 응답 코드 외의 응답일 때 = 크래쉬를 발생
+                        throw Throwable("$networkResponseCode")
+                    }
+                }
+            } catch (t: Throwable) {
+                onError(t)
+                addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncOnProgressedMbr = false
                 addScreenVerticalRecyclerViewAdapterItemDataOnVMAsyncSemaphoreMbr.release()
             }
 
