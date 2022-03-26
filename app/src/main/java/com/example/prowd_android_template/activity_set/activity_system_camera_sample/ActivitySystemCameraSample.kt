@@ -39,8 +39,11 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     private var confirmDialogMbr: DialogConfirm? = null
 
     // (ResultLauncher 객체)
-    // 카메라 권한 설정 액티비티 이동 객체
-    private lateinit var goToCameraPermissionConfigResultLauncherMbr: ActivityResultLauncher<Intent>
+    // 권한 설정 화면 이동 복귀 객체
+    private lateinit var permissionResultLauncherMbr: ActivityResultLauncher<Intent>
+
+    // 복귀 후 실행 콜백
+    private var permissionResultLauncherCallbackMbr: (() -> Unit)? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -181,9 +184,38 @@ class ActivitySystemCameraSample : AppCompatActivity() {
                                         val intent =
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         intent.data = Uri.fromParts("package", packageName, null)
-                                        goToCameraPermissionConfigResultLauncherMbr.launch(
-                                            intent
-                                        )
+                                        permissionResultLauncherCallbackMbr = {
+                                            // 설정 페이지 복귀시 콜백
+
+                                            // 권한을 승인했는지 확인
+                                            if (ActivityCompat.checkSelfPermission(
+                                                    this,
+                                                    Manifest.permission.CAMERA
+                                                ) == PackageManager.PERMISSION_GRANTED
+                                            ) { // 권한이 승인 상태
+                                                // 카메라 실행
+                                                startSystemCamera()
+                                            } else { // 권한 비승인 상태
+                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                    DialogConfirm.DialogInfoVO(
+                                                        true,
+                                                        "권한 요청",
+                                                        "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
+                                                        null,
+                                                        onCheckBtnClicked = {
+
+                                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                                null
+                                                        },
+                                                        onCanceled = {
+
+                                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                                null
+                                                        }
+                                                    )
+                                            }
+                                        }
+                                        permissionResultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
                                         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
@@ -234,40 +266,14 @@ class ActivitySystemCameraSample : AppCompatActivity() {
             }
     }
 
+    // (ActivityResultLauncher 객체 생성)
     private fun createActivityResultLauncher() {
-        // 카메라 권한 설정 액티비티 이동 객체 생성
-        goToCameraPermissionConfigResultLauncherMbr = registerForActivityResult(
+        // 앱 권한 설정 후 복귀
+        permissionResultLauncherMbr = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
-            // 설정 페이지 복귀시 콜백
-
-            // 권한을 승인했는지 확인
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.CAMERA
-                ) == PackageManager.PERMISSION_GRANTED
-            ) { // 권한이 승인 상태
-                // 카메라 실행
-                startSystemCamera()
-            } else { // 권한 비승인 상태
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                    DialogConfirm.DialogInfoVO(
-                        true,
-                        "권한 요청",
-                        "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
-                        null,
-                        onCheckBtnClicked = {
-
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                null
-                        },
-                        onCanceled = {
-
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                null
-                        }
-                    )
-            }
+            permissionResultLauncherCallbackMbr?.let { it1 -> it1() }
+            permissionResultLauncherCallbackMbr = null
         }
     }
 
