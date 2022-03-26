@@ -36,6 +36,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
+    private var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -70,10 +71,6 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         createMemberObjects()
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
-        // (권한 요청 객체 생성)
-        createPermissionObjects()
-        // (ActivityResultLauncher 객체 생성)
-        createActivityResultLauncher()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -136,6 +133,29 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ActivitySystemCameraSampleViewModel::class.java]
 
+        // 권한 요청 객체 생성
+        permissionRequestMbr =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+                permissionRequestCallbackMbr?.let { it1 -> it1(it) }
+                permissionRequestCallbackMbr = null
+            }
+
+        // 앱 권한 설정 후 복귀
+        permissionResultLauncherMbr = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            permissionResultLauncherCallbackMbr?.let { it1 -> it1(it) }
+            permissionResultLauncherCallbackMbr = null
+        }
+
+        // 시스템 카메라 이동 복귀
+        systemCameraResultLauncherMbr = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            systemCameraResultLauncherCallbackMbr?.let { it1 -> it1(it) }
+            systemCameraResultLauncherCallbackMbr = null
+        }
+
     }
 
     // viewModel 저장용 데이터 초기화
@@ -148,14 +168,14 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         }
     }
 
-    // 권한 요청 객체 생성
-    private fun createPermissionObjects() {
-        permissionRequestMbr =
-            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-                if (permissions.size == 2 && // 개별 권한 요청
-                    permissions.containsKey(Manifest.permission.CAMERA) &&
-                    permissions.containsKey(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                ) { // 카메라 권한
+    // 초기 뷰 설정
+    private fun viewSetting() {
+        // 시스템 카메라 테스트 버튼
+        bindingMbr.systemCameraTestBtn.setOnClickListener {
+            // 카메라 디바이스 사용 가능 여부 확인
+            if (this.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+                permissionRequestCallbackMbr = { permissions ->
+                    // 카메라 권한
                     val isGranted = permissions[Manifest.permission.CAMERA]!!
                     val neverAskAgain =
                         !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
@@ -275,34 +295,6 @@ class ActivitySystemCameraSample : AppCompatActivity() {
                         }
                     }
                 }
-            }
-    }
-
-    // (ActivityResultLauncher 객체 생성)
-    private fun createActivityResultLauncher() {
-        // 앱 권한 설정 후 복귀
-        permissionResultLauncherMbr = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) {
-            permissionResultLauncherCallbackMbr?.let { it1 -> it1(it) }
-            permissionResultLauncherCallbackMbr = null
-        }
-
-        // 시스템 카메라 이동 복귀
-        systemCameraResultLauncherMbr = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) {
-            systemCameraResultLauncherCallbackMbr?.let { it1 -> it1(it) }
-            systemCameraResultLauncherCallbackMbr = null
-        }
-    }
-
-    // 초기 뷰 설정
-    private fun viewSetting() {
-        // 시스템 카메라 테스트 버튼
-        bindingMbr.systemCameraTestBtn.setOnClickListener {
-            // 카메라 디바이스 사용 가능 여부 확인
-            if (this.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
                 permissionRequestMbr.launch(
                     arrayOf(
                         Manifest.permission.CAMERA,

@@ -27,6 +27,7 @@ class ActivityInit : AppCompatActivity() {
 
     // (권한 요청 객체)
     private lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
+    private var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -63,8 +64,6 @@ class ActivityInit : AppCompatActivity() {
         createMemberObjects()
         // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
         createViewModelDataObjects()
-        // (권한 요청 객체 생성)
-        createPermissionObjects()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -155,6 +154,13 @@ class ActivityInit : AppCompatActivity() {
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ActivityInitViewModel::class.java]
 
+        // 권한 요청 객체 생성
+        permissionRequestMbr =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+                permissionRequestCallbackMbr?.let { it1 -> it1(it) }
+                permissionRequestCallbackMbr = null
+            }
+
     }
 
     // viewModel 저장용 데이터 초기화
@@ -162,22 +168,6 @@ class ActivityInit : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
         }
-    }
-
-    // 권한 요청 객체 생성
-    // 아래 코드 중복 부분은, 학습용으로 권한 요청 양식을 보여주기 위해 남겨놓은 것. 추후 제거해도 됨
-    private fun createPermissionObjects() {
-        permissionRequestMbr =
-            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-                // 앱 권한 체크 플래그 변경
-                viewModelMbr.isCheckAppPermissionsOnProgressMbr = false
-                viewModelMbr.isCheckAppPermissionsCompletedOnceMbr = true
-                viewModelMbr.thisSpwMbr.isPermissionInitShownBefore = true
-
-                // 다음 엑티비티로 이동
-                goToNextActivity()
-
-            }
     }
 
     // 초기 뷰 설정
@@ -470,6 +460,15 @@ class ActivityInit : AppCompatActivity() {
                 viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted = true
 
                 // 디바이스 권한 요청
+                permissionRequestCallbackMbr = {
+                    // 앱 권한 체크 플래그 변경
+                    viewModelMbr.isCheckAppPermissionsOnProgressMbr = false
+                    viewModelMbr.isCheckAppPermissionsCompletedOnceMbr = true
+                    viewModelMbr.thisSpwMbr.isPermissionInitShownBefore = true
+
+                    // 다음 엑티비티로 이동
+                    goToNextActivity()
+                }
                 permissionRequestMbr.launch(applicationPermissionArrayMbr)
 
             },
@@ -479,6 +478,15 @@ class ActivityInit : AppCompatActivity() {
                 viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted = false
 
                 // 디바이스 권한 요청
+                permissionRequestCallbackMbr = {
+                    // 앱 권한 체크 플래그 변경
+                    viewModelMbr.isCheckAppPermissionsOnProgressMbr = false
+                    viewModelMbr.isCheckAppPermissionsCompletedOnceMbr = true
+                    viewModelMbr.thisSpwMbr.isPermissionInitShownBefore = true
+
+                    // 다음 엑티비티로 이동
+                    goToNextActivity()
+                }
                 permissionRequestMbr.launch(applicationPermissionArrayMbr)
 
             },
