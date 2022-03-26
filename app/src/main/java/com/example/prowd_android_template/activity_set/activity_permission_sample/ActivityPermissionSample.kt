@@ -51,6 +51,7 @@ class ActivityPermissionSample : AppCompatActivity() {
     private var confirmDialogMbr: DialogConfirm? = null
 
     // (ActivityResultLauncher 객체)
+    // 권한 설정 화면 이동 복귀 객체
     private lateinit var permissionResultLauncherMbr: ActivityResultLauncher<Intent>
 
     // 복귀 후 실행 콜백
