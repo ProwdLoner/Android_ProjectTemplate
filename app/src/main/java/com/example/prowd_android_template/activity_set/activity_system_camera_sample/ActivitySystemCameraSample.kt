@@ -1,10 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_system_camera_sample
 
 import android.Manifest
-import android.R.attr.data
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -158,8 +156,9 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     private fun createPermissionObjects() {
         permissionRequestMbr =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-                if (permissions.size == 1 && // 개별 권한 요청
-                    permissions.containsKey(Manifest.permission.CAMERA)
+                if (permissions.size == 2 && // 개별 권한 요청
+                    permissions.containsKey(Manifest.permission.CAMERA) &&
+                    permissions.containsKey(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 ) { // 카메라 권한
                     val isGranted = permissions[Manifest.permission.CAMERA]!!
                     val neverAskAgain =
@@ -308,7 +307,12 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         bindingMbr.systemCameraTestBtn.setOnClickListener {
             // 카메라 디바이스 사용 가능 여부 확인
             if (this.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-                permissionRequestMbr.launch(arrayOf(Manifest.permission.CAMERA))
+                permissionRequestMbr.launch(
+                    arrayOf(
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    )
+                )
             } else {
                 // 디바이스 장치에 카메라가 없는 상태
                 viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(

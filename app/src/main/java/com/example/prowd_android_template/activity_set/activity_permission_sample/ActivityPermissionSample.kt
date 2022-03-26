@@ -291,7 +291,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                     }
 
                 } else if (permissions.size == 2 && // 개별 권한 요청
-                    permissions.containsKey(Manifest.permission.ACCESS_FINE_LOCATION) ||
+                    permissions.containsKey(Manifest.permission.ACCESS_FINE_LOCATION) &&
                     permissions.containsKey(Manifest.permission.ACCESS_COARSE_LOCATION)
                 ) { // 위치 권한
                     val isFineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION]!!
