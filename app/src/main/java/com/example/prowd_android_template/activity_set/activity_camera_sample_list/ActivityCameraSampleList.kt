@@ -150,7 +150,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         // 시스템 카메라 샘플 이동 버튼
-        bindingMbr.goToSystemCameraSampleBtn.setOnClickListener {
+        bindingMbr.goToSystemCameraImageSampleBtn.setOnClickListener {
             // 시스템 카메라 액티비티 필요 권한
             permissionRequestCallbackMbr = { permissions ->
                 // 외부 저장소 읽기 권한
