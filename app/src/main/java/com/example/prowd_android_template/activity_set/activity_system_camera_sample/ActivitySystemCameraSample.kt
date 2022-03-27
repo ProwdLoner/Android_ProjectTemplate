@@ -329,64 +329,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
 
         bindingMbr.addToGalleryBtn.setOnClickListener {
             if (cameraImagePathMbr != null) {
-                // 카메라에서 가져온 파일
-                val imageFile = File(cameraImagePathMbr!!)
-                var fileBitmap = BitmapFactory.decodeFile(cameraImagePathMbr!!)
-
-                val orientation: Int = ExifInterface(imageFile.path).getAttributeInt(
-                    ExifInterface.TAG_ORIENTATION,
-                    ExifInterface.ORIENTATION_UNDEFINED
-                )
-                fileBitmap = when (orientation) {
-                    ExifInterface.ORIENTATION_ROTATE_90 -> TransformationUtils.rotateImage(
-                        fileBitmap,
-                        90
-                    )
-                    ExifInterface.ORIENTATION_ROTATE_180 -> TransformationUtils.rotateImage(
-                        fileBitmap,
-                        180
-                    )
-                    ExifInterface.ORIENTATION_ROTATE_270 -> TransformationUtils.rotateImage(
-                        fileBitmap,
-                        270
-                    )
-                    ExifInterface.ORIENTATION_NORMAL -> fileBitmap
-                    else -> fileBitmap
-                }
-
-                val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-                val fileName = sdf.format(System.currentTimeMillis()) + ".jpg"
-
-                // 카메라 파일을 갤러리에 저장
-                val values = ContentValues()
-                values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
-                values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    values.put(MediaStore.Images.Media.IS_PENDING, 1)
-                }
-
-                val uri =
-                    contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-                try {
-                    if (uri != null) {
-                        val descriptor = contentResolver.openFileDescriptor(uri, "w")
-                        if (descriptor != null) {
-                            val fos = FileOutputStream(descriptor.fileDescriptor)
-                            fileBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
-                            fos.close()
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                values.clear()
-                                values.put(MediaStore.Images.Media.IS_PENDING, 0)
-                                contentResolver.update(uri, values, null, null)
-                            }
-                        }
-                    }
-
-                    Toast.makeText(this, "갤러리에 사진을 저장했습니다.", Toast.LENGTH_SHORT).show()
-                } catch (e: java.lang.Exception) {
-                    Log.e("File", "error=${e.localizedMessage}")
-                }
+                addImageFileToGallery(File(cameraImagePathMbr!!))
             } else {
                 Toast.makeText(this, "갤러리에 저장할 사진이 없습니다.", Toast.LENGTH_SHORT).show()
             }
@@ -481,6 +424,66 @@ class ActivitySystemCameraSample : AppCompatActivity() {
             }
 
             systemCameraResultLauncherMbr.launch(takePictureIntent)
+        }
+    }
+
+    private fun addImageFileToGallery(imageFile: File) {
+        // 카메라에서 가져온 파일
+        var fileBitmap = BitmapFactory.decodeFile(imageFile.absolutePath)
+
+        val orientation: Int = ExifInterface(imageFile.path).getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_UNDEFINED
+        )
+        fileBitmap = when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> TransformationUtils.rotateImage(
+                fileBitmap,
+                90
+            )
+            ExifInterface.ORIENTATION_ROTATE_180 -> TransformationUtils.rotateImage(
+                fileBitmap,
+                180
+            )
+            ExifInterface.ORIENTATION_ROTATE_270 -> TransformationUtils.rotateImage(
+                fileBitmap,
+                270
+            )
+            ExifInterface.ORIENTATION_NORMAL -> fileBitmap
+            else -> fileBitmap
+        }
+
+        val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+        val fileName = sdf.format(System.currentTimeMillis()) + ".jpg"
+
+        // 카메라 파일을 갤러리에 저장
+        val values = ContentValues()
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+
+        val uri =
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        try {
+            if (uri != null) {
+                val descriptor = contentResolver.openFileDescriptor(uri, "w")
+                if (descriptor != null) {
+                    val fos = FileOutputStream(descriptor.fileDescriptor)
+                    fileBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+                    fos.close()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        values.clear()
+                        values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                        contentResolver.update(uri, values, null, null)
+                    }
+                }
+            }
+
+            Toast.makeText(this, "갤러리에 사진을 저장했습니다.", Toast.LENGTH_SHORT).show()
+        } catch (e: java.lang.Exception) {
+            Log.e("File", "error=${e.localizedMessage}")
         }
     }
 }
