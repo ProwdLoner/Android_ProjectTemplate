@@ -1,13 +1,20 @@
 package com.example.prowd_android_template.activity_set.activity_system_camera_sample
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,11 +24,13 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.TransformationUtils
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivitySystemCameraSampleBinding
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -317,6 +326,71 @@ class ActivitySystemCameraSample : AppCompatActivity() {
                 )
             }
         }
+
+        bindingMbr.addToGalleryBtn.setOnClickListener {
+            if (cameraImagePathMbr != null) {
+                // 카메라에서 가져온 파일
+                val imageFile = File(cameraImagePathMbr!!)
+                var fileBitmap = BitmapFactory.decodeFile(cameraImagePathMbr!!)
+
+                val orientation: Int = ExifInterface(imageFile.path).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_UNDEFINED
+                )
+                fileBitmap = when (orientation) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> TransformationUtils.rotateImage(
+                        fileBitmap,
+                        90
+                    )
+                    ExifInterface.ORIENTATION_ROTATE_180 -> TransformationUtils.rotateImage(
+                        fileBitmap,
+                        180
+                    )
+                    ExifInterface.ORIENTATION_ROTATE_270 -> TransformationUtils.rotateImage(
+                        fileBitmap,
+                        270
+                    )
+                    ExifInterface.ORIENTATION_NORMAL -> fileBitmap
+                    else -> fileBitmap
+                }
+
+                val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                val fileName = sdf.format(System.currentTimeMillis()) + ".jpg"
+
+                // 카메라 파일을 갤러리에 저장
+                val values = ContentValues()
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    values.put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
+
+                val uri =
+                    contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                try {
+                    if (uri != null) {
+                        val descriptor = contentResolver.openFileDescriptor(uri, "w")
+                        if (descriptor != null) {
+                            val fos = FileOutputStream(descriptor.fileDescriptor)
+                            fileBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+                            fos.close()
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                values.clear()
+                                values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                                contentResolver.update(uri, values, null, null)
+                            }
+                        }
+                    }
+
+                    Toast.makeText(this, "갤러리에 사진을 저장했습니다.", Toast.LENGTH_SHORT).show()
+                } catch (e: java.lang.Exception) {
+                    Log.e("File", "error=${e.localizedMessage}")
+                }
+            } else {
+                Toast.makeText(this, "갤러리에 저장할 사진이 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     // 라이브 데이터 설정
@@ -371,42 +445,38 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     }
 
     // 시스템 카메라 시작 : 카메라 관련 권한이 충족된 상태
-    // todo 갤러리에 추가 버튼 구현, 갤러리 이미지 보여주기, 갤러리 이미지 지우기, 커스텀 갤러리명 사용, 이미지 클릭시 상세보기 지원
+    // todo 갤러리 이미지 보여주기, 갤러리 이미지 지우기, 이미지 클릭시 상세보기 지원
+    private var cameraImagePathMbr: String? = null
     private fun startSystemCamera() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
         if (takePictureIntent.resolveActivity(packageManager) != null) {
-            // 사진 저장 파일 생성
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val imageFileName = "JPEG_" + timeStamp + "_"
-            val storageDir =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            // 내부 저장소 사진 파일 생성
+            val imageFileName = "JPEG_" + "camera_img_temp_file" + "_"
+            val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
             val photoFile = File.createTempFile(
                 imageFileName,
                 ".jpg",
                 storageDir
             )
 
-            val photoURI = FileProvider.getUriForFile(
+            cameraImagePathMbr = photoFile.absolutePath
+
+            // 카메라 앱에 내부 저장소 사진 파일 공유
+            val photoUri = FileProvider.getUriForFile(
                 this,
                 "com.example.prowd_android_template",
                 photoFile
             )
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
 
             systemCameraResultLauncherCallbackMbr = {
                 if (it.resultCode == RESULT_OK) {
                     // 저장된 파일 이미지 보기
                     Glide.with(this)
-                        .load(photoFile)
+                        .load(File(cameraImagePathMbr!!))
                         .transform(CenterCrop())
                         .into(bindingMbr.fileImg)
-
-                    // 사진 파일을 갤러리로 이동
-                    val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-                    val contentUri = Uri.fromFile(photoFile)
-                    mediaScanIntent.data = contentUri
-                    this.sendBroadcast(mediaScanIntent)
                 }
             }
 
