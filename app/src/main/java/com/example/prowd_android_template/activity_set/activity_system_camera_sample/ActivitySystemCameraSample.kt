@@ -427,6 +427,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         }
     }
 
+    // todo : 커스텀 앨범 저장
     private fun addImageFileToGallery(imageFile: File) {
         // 카메라에서 가져온 파일
         var fileBitmap = BitmapFactory.decodeFile(imageFile.absolutePath)
