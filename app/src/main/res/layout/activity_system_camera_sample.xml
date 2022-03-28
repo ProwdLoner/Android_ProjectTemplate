@@ -93,7 +93,7 @@
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="15dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="저장 파일 이미지"
+                    android:text="파일 이미지"
                     android:textColor="#FF000000"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/img_title" />
@@ -120,8 +120,19 @@
                     android:layout_marginTop="15dp"
                     android:text="갤러리에 추가"
                     android:textColor="#FF000000"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/go_to_gallery_btn"
                     app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/file_img" />
+
+                <Button
+                    android:id="@+id/go_to_gallery_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:text="갤러리로 이동"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/add_to_gallery_btn"
                     app:layout_constraintTop_toBottomOf="@id/file_img" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>

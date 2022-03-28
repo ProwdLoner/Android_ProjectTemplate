@@ -1,6 +1,7 @@
 package com.example.prowd_android_template.activity_set.activity_system_camera_sample
 
 import android.Manifest
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -65,6 +66,10 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     // 시스템 카메라 이동 복귀 객체
     private lateinit var systemCameraResultLauncherMbr: ActivityResultLauncher<Intent>
     private var systemCameraResultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+
+    // 갤러리 이동 복귀 객체
+    private lateinit var galleryResultLauncherMbr: ActivityResultLauncher<Intent>
+    private var galleryResultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -163,6 +168,14 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         ) {
             systemCameraResultLauncherCallbackMbr?.let { it1 -> it1(it) }
             systemCameraResultLauncherCallbackMbr = null
+        }
+
+        // 갤러리 이동 복귀
+        galleryResultLauncherMbr = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            galleryResultLauncherCallbackMbr?.let { it1 -> it1(it) }
+            galleryResultLauncherCallbackMbr = null
         }
 
     }
@@ -334,6 +347,32 @@ class ActivitySystemCameraSample : AppCompatActivity() {
                 Toast.makeText(this, "갤러리에 저장할 사진이 없습니다.", Toast.LENGTH_SHORT).show()
             }
         }
+
+        bindingMbr.goToGalleryBtn.setOnClickListener {
+            val intent = Intent(
+                Intent.ACTION_PICK,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            ).setType("image/*")
+
+            val mimeTypes = arrayOf("image/jpeg", "image/png", "image/jpg")
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+
+            galleryResultLauncherCallbackMbr = { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val intent = result.data
+
+                    val selectedUri: Uri = intent?.data!!
+
+                    // todo : 표시 이미지 livedata 로...
+                    Glide.with(this)
+                        .load(selectedUri)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.fileImg)
+
+                }
+            }
+            galleryResultLauncherMbr.launch(intent)
+        }
     }
 
     // 라이브 데이터 설정
@@ -388,7 +427,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     }
 
     // 시스템 카메라 시작 : 카메라 관련 권한이 충족된 상태
-    // todo 갤러리 이미지 보여주기, 갤러리 이미지 지우기, 이미지 클릭시 상세보기 지원
+    // todo 이미지 클릭시 상세보기 지원
     private var cameraImagePathMbr: String? = null
     private fun startSystemCamera() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
