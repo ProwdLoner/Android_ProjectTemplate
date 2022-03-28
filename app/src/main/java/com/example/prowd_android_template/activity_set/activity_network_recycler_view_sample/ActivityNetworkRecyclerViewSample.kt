@@ -309,11 +309,6 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // (리사이클러 뷰 설정)
-        // (ScreenVerticalRecyclerViewAdapter)
-        bindingMbr.screenVerticalRecyclerView.adapter =
-            adapterSetMbr.screenVerticalRecyclerViewAdapter
-
         // 화면 리플레시
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
             // 아직 데이터 로딩중이라면 리플레시 버튼 제거

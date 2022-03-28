@@ -9,7 +9,7 @@ abstract class AbstractRecyclerViewAdapter(
     parentView: Activity,
     targetView: RecyclerView,
     isVertical: Boolean,
-    onScrollHitBottom: () -> Unit
+    onScrollHitBottom: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트
@@ -27,6 +27,8 @@ abstract class AbstractRecyclerViewAdapter(
     // ---------------------------------------------------------------------------------------------
     // <생성자 공간>
     init {
+        targetView.adapter = this
+
         val scrollAdapterLayoutManager = LinearLayoutManager(parentView)
         if (isVertical) {
             scrollAdapterLayoutManager.orientation = LinearLayoutManager.VERTICAL
@@ -46,7 +48,9 @@ abstract class AbstractRecyclerViewAdapter(
                         scrollAdapterLayoutManager.findFirstVisibleItemPosition()
 
                     if (visibleItemCount + pastVisibleItems >= totalItemCount) {
-                        onScrollHitBottom()
+                        if (onScrollHitBottom != null) {
+                            onScrollHitBottom()
+                        }
                     }
                 }
             }

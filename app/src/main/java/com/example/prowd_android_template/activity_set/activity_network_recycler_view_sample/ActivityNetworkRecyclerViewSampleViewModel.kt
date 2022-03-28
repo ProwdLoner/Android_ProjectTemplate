@@ -75,7 +75,7 @@ class ActivityNetworkRecyclerViewSampleViewModel(application: Application) :
     val changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
 
-    // ScreenVerticalRecyclerViewAdapter 데이터 변경 진행 상태 플래그
+    // ScreenVerticalRecyclerViewAdapter 데이터
     val screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
         MutableLiveData(ArrayList())
 

@@ -15,12 +15,6 @@
             android:background="@android:color/transparent"
             app:layout_scrollFlags="scroll|snap|exitUntilCollapsed">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="50dp">
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -33,7 +27,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="기본 리사이클러뷰 샘플"
+                android:text="기본 리사이클러 뷰 샘플\n(서버 통신 가정)"
+                android:gravity="center"
                 android:textColor="#FF000000"
                 android:textSize="20sp"
                 app:layout_constraintEnd_toEndOf="parent"
