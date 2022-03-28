@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample_editor
+package com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample_editor
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-class ActivityBasicRecyclerViewSampleEditorViewModel(application: Application) :
+class ActivityNetworkRecyclerViewSampleEditorViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
     private val applicationMbr = application

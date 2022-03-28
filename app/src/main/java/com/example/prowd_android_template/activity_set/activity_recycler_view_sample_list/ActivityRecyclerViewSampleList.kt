@@ -4,7 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample
+import com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample.ActivityNetworkRecyclerViewSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -118,11 +118,11 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         // 기본 리사이클러 뷰 테스트 버튼
-        bindingMbr.goToBasicRecyclerViewSampleBtn.setOnClickListener {
+        bindingMbr.goToNetworkRecyclerViewSampleBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
-                    ActivityBasicRecyclerViewSample::class.java
+                    ActivityNetworkRecyclerViewSample::class.java
                 )
             startActivity(intent)
         }

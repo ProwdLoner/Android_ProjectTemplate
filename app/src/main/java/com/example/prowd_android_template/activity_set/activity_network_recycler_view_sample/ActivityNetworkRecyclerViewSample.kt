@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample
+package com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample
 
 import android.app.Activity
 import android.content.Intent
@@ -13,11 +13,11 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample_editor.ActivityBasicRecyclerViewSampleEditor
+import com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample_editor.ActivityNetworkRecyclerViewSampleEditor
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityBasicRecyclerViewSampleBinding
+import com.example.prowd_android_template.databinding.ActivityNetworkRecyclerViewSampleBinding
 import java.net.SocketTimeoutException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -26,16 +26,16 @@ import kotlin.collections.ArrayList
 // 기본 리사이클러 뷰 샘플
 // 동작 확인 완료 : 실제 서버 - 클라이언트로 사용하기 위해선 리포지토리 등을 커스텀 할 것.
 // 아이템 제거, 이동이 아닌 아이템 내용 변경을 위해서는 동일 주소를 가진 객체를 사용할 것이 아니라, 주소가 다른 클론을 생성해서 변경해야 함을 주의
-class ActivityBasicRecyclerViewSample : AppCompatActivity() {
+class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicRecyclerViewSampleBinding
+    private lateinit var bindingMbr: ActivityNetworkRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityBasicRecyclerViewSampleViewModel
+    lateinit var viewModelMbr: ActivityNetworkRecyclerViewSampleViewModel
 
     // (어뎁터 객체)
-    private lateinit var adapterSetMbr: ActivityBasicRecyclerViewSampleAdapterSet
+    private lateinit var adapterSetMbr: ActivityNetworkRecyclerViewSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -57,7 +57,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityBasicRecyclerViewSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityNetworkRecyclerViewSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -91,12 +91,12 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 // 기본 헤더 푸터 생성
                 viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                     arrayListOf(
-                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO(
+                        ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO(
                             adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
                             null,
                             null
                         ),
-                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO(
+                        ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO(
                             adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
                             null,
                             null
@@ -151,11 +151,11 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityBasicRecyclerViewSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityNetworkRecyclerViewSampleViewModel::class.java]
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityBasicRecyclerViewSampleAdapterSet(
-            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter(
+        adapterSetMbr = ActivityNetworkRecyclerViewSampleAdapterSet(
+            ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter(
                 this,
                 viewModelMbr,
                 bindingMbr.screenVerticalRecyclerView,
@@ -184,7 +184,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 // 받아오는 데이터 : 컨텐츠 uid, 컨텐츠 타이틀, 컨텐츠 본문, 작성 시간
                 val intent = result.data!!
                 val resultVo =
-                    intent.getParcelableExtra<ActivityBasicRecyclerViewSampleEditor.ResultVo>("result")!!
+                    intent.getParcelableExtra<ActivityNetworkRecyclerViewSampleEditor.ResultVo>("result")!!
 
                 viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                     true
@@ -192,7 +192,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 // 추가할 아이템
                 val itemUid = adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
                 val newItem =
-                    ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
+                    ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
                         itemUid,
                         resultVo.itemContentUid,
                         resultVo.itemTitle,
@@ -231,22 +231,22 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                 when (viewModelMbr.getScreenVerticalRecyclerViewAdapterItemDataPageItemSortByMbr) {
                     0 -> {
                         itemDataList.sortWith(compareBy {
-                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
+                            (it as ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
                         })
                     }
                     1 -> {
                         itemDataList.sortWith(compareByDescending {
-                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
+                            (it as ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).title
                         })
                     }
                     2 -> {
                         itemDataList.sortWith(compareBy {
-                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
+                            (it as ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
                         })
                     }
                     3 -> {
                         itemDataList.sortWith(compareByDescending {
-                            (it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
+                            (it as ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).content
                         })
                     }
                     4 -> {
@@ -255,7 +255,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                             val transFormat =
                                 SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                             val date: Date =
-                                transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
+                                transFormat.parse((it as ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
 
                             date.time
                         })
@@ -266,7 +266,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                             val transFormat =
                                 SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                             val date: Date =
-                                transFormat.parse((it as ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
+                                transFormat.parse((it as ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO).writeDate)!!
 
                             date.time
                         })
@@ -356,7 +356,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         bindingMbr.addItemBtn.setOnClickListener {
             // 받아오는 데이터 : 컨텐츠 uid, 컨텐츠 타이틀, 컨텐츠 본문, 작성 시간
             val gotoIntent =
-                Intent(this, ActivityBasicRecyclerViewSampleEditor::class.java)
+                Intent(this, ActivityNetworkRecyclerViewSampleEditor::class.java)
             resultFromActivityBasicRecyclerViewSampleEditor.launch(gotoIntent)
         }
 
@@ -562,7 +562,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
                                         // 삭제할 아이템의 리스트 인덱스 추출
                                         val itemIdx =
                                             screenVerticalRecyclerViewAdapterDataListCopy.indexOfFirst {
-                                                if (it is ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO) {
+                                                if (it is ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO) {
                                                     it.contentUid == contentUid
                                                 } else {
                                                     false
@@ -711,7 +711,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
                     // 외부 데이터를 어뎁터용 데이터로 변형 (구조뿐 아닌 화면에 보여질 타입까지 설정 = VO 클래스 종류 선정)
                     val headerData =
-                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO(
+                        ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO(
                             itemUid,
                             getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncResult.uid,
                             getScreenVerticalRecyclerViewAdapterHeaderDataOnVMAsyncResult.content
@@ -821,7 +821,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
                     // 외부 데이터를 어뎁터용 데이터로 변형
                     val footerData =
-                        ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO(
+                        ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO(
                             itemUid,
                             getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult.uid,
                             getScreenVerticalRecyclerViewAdapterFooterDataOnVMAsyncResult.content
@@ -920,7 +920,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
         // 로더를 추가하고 화면 갱신
         screenVerticalRecyclerViewAdapterDataListCopy.add(
             itemLastIdx + 1,
-            ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.ItemLoader.ItemVO(
+            ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.ItemLoader.ItemVO(
                 adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
             )
         )
@@ -974,7 +974,7 @@ class ActivityBasicRecyclerViewSample : AppCompatActivity() {
 
                         for (data in getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.testList) {
                             adapterDataList.add(
-                                ActivityBasicRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
+                                ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
                                     adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
                                     data.uid,
                                     data.title,

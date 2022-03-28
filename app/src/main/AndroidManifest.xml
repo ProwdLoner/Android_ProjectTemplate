@@ -40,7 +40,7 @@
             android:name=".activity_set.activity_jni_sample.ActivityJniSample"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_basic_recycler_view_sample_editor.ActivityBasicRecyclerViewSampleEditor"
+            android:name=".activity_set.activity_network_recycler_view_sample_editor.ActivityNetworkRecyclerViewSampleEditor"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
         <activity
@@ -53,7 +53,7 @@
             android:name=".activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleList"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_basic_recycler_view_sample.ActivityBasicRecyclerViewSample"
+            android:name=".activity_set.activity_network_recycler_view_sample.ActivityNetworkRecyclerViewSample"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList"

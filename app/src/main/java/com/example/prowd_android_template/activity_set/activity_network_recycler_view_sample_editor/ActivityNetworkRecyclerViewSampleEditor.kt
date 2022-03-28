@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_basic_recycler_view_sample_editor
+package com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample_editor
 
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
@@ -15,13 +15,13 @@ import java.net.SocketTimeoutException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
+class ActivityNetworkRecyclerViewSampleEditor : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
     private lateinit var bindingMbr: ActivityBasicRecyclerViewSampleEditorBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityBasicRecyclerViewSampleEditorViewModel
+    lateinit var viewModelMbr: ActivityNetworkRecyclerViewSampleEditorViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -108,7 +108,7 @@ class ActivityBasicRecyclerViewSampleEditor : AppCompatActivity() {
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
         viewModelMbr =
-            ViewModelProvider(this)[ActivityBasicRecyclerViewSampleEditorViewModel::class.java]
+            ViewModelProvider(this)[ActivityNetworkRecyclerViewSampleEditorViewModel::class.java]
 
     }
 

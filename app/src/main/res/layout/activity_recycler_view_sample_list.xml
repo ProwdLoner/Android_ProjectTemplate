@@ -64,15 +64,51 @@
                 android:layout_height="wrap_content">
 
                 <Button
-                    android:id="@+id/go_to_basic_recycler_view_sample_btn"
+                    android:id="@+id/go_to_basic_vertical_recycler_view_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="기본 리사이클러뷰 샘플\n(서버 통신용)"
+                    android:text="기본 리사이클러뷰 샘플\n(세로)"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <Button
+                    android:id="@+id/go_to_basic_horizontal_recycler_view_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="기본 리사이클러뷰 샘플\n(가로)"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_basic_vertical_recycler_view_sample_btn" />
+
+                <Button
+                    android:id="@+id/go_to_basic_header_footer_recycler_view_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="기본 리사이클러뷰 샘플\n(헤더, 푸터 추가)"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_basic_horizontal_recycler_view_sample_btn" />
+
+                <Button
+                    android:id="@+id/go_to_network_recycler_view_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="응용 리사이클러뷰 샘플\n(서버 통신 가정)"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_basic_header_footer_recycler_view_sample_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
