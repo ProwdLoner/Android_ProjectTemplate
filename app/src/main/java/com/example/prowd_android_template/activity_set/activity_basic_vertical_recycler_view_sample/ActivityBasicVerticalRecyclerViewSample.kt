@@ -2,7 +2,6 @@ package com.example.prowd_android_template.activity_set.activity_basic_vertical_
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.CountDownTimer
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
