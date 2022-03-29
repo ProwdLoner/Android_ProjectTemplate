@@ -98,6 +98,26 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
                                     adapterSetMbr.recyclerViewAdapter.maxUid,
                                     "item3"
+                                ),
+                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item4"
+                                ),
+                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item5"
+                                ),
+                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item6"
+                                ),
+                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item7"
+                                ),
+                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item8"
                                 )
                             )
                         )
