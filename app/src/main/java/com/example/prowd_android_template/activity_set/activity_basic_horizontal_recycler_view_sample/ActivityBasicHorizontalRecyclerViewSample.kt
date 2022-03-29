@@ -1,24 +1,24 @@
-package com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list
+package com.example.prowd_android_template.activity_set.activity_basic_horizontal_recycler_view_sample
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_basic_horizontal_recycler_view_sample.ActivityBasicHorizontalRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample.ActivityBasicVerticalRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample.ActivityNetworkRecyclerViewSample
+import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityRecyclerViewSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityBasicHorizontalRecyclerViewSampleBinding
 
-class ActivityRecyclerViewSampleList : AppCompatActivity() {
+class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityRecyclerViewSampleListBinding
+    private lateinit var bindingMbr: ActivityBasicHorizontalRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityRecyclerViewSampleListViewModel
+    lateinit var viewModelMbr: ActivityBasicHorizontalRecyclerViewSampleViewModel
+
+    // (어뎁터 객체)
+    private lateinit var adapterSetMbr: ActivityBasicHorizontalRecyclerViewSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -37,7 +37,7 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityRecyclerViewSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityBasicHorizontalRecyclerViewSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -67,6 +67,64 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
+                // 로딩 아이템 생성
+                var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+                    arrayListOf(
+                        ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.maxUid
+                        )
+                    )
+                viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = adapterDataList
+
+                viewModelMbr.executorServiceMbr?.execute {
+                    // 로딩 예시를 위한 2초 대기
+                    Thread.sleep(2000)
+
+                    runOnUiThread {
+                        // 로딩 아이템 제거 및 아이템 추가
+                        adapterDataList =
+                            java.util.ArrayList()
+                        adapterDataList.addAll(
+                            arrayListOf(
+                                ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item1"
+                                ),
+                                ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item2"
+                                ),
+                                ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item3"
+                                ),
+                                ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item4"
+                                ),
+                                ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item5"
+                                ),
+                                ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item6"
+                                ),
+                                ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item7"
+                                ),
+                                ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    "item8"
+                                )
+                            )
+                        )
+
+                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
+                            adapterDataList
+                    }
+                }
             }
         }
 
@@ -104,8 +162,19 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityRecyclerViewSampleListViewModel::class.java]
+        viewModelMbr =
+            ViewModelProvider(this)[ActivityBasicHorizontalRecyclerViewSampleViewModel::class.java]
 
+        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
+        adapterSetMbr = ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
+            ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter(
+                this,
+                viewModelMbr,
+                bindingMbr.recyclerView,
+                false,
+                null
+            )
+        )
     }
 
     // viewModel 저장용 데이터 초기화
@@ -120,33 +189,6 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.goToBasicVerticalRecyclerViewSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicVerticalRecyclerViewSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToBasicHorizontalRecyclerViewSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicHorizontalRecyclerViewSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 기본 리사이클러 뷰 테스트 버튼
-        bindingMbr.goToNetworkRecyclerViewSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityNetworkRecyclerViewSample::class.java
-                )
-            startActivity(intent)
-        }
 
     }
 
@@ -198,6 +240,11 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
             }
+        }
+
+        // recyclerViewAdapter 데이터 리스트
+        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
+            adapterSetMbr.recyclerViewAdapter.setNewItemList(it)
         }
     }
 }

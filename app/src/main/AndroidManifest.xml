@@ -23,6 +23,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_basic_horizontal_recycler_view_sample.ActivityBasicHorizontalRecyclerViewSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_basic_vertical_recycler_view_sample.ActivityBasicVerticalRecyclerViewSample"
             android:exported="false" />
         <activity
