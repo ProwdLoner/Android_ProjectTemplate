@@ -23,6 +23,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_basic_camera2_api_sample.ActivityBasicCamera2ApiSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSample"
             android:exported="false" />
         <activity
