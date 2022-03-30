@@ -668,6 +668,14 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
             }
         }
+
+        viewModelMbr.isScreenVerticalRecyclerViewAdapterFooterLoadingLiveDataMbr.observe(this){
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.isFooterLoading = it
+        }
+
+        viewModelMbr.isScreenVerticalRecyclerViewAdapterHeaderLoadingLiveDataMbr.observe(this){
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.isHeaderLoading = it
+        }
     }
 
     // ScreenVerticalRecyclerViewAdapter 의 헤더 데이터 갱신
@@ -683,7 +691,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
 
         // 헤더 로더 출력 = 헤더의 아이템을 시머로 숨기기
         viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-        adapterSetMbr.screenVerticalRecyclerViewAdapter.isHeaderLoading = true
+        viewModelMbr.isScreenVerticalRecyclerViewAdapterHeaderLoadingLiveDataMbr.value = true
         viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
 
         // 리포지토리 데이터 요청
@@ -694,7 +702,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
 
                     // 헤더로더 제거
-                    adapterSetMbr.screenVerticalRecyclerViewAdapter.isHeaderLoading = false
+                    viewModelMbr.isScreenVerticalRecyclerViewAdapterHeaderLoadingLiveDataMbr.value = false
 
                     // 어뎁터 주입용 데이터 리스트 클론 생성
                     val screenVerticalRecyclerViewAdapterDataListCopy =
@@ -731,7 +739,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
 
                     // 헤더로더 제거
-                    adapterSetMbr.screenVerticalRecyclerViewAdapter.isHeaderLoading = false
+                    viewModelMbr.isScreenVerticalRecyclerViewAdapterHeaderLoadingLiveDataMbr.value = false
 
                     viewModelMbr.changeScreenVerticalRecyclerViewAdapterHeaderDataOnProgressLiveDataMbr.value =
                         false
@@ -793,7 +801,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
 
         // 로더 출력
         viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
-        adapterSetMbr.screenVerticalRecyclerViewAdapter.isFooterLoading = true
+        viewModelMbr.isScreenVerticalRecyclerViewAdapterFooterLoadingLiveDataMbr.value = true
         viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.release()
 
         // 리포지토리 데이터 요청
@@ -804,7 +812,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
 
                     // 헤더로더 제거
-                    adapterSetMbr.screenVerticalRecyclerViewAdapter.isFooterLoading = false
+                    viewModelMbr.isScreenVerticalRecyclerViewAdapterFooterLoadingLiveDataMbr.value = false
 
                     // 어뎁터 주입용 데이터 리스트 클론 생성
                     val screenVerticalRecyclerViewAdapterDataListCopy =
@@ -841,7 +849,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.screenVerticalRecyclerViewAdapterDataSemaphoreMbr.acquire()
 
                     // 헤더로더 제거
-                    adapterSetMbr.screenVerticalRecyclerViewAdapter.isFooterLoading = false
+                    viewModelMbr.isScreenVerticalRecyclerViewAdapterFooterLoadingLiveDataMbr.value = false
 
                     viewModelMbr.changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr.value =
                         false

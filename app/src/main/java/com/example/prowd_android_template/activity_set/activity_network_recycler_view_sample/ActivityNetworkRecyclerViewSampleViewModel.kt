@@ -75,13 +75,17 @@ class ActivityNetworkRecyclerViewSampleViewModel(application: Application) :
     val changeScreenVerticalRecyclerViewAdapterFooterDataOnProgressLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
 
-    // ScreenVerticalRecyclerViewAdapter 데이터
-    val screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
-        MutableLiveData(ArrayList())
-
     // ScreenVerticalRecyclerViewAdapter 아이템 데이터 삭제 요청 (요청이 들어오면 삭제 확인 다이얼로그를 표시)
     val screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr: MutableLiveData<Long?> =
         MutableLiveData(null)
+
+    // ScreenVerticalRecyclerViewAdapter 데이터
+    val screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
+        MutableLiveData(ArrayList())
+    val isScreenVerticalRecyclerViewAdapterHeaderLoadingLiveDataMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
+    val isScreenVerticalRecyclerViewAdapterFooterLoadingLiveDataMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
 
 
     // ---------------------------------------------------------------------------------------------
