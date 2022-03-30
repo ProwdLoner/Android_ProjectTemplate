@@ -48,7 +48,7 @@ class HandlerThreadObj(private val threadName: String) {
     // <비공개 메소드 공간>
     // (스레드 확인 함수)
     // 스레드가 생성되어 정상 동작중이면 true
-    private fun isThreadObjAlive(): Boolean {
+    fun isThreadObjAlive(): Boolean {
         return (null != handler && null != handlerThread && handlerThread!!.isAlive)
     }
 }

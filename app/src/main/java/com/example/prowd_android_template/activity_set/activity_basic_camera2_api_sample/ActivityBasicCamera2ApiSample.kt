@@ -1,13 +1,27 @@
 package com.example.prowd_android_template.activity_set.activity_basic_camera2_api_sample
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.graphics.ImageFormat
+import android.hardware.camera2.CameraCharacteristics
+import android.media.Image
+import android.media.ImageReader
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.WindowManager
+import androidx.core.app.ActivityCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
+import com.example.prowd_android_template.util_class.CameraObj
 
+// todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -26,6 +40,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 확인 다이얼로그
     private var confirmDialogMbr: DialogConfirm? = null
 
+    // 카메라 실행 객체
+    private var backCameraObjMbr: CameraObj? = null
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -35,6 +52,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // (뷰 객체 바인딩)
         bindingMbr = ActivityBasicCamera2ApiSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
+
+        // (화면을 꺼지지 않도록 하는 플래그)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        // (상태창 투명화)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
 
         // (초기 객체 생성)
         createMemberObjects()
@@ -51,6 +79,63 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        // 카메라 실행
+        isImageProcessingPause = false
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        ) { // 권한 승인 상태
+            // (카메라 실행)
+            // 카메라 생성
+            backCameraObjMbr?.openCamera(
+                onCameraDeviceReady = {
+                    // (서페이스 생성)
+                    // 이미지 리더 생성
+                    backCameraObjMbr?.createImageReader(
+                        CameraObj.ImageReaderConfigVo(
+                            Long.MAX_VALUE,
+                            1f,
+                            ImageFormat.YUV_420_888,
+                            2,
+                            imageReaderCallback = { reader ->
+                                processImage(reader)
+                            }
+                        )
+                    )
+
+                    // 프리뷰 생성
+                    backCameraObjMbr?.createPreviewInfoAsync(
+                        arrayListOf(bindingMbr.cameraPreviewAutoFitTexture),
+                        onPreviewTextureReady = { // 프리뷰 서페이스 준비 완료
+                            // 카메라 세션 리퀘스트 빌더 생성
+                            backCameraObjMbr?.createCameraCaptureRequest()
+
+                            // 카메라 세션 생성
+                            backCameraObjMbr?.createCameraSession(
+                                onCaptureSessionCreated = { // 카메라 세션 생성 완료
+                                    // 카메라 세션 실행
+                                    backCameraObjMbr?.runCameraCaptureSession()
+
+                                },
+                                onError = {
+                                    // todo
+                                }
+                            )
+
+
+                        }
+                    )
+                },
+                onError = {
+                    // todo
+
+                }
+            )
+        } else { // 권한 비승인 상태
+            // todo : 보험 - 다이얼로그 보여주고 뒤로가기
+        }
+
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
             val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
@@ -65,7 +150,18 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 //  데이터 로딩
             }
         }
+    }
 
+    override fun onPause() {
+        isImageProcessingPause = true
+        backCameraObjMbr?.stopCameraCaptureSession()
+        backCameraObjMbr?.deleteCameraSession()
+        backCameraObjMbr?.deleteCameraCaptureRequest()
+        backCameraObjMbr?.deletePreviewInfoAsync()
+        backCameraObjMbr?.deleteImageReader()
+        backCameraObjMbr?.closeCamera()
+
+        super.onPause()
     }
 
     override fun onStop() {
@@ -90,6 +186,32 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         super.onDestroy()
     }
 
+    override fun onBackPressed() {
+        isImageProcessingPause = true
+        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
+            true,
+            "카메라 종료",
+            "카메라를 종료하시겠습니까?",
+            "종료",
+            "취소",
+            onPosBtnClicked = {
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                finish()
+            },
+            onNegBtnClicked = {
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                isImageProcessingPause = false
+            },
+            onCanceled = {
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                isImageProcessingPause = false
+            }
+        )
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
@@ -101,6 +223,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ActivityBasicCamera2ApiSampleViewModel::class.java]
+
+        // 사용 카메라 객체 생성
+        // 후방 카메라
+        val backCameraId = CameraObj.chooseCameraId(this, CameraCharacteristics.LENS_FACING_BACK)
+        if (null != backCameraId) {
+            backCameraObjMbr =
+                CameraObj.getInstance(this, backCameraId)
+        }
 
     }
 
@@ -116,7 +246,31 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        bindingMbr.cameraCloseBtn.setOnClickListener {
+            isImageProcessingPause = true
+            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
+                true,
+                "카메라 종료",
+                "카메라를 종료하시겠습니까?",
+                "종료",
+                "취소",
+                onPosBtnClicked = {
+                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
+                    finish()
+                },
+                onNegBtnClicked = {
+                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                    isImageProcessingPause = false
+                },
+                onCanceled = {
+                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                    isImageProcessingPause = false
+                }
+            )
+        }
 
     }
 
@@ -168,6 +322,64 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
             }
+        }
+    }
+
+    private var isImageProcessingPause = false
+    private var imageObjectToBitmapOnProgressMbr = false
+    private fun processImage(reader: ImageReader?) {
+        try {
+            if (null == reader) {
+                return
+            }
+
+            val imageObj: Image = reader.acquireLatestImage() ?: return
+
+            // 병렬처리를 위한 플래그
+            // 아래 작업도중이라면 그냥 imageObj 를 닫고 넘기기
+            if (imageObjectToBitmapOnProgressMbr || // 이미지 객체를 비트맵으로 변환중
+                isImageProcessingPause || // 이미지 프로세싱 중지 상태
+                isFinishing // 액티비티 자체가 종료
+            ) {
+                // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
+                imageObj.close()
+                return
+            }
+
+            Log.e("Image Process Status", "true")
+
+            // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
+            // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 를 plane 으로 복사하여 사용
+            // 아무리 빨리 복사를 해도, 액티비티 자체가 강제 종료되는 시점에 imageObj 가 close 될 가능성이 있기에
+            // 바로 아랫줄에서 바이트 버퍼 클론 할 때에 에러가 발생할 수 있음.
+            // 에러는 종료시에 일어나므로, try catch 문으로 튕기지 않게 처리만 해둠
+//            val yBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[0].buffer)
+//            val uBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[1].buffer)
+//            val vBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[2].buffer)
+//
+//            val yRowStride: Int = imageObj.planes[0].rowStride
+//            val yPixelStride: Int = imageObj.planes[0].pixelStride
+//
+//            val uRowStride: Int = imageObj.planes[1].rowStride
+//            val uPixelStride: Int = imageObj.planes[1].pixelStride
+//
+//            val vRowStride: Int = imageObj.planes[2].rowStride
+//            val vPixelStride: Int = imageObj.planes[2].pixelStride
+//
+//            val imgWidth: Int = imageObj.width
+//            val imgHeight: Int = imageObj.height
+
+            // 이미지 데이터가 복사되어 image 객체 해제
+            imageObj.close()
+
+            // todo : yuv 바이트버퍼를 rgb 비트맵으로 변경 (YUV420 -> ARGB8888)
+
+        } catch (e: Exception) {
+            // 발생 가능한 에러 :
+            // 1. 이미지 객체를 사용하려 할 때, 액티비티가 종료되어 이미지 객체가 종료된 상황
+            // 2. Camera2 api 내부 에러 등
+            e.printStackTrace()
+            finish()
         }
     }
 }
