@@ -125,14 +125,14 @@ class ActivityJniSample : AppCompatActivity() {
         }
 
         // test2.cpp 테스트 버튼
-        bindingMbr.textFromAssetsTestBtn.setOnClickListener {
-            val jniResponse = NativeWrapperAssetManagerTest.getAssetTextString(
-                assets,
-                "jni_test.txt"
-            )
-
-            bindingMbr.textFromAssetsTestResultValue.text = jniResponse
-        }
+//        bindingMbr.textFromAssetsTestBtn.setOnClickListener {
+//            val jniResponse = NativeWrapperAssetManagerTest.getAssetTextString(
+//                assets,
+//                "jni_test.txt"
+//            )
+//
+//            bindingMbr.textFromAssetsTestResultValue.text = jniResponse
+//        }
 
     }
 
