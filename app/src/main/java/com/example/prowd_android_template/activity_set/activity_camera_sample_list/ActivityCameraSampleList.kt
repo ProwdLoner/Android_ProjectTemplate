@@ -13,7 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_basic_camera2_api_sample.ActivityBasicCamera2ApiSample
-import com.example.prowd_android_template.activity_set.activity_system_camera_sample.ActivitySystemCameraSample
+import com.example.prowd_android_template.activity_set.activity_system_camera_photo_sample.ActivitySystemCameraPhotoSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -151,7 +151,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         // 시스템 카메라 샘플 이동 버튼
-        bindingMbr.goToSystemCameraImageSampleBtn.setOnClickListener {
+        bindingMbr.goToSystemCameraPhotoSampleBtn.setOnClickListener {
             // 시스템 카메라 액티비티 필요 권한
             permissionRequestCallbackMbr = { permissions ->
                 // 외부 저장소 읽기 권한
@@ -164,7 +164,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
                     val intent =
                         Intent(
                             this,
-                            ActivitySystemCameraSample::class.java
+                            ActivitySystemCameraPhotoSample::class.java
                         )
                     startActivity(intent)
                 } else { // 권한 거부
@@ -212,7 +212,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
                                             val goToIntent =
                                                 Intent(
                                                     this,
-                                                    ActivitySystemCameraSample::class.java
+                                                    ActivitySystemCameraPhotoSample::class.java
                                                 )
                                             startActivity(goToIntent)
                                         } else { // 권한 비승인
@@ -350,7 +350,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
                                             val goToIntent =
                                                 Intent(
                                                     this,
-                                                    ActivityBasicCamera2ApiSample::class.java
+                                                    ActivitySystemCameraPhotoSample::class.java
                                                 )
                                             startActivity(goToIntent)
                                         } else { // 권한 비승인

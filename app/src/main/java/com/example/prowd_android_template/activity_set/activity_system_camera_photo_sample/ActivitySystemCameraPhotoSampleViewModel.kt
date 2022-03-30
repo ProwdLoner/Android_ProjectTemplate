@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_system_camera_sample
+package com.example.prowd_android_template.activity_set.activity_system_camera_photo_sample
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -11,7 +11,7 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ActivitySystemCameraSampleViewModel(application: Application) :
+class ActivitySystemCameraPhotoSampleViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
     private val applicationMbr = application

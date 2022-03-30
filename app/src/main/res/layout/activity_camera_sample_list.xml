@@ -64,11 +64,11 @@
                 android:layout_height="wrap_content">
 
                 <Button
-                    android:id="@+id/go_to_system_camera_image_sample_btn"
+                    android:id="@+id/go_to_system_camera_photo_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="기본 카메라 샘플\n(시스템 카메라 이미지 촬영)"
+                    android:text="기본 카메라 샘플\n(시스템 카메라 사진 촬영)"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -84,7 +84,7 @@
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_system_camera_image_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/go_to_system_camera_photo_sample_btn" />
 
                 <Button
                     android:id="@+id/go_to_basic_camera2_api_sample_btn"
@@ -97,6 +97,30 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/go_to_system_camera_video_sample_btn" />
+
+                <Button
+                    android:id="@+id/go_to_basic_camera2_api_photo_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="기본 카메라2 API 샘플\n(Camera2 사진 촬영)"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_basic_camera2_api_sample_btn" />
+
+                <Button
+                    android:id="@+id/go_to_basic_camera2_api_video_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="기본 카메라2 API 샘플\n(Camera2 동영상 촬영)"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_basic_camera2_api_photo_sample_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>

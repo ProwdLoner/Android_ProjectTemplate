@@ -29,9 +29,6 @@
             android:name=".activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSample"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_multi_type_item_recycler_view_sample.ActivityMultiTypeItemRecyclerViewSample"
-            android:exported="false" />
-        <activity
             android:name=".activity_set.activity_basic_horizontal_recycler_view_sample.ActivityBasicHorizontalRecyclerViewSample"
             android:exported="false" />
         <activity
@@ -41,7 +38,7 @@
             android:name=".activity_set.activity_permission_sample.ActivityPermissionSample"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_system_camera_sample.ActivitySystemCameraSample"
+            android:name=".activity_set.activity_system_camera_photo_sample.ActivitySystemCameraPhotoSample"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_camera_sample_list.ActivityCameraSampleList"

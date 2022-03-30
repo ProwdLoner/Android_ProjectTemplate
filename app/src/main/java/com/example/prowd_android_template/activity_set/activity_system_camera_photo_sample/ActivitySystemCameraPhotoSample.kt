@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_system_camera_sample
+package com.example.prowd_android_template.activity_set.activity_system_camera_photo_sample
 
 import android.Manifest
 import android.app.Activity
@@ -29,20 +29,20 @@ import com.bumptech.glide.load.resource.bitmap.TransformationUtils
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivitySystemCameraSampleBinding
+import com.example.prowd_android_template.databinding.ActivitySystemCameraPhotoSampleBinding
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
 
-class ActivitySystemCameraSample : AppCompatActivity() {
+class ActivitySystemCameraPhotoSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivitySystemCameraSampleBinding
+    private lateinit var bindingMbr: ActivitySystemCameraPhotoSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivitySystemCameraSampleViewModel
+    lateinit var viewModelMbr: ActivitySystemCameraPhotoSampleViewModel
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
@@ -78,7 +78,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivitySystemCameraSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivitySystemCameraPhotoSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -145,7 +145,7 @@ class ActivitySystemCameraSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivitySystemCameraSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivitySystemCameraPhotoSampleViewModel::class.java]
 
         // 권한 요청 객체 생성
         permissionRequestMbr =
