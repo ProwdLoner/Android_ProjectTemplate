@@ -139,7 +139,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     if (isHeaderLoading) {
                         binding.loaderContainer.visibility = View.VISIBLE
                     } else {
-                        binding.loaderContainer.visibility = View.INVISIBLE
+                        binding.loaderContainer.visibility = View.GONE
                     }
 
                     binding.title.text = entity.title
@@ -152,7 +152,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     if (isFooterLoading) {
                         binding.loaderContainer.visibility = View.VISIBLE
                     } else {
-                        binding.loaderContainer.visibility = View.INVISIBLE
+                        binding.loaderContainer.visibility = View.GONE
                     }
 
                     binding.title.text = entity.title

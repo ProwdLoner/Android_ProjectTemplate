@@ -13,8 +13,8 @@ abstract class AbstractRecyclerViewAdapter(
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트
-    val currentItemListMbr: ArrayList<AdapterItemAbstractVO> =
-        arrayListOf()
+    val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = arrayListOf()
+
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
     // Long 값 최소에서 최대로 갈 때까지 진행되므로, 그때까지 아이템 리스트에 남아있을 가능성은 매우 드뭄
@@ -232,6 +232,6 @@ abstract class AbstractRecyclerViewAdapter(
 
 
     // ---------------------------------------------------------------------------------------------
-    // <내부 클래스 공간>
+    // <중첩 클래스 공간>
     abstract class AdapterItemAbstractVO(open val itemUid: Long)
 }

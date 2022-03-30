@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_basic_horizontal_recycler_view_sample.ActivityBasicHorizontalRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample.ActivityBasicVerticalRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_multi_type_item_recycler_view_sample.ActivityMultiTypeItemRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample.ActivityNetworkRecyclerViewSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -145,15 +144,6 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityBasicHeaderFooterRecyclerViewSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToMultiTypeItemRecyclerViewSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityMultiTypeItemRecyclerViewSample::class.java
                 )
             startActivity(intent)
         }
