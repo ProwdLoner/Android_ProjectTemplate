@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample.ActivityNetworkRecyclerViewSampleAdapterSet
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -87,7 +86,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                 // 로딩 아이템 생성
                 var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
-                    adapterSetMbr.recyclerViewAdapter.currentItemListMbr
+                    adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
 
                 adapterDataList.add(1,
                     ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
@@ -108,14 +107,14 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         viewModelMbr.isRecyclerViewAdapterFooterLoadingLiveDataMbr.value = false
 
                         // 아이템 로딩 제거
-                        adapterDataList = adapterSetMbr.recyclerViewAdapter.currentItemListMbr
+                        adapterDataList = adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
                         adapterDataList.removeAt(1)
 
                         viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = adapterDataList
 
                         // 데이터 주입
                         // 헤더 푸터 데이터
-                        adapterDataList = adapterSetMbr.recyclerViewAdapter.currentItemListMbr
+                        adapterDataList = adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
                         adapterDataList.removeLast()
                         adapterDataList.removeFirst()
                         adapterDataList.add(0,
