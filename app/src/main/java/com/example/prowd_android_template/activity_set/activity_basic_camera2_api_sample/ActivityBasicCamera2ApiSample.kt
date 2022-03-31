@@ -2,24 +2,31 @@ package com.example.prowd_android_template.activity_set.activity_basic_camera2_a
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.ImageFormat
+import android.graphics.*
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
 import android.media.ImageReader
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.FitCenter
+import com.bumptech.glide.request.RequestOptions
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
+import com.example.prowd_android_template.util_object.CustomUtil
+import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+
 
 // todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
@@ -346,33 +353,58 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 return
             }
 
-            Log.e("Image Process Status", "true")
+            Log.e("Status", "now image processing")
 
             // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
             // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 를 plane 으로 복사하여 사용
             // 아무리 빨리 복사를 해도, 액티비티 자체가 강제 종료되는 시점에 imageObj 가 close 될 가능성이 있기에
             // 바로 아랫줄에서 바이트 버퍼 클론 할 때에 에러가 발생할 수 있음.
             // 에러는 종료시에 일어나므로, try catch 문으로 튕기지 않게 처리만 해둠
-//            val yBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[0].buffer)
-//            val uBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[1].buffer)
-//            val vBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[2].buffer)
-//
-//            val yRowStride: Int = imageObj.planes[0].rowStride
-//            val yPixelStride: Int = imageObj.planes[0].pixelStride
-//
-//            val uRowStride: Int = imageObj.planes[1].rowStride
-//            val uPixelStride: Int = imageObj.planes[1].pixelStride
-//
-//            val vRowStride: Int = imageObj.planes[2].rowStride
-//            val vPixelStride: Int = imageObj.planes[2].pixelStride
-//
-//            val imgWidth: Int = imageObj.width
-//            val imgHeight: Int = imageObj.height
+            val yBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[0].buffer)
+            val uBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[1].buffer)
+            val vBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[2].buffer)
+
+            val imgWidth = imageObj.width
+            val imgHeight = imageObj.height
 
             // 이미지 데이터가 복사되어 image 객체 해제
             imageObj.close()
 
-            // todo : yuv 바이트버퍼를 rgb 비트맵으로 변경 (YUV420 -> ARGB8888)
+            // todo : rgb 비트맵을 현재 디바이스 방향에 맞게 회전
+            // todo : gpu support 가 필요한 작업 목록 =
+            // todo : 1. yuv to rgb  2. rotate image  3. crop image  4. resize image
+
+            imageObjectToBitmapOnProgressMbr = true
+            viewModelMbr.executorServiceMbr?.execute {
+                // (YUV420 Image to ARGB8888 Bitmap)
+                val ySize: Int = yBuffer.remaining()
+                val uSize: Int = uBuffer.remaining()
+                val vSize: Int = vBuffer.remaining()
+
+                val nv21 = ByteArray(ySize + uSize + vSize)
+
+                yBuffer.get(nv21, 0, ySize)
+                vBuffer.get(nv21, ySize, vSize)
+                uBuffer.get(nv21, ySize + vSize, uSize)
+
+                val yuvImage =
+                    YuvImage(nv21, ImageFormat.NV21, imgWidth, imgHeight, null)
+                val out = ByteArrayOutputStream()
+                yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 100, out)
+                val imageBytes: ByteArray = out.toByteArray()
+                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+
+                if (!isFinishing) {
+                    runOnUiThread {
+                        Glide.with(this)
+                            .load(bitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.testImg)
+                    }
+                }
+
+                imageObjectToBitmapOnProgressMbr = false
+            }
 
         } catch (e: Exception) {
             // 발생 가능한 에러 :
