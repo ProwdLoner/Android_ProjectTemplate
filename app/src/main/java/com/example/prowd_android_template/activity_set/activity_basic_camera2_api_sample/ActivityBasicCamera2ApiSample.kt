@@ -7,6 +7,7 @@ import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
 import android.media.ImageReader
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Log
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +18,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.FitCenter
-import com.bumptech.glide.request.RequestOptions
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -127,6 +127,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 },
                                 onError = {
                                     // todo
+
                                 }
                             )
 
@@ -354,6 +355,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
 
             Log.e("Status", "now image processing")
+            val imageToBitmapStartTime = SystemClock.elapsedRealtime()
 
             // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
             // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 를 plane 으로 복사하여 사용
@@ -402,6 +404,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             .into(bindingMbr.testImg)
                     }
                 }
+
+                Log.e("image to bitmap time", (SystemClock.elapsedRealtime() - imageToBitmapStartTime!!).toString())
 
                 imageObjectToBitmapOnProgressMbr = false
             }
