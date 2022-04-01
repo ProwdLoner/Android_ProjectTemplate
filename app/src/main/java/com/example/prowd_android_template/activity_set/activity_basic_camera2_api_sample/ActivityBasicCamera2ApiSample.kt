@@ -6,6 +6,7 @@ import android.graphics.*
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
 import android.media.ImageReader
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
@@ -24,7 +25,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_object.CustomUtil
-import java.io.ByteArrayOutputStream
+import com.example.prowd_android_template.util_object.YuvToRgbBitmapUtil
 import java.nio.ByteBuffer
 
 
@@ -347,7 +348,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 아래 작업도중이라면 그냥 imageObj 를 닫고 넘기기
             if (imageObjectToBitmapOnProgressMbr || // 이미지 객체를 비트맵으로 변환중
                 isImageProcessingPause || // 이미지 프로세싱 중지 상태
-                isFinishing // 액티비티 자체가 종료
+                isDestroyed // 액티비티 자체가 종료
             ) {
                 // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
                 imageObj.close()
@@ -363,11 +364,25 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 바로 아랫줄에서 바이트 버퍼 클론 할 때에 에러가 발생할 수 있음.
             // 에러는 종료시에 일어나므로, try catch 문으로 튕기지 않게 처리만 해둠
             val yBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[0].buffer)
+            val yPixelStride: Int = imageObj.planes[0].pixelStride
+            val yRowStride: Int = imageObj.planes[0].rowStride
             val uBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[1].buffer)
+            val uPixelStride: Int = imageObj.planes[1].pixelStride
+            val uRowStride: Int = imageObj.planes[1].rowStride
             val vBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[2].buffer)
+            val vPixelStride: Int = imageObj.planes[2].pixelStride
+            val vRowStride: Int = imageObj.planes[2].rowStride
 
-            val imgWidth = imageObj.width
-            val imgHeight = imageObj.height
+            val imgWidth: Int = imageObj.width
+            val imgHeight: Int = imageObj.height
+            val pixelSizeBits: Int = ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888)
+            val pixelCount: Int = imageObj.cropRect.width() * imageObj.cropRect.height()
+            val imageCrop = Rect(
+                imageObj.cropRect.left,
+                imageObj.cropRect.top,
+                imageObj.cropRect.right,
+                imageObj.cropRect.bottom
+            )
 
             // 이미지 데이터가 복사되어 image 객체 해제
             imageObj.close()
@@ -379,25 +394,30 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             imageObjectToBitmapOnProgressMbr = true
             viewModelMbr.executorServiceMbr?.execute {
                 // (YUV420 Image to ARGB8888 Bitmap)
-                val ySize: Int = yBuffer.remaining()
-                val uSize: Int = uBuffer.remaining()
-                val vSize: Int = vBuffer.remaining()
 
-                val nv21 = ByteArray(ySize + uSize + vSize)
+                // RenderScript 사용
+                val bitmap =
+                    YuvToRgbBitmapUtil.yuv420888ToRgbBitmapUsingRenderScript(
+                        viewModelMbr.renderScript,
+                        viewModelMbr.scriptIntrinsicYuvToRGB,
+                        imgWidth,
+                        imgHeight,
+                        pixelCount,
+                        pixelSizeBits,
+                        imageCrop,
+                        yBuffer,
+                        yPixelStride,
+                        yRowStride,
+                        uBuffer,
+                        uPixelStride,
+                        uRowStride,
+                        vBuffer,
+                        vPixelStride,
+                        vRowStride
+                    )
 
-                yBuffer.get(nv21, 0, ySize)
-                vBuffer.get(nv21, ySize, vSize)
-                uBuffer.get(nv21, ySize + vSize, uSize)
-
-                val yuvImage =
-                    YuvImage(nv21, ImageFormat.NV21, imgWidth, imgHeight, null)
-                val out = ByteArrayOutputStream()
-                yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 100, out)
-                val imageBytes: ByteArray = out.toByteArray()
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-
-                if (!isFinishing) {
-                    runOnUiThread {
+                runOnUiThread {
+                    if (!isDestroyed) {
                         Glide.with(this)
                             .load(bitmap)
                             .transform(FitCenter())
@@ -405,7 +425,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     }
                 }
 
-                Log.e("image to bitmap time", (SystemClock.elapsedRealtime() - imageToBitmapStartTime!!).toString())
+                Log.e(
+                    "image to bitmap time",
+                    (SystemClock.elapsedRealtime() - imageToBitmapStartTime).toString()
+                )
 
                 imageObjectToBitmapOnProgressMbr = false
             }

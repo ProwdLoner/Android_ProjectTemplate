@@ -24,6 +24,10 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/libs/jni_string_test_lib)
 include_directories(${CMAKE_SOURCE_DIR}/libs/asset_manager_test_lib/include)
 add_subdirectory(${CMAKE_SOURCE_DIR}/libs/asset_manager_test_lib)
 
+# libyuv
+include_directories(${CMAKE_SOURCE_DIR}/libs/lib_yuv/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/lib_yuv)
+
 # (래퍼 라이브러리 추가)
 # native_wrapper_test1.cpp
 add_library(
@@ -49,6 +53,20 @@ add_library(
 target_link_libraries(
         native_wrapper_asset_manager_test
         asset_manager_test_lib
+        ${log-lib}
+        ${android-lib}
+)
+
+# native_wrapper_lib_yuv.cpp
+add_library(
+        native_wrapper_lib_yuv # 자바용 라이브러리 이름
+        SHARED # 종류
+        wrappers/native_wrapper_lib_yuv.cpp # CPP 라이브러리 파일
+)
+
+target_link_libraries(
+        native_wrapper_lib_yuv
+        yuv
         ${log-lib}
         ${android-lib}
 )
