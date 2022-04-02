@@ -123,6 +123,10 @@ object YuvToRgbBitmapUtil {
         scriptIntrinsicYuvToRGB.forEach(outputAllocation)
         outputAllocation.copyTo(resultBitmap)
 
+        outputAllocation.destroy()
+        inputAllocation.destroy()
+        elemType.destroy()
+
         return resultBitmap
     }
 }

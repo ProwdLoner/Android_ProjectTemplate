@@ -67,6 +67,10 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     override fun onCleared() {
         executorServiceMbr?.shutdown()
         executorServiceMbr = null
+
+        scriptIntrinsicYuvToRGB.destroy()
+        renderScript.finish()
+        renderScript.hashCode()
         super.onCleared()
     }
 
