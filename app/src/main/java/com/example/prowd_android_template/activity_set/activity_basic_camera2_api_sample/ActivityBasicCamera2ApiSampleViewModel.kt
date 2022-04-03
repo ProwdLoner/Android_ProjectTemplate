@@ -42,9 +42,8 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     var isDataFirstLoadingMbr = true
 
     // 랜더 스크립트
-    val renderScript: RenderScript = RenderScript.create(application)
-    val scriptIntrinsicYuvToRGB: ScriptIntrinsicYuvToRGB =
-        ScriptIntrinsicYuvToRGB.create(renderScript, Element.U8_4(renderScript))
+    var renderScript: RenderScript? = null
+    var scriptIntrinsicYuvToRGB: ScriptIntrinsicYuvToRGB? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -68,9 +67,9 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         executorServiceMbr?.shutdown()
         executorServiceMbr = null
 
-        scriptIntrinsicYuvToRGB.destroy()
-        renderScript.finish()
-        renderScript.hashCode()
+        scriptIntrinsicYuvToRGB?.destroy()
+        renderScript?.finish()
+        renderScript?.destroy()
         super.onCleared()
     }
 

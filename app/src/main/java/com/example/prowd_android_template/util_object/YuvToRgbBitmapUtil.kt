@@ -30,33 +30,31 @@ object YuvToRgbBitmapUtil {
         val yuvBuffer = ByteArray(pixelCount * pixelSizeBits / 8)
 
         // yBuffer
-        val yOutputStride = 1
         var yOutputOffset = 0
         val yPlaneWidth = imageCrop.width()
         val yPlaneHeight = imageCrop.height()
         val yRowBuffer = ByteArray(yRowStride)
-        val yRowLength = if (yPixelStride == 1 && yOutputStride == 1) {
+        val yRowLength = if (yPixelStride == 1) {
             yPlaneWidth
         } else {
             (yPlaneWidth - 1) * yPixelStride + 1
         }
         for (row in 0 until yPlaneHeight) {
             yBuffer.position((row + imageCrop.top) * yRowStride + imageCrop.left * yPixelStride)
-            if (yPixelStride == 1 && yOutputStride == 1) {
+            if (yPixelStride == 1) {
                 yBuffer.get(yuvBuffer, yOutputOffset, yRowLength)
                 yOutputOffset += yRowLength
             } else {
                 yBuffer.get(yRowBuffer, 0, yRowLength)
                 for (col in 0 until yPlaneWidth) {
                     yuvBuffer[yOutputOffset] = yRowBuffer[col * yPixelStride]
-                    yOutputOffset += yOutputStride
+                    yOutputOffset += 1
                 }
             }
         }
 
 
         // uBuffer
-        val uOutputStride = 2
         var uOutputOffset = pixelCount + 1
         val uPlaneCrop = imageCrop.run {
             Rect(left / 2, top / 2, right / 2, bottom / 2)
@@ -64,28 +62,19 @@ object YuvToRgbBitmapUtil {
         val uPlaneWidth = uPlaneCrop.width()
         val uPlaneHeight = uPlaneCrop.height()
         val uRowBuffer = ByteArray(uRowStride)
-        val uRowLength = if (uPixelStride == 1 && uOutputStride == 1) {
-            uPlaneWidth
-        } else {
+        val uRowLength =
             (uPlaneWidth - 1) * uPixelStride + 1
-        }
         for (row in 0 until uPlaneHeight) {
             uBuffer.position((row + uPlaneCrop.top) * uRowStride + uPlaneCrop.left * uPixelStride)
-            if (uPixelStride == 1 && uOutputStride == 1) {
-                uBuffer.get(yuvBuffer, uOutputOffset, uRowLength)
-                uOutputOffset += uRowLength
-            } else {
-                uBuffer.get(uRowBuffer, 0, uRowLength)
-                for (col in 0 until uPlaneWidth) {
-                    yuvBuffer[uOutputOffset] = uRowBuffer[col * uPixelStride]
-                    uOutputOffset += uOutputStride
-                }
+            uBuffer.get(uRowBuffer, 0, uRowLength)
+            for (col in 0 until uPlaneWidth) {
+                yuvBuffer[uOutputOffset] = uRowBuffer[col * uPixelStride]
+                uOutputOffset += 2
             }
         }
 
 
         // vBuffer
-        val vOutputStride = 2
         var vOutputOffset = pixelCount
         val vPlaneCrop = imageCrop.run {
             Rect(left / 2, top / 2, right / 2, bottom / 2)
@@ -93,22 +82,14 @@ object YuvToRgbBitmapUtil {
         val vPlaneWidth = vPlaneCrop.width()
         val vPlaneHeight = vPlaneCrop.height()
         val vRowBuffer = ByteArray(vRowStride)
-        val vRowLength = if (vPixelStride == 1 && vOutputStride == 1) {
-            vPlaneWidth
-        } else {
+        val vRowLength =
             (vPlaneWidth - 1) * vPixelStride + 1
-        }
         for (row in 0 until vPlaneHeight) {
             vBuffer.position((row + vPlaneCrop.top) * vRowStride + vPlaneCrop.left * vPixelStride)
-            if (vPixelStride == 1 && vOutputStride == 1) {
-                vBuffer.get(yuvBuffer, vOutputOffset, vRowLength)
-                vOutputOffset += vRowLength
-            } else {
-                vBuffer.get(vRowBuffer, 0, vRowLength)
-                for (col in 0 until vPlaneWidth) {
-                    yuvBuffer[vOutputOffset] = vRowBuffer[col * vPixelStride]
-                    vOutputOffset += vOutputStride
-                }
+            vBuffer.get(vRowBuffer, 0, vRowLength)
+            for (col in 0 until vPlaneWidth) {
+                yuvBuffer[vOutputOffset] = vRowBuffer[col * vPixelStride]
+                vOutputOffset += 2
             }
         }
 

@@ -6,9 +6,11 @@ import android.graphics.*
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
 import android.media.ImageReader
-import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.renderscript.Element
+import android.renderscript.RenderScript
+import android.renderscript.ScriptIntrinsicYuvToRGB
 import android.util.Log
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
@@ -395,11 +397,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             viewModelMbr.executorServiceMbr?.execute {
                 // (YUV420 Image to ARGB8888 Bitmap)
 
+                if (viewModelMbr.renderScript == null) {
+                    viewModelMbr.renderScript = RenderScript.create(application)
+                    viewModelMbr.scriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(
+                        viewModelMbr.renderScript,
+                        Element.U8_4(viewModelMbr.renderScript)
+                    )
+                }
+
                 // RenderScript 사용
                 val bitmap =
                     YuvToRgbBitmapUtil.yuv420888ToRgbBitmapUsingRenderScript(
-                        viewModelMbr.renderScript,
-                        viewModelMbr.scriptIntrinsicYuvToRGB,
+                        viewModelMbr.renderScript!!,
+                        viewModelMbr.scriptIntrinsicYuvToRGB!!,
                         imgWidth,
                         imgHeight,
                         pixelCount,
