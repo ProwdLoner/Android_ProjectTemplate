@@ -27,6 +27,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_object.CustomUtil
+import com.example.prowd_android_template.util_object.RenderScriptUtil
 import com.example.prowd_android_template.util_object.YuvToRgbBitmapUtil
 import java.nio.ByteBuffer
 
@@ -398,7 +399,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
 
                 // RenderScript 사용
-                val bitmap =
+                var bitmap =
                     YuvToRgbBitmapUtil.yuv420888ToRgbBitmapUsingRenderScript(
                         viewModelMbr.renderScript!!,
                         viewModelMbr.scriptIntrinsicYuvToRGB!!,
@@ -414,6 +415,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         vPixelStride,
                         vRowStride
                     )
+
+                // 이미지 회전
+                // todo : yuv to rgb 와 camera sensor orientation 에 따른 rotate 를 한번에 처리하기
+                bitmap =
+                    RenderScriptUtil.rotateBitmap(
+                        this,
+                        bitmap,
+                        360 - backCameraObjMbr!!.sensorOrientationMbr
+                    )!!
 
                 runOnUiThread {
                     if (!isDestroyed) {
