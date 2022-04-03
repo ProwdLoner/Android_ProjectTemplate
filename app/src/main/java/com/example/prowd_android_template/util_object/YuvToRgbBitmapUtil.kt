@@ -2,7 +2,6 @@ package com.example.prowd_android_template.util_object
 
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
-import android.graphics.Rect
 import android.renderscript.*
 import java.nio.ByteBuffer
 
@@ -12,9 +11,6 @@ object YuvToRgbBitmapUtil {
         scriptIntrinsicYuvToRGB: ScriptIntrinsicYuvToRGB,
         imageWidth: Int,
         imageHeight: Int,
-        pixelCount: Int,
-        pixelSizeBits: Int,
-        imageCrop: Rect,
         yBuffer: ByteBuffer,
         yPixelStride: Int,
         yRowStride: Int,
@@ -26,80 +22,73 @@ object YuvToRgbBitmapUtil {
         vRowStride: Int
     ): Bitmap {
         val resultBitmap = Bitmap.createBitmap(imageWidth, imageHeight, Bitmap.Config.ARGB_8888)
+        val pixelCount: Int = imageWidth * imageHeight
 
-        val yuvBuffer = ByteArray(pixelCount * pixelSizeBits / 8)
+        // (yuvByteArray 생성)
+        val yuvByteArray = ByteArray(pixelCount * ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888) / 8)
 
         // yBuffer
         var yOutputOffset = 0
-        val yPlaneWidth = imageCrop.width()
-        val yPlaneHeight = imageCrop.height()
-        val yRowBuffer = ByteArray(yRowStride)
+        val yRowByteArray = ByteArray(yRowStride)
         val yRowLength = if (yPixelStride == 1) {
-            yPlaneWidth
+            imageWidth
         } else {
-            (yPlaneWidth - 1) * yPixelStride + 1
+            (imageWidth - 1) * yPixelStride + 1
         }
-        for (row in 0 until yPlaneHeight) {
-            yBuffer.position((row + imageCrop.top) * yRowStride + imageCrop.left * yPixelStride)
+        for (row in 0 until imageHeight) {
+            yBuffer.position(row * yRowStride)
             if (yPixelStride == 1) {
-                yBuffer.get(yuvBuffer, yOutputOffset, yRowLength)
+                yBuffer.get(yuvByteArray, yOutputOffset, yRowLength)
                 yOutputOffset += yRowLength
             } else {
-                yBuffer.get(yRowBuffer, 0, yRowLength)
-                for (col in 0 until yPlaneWidth) {
-                    yuvBuffer[yOutputOffset] = yRowBuffer[col * yPixelStride]
+                yBuffer.get(yRowByteArray, 0, yRowLength)
+                for (col in 0 until imageWidth) {
+                    yuvByteArray[yOutputOffset] = yRowByteArray[col * yPixelStride]
                     yOutputOffset += 1
                 }
             }
         }
 
-
         // uBuffer
         var uOutputOffset = pixelCount + 1
-        val uPlaneCrop = imageCrop.run {
-            Rect(left / 2, top / 2, right / 2, bottom / 2)
-        }
-        val uPlaneWidth = uPlaneCrop.width()
-        val uPlaneHeight = uPlaneCrop.height()
-        val uRowBuffer = ByteArray(uRowStride)
+        val uPlaneWidth = imageWidth / 2
+        val uPlaneHeight = imageHeight / 2
+        val uRowByteArray = ByteArray(uRowStride)
         val uRowLength =
             (uPlaneWidth - 1) * uPixelStride + 1
         for (row in 0 until uPlaneHeight) {
-            uBuffer.position((row + uPlaneCrop.top) * uRowStride + uPlaneCrop.left * uPixelStride)
-            uBuffer.get(uRowBuffer, 0, uRowLength)
+            uBuffer.position((row) * uRowStride)
+            uBuffer.get(uRowByteArray, 0, uRowLength)
             for (col in 0 until uPlaneWidth) {
-                yuvBuffer[uOutputOffset] = uRowBuffer[col * uPixelStride]
+                yuvByteArray[uOutputOffset] = uRowByteArray[col * uPixelStride]
                 uOutputOffset += 2
             }
         }
 
-
         // vBuffer
         var vOutputOffset = pixelCount
-        val vPlaneCrop = imageCrop.run {
-            Rect(left / 2, top / 2, right / 2, bottom / 2)
-        }
-        val vPlaneWidth = vPlaneCrop.width()
-        val vPlaneHeight = vPlaneCrop.height()
-        val vRowBuffer = ByteArray(vRowStride)
+        val vPlaneWidth = imageWidth / 2
+        val vPlaneHeight = imageHeight / 2
+        val vRowByteArray = ByteArray(vRowStride)
         val vRowLength =
             (vPlaneWidth - 1) * vPixelStride + 1
         for (row in 0 until vPlaneHeight) {
-            vBuffer.position((row + vPlaneCrop.top) * vRowStride + vPlaneCrop.left * vPixelStride)
-            vBuffer.get(vRowBuffer, 0, vRowLength)
+            vBuffer.position((row) * vRowStride)
+            vBuffer.get(vRowByteArray, 0, vRowLength)
             for (col in 0 until vPlaneWidth) {
-                yuvBuffer[vOutputOffset] = vRowBuffer[col * vPixelStride]
+                yuvByteArray[vOutputOffset] = vRowByteArray[col * vPixelStride]
                 vOutputOffset += 2
             }
         }
 
+        // (RenderScriptIntrinsic 실행)
         val elemType = Type.Builder(renderScript, Element.YUV(renderScript))
             .setYuvFormat(ImageFormat.NV21)
             .create()
-        val inputAllocation = Allocation.createSized(renderScript, elemType.element, yuvBuffer.size)
+        val inputAllocation = Allocation.createSized(renderScript, elemType.element, yuvByteArray.size)
         val outputAllocation = Allocation.createFromBitmap(renderScript, resultBitmap)
 
-        inputAllocation.copyFrom(yuvBuffer)
+        inputAllocation.copyFrom(yuvByteArray)
         scriptIntrinsicYuvToRGB.setInput(inputAllocation)
         scriptIntrinsicYuvToRGB.forEach(outputAllocation)
         outputAllocation.copyTo(resultBitmap)

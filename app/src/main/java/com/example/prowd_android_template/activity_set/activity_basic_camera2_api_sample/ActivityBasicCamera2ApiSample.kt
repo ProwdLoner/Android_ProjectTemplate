@@ -377,14 +377,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             val imgWidth: Int = imageObj.width
             val imgHeight: Int = imageObj.height
-            val pixelSizeBits: Int = ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888)
-            val pixelCount: Int = imageObj.cropRect.width() * imageObj.cropRect.height()
-            val imageCrop = Rect(
-                imageObj.cropRect.left,
-                imageObj.cropRect.top,
-                imageObj.cropRect.right,
-                imageObj.cropRect.bottom
-            )
 
             // 이미지 데이터가 복사되어 image 객체 해제
             imageObj.close()
@@ -412,9 +404,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         viewModelMbr.scriptIntrinsicYuvToRGB!!,
                         imgWidth,
                         imgHeight,
-                        pixelCount,
-                        pixelSizeBits,
-                        imageCrop,
                         yBuffer,
                         yPixelStride,
                         yRowStride,
