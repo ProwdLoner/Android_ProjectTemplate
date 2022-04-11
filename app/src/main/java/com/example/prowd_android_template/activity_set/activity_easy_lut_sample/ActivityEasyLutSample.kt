@@ -129,7 +129,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
         if (!this.isFinishing) {
             Glide.with(this)
-                .load(R.drawable.landscape)
+                .load(R.drawable.img_activity_easy_lut_sample_filter_test_image)
                 .transform(CenterCrop())
                 .into(bindingMbr.originImage)
         }
@@ -149,7 +149,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
             viewModelMbr.executorServiceMbr?.execute {
                 // 원본 이미지 가져오기
-                val drawable = AppCompatResources.getDrawable(this, R.drawable.landscape)
+                val drawable = AppCompatResources.getDrawable(this, R.drawable.img_activity_easy_lut_sample_filter_test_image)
                 val bitmapDrawable = drawable as BitmapDrawable
                 val originBitmap = bitmapDrawable.bitmap
 
