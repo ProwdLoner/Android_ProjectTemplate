@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_camera_sample_list.ActivityCameraSampleList
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
+import com.example.prowd_android_template.activity_set.activity_image_processing_sample_list.ActivityImageProcessingSampleList
 import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
 import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList
@@ -180,6 +181,16 @@ class ActivityHome : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityCameraSampleList::class.java
+                )
+            startActivity(intent)
+        }
+
+        // 이미지 처리 샘플 목록 이동 버튼
+        bindingMbr.goToImageProcessingSampleListBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityImageProcessingSampleList::class.java
                 )
             startActivity(intent)
         }

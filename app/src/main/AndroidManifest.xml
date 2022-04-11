@@ -23,6 +23,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_easy_lut_sample.ActivityEasyLutSample"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_image_processing_sample_list.ActivityImageProcessingSampleList"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_basic_camera2_api_sample.ActivityBasicCamera2ApiSample"
             android:exported="false"
             android:screenOrientation="portrait" />
