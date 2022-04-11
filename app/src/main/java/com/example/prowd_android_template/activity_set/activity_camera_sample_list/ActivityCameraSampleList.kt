@@ -350,7 +350,7 @@ class ActivityCameraSampleList : AppCompatActivity() {
                                             val goToIntent =
                                                 Intent(
                                                     this,
-                                                    ActivitySystemCameraPhotoSample::class.java
+                                                    ActivityBasicCamera2ApiSample::class.java
                                                 )
                                             startActivity(goToIntent)
                                         } else { // 권한 비승인
