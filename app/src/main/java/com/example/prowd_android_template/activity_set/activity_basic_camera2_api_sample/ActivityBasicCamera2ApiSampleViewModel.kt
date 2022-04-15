@@ -6,6 +6,7 @@ import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicYuvToRGB
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.ScriptC_rotator
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -41,9 +42,16 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
-    // 랜더 스크립트
-    var renderScript: RenderScript? = null
-    var scriptIntrinsicYuvToRGB: ScriptIntrinsicYuvToRGB? = null
+    // (랜더 스크립트)
+    var renderScript: RenderScript = RenderScript.create(application)
+
+    // intrinsic yuv to rgb
+    var scriptIntrinsicYuvToRGB: ScriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(
+        renderScript,
+        Element.U8_4(renderScript)
+    )
+
+    var scriptCRotator : ScriptC_rotator = ScriptC_rotator(renderScript)
 
 
     // ---------------------------------------------------------------------------------------------
@@ -67,9 +75,12 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         executorServiceMbr?.shutdown()
         executorServiceMbr = null
 
-        scriptIntrinsicYuvToRGB?.destroy()
-        renderScript?.finish()
-        renderScript?.destroy()
+        // 랜더 스크립트 객체 해소
+        scriptIntrinsicYuvToRGB.destroy()
+        scriptCRotator.destroy()
+        renderScript.finish()
+        renderScript.destroy()
+
         super.onCleared()
     }
 

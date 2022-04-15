@@ -8,9 +8,6 @@ import android.media.Image
 import android.media.ImageReader
 import android.os.Bundle
 import android.os.SystemClock
-import android.renderscript.Element
-import android.renderscript.RenderScript
-import android.renderscript.ScriptIntrinsicYuvToRGB
 import android.util.Log
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
@@ -362,22 +359,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val imageToBitmapStartTime = SystemClock.elapsedRealtime()
 
             // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
-            // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 를 plane 으로 복사하여 사용
-            // 아무리 빨리 복사를 해도, 액티비티 자체가 강제 종료되는 시점에 imageObj 가 close 될 가능성이 있기에
-            // 바로 아랫줄에서 바이트 버퍼 클론 할 때에 에러가 발생할 수 있음.
-            // 에러는 종료시에 일어나므로, try catch 문으로 튕기지 않게 처리만 해둠
-            val yBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[0].buffer)
-            val yPixelStride: Int = imageObj.planes[0].pixelStride
-            val yRowStride: Int = imageObj.planes[0].rowStride
-            val uBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[1].buffer)
-            val uPixelStride: Int = imageObj.planes[1].pixelStride
-            val uRowStride: Int = imageObj.planes[1].rowStride
-            val vBuffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[2].buffer)
-            val vPixelStride: Int = imageObj.planes[2].pixelStride
-            val vRowStride: Int = imageObj.planes[2].rowStride
-
+            // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 정보를 ByteArray 로 복사하여 사용
             val imgWidth: Int = imageObj.width
             val imgHeight: Int = imageObj.height
+
+            val yuvByteArray = YuvToRgbBitmapUtil.yuv420888ImageToByteArray(imageObj)
 
             // 이미지 데이터가 복사되어 image 객체 해제
             imageObj.close()
@@ -386,44 +372,31 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // todo : gpu support 가 필요한 작업 목록 =
             // todo : 1. yuv to rgb  2. rotate image  3. crop image  4. resize image
 
+            // 시간이 드는 작업은 미리 만들어두고 이를 다른 스레드에서 사용하도록 함.
+            // 더블 버퍼 구조와 비슷하게 구성해도 됨
             imageObjectToBitmapOnProgressMbr = true
             viewModelMbr.executorServiceMbr?.execute {
                 // (YUV420 Image to ARGB8888 Bitmap)
 
-                if (viewModelMbr.renderScript == null) {
-                    viewModelMbr.renderScript = RenderScript.create(application)
-                    viewModelMbr.scriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(
-                        viewModelMbr.renderScript,
-                        Element.U8_4(viewModelMbr.renderScript)
-                    )
-                }
-
                 // RenderScript 사용
                 var bitmap =
                     YuvToRgbBitmapUtil.yuv420888ToRgbBitmapUsingRenderScript(
-                        viewModelMbr.renderScript!!,
-                        viewModelMbr.scriptIntrinsicYuvToRGB!!,
+                        viewModelMbr.renderScript,
+                        viewModelMbr.scriptIntrinsicYuvToRGB,
                         imgWidth,
                         imgHeight,
-                        yBuffer,
-                        yPixelStride,
-                        yRowStride,
-                        uBuffer,
-                        uPixelStride,
-                        uRowStride,
-                        vBuffer,
-                        vPixelStride,
-                        vRowStride
+                        yuvByteArray
                     )
 
                 // 이미지 회전
                 // todo : yuv to rgb 와 camera sensor orientation 에 따른 rotate 를 한번에 처리하기
                 bitmap =
                     RenderScriptUtil.rotateBitmap(
-                        this,
+                        viewModelMbr.renderScript,
+                        viewModelMbr.scriptCRotator,
                         bitmap,
                         360 - backCameraObjMbr!!.sensorOrientationMbr
-                    )!!
+                    )
 
                 runOnUiThread {
                     if (!isDestroyed) {
