@@ -123,22 +123,20 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                                 },
                                 onError = {
-                                    // todo
+                                    // todo 세션 생성 실패
 
                                 }
                             )
-
-
                         }
                     )
                 },
                 onError = {
-                    // todo
+                    // todo 디바이스 생성 실패
 
                 }
             )
         } else { // 권한 비승인 상태
-            // todo : 보험 - 다이얼로그 보여주고 뒤로가기
+            // todo : 권한 필요 다이얼로그 보여주고 뒤로가기 (원래 권한이 없으면 진입이 불가하지만 보험용)
         }
 
         // (데이터 갱신 시점 적용)
