@@ -6,6 +6,7 @@ import android.graphics.Rect
 import android.media.Image
 import android.renderscript.*
 import com.example.prowd_android_template.ScriptC_rotator
+import com.xxx.yyy.ScriptC_crop
 
 object RenderScriptUtil {
     // input example :
@@ -96,7 +97,7 @@ object RenderScriptUtil {
     //        renderScript,
     //        Element.U8_4(renderScript)
     //    )
-    fun yuv420888ToRgbBitmap(
+    fun yuv420888ToRgbBitmapIntrinsic(
         renderScript: RenderScript,
         scriptIntrinsicYuvToRGB: ScriptIntrinsicYuvToRGB,
         imageWidth: Int,
@@ -129,7 +130,7 @@ object RenderScriptUtil {
     //    var scriptIntrinsicResize: ScriptIntrinsicResize = ScriptIntrinsicResize.create(
     //        renderScript
     //    )
-    fun resizeBitmap(
+    fun resizeBitmapIntrinsic(
         renderScript: RenderScript,
         scriptIntrinsicResize: ScriptIntrinsicResize,
         bitmap: Bitmap,
@@ -200,5 +201,51 @@ object RenderScriptUtil {
         targetAllocation.destroy()
 
         return target
+    }
+
+    // (이미지를 특정 좌표에서 자르는 함수)
+    fun cropBitmap(
+        renderScript: RenderScript,
+        scriptCCrop: ScriptC_crop,
+        sourceBitmap: Bitmap,
+        left: Int,
+        top: Int,
+        right: Int,
+        bottom: Int
+    ): Bitmap {
+        val width = sourceBitmap.width
+        val height = sourceBitmap.height
+
+        val inputType = Type.createXY(renderScript, Element.RGBA_8888(renderScript), width, height)
+        val inputAllocation =
+            Allocation.createTyped(renderScript, inputType, Allocation.USAGE_SCRIPT)
+        inputAllocation.copyFrom(sourceBitmap)
+
+        val outputType =
+            Type.createXY(renderScript, Element.RGBA_8888(renderScript), right - left, bottom - top)
+        val outputAllocation =
+            Allocation.createTyped(renderScript, outputType, Allocation.USAGE_SCRIPT)
+
+        scriptCCrop._croppedImg = outputAllocation
+        scriptCCrop._width = width
+        scriptCCrop._height = height
+        scriptCCrop._xStart = left.toLong()
+        scriptCCrop._yStart = top.toLong()
+
+        val launchOptions: Script.LaunchOptions = Script.LaunchOptions()
+        launchOptions.setX(left, right)
+        launchOptions.setY(top, bottom)
+
+        scriptCCrop.forEach_doCrop(inputAllocation, launchOptions)
+
+        val resultBitmap = Bitmap.createBitmap(right - left, bottom - top, sourceBitmap.config)
+        outputAllocation.copyTo(resultBitmap)
+
+        inputType.destroy()
+        inputAllocation.destroy()
+        outputType.destroy()
+        outputAllocation.destroy()
+
+        return resultBitmap
     }
 }

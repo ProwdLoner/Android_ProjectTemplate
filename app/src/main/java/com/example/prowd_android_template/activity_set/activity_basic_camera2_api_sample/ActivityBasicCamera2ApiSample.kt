@@ -331,87 +331,42 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
     }
 
+    // (카메라 이미지 실시간 처리 콜백)
     private var isImageProcessingPause = false
-    private var imageObjectToBitmapOnProgressMbr = false
     private fun processImage(reader: ImageReader?) {
         try {
             if (null == reader) {
                 return
             }
 
-            val imageObj: Image = reader.acquireLatestImage() ?: return
-
-            // 병렬처리를 위한 플래그
-            // 아래 작업도중이라면 그냥 imageObj 를 닫고 넘기기
-            if (imageObjectToBitmapOnProgressMbr || // 이미지 객체를 비트맵으로 변환중
-                isImageProcessingPause || // 이미지 프로세싱 중지 상태
-                isDestroyed // 액티비티 자체가 종료
-            ) {
-                // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
-                imageObj.close()
-                return
-            }
-
-            Log.e("Status", "now image processing")
-            val imageToBitmapStartTime = SystemClock.elapsedRealtime()
-
-            // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
-            // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 정보를 ByteArray 로 복사하여 사용
-            val imgWidth: Int = imageObj.width
-            val imgHeight: Int = imageObj.height
-
-            val yuvByteArray = RenderScriptUtil.yuv420888ImageToByteArray(imageObj)
-
-            // 이미지 데이터가 복사되어 image 객체 해제
-            imageObj.close()
-
-            // todo : rgb 비트맵을 현재 디바이스 방향에 맞게 회전
+            // (YUV to RGB)
             // todo : gpu support 가 필요한 작업 목록 =
-            // todo : 1. yuv to rgb  2. rotate image  3. crop image  4. resize image
+            // todo : 1. yuv to rgb  2. rotate image  3. crop image  4. resize image  5. etc...
 
-            // 시간이 드는 작업은 미리 만들어두고 이를 다른 스레드에서 사용하도록 함.
-            // 더블 버퍼 구조와 비슷하게 구성해도 됨
-            imageObjectToBitmapOnProgressMbr = true
-            viewModelMbr.executorServiceMbr?.execute {
-                // (YUV420 Image to ARGB8888 Bitmap)
-
-                // RenderScript 사용
-                var bitmap =
-                    RenderScriptUtil.yuv420888ToRgbBitmap(
-                        viewModelMbr.renderScript,
-                        viewModelMbr.scriptIntrinsicYuvToRGB,
-                        imgWidth,
-                        imgHeight,
-                        yuvByteArray
-                    )
-
+            // todo : yuv to rgb 와 camera sensor orientation 에 따른 rotate 를 한번에 처리하기
+            val imageObj: Image = reader.acquireLatestImage() ?: return
+            yuvImageToArgbBitmap(imageObj, onConvertingComplete = { yuvImageToArgbBitmap ->
                 // 이미지 회전
-                // todo : yuv to rgb 와 camera sensor orientation 에 따른 rotate 를 한번에 처리하기
-                bitmap =
-                    RenderScriptUtil.rotateBitmap(
-                        viewModelMbr.renderScript,
-                        viewModelMbr.scriptCRotator,
-                        bitmap,
-                        360 - backCameraObjMbr!!.sensorOrientationMbr
-                    )
+//                bitmap =
+//                    RenderScriptUtil.rotateBitmap(
+//                        viewModelMbr.renderScript,
+//                        viewModelMbr.scriptCRotator,
+//                        bitmap,
+//                        360 - backCameraObjMbr!!.sensorOrientationMbr
+//                    )
 
                 runOnUiThread {
                     if (!isDestroyed) {
                         Glide.with(this)
-                            .load(bitmap)
+                            .load(yuvImageToArgbBitmap)
                             .transform(FitCenter())
                             .into(bindingMbr.testImg)
                     }
                 }
 
-                Log.e(
-                    "image to bitmap time",
-                    (SystemClock.elapsedRealtime() - imageToBitmapStartTime).toString()
-                )
+                // todo
 
-                imageObjectToBitmapOnProgressMbr = false
-            }
-
+            })
         } catch (e: Exception) {
             // 발생 가능한 에러 :
             // 1. 이미지 객체를 사용하려 할 때, 액티비티가 종료되어 이미지 객체가 종료된 상황
@@ -420,4 +375,66 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             finish()
         }
     }
+
+    // (yuv 카메라 raw 데이터를 rgb bitmap 객체로 변환)
+    // 콜백 반환값 : 변환 완료 Bitmap
+    // 주의 : 받은 Image 객체는 return 전에 꼭 close() 를 해줄 것
+    private var yuvImageToArgbBitmapOnProgressMbr = false
+    private fun yuvImageToArgbBitmap(
+        image: Image,
+        onConvertingComplete: (Bitmap) -> Unit
+    ) {
+        // 병렬처리를 위한 플래그
+        // 아래 작업도중이라면 바로 return
+        if (yuvImageToArgbBitmapOnProgressMbr || // 작업중
+            isImageProcessingPause || // 이미지 프로세싱 중지 상태
+            isDestroyed // 액티비티 자체가 종료
+        ) {
+            // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
+            image.close()
+            return
+        }
+
+        val logicStartTime = SystemClock.elapsedRealtime()
+
+        // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
+        // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 정보를 ByteArray 로 복사하여 사용
+        val imgWidth: Int = image.width
+        val imgHeight: Int = image.height
+
+        val yuvByteArray = RenderScriptUtil.yuv420888ImageToByteArray(image)
+
+        // 이미지 데이터가 복사되어 image 객체 해제
+        image.close()
+
+        // 시간이 드는 작업은 미리 만들어두고 이를 다른 스레드에서 사용하도록 함.
+        // 더블 버퍼 구조와 비슷하게 구성해도 됨
+        yuvImageToArgbBitmapOnProgressMbr = true
+        viewModelMbr.executorServiceMbr?.execute {
+            // (YUV420 Image to ARGB8888 Bitmap)
+
+            // RenderScript 사용
+            val bitmap =
+                RenderScriptUtil.yuv420888ToRgbBitmapIntrinsic(
+                    viewModelMbr.renderScript,
+                    viewModelMbr.scriptIntrinsicYuvToRGB,
+                    imgWidth,
+                    imgHeight,
+                    yuvByteArray
+                )
+
+            runOnUiThread {
+                bindingMbr.yuvToRgbMs.text =
+                    (SystemClock.elapsedRealtime() - logicStartTime).toString()
+            }
+
+            yuvImageToArgbBitmapOnProgressMbr = false
+
+            onConvertingComplete(bitmap)
+        }
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <중첩 클래스 공간>
 }
