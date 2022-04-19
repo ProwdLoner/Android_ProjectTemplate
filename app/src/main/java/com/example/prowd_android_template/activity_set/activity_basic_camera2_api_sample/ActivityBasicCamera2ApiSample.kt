@@ -23,10 +23,7 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
-import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
-import com.example.prowd_android_template.util_object.YuvToRgbBitmapUtil
-import java.nio.ByteBuffer
 
 
 // todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
@@ -363,7 +360,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val imgWidth: Int = imageObj.width
             val imgHeight: Int = imageObj.height
 
-            val yuvByteArray = YuvToRgbBitmapUtil.yuv420888ImageToByteArray(imageObj)
+            val yuvByteArray = RenderScriptUtil.yuv420888ImageToByteArray(imageObj)
 
             // 이미지 데이터가 복사되어 image 객체 해제
             imageObj.close()
@@ -380,7 +377,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 // RenderScript 사용
                 var bitmap =
-                    YuvToRgbBitmapUtil.yuv420888ToRgbBitmapUsingRenderScript(
+                    RenderScriptUtil.yuv420888ToRgbBitmap(
                         viewModelMbr.renderScript,
                         viewModelMbr.scriptIntrinsicYuvToRGB,
                         imgWidth,
