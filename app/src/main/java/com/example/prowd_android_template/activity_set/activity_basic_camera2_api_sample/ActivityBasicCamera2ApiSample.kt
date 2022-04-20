@@ -23,7 +23,6 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_object.RenderScriptUtil
-import java.util.concurrent.Semaphore
 
 
 // todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
@@ -345,17 +344,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val imageObj: Image = reader.acquireLatestImage() ?: return
 
             // 병렬 처리 진입 플래그
-            yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.acquire()
             if (yuvByteArrayToArgbBitmapAsyncOnProgressMbr || // 작업중
                 isImageProcessingPause || // 이미지 프로세싱 중지 상태
                 isDestroyed // 액티비티 자체가 종료
             ) {
-                yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.release()
                 // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
                 imageObj.close()
                 return
             }
-            yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.release()
 
             // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
             // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 정보를 ByteArray 로 복사하여 사용
@@ -407,16 +403,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (yuv 카메라 raw 데이터를 rgb bitmap 객체로 변환)
     // 콜백 반환값 : 변환 완료 Bitmap
     private var yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
-    private val yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr = Semaphore(1)
     private fun yuvByteArrayToArgbBitmapAsync(
         imgWidth: Int,
         imgHeight: Int,
         yuvByteArray: ByteArray,
         onConvertingComplete: (Bitmap) -> Unit
     ) {
-        yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.acquire()
         yuvByteArrayToArgbBitmapAsyncOnProgressMbr = true
-        yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.release()
 
         viewModelMbr.executorServiceMbr?.execute {
             // 이미지 변환 타이머 스타트
@@ -439,9 +432,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     (SystemClock.elapsedRealtime() - logicStartTime).toString()
             }
 
-            yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.acquire()
             yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
-            yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.release()
 
             onConvertingComplete(bitmap)
         }
