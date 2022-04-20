@@ -208,10 +208,7 @@ object RenderScriptUtil {
         renderScript: RenderScript,
         scriptCCrop: ScriptC_crop,
         sourceBitmap: Bitmap,
-        left: Int,
-        top: Int,
-        right: Int,
-        bottom: Int
+        roiRect: Rect
     ): Bitmap {
         val width = sourceBitmap.width
         val height = sourceBitmap.height
@@ -222,23 +219,23 @@ object RenderScriptUtil {
         inputAllocation.copyFrom(sourceBitmap)
 
         val outputType =
-            Type.createXY(renderScript, Element.RGBA_8888(renderScript), right - left, bottom - top)
+            Type.createXY(renderScript, Element.RGBA_8888(renderScript), roiRect.right - roiRect.left, roiRect.bottom - roiRect.top)
         val outputAllocation =
             Allocation.createTyped(renderScript, outputType, Allocation.USAGE_SCRIPT)
 
         scriptCCrop._croppedImg = outputAllocation
         scriptCCrop._width = width
         scriptCCrop._height = height
-        scriptCCrop._xStart = left.toLong()
-        scriptCCrop._yStart = top.toLong()
+        scriptCCrop._xStart = roiRect.left.toLong()
+        scriptCCrop._yStart = roiRect.top.toLong()
 
         val launchOptions: Script.LaunchOptions = Script.LaunchOptions()
-        launchOptions.setX(left, right)
-        launchOptions.setY(top, bottom)
+        launchOptions.setX(roiRect.left, roiRect.right)
+        launchOptions.setY(roiRect.top, roiRect.bottom)
 
         scriptCCrop.forEach_doCrop(inputAllocation, launchOptions)
 
-        val resultBitmap = Bitmap.createBitmap(right - left, bottom - top, sourceBitmap.config)
+        val resultBitmap = Bitmap.createBitmap(roiRect.right - roiRect.left, roiRect.bottom - roiRect.top, sourceBitmap.config)
         outputAllocation.copyTo(resultBitmap)
 
         inputType.destroy()

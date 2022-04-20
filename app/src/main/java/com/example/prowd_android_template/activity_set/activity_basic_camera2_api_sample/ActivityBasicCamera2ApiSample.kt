@@ -23,6 +23,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_object.RenderScriptUtil
+import java.util.concurrent.Semaphore
 
 
 // todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
@@ -344,14 +345,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val imageObj: Image = reader.acquireLatestImage() ?: return
 
             // 병렬 처리 진입 플래그
-            if (yuvImageToArgbBitmapAsyncOnProgressMbr || // 작업중
+            yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.acquire()
+            if (yuvByteArrayToArgbBitmapAsyncOnProgressMbr || // 작업중
                 isImageProcessingPause || // 이미지 프로세싱 중지 상태
                 isDestroyed // 액티비티 자체가 종료
             ) {
+                yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.release()
                 // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
                 imageObj.close()
                 return
             }
+            yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.release()
 
             // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
             // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 정보를 ByteArray 로 복사하여 사용
@@ -366,12 +370,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 시간이 드는 작업은 미리 만들어두고 이를 다른 스레드에서 사용하도록 함.
             // 더블 버퍼 구조와 비슷하게 구성해도 됨
 
-            // yuv Image 를 rgb Bitmap 으로 변환
-            yuvImageToArgbBitmapAsync(
+            // yuv ByteArray 를 rgb Bitmap 으로 변환
+            yuvByteArrayToArgbBitmapAsync(
                 imgWidth,
                 imgHeight,
                 yuvByteArray,
-                onConvertingComplete = { yuvImageToArgbBitmapAsyncBitmap ->
+                onConvertingComplete = { yuvByteArrayToArgbBitmapAsyncBitmap ->
                     // 이미지 회전 (현재 굉장히 무거움)
 //                bitmap =
 //                    RenderScriptUtil.rotateBitmap(
@@ -385,7 +389,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     runOnUiThread {
                         if (!isDestroyed) {
                             Glide.with(this)
-                                .load(yuvImageToArgbBitmapAsyncBitmap)
+                                .load(yuvByteArrayToArgbBitmapAsyncBitmap)
                                 .transform(FitCenter())
                                 .into(bindingMbr.testImg)
                         }
@@ -402,21 +406,23 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (yuv 카메라 raw 데이터를 rgb bitmap 객체로 변환)
     // 콜백 반환값 : 변환 완료 Bitmap
-    private var yuvImageToArgbBitmapAsyncOnProgressMbr = false
-    private fun yuvImageToArgbBitmapAsync(
+    private var yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
+    private val yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr = Semaphore(1)
+    private fun yuvByteArrayToArgbBitmapAsync(
         imgWidth: Int,
         imgHeight: Int,
         yuvByteArray: ByteArray,
         onConvertingComplete: (Bitmap) -> Unit
     ) {
-        yuvImageToArgbBitmapAsyncOnProgressMbr = true
-
-        // 이미지 변환 타이머 스타트
-        val logicStartTime = SystemClock.elapsedRealtime()
+        yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.acquire()
+        yuvByteArrayToArgbBitmapAsyncOnProgressMbr = true
+        yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.release()
 
         viewModelMbr.executorServiceMbr?.execute {
-            // (YUV420 Image to ARGB8888 Bitmap)
+            // 이미지 변환 타이머 스타트
+            val logicStartTime = SystemClock.elapsedRealtime()
 
+            // (YUV420 Image to ARGB8888 Bitmap)
             // RenderScript 사용
             val bitmap =
                 RenderScriptUtil.yuv420888ToRgbBitmapIntrinsic(
@@ -433,7 +439,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     (SystemClock.elapsedRealtime() - logicStartTime).toString()
             }
 
-            yuvImageToArgbBitmapAsyncOnProgressMbr = false
+            yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.acquire()
+            yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
+            yuvByteArrayToArgbBitmapAsyncOnProgressSemaphoreMbr.release()
 
             onConvertingComplete(bitmap)
         }
