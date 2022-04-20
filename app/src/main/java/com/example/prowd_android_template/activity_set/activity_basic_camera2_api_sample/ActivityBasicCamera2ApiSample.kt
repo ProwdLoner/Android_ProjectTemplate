@@ -123,20 +123,55 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                                 },
                                 onError = {
-                                    // todo 세션 생성 실패
-
+                                    // 세션 생성 실패
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "카메라 동작 에러",
+                                            "카메라 세션 생성에 실패했습니다.\n카메라를 종료합니다.",
+                                            null,
+                                            onCheckBtnClicked = {
+                                                finish()
+                                            },
+                                            onCanceled = {
+                                                finish()
+                                            }
+                                        )
                                 }
                             )
                         }
                     )
                 },
                 onError = {
-                    // todo 디바이스 생성 실패
-
+                    // 디바이스 생성 실패
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                        true,
+                        "카메라 동작 에러",
+                        "카메라 조작 객체 생성에 실패했습니다.\n카메라를 종료합니다.",
+                        null,
+                        onCheckBtnClicked = {
+                            finish()
+                        },
+                        onCanceled = {
+                            finish()
+                        }
+                    )
                 }
             )
         } else { // 권한 비승인 상태
-            // todo : 권한 필요 다이얼로그 보여주고 뒤로가기 (원래 권한이 없으면 진입이 불가하지만 보험용)
+            // 권한 필요 다이얼로그 보여주고 뒤로가기 (원래 권한이 없으면 진입이 불가하지만 보험용)
+            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                true,
+                "카메라 권한 필요",
+                "카메라 권한 승인이 필요합니다.\n카메라를 종료합니다.",
+                null,
+                onCheckBtnClicked = {
+                    finish()
+                },
+                onCanceled = {
+                    finish()
+                }
+            )
         }
 
         // (데이터 갱신 시점 적용)
