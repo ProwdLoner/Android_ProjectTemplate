@@ -131,7 +131,7 @@ class CameraObj private constructor(
     private var cameraDeviceMbr: CameraDevice? = null
 
     @RequiresPermission(Manifest.permission.CAMERA)
-    fun openCamera(onCameraDeviceReady: () -> Unit, onError: (Throwable) -> Unit) {
+    fun openCameraAsync(onCameraDeviceReady: () -> Unit, onError: (Throwable) -> Unit) {
         openCameraSemaphoreMbr.acquire()
 
         // 카메라가 열려있다면 리턴
@@ -210,8 +210,7 @@ class CameraObj private constructor(
             val chosenImageReaderSize = chooseCameraSize(
                 cameraSizes,
                 imageReaderConfigVo.preferredImageReaderArea,
-                imageReaderConfigVo.preferredImageReaderWHRatio,
-                false
+                imageReaderConfigVo.preferredImageReaderWHRatio
             )
 
             val imageReader = ImageReader.newInstance(
@@ -272,8 +271,7 @@ class CameraObj private constructor(
                         chosenPreviewSize = chooseCameraSize(
                             cameraSizes,
                             preferredPreviewArea,
-                            preferredPreviewWHRatio,
-                            true
+                            preferredPreviewWHRatio
                         )
 
                         val surfaceTexture = cameraPreview.surfaceTexture
@@ -353,8 +351,7 @@ class CameraObj private constructor(
                                     chosenPreviewSize = chooseCameraSize(
                                         cameraSizes,
                                         preferredPreviewArea,
-                                        preferredPreviewWHRatio,
-                                        true
+                                        preferredPreviewWHRatio
                                     )
 
                                     val surfaceTexture = cameraPreview.surfaceTexture
@@ -647,17 +644,16 @@ class CameraObj private constructor(
     // preferredArea 0 은 최소, Long.MAX_VALUE 는 최대
     // preferredWHRatio 0 이하면 비율을 신경쓰지 않고 넓이만으로 비교
     private fun chooseCameraSize(
-        cameraSizes: Array<Size>,
+        offeredCameraSizes: Array<Size>,
         preferredArea: Long,
-        preferredWHRatio: Float,
-        isPreviewSize: Boolean
+        preferredWHRatio: Float
     ): Size {
         if (0f >= preferredWHRatio) { // whRatio 를 0 이하로 선택하면 넓이만으로 비교
             // 넓이 비슷한 것을 선정
             var smallestAreaDiff: Long = Long.MAX_VALUE
             var resultIndex = 0
 
-            for ((index, value) in cameraSizes.withIndex()) {
+            for ((index, value) in offeredCameraSizes.withIndex()) {
                 val area = value.width.toLong() * value.height.toLong()
                 val areaDiff = abs(area - preferredArea)
                 if (areaDiff < smallestAreaDiff) {
@@ -666,40 +662,36 @@ class CameraObj private constructor(
                 }
             }
 
-            return cameraSizes[resultIndex]
+            return offeredCameraSizes[resultIndex]
         } else { // 비율을 먼저 보고, 이후 넓이로 비교
             // 카메라 디바이스와 휴대폰 rotation 이 서로 다른지를 확인
             var isCameraDeviceAndMobileRotationDifferent = false
 
-            if (isPreviewSize) { // preview 사이즈를 구할 때에는 width 와 height 가 현재 rotation 에 따라 달라짐
-                val rotation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    parentActivityMbr.display!!.rotation
-                } else {
-                    parentActivityMbr.windowManager.defaultDisplay.rotation
-                }
+            val rotation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                parentActivityMbr.display!!.rotation
+            } else {
+                parentActivityMbr.windowManager.defaultDisplay.rotation
+            }
 
-                when (rotation) {
-                    Surface.ROTATION_0, Surface.ROTATION_180 -> {
-                        if (sensorOrientationMbr == 90 || sensorOrientationMbr == 270) {
-                            isCameraDeviceAndMobileRotationDifferent = true
-                        }
-                    }
-
-                    Surface.ROTATION_90, Surface.ROTATION_270 -> {
-                        if (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) {
-                            isCameraDeviceAndMobileRotationDifferent = true
-                        }
+            when (rotation) {
+                Surface.ROTATION_0, Surface.ROTATION_180 -> {
+                    if (sensorOrientationMbr == 90 || sensorOrientationMbr == 270) {
+                        isCameraDeviceAndMobileRotationDifferent = true
                     }
                 }
-            } else { // 이미지 리더의 비율은 방향과 관계가 없음
-                isCameraDeviceAndMobileRotationDifferent = false
+
+                Surface.ROTATION_90, Surface.ROTATION_270 -> {
+                    if (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) {
+                        isCameraDeviceAndMobileRotationDifferent = true
+                    }
+                }
             }
 
             // 비율 비슷한 것을 선정
             var mostSameWhRatio = 0f
             var smallestWhRatioDiff: Float = Float.MAX_VALUE
 
-            for (value in cameraSizes) {
+            for (value in offeredCameraSizes) {
                 val whRatio: Float = if (isCameraDeviceAndMobileRotationDifferent) {
                     value.height.toFloat() / value.width.toFloat()
                 } else {
@@ -717,7 +709,7 @@ class CameraObj private constructor(
             var resultSizeIndex = 0
             var smallestAreaDiff: Long = Long.MAX_VALUE
             // 비슷한 비율중 가장 비슷한 넓이를 선정
-            for ((index, value) in cameraSizes.withIndex()) {
+            for ((index, value) in offeredCameraSizes.withIndex()) {
                 val whRatio: Float = if (isCameraDeviceAndMobileRotationDifferent) {
                     value.height.toFloat() / value.width.toFloat()
                 } else {
@@ -733,7 +725,7 @@ class CameraObj private constructor(
                     }
                 }
             }
-            return cameraSizes[resultSizeIndex]
+            return offeredCameraSizes[resultSizeIndex]
         }
     }
 
