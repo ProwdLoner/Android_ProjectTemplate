@@ -83,6 +83,15 @@ abstract class AbstractRecyclerViewAdapter(
     fun setNewItemList(newItemList: ArrayList<AdapterItemAbstractVO>) {
         // (newItemList 에서 순환하며, 가장 앞에서부터 비교하며 싱크를 맞추기)
 
+        if (newItemList.size == 0){
+            val currentEndIdx = currentItemListMbr.size
+            currentItemListMbr.clear()
+
+            notifyItemRangeRemoved(0, currentEndIdx)
+
+            return
+        }
+
         // 새 아이템 리스트 마지막 인덱스
         val newItemListLastIdx = newItemList.size - 1
 
