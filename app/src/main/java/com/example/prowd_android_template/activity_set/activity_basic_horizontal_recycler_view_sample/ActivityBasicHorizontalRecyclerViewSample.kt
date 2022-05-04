@@ -81,7 +81,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                     Thread.sleep(2000)
 
                     runOnUiThread {
-                        // 로딩 아이템 제거 및 아이템 추가
+                        // 아이템 데이터 생성
                         adapterDataList =
                             java.util.ArrayList()
                         adapterDataList.addAll(
@@ -121,6 +121,10 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                             )
                         )
 
+                        // 로딩 아이템 제거
+                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =ArrayList()
+
+                        // 데이터 반영
                         viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
                             adapterDataList
                     }

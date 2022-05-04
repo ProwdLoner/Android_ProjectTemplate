@@ -1,0 +1,8 @@
+libdir=C:/Users/runit/Downloads/dlib_19_23/lib
+includedir=C:/Users/runit/Downloads/dlib_19_23/include
+
+Name: dlib
+Description: Numerical and networking C++ library
+Version: 19.23.0
+Libs: -L${libdir} -ldlib -pthread
+Cflags: -I${includedir} 

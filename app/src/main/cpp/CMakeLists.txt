@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.18.1)
 # 프로젝트명
 project("prowd_android_template_native_wrapper")
 
+
 # (NDK 라이브러리 탐색)
 # 로그 라이브러리
 find_library(
@@ -15,7 +16,28 @@ find_library(
 find_library(android-lib
         android)
 
+
 # (서드 라이브러리 추가)
+# opencv 라이브러리
+include_directories(${OpenCV_DIR}/jni/include)
+add_library(lib_opencv SHARED IMPORTED)
+set_target_properties(
+        lib_opencv
+        PROPERTIES IMPORTED_LOCATION
+        ${OpenCV_DIR}/libs/${ANDROID_ABI}/libopencv_java4.so
+)
+
+# dlib 라이브러리
+include_directories(${dlib_DIR}/include)
+add_library(dlib STATIC IMPORTED)
+set_target_properties(
+        dlib
+        PROPERTIES IMPORTED_LOCATION
+        ${dlib_DIR}/lib/${ANDROID_ABI}/libdlib.a
+)
+
+
+# (라이브러리 추가)
 # jni_string_test_lib
 include_directories(${CMAKE_SOURCE_DIR}/libs/jni_string_test_lib/include)
 add_subdirectory(${CMAKE_SOURCE_DIR}/libs/jni_string_test_lib)
@@ -23,6 +45,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/libs/jni_string_test_lib)
 # asset_manager_test_lib
 include_directories(${CMAKE_SOURCE_DIR}/libs/asset_manager_test_lib/include)
 add_subdirectory(${CMAKE_SOURCE_DIR}/libs/asset_manager_test_lib)
+
 
 # (래퍼 라이브러리 추가)
 # native_wrapper_test1.cpp

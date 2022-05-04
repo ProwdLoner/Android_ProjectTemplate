@@ -88,7 +88,8 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                 var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
                     adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
 
-                adapterDataList.add(1,
+                adapterDataList.add(
+                    1,
                     ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
                         adapterSetMbr.recyclerViewAdapter.maxUid
                     )
@@ -97,86 +98,133 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                 viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = adapterDataList
 
                 viewModelMbr.executorServiceMbr?.execute {
-                    // 로딩 예시를 위한 2초 대기
-                    Thread.sleep(2000)
+                    // 네트워크 요청시 헤더, 푸터, 아이템 각각의 비동기적인 처리가 필요 (뮤텍스와 싱크)
 
+                    // 헤더 대기 시간 가정
+                    Thread.sleep(500)
                     runOnUiThread {
-                        // 로딩 아이템 제거
-                        // 헤더 푸터 로딩 제거
                         viewModelMbr.isRecyclerViewAdapterHeaderLoadingLiveDataMbr.value = false
-                        viewModelMbr.isRecyclerViewAdapterFooterLoadingLiveDataMbr.value = false
 
-                        // 아이템 로딩 제거
-                        adapterDataList = adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
-                        adapterDataList.removeAt(1)
-
-                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = adapterDataList
-
-                        // 데이터 주입
-                        // 헤더 푸터 데이터
-                        adapterDataList = adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
-                        adapterDataList.removeLast()
-                        adapterDataList.removeFirst()
-                        adapterDataList.add(0,
-                            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
-                                adapterSetMbr.recyclerViewAdapter.maxUid,
-                                "헤더"
-                            )
-                        )
-
-                        adapterDataList.add(
-                            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
-                                adapterSetMbr.recyclerViewAdapter.maxUid,
-                                "푸터"
-                            )
-                        )
-
-
-                        // 아이템 데이터
-                        adapterDataList.addAll(1,
-                            arrayListOf(
-                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
-                                    "item1"
-                                ),
-                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
-                                    "item2"
-                                ),
-                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
-                                    "item3"
-                                ),
-                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
-                                    "item4"
-                                ),
-                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
-                                    "item5"
-                                ),
-                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
-                                    "item6"
-                                ),
-                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
-                                    "item7"
-                                ),
-                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
-                                    "item8"
+                        viewModelMbr.executorServiceMbr?.execute {
+                            // 주입용 데이터 준비
+                            adapterDataList =
+                                adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                            val headerVo =
+                                adapterDataList.first() as ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO
+                            val newHeaderVo =
+                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                                    headerVo.itemUid,
+                                    "헤더입니다."
                                 )
+                            adapterDataList.removeFirst()
+                            adapterDataList.add(
+                                0,
+                                newHeaderVo
                             )
-                        )
 
-                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
-                            adapterDataList
+                            // 화면 반영
+                            runOnUiThread {
+                                viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
+                                    adapterDataList
+
+                                viewModelMbr.executorServiceMbr?.execute {
+                                    // 푸터 대기 시간 가정
+                                    Thread.sleep(500)
+                                    runOnUiThread {
+                                        viewModelMbr.isRecyclerViewAdapterFooterLoadingLiveDataMbr.value =
+                                            false
+
+                                        viewModelMbr.executorServiceMbr?.execute {
+                                            // 주입용 데이터 준비
+                                            adapterDataList =
+                                                adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                                            val footerVo =
+                                                adapterDataList.last() as ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO
+                                            val newFooterVo =
+                                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                                                    footerVo.itemUid,
+                                                    "푸터입니다."
+                                                )
+                                            adapterDataList.removeLast()
+                                            adapterDataList.add(
+                                                newFooterVo
+                                            )
+
+                                            // 화면 반영
+                                            runOnUiThread {
+                                                viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
+                                                    adapterDataList
+
+                                                viewModelMbr.executorServiceMbr?.execute {
+                                                    // 아이템 대기 가정
+                                                    Thread.sleep(1000)
+                                                    // 아이템 로더 제거
+                                                    adapterDataList =
+                                                        adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                                                    adapterDataList.removeAt(1)
+
+                                                    runOnUiThread {
+                                                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
+                                                            adapterDataList
+                                                        viewModelMbr.executorServiceMbr?.execute {
+                                                            // 아이템 데이터
+                                                            adapterDataList =
+                                                                adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplica()
+                                                            adapterDataList.addAll(
+                                                                1,
+                                                                arrayListOf(
+                                                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                                                        adapterSetMbr.recyclerViewAdapter.maxUid,
+                                                                        "item1"
+                                                                    ),
+                                                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                                                        adapterSetMbr.recyclerViewAdapter.maxUid,
+                                                                        "item2"
+                                                                    ),
+                                                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                                                        adapterSetMbr.recyclerViewAdapter.maxUid,
+                                                                        "item3"
+                                                                    ),
+                                                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                                                        adapterSetMbr.recyclerViewAdapter.maxUid,
+                                                                        "item4"
+                                                                    ),
+                                                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                                                        adapterSetMbr.recyclerViewAdapter.maxUid,
+                                                                        "item5"
+                                                                    ),
+                                                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                                                        adapterSetMbr.recyclerViewAdapter.maxUid,
+                                                                        "item6"
+                                                                    ),
+                                                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                                                        adapterSetMbr.recyclerViewAdapter.maxUid,
+                                                                        "item7"
+                                                                    ),
+                                                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                                                        adapterSetMbr.recyclerViewAdapter.maxUid,
+                                                                        "item8"
+                                                                    )
+                                                                )
+                                                            )
+
+                                                            runOnUiThread {
+                                                                viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
+                                                                    adapterDataList
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-
     }
 
     override fun onStop() {
@@ -296,11 +344,11 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             adapterSetMbr.recyclerViewAdapter.setNewItemList(it)
         }
 
-        viewModelMbr.isRecyclerViewAdapterHeaderLoadingLiveDataMbr.observe(this){
+        viewModelMbr.isRecyclerViewAdapterHeaderLoadingLiveDataMbr.observe(this) {
             adapterSetMbr.recyclerViewAdapter.isHeaderLoading = it
         }
 
-        viewModelMbr.isRecyclerViewAdapterFooterLoadingLiveDataMbr.observe(this){
+        viewModelMbr.isRecyclerViewAdapterFooterLoadingLiveDataMbr.observe(this) {
             adapterSetMbr.recyclerViewAdapter.isFooterLoading = it
         }
     }
