@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.network_request_api_set.test.request_vo
+package com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo
 
 
 data class DeleteTestListInputVO(

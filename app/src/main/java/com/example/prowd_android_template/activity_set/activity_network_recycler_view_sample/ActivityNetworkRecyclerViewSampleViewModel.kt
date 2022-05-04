@@ -9,7 +9,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
-import com.example.prowd_android_template.network_request_api_set.test.request_vo.*
+import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.request_vo.*
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
