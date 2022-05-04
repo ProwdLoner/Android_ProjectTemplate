@@ -105,7 +105,6 @@ dependencies {
     // (뷰 라이브러리)
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.13.1'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.13.1'
 
     // facebook shimmer

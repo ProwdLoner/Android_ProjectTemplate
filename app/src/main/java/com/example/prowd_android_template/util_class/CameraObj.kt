@@ -124,23 +124,29 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
+    // (카메라 관련 함수)
+    // 아래 번호는 진행 순서로, 동일 번호는 동일 시점에 병렬적으로 진행이 가능한 작업
+
     // 1. 카메라 디바이스 객체 생성
-    private val openCameraSemaphoreMbr = Semaphore(1)
+    // 카메라 조작용 객체를 생성하는 것으로, 이후 카메라 조작의 기본이 되는 작업.
+    // 여기서 만들어진 객체를 실제 카메라 디바이스를 정보화 했다고 생각하면 됨.
+
+    private var cameraDeviceChangingMbr: Boolean = false
+    private val cameraDeviceChangingSemaphoreMbr = Semaphore(1)
     private val openCameraHandlerThreadMbr = HandlerThreadObj("openCamera")
-    private var isCameraDeviceOpenedMbr = false
     private var cameraDeviceMbr: CameraDevice? = null
 
     @RequiresPermission(Manifest.permission.CAMERA)
     fun openCameraAsync(onCameraDeviceReady: () -> Unit, onError: (Throwable) -> Unit) {
-        openCameraSemaphoreMbr.acquire()
-
-        // 카메라가 열려있다면 리턴
-        if (isCameraDeviceOpenedMbr) {
-            openCameraSemaphoreMbr.release()
+        cameraDeviceChangingSemaphoreMbr.acquire()
+        if (cameraDeviceChangingMbr || null != cameraDeviceMbr) {
+            // 현재 디바이스 생성/소멸 도중이거나 카메라 디바이스가 이미 만들어진 경우는 return
+            cameraDeviceChangingSemaphoreMbr.release()
             return
+        } else {
+            cameraDeviceChangingMbr = true
+            cameraDeviceChangingSemaphoreMbr.release()
         }
-
-        isCameraDeviceOpenedMbr = true
 
         if (!openCameraHandlerThreadMbr.isThreadObjAlive()) {
             // 카메라 사용 스레드가 아직 실행되지 않았을 때
@@ -154,7 +160,10 @@ class CameraObj private constructor(
                 // cameraDevice 가 열리면,
                 // 객체 저장
                 cameraDeviceMbr = camera
-                openCameraSemaphoreMbr.release()
+
+                cameraDeviceChangingSemaphoreMbr.acquire()
+                cameraDeviceChangingMbr = false
+                cameraDeviceChangingSemaphoreMbr.release()
                 onCameraDeviceReady()
             }
 
@@ -163,39 +172,54 @@ class CameraObj private constructor(
                 camera.close()
                 cameraDeviceMbr = null
 
-                isCameraDeviceOpenedMbr = false
+                cameraDeviceChangingSemaphoreMbr.acquire()
+                cameraDeviceChangingMbr = false
+                cameraDeviceChangingSemaphoreMbr.release()
+
                 onError(RuntimeException("Camera No Longer Available"))
-                openCameraSemaphoreMbr.release()
             }
 
             override fun onError(camera: CameraDevice, error: Int) {
                 camera.close()
                 cameraDeviceMbr = null
 
-                isCameraDeviceOpenedMbr = false
+                cameraDeviceChangingSemaphoreMbr.acquire()
+                cameraDeviceChangingMbr = false
+                cameraDeviceChangingSemaphoreMbr.release()
+
                 onError(RuntimeException("Error Code : $error"))
-                openCameraSemaphoreMbr.release()
             }
         }, openCameraHandlerThreadMbr.handler)
     }
 
     fun closeCamera() {
-        openCameraSemaphoreMbr.acquire()
+        cameraDeviceChangingSemaphoreMbr.acquire()
+        if (cameraDeviceChangingMbr || null == cameraDeviceMbr) {
+            // 현재 디바이스 생성/소멸 도중이거나 카메라 디바이스가 없는 경우는 return
+            cameraDeviceChangingSemaphoreMbr.release()
+            return
+        } else {
+            cameraDeviceChangingMbr = true
+            cameraDeviceChangingSemaphoreMbr.release()
+        }
 
         cameraDeviceMbr?.close()
         cameraDeviceMbr = null
         openCameraHandlerThreadMbr.stopHandlerThread()
-        isCameraDeviceOpenedMbr = false
 
-        openCameraSemaphoreMbr.release()
+        cameraDeviceChangingSemaphoreMbr.acquire()
+        cameraDeviceChangingMbr = false
+        cameraDeviceChangingSemaphoreMbr.release()
     }
 
 
+    // todo : 프리뷰와 쌍으로 만들기
+    // todo : 고속모드라면 서페이스 사이즈 결정에서부터 변화가 필요 사이즈 결정은 min / max 로 결정하도록 하기
+    // todo : 완료 콜백으로 완료된 시점에 결정된 이미지 사이즈를 반환
     // 1. 이미지 리더 서페이스 생성
     var imageReaderMbr: ImageReader? = null
     private val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader")
     fun createImageReader(imageReaderConfigVo: ImageReaderConfigVo) {
-
         if (!imageReaderHandlerThreadMbr.isThreadObjAlive()) {
             // 카메라 사용 스레드가 아직 실행되지 않았을 때
             imageReaderHandlerThreadMbr.startHandlerThread()
@@ -442,38 +466,57 @@ class CameraObj private constructor(
 
 
     // 2. 카메라 세션 생성
-    private val createCameraSessionSemaphoreMbr = Semaphore(1)
+    // 카메라 디바이스 및 출력 서페이스 필요
+    private var cameraSessionChangingMbr: Boolean = false
+    private val cameraSessionChangingSemaphoreMbr = Semaphore(1)
     private val createCameraSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession")
-    private var isCameraSessionCreatedMbr = false
     private var cameraCaptureSessionMbr: CameraCaptureSession? = null
 
     fun createCameraSession(
         onCaptureSessionCreated: () -> Unit,
         onError: (Throwable) -> Unit
     ) {
-        createCameraSessionSemaphoreMbr.acquire()
+        cameraSessionChangingSemaphoreMbr.acquire()
+        if (cameraSessionChangingMbr || null != cameraCaptureSessionMbr) {
+            // 현재 세션 생성/소멸 도중이거나 세션이 이미 만들어진 경우는 return
+            cameraSessionChangingSemaphoreMbr.release()
+            return
+        } else {
+            cameraSessionChangingMbr = true
+            cameraSessionChangingSemaphoreMbr.release()
+        }
 
-        // 카메라 디바이스 및 서페이스 준비가 되지 않은 경우
-        if (cameraDeviceMbr == null ||
-            isCameraSessionCreatedMbr ||
-            (null == imageReaderMbr &&
+        // 필요 사항 준비 여부 (cameraDevice 준비 및 서페이스 준비)
+        if (null == cameraDeviceMbr) {
+            cameraSessionChangingSemaphoreMbr.acquire()
+            cameraSessionChangingMbr = false
+            cameraSessionChangingSemaphoreMbr.release()
+
+            onError(RuntimeException("카메라 조작 준비가 필요합니다."))
+            return
+        } else if ((null == imageReaderMbr &&
                     (previewInfoVoListMbr == null ||
                             previewInfoVoListMbr!!.isEmpty()))
         ) {
-            createCameraSessionSemaphoreMbr.release()
+            cameraSessionChangingSemaphoreMbr.acquire()
+            cameraSessionChangingMbr = false
+            cameraSessionChangingSemaphoreMbr.release()
+
+            onError(RuntimeException("적어도 하나의 출력 설정이 필요합니다."))
             return
         }
 
-        isCameraSessionCreatedMbr = true
-
+        // 세션 실행용 스레드 생성
         if (!createCameraSessionHandlerThreadMbr.isThreadObjAlive()) {
             createCameraSessionHandlerThreadMbr.startHandlerThread()
         }
 
         // api 28 이상 / 미만의 요청 방식이 다름
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
+            // 출력 설정 객체 리스트
             val outputConfigurationList = ArrayList<OutputConfiguration>()
 
+            // 프리뷰 서페이스 주입
             if (null != previewInfoVoListMbr) {
                 for (previewInfoVO in previewInfoVoListMbr!!) {
                     val surface = previewInfoVO.surface
@@ -481,6 +524,7 @@ class CameraObj private constructor(
                 }
             }
 
+            // 이미지 리더 서페이스 주입
             if (null != imageReaderMbr) {
                 outputConfigurationList.add(
                     OutputConfiguration(
@@ -489,7 +533,7 @@ class CameraObj private constructor(
                 )
             }
 
-            // todo SESSION_REGULAR 커스텀
+            // todo SESSION_REGULAR 고속모드
             cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
                 SessionConfiguration.SESSION_REGULAR,
                 outputConfigurationList,
@@ -498,23 +542,32 @@ class CameraObj private constructor(
                     override fun onConfigured(session: CameraCaptureSession) {
                         cameraCaptureSessionMbr = session
 
+                        cameraSessionChangingSemaphoreMbr.acquire()
+                        cameraSessionChangingMbr = false
+                        cameraSessionChangingSemaphoreMbr.release()
+
                         onCaptureSessionCreated()
-                        createCameraSessionSemaphoreMbr.release()
                     }
 
                     // 세션 생성 실패
                     override fun onConfigureFailed(session: CameraCaptureSession) {
                         cameraCaptureSessionMbr?.close()
                         cameraCaptureSessionMbr = null
+
+                        cameraSessionChangingSemaphoreMbr.acquire()
+                        cameraSessionChangingMbr = false
+                        cameraSessionChangingSemaphoreMbr.release()
+
                         onError(RuntimeException("Create Camera Session Failed"))
-                        createCameraSessionSemaphoreMbr.release()
                     }
                 }
             ))
         } else {
             // api 28 미만
+            // 출력 서페이스 리스트
             val surfaces = ArrayList<Surface>()
 
+            // 프리뷰 서페이스 주입
             if (null != previewInfoVoListMbr) {
                 for (previewInfoVO in previewInfoVoListMbr!!) {
                     val surface = previewInfoVO.surface
@@ -522,6 +575,7 @@ class CameraObj private constructor(
                 }
             }
 
+            // 이미지 리더 서페이스 주입
             if (null != imageReaderMbr) {
                 val surface = imageReaderMbr!!.surface
                 surfaces.add(surface)
@@ -533,15 +587,21 @@ class CameraObj private constructor(
                     override fun onConfigured(session: CameraCaptureSession) {
                         cameraCaptureSessionMbr = session
 
+                        cameraSessionChangingSemaphoreMbr.acquire()
+                        cameraSessionChangingMbr = false
+                        cameraSessionChangingSemaphoreMbr.release()
                         onCaptureSessionCreated()
-                        createCameraSessionSemaphoreMbr.release()
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
                         cameraCaptureSessionMbr?.close()
                         cameraCaptureSessionMbr = null
+
+                        cameraSessionChangingSemaphoreMbr.acquire()
+                        cameraSessionChangingMbr = false
+                        cameraSessionChangingSemaphoreMbr.release()
+
                         onError(RuntimeException("Create Camera Session Failed"))
-                        createCameraSessionSemaphoreMbr.release()
                     }
                 }, createCameraSessionHandlerThreadMbr.handler
             )
@@ -549,25 +609,43 @@ class CameraObj private constructor(
     }
 
     fun deleteCameraSession() {
-        createCameraSessionSemaphoreMbr.acquire()
+        cameraSessionChangingSemaphoreMbr.acquire()
+        if (cameraSessionChangingMbr || null == cameraCaptureSessionMbr) {
+            // 현재 세션 생성/소멸 도중이거나 세션이 비어있는 경우는 return
+            cameraSessionChangingSemaphoreMbr.release()
+            return
+        } else {
+            cameraSessionChangingMbr = true
+            cameraSessionChangingSemaphoreMbr.release()
+        }
 
         cameraCaptureSessionMbr?.close()
         cameraCaptureSessionMbr = null
         createCameraSessionHandlerThreadMbr.stopHandlerThread()
-        isCameraSessionCreatedMbr = false
 
-        createCameraSessionSemaphoreMbr.release()
+        cameraSessionChangingSemaphoreMbr.acquire()
+        cameraSessionChangingMbr = false
+        cameraSessionChangingSemaphoreMbr.release()
     }
 
     // 2. 카메라 세션 리퀘스트 빌더 생성
+    // 카메라 디바이스 및 출력 서페이스 필요
     // todo : manual change 기능 추가
     var captureRequestBuilderMbr: CaptureRequest.Builder? = null
     fun createCameraCaptureRequest() {
-        if (cameraDeviceMbr == null ||
-            (null == imageReaderMbr &&
+        // 필요 사항 준비 여부 (cameraDevice 준비 및 서페이스 준비)
+        if (null == cameraDeviceMbr) {
+            cameraSessionChangingSemaphoreMbr.acquire()
+            cameraSessionChangingMbr = false
+            cameraSessionChangingSemaphoreMbr.release()
+            return
+        } else if ((null == imageReaderMbr &&
                     (previewInfoVoListMbr == null ||
                             previewInfoVoListMbr!!.isEmpty()))
         ) {
+            cameraSessionChangingSemaphoreMbr.acquire()
+            cameraSessionChangingMbr = false
+            cameraSessionChangingSemaphoreMbr.release()
             return
         }
 
