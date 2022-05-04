@@ -14,7 +14,7 @@ import com.example.prowd_android_template.databinding.ActivityViewPagerSampleLis
 class ActivityViewPagerSampleList : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityViewPagerSampleListBinding
+    lateinit var bindingMbr: ActivityViewPagerSampleListBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityViewPagerSampleListViewModel

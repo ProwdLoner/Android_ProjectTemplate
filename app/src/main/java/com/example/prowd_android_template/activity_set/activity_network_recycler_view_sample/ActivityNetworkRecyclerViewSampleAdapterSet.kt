@@ -20,8 +20,7 @@ class ActivityNetworkRecyclerViewSampleAdapterSet(
 ) {
     // 어뎁터 #1
     class ScreenVerticalRecyclerViewAdapter(
-        private val parentViewMbr: AppCompatActivity,
-        private val parentViewModel: ActivityNetworkRecyclerViewSampleViewModel,
+        private val parentViewMbr: ActivityNetworkRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
         onScrollHitBottom: (() -> Unit)?
@@ -189,7 +188,7 @@ class ActivityNetworkRecyclerViewSampleAdapterSet(
 
                         binding.root.startAnimation(startAnimation)
 
-                        parentViewModel.executorServiceMbr?.execute {
+                        parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
                             Thread.sleep(2000)
 
                             parentViewMbr.runOnUiThread {
@@ -257,18 +256,18 @@ class ActivityNetworkRecyclerViewSampleAdapterSet(
                     // 아이템 제거 버튼 클릭
                     binding.deleteBtn.setOnClickListener {
                         // 중복 클릭 방지
-                        if (parentViewModel.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value != null
+                        if (parentViewMbr.viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value != null
                         // 현재 삭제 리퀘스트가 진행중일 때
                         ) {
                             // 로직 취소
                             return@setOnClickListener
                         }
 
-                        parentViewModel.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
+                        parentViewMbr.viewModelMbr.changeScreenVerticalRecyclerViewAdapterItemDataOnProgressLiveDataMbr.value =
                             true
 
                         // 데이터 삭제 요청
-                        parentViewModel.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
+                        parentViewMbr.viewModelMbr.screenVerticalRecyclerViewAdapterItemDataDeleteContentUidLiveDataMbr.value =
                             entity.contentUid
                     }
                 }

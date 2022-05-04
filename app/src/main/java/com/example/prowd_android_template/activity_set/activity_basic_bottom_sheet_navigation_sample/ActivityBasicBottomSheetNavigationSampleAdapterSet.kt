@@ -11,7 +11,7 @@ data class ActivityBasicBottomSheetNavigationSampleAdapterSet(
     // <내부 클래스 공간>
     // [플래그먼트 변경 어뎁터]
     class ScreenViewPagerFragmentStateAdapter(
-        parentViewMbr: AppCompatActivity
+        parentViewMbr: ActivityBasicBottomSheetNavigationSample
     ) : FragmentStateAdapter(parentViewMbr) {
         // <멤버 변수 공간>
         private val adapterMainDataMbr: ArrayList<Fragment> = ArrayList()

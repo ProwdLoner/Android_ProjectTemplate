@@ -15,7 +15,6 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
     // 어뎁터 #1
     class RecyclerViewAdapter(
         private val parentViewMbr: AppCompatActivity,
-        private val parentViewModel: ActivityBasicHeaderFooterRecyclerViewSampleViewModel,
         targetView: RecyclerView,
         isVertical: Boolean,
         onScrollHitBottom: (() -> Unit)?

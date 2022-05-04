@@ -18,7 +18,7 @@ import java.util.*
 class ActivityNetworkRecyclerViewSampleEditor : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicRecyclerViewSampleEditorBinding
+    lateinit var bindingMbr: ActivityBasicRecyclerViewSampleEditorBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityNetworkRecyclerViewSampleEditorViewModel

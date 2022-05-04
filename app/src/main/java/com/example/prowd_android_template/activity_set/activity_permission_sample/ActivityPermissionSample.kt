@@ -33,7 +33,7 @@ import com.example.prowd_android_template.databinding.ActivityPermissionSampleBi
 class ActivityPermissionSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityPermissionSampleBinding
+    lateinit var bindingMbr: ActivityPermissionSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityPermissionSampleViewModel

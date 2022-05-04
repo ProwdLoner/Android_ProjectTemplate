@@ -16,7 +16,7 @@ import com.example.prowd_android_template.databinding.ActivityRecyclerViewSample
 class ActivityRecyclerViewSampleList : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityRecyclerViewSampleListBinding
+    lateinit var bindingMbr: ActivityRecyclerViewSampleListBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityRecyclerViewSampleListViewModel

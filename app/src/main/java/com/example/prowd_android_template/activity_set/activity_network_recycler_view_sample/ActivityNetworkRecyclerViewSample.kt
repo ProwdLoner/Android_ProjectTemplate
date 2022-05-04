@@ -29,13 +29,13 @@ import kotlin.collections.ArrayList
 class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityNetworkRecyclerViewSampleBinding
+    lateinit var bindingMbr: ActivityNetworkRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityNetworkRecyclerViewSampleViewModel
 
     // (어뎁터 객체)
-    private lateinit var adapterSetMbr: ActivityNetworkRecyclerViewSampleAdapterSet
+    lateinit var adapterSetMbr: ActivityNetworkRecyclerViewSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -157,7 +157,6 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
         adapterSetMbr = ActivityNetworkRecyclerViewSampleAdapterSet(
             ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter(
                 this,
-                viewModelMbr,
                 bindingMbr.screenVerticalRecyclerView,
                 true,
                 onScrollHitBottom = { // 뷰 스크롤이 가장 아래쪽에 닿았을 때 = 페이징 타이밍

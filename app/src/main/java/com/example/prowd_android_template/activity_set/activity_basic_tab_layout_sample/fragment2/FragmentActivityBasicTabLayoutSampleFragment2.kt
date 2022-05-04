@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample
-import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSampleViewModel
 import com.example.prowd_android_template.databinding.FragmentActivityBasicTabLayoutSample2Binding
 
 class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
@@ -15,8 +14,7 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
     private lateinit var bindingMbr: FragmentActivityBasicTabLayoutSample2Binding
 
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
-    private lateinit var parentActivity: ActivityBasicTabLayoutSample
-    private lateinit var parentViewModel: ActivityBasicTabLayoutSampleViewModel
+    private lateinit var parentActivityMbr: ActivityBasicTabLayoutSample
 
 
     // ---------------------------------------------------------------------------------------------
@@ -30,8 +28,7 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
             FragmentActivityBasicTabLayoutSample2Binding.inflate(layoutInflater)
 
         // (부모 객체 저장)
-        parentActivity = requireActivity() as ActivityBasicTabLayoutSample
-        parentViewModel = parentActivity.viewModelMbr
+        parentActivityMbr = requireActivity() as ActivityBasicTabLayoutSample
 
         // (초기 객체 생성)
         createMemberObjects()
@@ -51,17 +48,17 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
         super.onResume()
 
         // (데이터 갱신 시점 적용)
-        if (!parentViewModel.isChangingConfigurationsMbr && // 화면 회전이 아니면서,
+        if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr && // 화면 회전이 아니면서,
             isVisible // 현재 보이는 상황일 때
         ) {
-            val sessionToken = parentViewModel.currentLoginSessionInfoSpwMbr.sessionToken
+            val sessionToken = parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
-            if (parentViewModel.fragment2Data.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-                sessionToken != parentViewModel.fragment2Data.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
+            if (parentActivityMbr.viewModelMbr.fragment2Data.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
+                sessionToken != parentActivityMbr.viewModelMbr.fragment2Data.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
             ) {
                 // 진입 플래그 변경
-                parentViewModel.fragment2Data.isDataFirstLoadingMbr = false
-                parentViewModel.fragment2Data.currentUserSessionTokenMbr = sessionToken
+                parentActivityMbr.viewModelMbr.fragment2Data.isDataFirstLoadingMbr = false
+                parentActivityMbr.viewModelMbr.fragment2Data.currentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
             }
@@ -83,24 +80,24 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
 
     // viewModel 저장용 데이터 초기화
     private fun createViewModelDataObjects() {
-        if (!parentViewModel.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
+        if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            parentViewModel.fragment2Data.currentUserSessionTokenMbr = parentViewModel.currentLoginSessionInfoSpwMbr.sessionToken
+            parentActivityMbr.viewModelMbr.fragment2Data.currentUserSessionTokenMbr = parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
 
     // 초기 뷰 설정
     private fun viewSetting() {
         bindingMbr.fragmentClickBtn.setOnClickListener {
-            parentViewModel.fragmentClickedPositionLiveDataMbr.value = 2
+            parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.value = 2
         }
 
     }
 
     // 라이브 데이터 설정
     private fun setLiveData() {
-        parentViewModel.fragmentClickedPositionLiveDataMbr.observe(parentActivity){
+        parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.observe(parentActivityMbr){
             if (null == it){
                 bindingMbr.clickedByValueTxt.text = "클릭 없음"
             }else{

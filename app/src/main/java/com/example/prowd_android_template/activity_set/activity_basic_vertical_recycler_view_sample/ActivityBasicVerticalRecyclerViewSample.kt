@@ -13,13 +13,13 @@ import com.example.prowd_android_template.databinding.ActivityBasicVerticalRecyc
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicVerticalRecyclerViewSampleBinding
+    lateinit var bindingMbr: ActivityBasicVerticalRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityBasicVerticalRecyclerViewSampleViewModel
 
     // (어뎁터 객체)
-    private lateinit var adapterSetMbr: ActivityBasicVerticalRecyclerViewSampleAdapterSet
+    lateinit var adapterSetMbr: ActivityBasicVerticalRecyclerViewSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -174,7 +174,6 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         adapterSetMbr = ActivityBasicVerticalRecyclerViewSampleAdapterSet(
             ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter(
                 this,
-                viewModelMbr,
                 bindingMbr.recyclerView,
                 true,
                 null

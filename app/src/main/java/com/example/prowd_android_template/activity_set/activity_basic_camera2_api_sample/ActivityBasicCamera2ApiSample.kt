@@ -29,7 +29,7 @@ import com.example.prowd_android_template.util_object.RenderScriptUtil
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicCamera2ApiSampleBinding
+    lateinit var bindingMbr: ActivityBasicCamera2ApiSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityBasicCamera2ApiSampleViewModel

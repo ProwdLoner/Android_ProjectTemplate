@@ -13,7 +13,7 @@ import com.example.prowd_android_template.databinding.ActivityImageProcessingSam
 class ActivityImageProcessingSampleList : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityImageProcessingSampleListBinding
+    lateinit var bindingMbr: ActivityImageProcessingSampleListBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityImageProcessingSampleListViewModel

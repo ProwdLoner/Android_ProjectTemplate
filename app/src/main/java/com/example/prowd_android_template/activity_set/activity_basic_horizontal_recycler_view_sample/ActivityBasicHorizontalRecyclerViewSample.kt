@@ -12,13 +12,13 @@ import com.example.prowd_android_template.databinding.ActivityBasicHorizontalRec
 class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicHorizontalRecyclerViewSampleBinding
+    lateinit var bindingMbr: ActivityBasicHorizontalRecyclerViewSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityBasicHorizontalRecyclerViewSampleViewModel
 
     // (어뎁터 객체)
-    private lateinit var adapterSetMbr: ActivityBasicHorizontalRecyclerViewSampleAdapterSet
+    lateinit var adapterSetMbr: ActivityBasicHorizontalRecyclerViewSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -173,7 +173,6 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
         adapterSetMbr = ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
             ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter(
                 this,
-                viewModelMbr,
                 bindingMbr.recyclerView,
                 false,
                 null

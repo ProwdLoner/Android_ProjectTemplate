@@ -19,7 +19,7 @@ import com.example.prowd_android_template.databinding.ActivityHomeBinding
 class ActivityHome : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityHomeBinding
+    lateinit var bindingMbr: ActivityHomeBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityHomeViewModel

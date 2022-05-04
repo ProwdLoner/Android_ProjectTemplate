@@ -20,7 +20,7 @@ import java.net.SocketTimeoutException
 class ActivityInit : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityInitBinding
+    lateinit var bindingMbr: ActivityInitBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityInitViewModel

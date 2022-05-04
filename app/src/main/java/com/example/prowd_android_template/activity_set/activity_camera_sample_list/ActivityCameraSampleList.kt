@@ -22,7 +22,7 @@ import com.example.prowd_android_template.databinding.ActivityCameraSampleListBi
 class ActivityCameraSampleList : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityCameraSampleListBinding
+    lateinit var bindingMbr: ActivityCameraSampleListBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityCameraSampleListViewModel

@@ -20,7 +20,7 @@ import com.example.prowd_android_template.util_object.easylut.lutimage.LutAlignm
 class ActivityEasyLutSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityEasyLutSampleBinding
+    lateinit var bindingMbr: ActivityEasyLutSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityEasyLutSampleViewModel

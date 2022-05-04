@@ -14,13 +14,13 @@ import com.google.android.material.tabs.TabLayoutMediator
 class ActivityBasicTabLayoutSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicTabLayoutSampleBinding
+    lateinit var bindingMbr: ActivityBasicTabLayoutSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityBasicTabLayoutSampleViewModel
 
     // (어뎁터 객체)
-    private lateinit var adapterSetMbr: ActivityBasicTabLayoutSampleAdapterSet
+    lateinit var adapterSetMbr: ActivityBasicTabLayoutSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그

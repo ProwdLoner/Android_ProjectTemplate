@@ -14,8 +14,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
 ) {
     // 어뎁터 #1
     class RecyclerViewAdapter(
-        private val parentViewMbr: AppCompatActivity,
-        private val parentViewModel: ActivityBasicHorizontalRecyclerViewSampleViewModel,
+        private val parentViewMbr: ActivityBasicHorizontalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
         onScrollHitBottom: (() -> Unit)?

@@ -16,13 +16,13 @@ import com.example.prowd_android_template.databinding.ActivityBasicBottomSheetNa
 class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: ActivityBasicBottomSheetNavigationSampleBinding
+    lateinit var bindingMbr: ActivityBasicBottomSheetNavigationSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityBasicBottomSheetNavigationSampleViewModel
 
     // (어뎁터 객체)
-    private lateinit var adapterSetMbr: ActivityBasicBottomSheetNavigationSampleAdapterSet
+    lateinit var adapterSetMbr: ActivityBasicBottomSheetNavigationSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
