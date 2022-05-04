@@ -314,7 +314,7 @@ class ActivityBasicCamera2ApiRecordVideoSample : AppCompatActivity() {
         }
 
         bindingMbr.recordBtn.setOnTouchListener(object : View.OnTouchListener {
-            override fun onTouch(v: View?, event: MotionEvent): Boolean {
+            override fun onTouch(v: View, event: MotionEvent): Boolean {
                 when (event.action) {
                     MotionEvent.ACTION_DOWN ->                 // PRESSED
                     {
@@ -325,6 +325,7 @@ class ActivityBasicCamera2ApiRecordVideoSample : AppCompatActivity() {
                     MotionEvent.ACTION_UP ->                 // RELEASED
                     {
                         Log.e("record", "stop")
+                        v.performClick()
                         return true // if you want to handle the touch event
                     }
                 }
