@@ -12,6 +12,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
+import com.example.prowd_android_template.activity_set.activity_basic_camera2_api_record_video_sample.ActivityBasicCamera2ApiRecordVideoSample
 import com.example.prowd_android_template.activity_set.activity_basic_camera2_api_sample.ActivityBasicCamera2ApiSample
 import com.example.prowd_android_template.activity_set.activity_system_camera_photo_sample.ActivitySystemCameraPhotoSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -351,6 +352,144 @@ class ActivityCameraSampleList : AppCompatActivity() {
                                                 Intent(
                                                     this,
                                                     ActivityBasicCamera2ApiSample::class.java
+                                                )
+                                            startActivity(goToIntent)
+                                        } else { // 권한 비승인
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                DialogConfirm.DialogInfoVO(
+                                                    true,
+                                                    "권한 요청",
+                                                    "해당 서비스를 이용하기 위해선\n카메라 디바이스 사용 권한이 필요합니다.",
+                                                    null,
+                                                    onCheckBtnClicked = {
+
+                                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                            null
+                                                    },
+                                                    onCanceled = {
+
+                                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                            null
+                                                    }
+                                                )
+                                        }
+                                    }
+                                    permissionResultLauncherMbr.launch(
+                                        intent
+                                    )
+                                },
+                                onNegBtnClicked = {
+                                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "권한 요청",
+                                            "해당 서비스를 이용하기 위해선\n카메라 디바이스 사용 권한이 필요합니다.",
+                                            null,
+                                            onCheckBtnClicked = {
+
+                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                    null
+                                            },
+                                            onCanceled = {
+
+                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                    null
+                                            }
+                                        )
+                                },
+                                onCanceled = {
+                                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "권한 요청",
+                                            "해당 서비스를 이용하기 위해선\n카메라 디바이스 사용 권한이 필요합니다.",
+                                            null,
+                                            onCheckBtnClicked = {
+
+                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                    null
+                                            },
+                                            onCanceled = {
+
+                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                    null
+                                            }
+                                        )
+                                }
+                            )
+                    }
+                }
+            }
+            permissionRequestMbr.launch(arrayOf(Manifest.permission.CAMERA))
+        }
+
+        // 기본 Camera2 api 동영상 촬용 샘플 이동 버튼
+        bindingMbr.goToBasicCamera2ApiVideoSampleBtn.setOnClickListener {
+            // 시스템 카메라 액티비티 필요 권한
+            permissionRequestCallbackMbr = { permissions ->
+                // 외부 저장소 읽기 권한
+                val isGranted = permissions[Manifest.permission.CAMERA]!!
+                val neverAskAgain =
+                    !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
+
+                if (isGranted) { // 권한 승인
+                    // 액티비티 이동
+                    val intent =
+                        Intent(
+                            this,
+                            ActivityBasicCamera2ApiRecordVideoSample::class.java
+                        )
+                    startActivity(intent)
+                } else { // 권한 거부
+                    if (!neverAskAgain) {
+                        // 단순 거부
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                            DialogConfirm.DialogInfoVO(
+                                true,
+                                "권한 요청",
+                                "해당 서비스를 이용하기 위해선\n카메라 디바이스 사용 권한이 필요합니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                                },
+                                onCanceled = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                                }
+                            )
+                    } else {
+                        // 다시 묻지 않기 선택
+                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                            DialogBinaryChoose.DialogInfoVO(
+                                true,
+                                "권한 요청",
+                                "해당 서비스를 이용하기 위해선\n" +
+                                        "카메라 디바이스 사용 권한이 필요합니다.\n" +
+                                        "권한 설정 화면으로 이동하시겠습니까?",
+                                null,
+                                null,
+                                onPosBtnClicked = {
+                                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                    // 권한 설정 화면으로 이동
+                                    val intent =
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                    intent.data = Uri.fromParts("package", packageName, null)
+                                    permissionResultLauncherCallbackMbr = {
+                                        // 권한 확인
+                                        if (ActivityCompat.checkSelfPermission(
+                                                this,
+                                                Manifest.permission.CAMERA
+                                            ) == PackageManager.PERMISSION_GRANTED
+                                        ) { // 권한 승인
+                                            // 액티비티 이동
+                                            val goToIntent =
+                                                Intent(
+                                                    this,
+                                                    ActivityBasicCamera2ApiRecordVideoSample::class.java
                                                 )
                                             startActivity(goToIntent)
                                         } else { // 권한 비승인
