@@ -24,7 +24,8 @@
         android:theme="@style/Theme.Application">
         <activity
             android:name=".activity_set.activity_basic_camera2_api_record_video_sample.ActivityBasicCamera2ApiRecordVideoSample"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activity_set.activity_easy_lut_sample.ActivityEasyLutSample"
             android:exported="false" />

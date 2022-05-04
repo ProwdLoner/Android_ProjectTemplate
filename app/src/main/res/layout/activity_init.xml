@@ -39,7 +39,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <de.hdodenhof.circleimageview.CircleImageView
+    <com.example.prowd_android_template.custom_view.CircleImageView
         android:id="@+id/count_down_back"
         android:layout_width="30dp"
         android:layout_height="30dp"

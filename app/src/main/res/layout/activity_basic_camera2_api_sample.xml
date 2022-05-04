@@ -8,8 +8,8 @@
     <!-- 카메라 프리뷰 화면 뷰 -->
     <com.example.prowd_android_template.custom_view.AutoFitTextureView
         android:id="@+id/camera_preview_auto_fit_texture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
