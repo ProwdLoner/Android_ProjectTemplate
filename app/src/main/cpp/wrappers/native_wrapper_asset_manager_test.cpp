@@ -58,14 +58,6 @@ Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperAssetMana
     //free malloc
     free(file_data);
 
-    // 서드 라이브러리 텍스트 요청
-    std::string thirdLibString = getAssetTextString();
-
-    std::string asset_file_name_string(asset_file_name);
-    std::string resultString =
-            "file_name :\n\t" + asset_file_name_string + "\nfile_value :\n\t" + asset_text + "(" +
-            thirdLibString + ")";
-
     LOGI("getAssetTextString_end");
-    return env->NewStringUTF(resultString.c_str());
+    return env->NewStringUTF(asset_text.c_str());
 }
