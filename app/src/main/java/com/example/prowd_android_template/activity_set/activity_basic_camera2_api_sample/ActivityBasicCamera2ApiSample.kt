@@ -451,6 +451,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     private fun startCamera() {
         // 카메라 실행
         isImageProcessingPause = false
+
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.CAMERA

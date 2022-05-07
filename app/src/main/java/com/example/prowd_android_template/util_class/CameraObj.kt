@@ -41,7 +41,7 @@ class CameraObj private constructor(
     private val cameraManagerMbr: CameraManager =
         parentActivityMbr.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
-    // 카메라 정보 제공 객체
+    // 카메라 정보 객체
     lateinit var cameraCharacteristicsMbr: CameraCharacteristics
 
     // 카메라 지원 사이즈 반환 객체
