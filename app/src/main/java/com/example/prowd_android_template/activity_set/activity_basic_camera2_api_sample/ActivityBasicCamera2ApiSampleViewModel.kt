@@ -53,6 +53,9 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
 
     var scriptCRotator : ScriptC_rotator = ScriptC_rotator(renderScript)
 
+    // 액티비티 진입 필수 권한 요청 여부
+    var isActivityPermissionClear = false
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>

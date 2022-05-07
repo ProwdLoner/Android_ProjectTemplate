@@ -1,6 +1,5 @@
 package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample
 
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.viewpager2.adapter.FragmentStateAdapter
