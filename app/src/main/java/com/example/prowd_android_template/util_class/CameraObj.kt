@@ -20,6 +20,8 @@ import androidx.annotation.RequiresPermission
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.lang.RuntimeException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.math.abs
 import kotlin.math.max
@@ -49,6 +51,9 @@ class CameraObj private constructor(
 
     // 카메라 기본 방향 정보
     var sensorOrientationMbr: Int = 0
+
+    // (스레드 풀)
+    var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
 
     // ---------------------------------------------------------------------------------------------
@@ -131,84 +136,112 @@ class CameraObj private constructor(
     // 카메라 조작용 객체를 생성하는 것으로, 이후 카메라 조작의 기본이 되는 작업.
     // 여기서 만들어진 객체를 실제 카메라 디바이스를 정보화 했다고 생각하면 됨.
 
-    private var cameraDeviceChangingMbr: Boolean = false
+    private var openCameraOnProgressedMbr = false
+    private var openCameraOnProgressedSemaphoreMbr = Semaphore(1)
+
+
     private val cameraDeviceChangingSemaphoreMbr = Semaphore(1)
+
     private val openCameraHandlerThreadMbr = HandlerThreadObj("openCamera")
     private var cameraDeviceMbr: CameraDevice? = null
 
     @RequiresPermission(Manifest.permission.CAMERA)
-    fun openCameraAsync(onCameraDeviceReady: () -> Unit, onError: (Throwable) -> Unit) {
-        cameraDeviceChangingSemaphoreMbr.acquire()
-        if (cameraDeviceChangingMbr || null != cameraDeviceMbr) {
-            // 현재 디바이스 생성/소멸 도중이거나 카메라 디바이스가 이미 만들어진 경우는 return
-            cameraDeviceChangingSemaphoreMbr.release()
+    fun openCamera(
+        onCameraDeviceReady: () -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        // 카메라가 열리는 도중에 중복 요청 금지
+        openCameraOnProgressedSemaphoreMbr.acquire()
+        if (openCameraOnProgressedMbr) {
+            openCameraOnProgressedSemaphoreMbr.release()
             return
         } else {
-            cameraDeviceChangingMbr = true
-            cameraDeviceChangingSemaphoreMbr.release()
+            openCameraOnProgressedMbr = true
+            openCameraOnProgressedSemaphoreMbr.release()
         }
 
-        if (!openCameraHandlerThreadMbr.isThreadObjAlive()) {
-            // 카메라 사용 스레드가 아직 실행되지 않았을 때
-            openCameraHandlerThreadMbr.startHandlerThread()
+        executorServiceMbr?.execute {
+            // 카메라 생성과 닫기 간의 뮤텍스
+            cameraDeviceChangingSemaphoreMbr.acquire()
+
+            if (null != cameraDeviceMbr) {
+                // 디바이스가 이미 만들어진 경우는 return
+
+                openCameraOnProgressedSemaphoreMbr.acquire()
+                openCameraOnProgressedMbr = false
+                openCameraOnProgressedSemaphoreMbr.release()
+
+                cameraDeviceChangingSemaphoreMbr.release()
+
+                return@execute
+            }
+
+            if (!openCameraHandlerThreadMbr.isThreadObjAlive()) {
+                // 카메라 사용 스레드가 아직 실행되지 않았을 때
+                openCameraHandlerThreadMbr.startHandlerThread()
+            }
+
+            // cameraDevice open 요청
+            cameraManagerMbr.openCamera(
+                cameraIdMbr,
+                object : CameraDevice.StateCallback() {
+                    // 카메라 디바이스 연결
+                    override fun onOpened(camera: CameraDevice) {
+                        // cameraDevice 가 열리면,
+                        // 객체 저장
+                        cameraDeviceMbr = camera
+
+                        openCameraOnProgressedSemaphoreMbr.acquire()
+                        openCameraOnProgressedMbr = false
+                        openCameraOnProgressedSemaphoreMbr.release()
+
+                        cameraDeviceChangingSemaphoreMbr.release()
+                        onCameraDeviceReady()
+                    }
+
+                    // 카메라 디바이스 연결 끊김
+                    override fun onDisconnected(camera: CameraDevice) {
+                        camera.close()
+                        cameraDeviceMbr = null
+
+                        openCameraOnProgressedSemaphoreMbr.acquire()
+                        openCameraOnProgressedMbr = false
+                        openCameraOnProgressedSemaphoreMbr.release()
+
+                        cameraDeviceChangingSemaphoreMbr.release()
+
+                        onError(RuntimeException("Camera No Longer Available"))
+                    }
+
+                    override fun onError(camera: CameraDevice, error: Int) {
+                        camera.close()
+                        cameraDeviceMbr = null
+
+                        openCameraOnProgressedSemaphoreMbr.acquire()
+                        openCameraOnProgressedMbr = false
+                        openCameraOnProgressedSemaphoreMbr.release()
+
+                        cameraDeviceChangingSemaphoreMbr.release()
+
+                        onError(RuntimeException("Error Code : $error"))
+                    }
+                }, openCameraHandlerThreadMbr.handler
+            )
         }
-
-        // cameraDevice open 요청
-        cameraManagerMbr.openCamera(cameraIdMbr, object : CameraDevice.StateCallback() {
-            // 카메라 디바이스 연결
-            override fun onOpened(camera: CameraDevice) {
-                // cameraDevice 가 열리면,
-                // 객체 저장
-                cameraDeviceMbr = camera
-
-                cameraDeviceChangingSemaphoreMbr.acquire()
-                cameraDeviceChangingMbr = false
-                cameraDeviceChangingSemaphoreMbr.release()
-                onCameraDeviceReady()
-            }
-
-            // 카메라 디바이스 연결 끊김
-            override fun onDisconnected(camera: CameraDevice) {
-                camera.close()
-                cameraDeviceMbr = null
-
-                cameraDeviceChangingSemaphoreMbr.acquire()
-                cameraDeviceChangingMbr = false
-                cameraDeviceChangingSemaphoreMbr.release()
-
-                onError(RuntimeException("Camera No Longer Available"))
-            }
-
-            override fun onError(camera: CameraDevice, error: Int) {
-                camera.close()
-                cameraDeviceMbr = null
-
-                cameraDeviceChangingSemaphoreMbr.acquire()
-                cameraDeviceChangingMbr = false
-                cameraDeviceChangingSemaphoreMbr.release()
-
-                onError(RuntimeException("Error Code : $error"))
-            }
-        }, openCameraHandlerThreadMbr.handler)
     }
 
     fun closeCamera() {
         cameraDeviceChangingSemaphoreMbr.acquire()
-        if (cameraDeviceChangingMbr || null == cameraDeviceMbr) {
-            // 현재 디바이스 생성/소멸 도중이거나 카메라 디바이스가 없는 경우는 return
+        if (null == cameraDeviceMbr) {
+            // 카메라 디바이스가 없는 경우는 return
             cameraDeviceChangingSemaphoreMbr.release()
             return
-        } else {
-            cameraDeviceChangingMbr = true
-            cameraDeviceChangingSemaphoreMbr.release()
         }
 
         cameraDeviceMbr?.close()
         cameraDeviceMbr = null
         openCameraHandlerThreadMbr.stopHandlerThread()
 
-        cameraDeviceChangingSemaphoreMbr.acquire()
-        cameraDeviceChangingMbr = false
         cameraDeviceChangingSemaphoreMbr.release()
     }
 

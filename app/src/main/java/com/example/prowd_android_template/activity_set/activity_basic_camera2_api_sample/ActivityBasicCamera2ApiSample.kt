@@ -459,7 +459,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         ) { // 권한 승인 상태
             // (카메라 실행)
             // 카메라 생성
-            backCameraObjMbr?.openCameraAsync(
+            backCameraObjMbr?.openCamera(
                 onCameraDeviceReady = {
                     // (서페이스 생성)
                     // 이미지 리더 생성
