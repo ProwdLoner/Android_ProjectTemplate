@@ -12,6 +12,7 @@ import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
+import android.media.MediaRecorder
 import android.os.Build
 import android.util.Size
 import android.view.Surface
@@ -19,7 +20,6 @@ import android.view.TextureView
 import androidx.annotation.RequiresPermission
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
-import java.lang.RuntimeException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -505,15 +505,40 @@ class CameraObj private constructor(
         previewSurfaceListMbr.clear()
     }
 
-    // todo
+    // todo 동시 저장 확인
     // 1. 영상 저장 서페이스 생성
-    fun setVideoRecordingSurface() {
-
-    }
-
-    fun unSetVideoRecordingSurface() {
-
-    }
+//    var videoRecordMediaRecorderMbr : MediaRecorder? = null
+//    fun setVideoRecordingSurface(saveFilePath : String) {
+//        val mediaRecorder = MediaRecorder()
+//        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+//        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+//        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+//        mediaRecorder.setOutputFile(saveFilePath)
+//        mediaRecorder.setVideoEncodingBitRate(10000000)
+//        mediaRecorder.setVideoFrameRate(30)
+//        mediaRecorder.setVideoSize(videoSize.width, videoSize.height)
+//
+//        val rotation: Int = parentActivityMbr.getWindowManager().getDefaultDisplay().getRotation()
+//        when (sensorOrientationMbr) {
+//            SENSOR_ORIENTATION_DEFAULT_DEGREES -> mediaRecorder.setOrientationHint(
+//                DEFAULT_ORIENTATIONS.get(rotation)
+//            )
+//            SENSOR_ORIENTATION_INVERSE_DEGREES -> mediaRecorder.setOrientationHint(
+//                INVERSE_ORIENTATIONS.get(rotation)
+//            )
+//        }
+//
+//        mediaRecorder.prepare()
+//
+//        videoRecordMediaRecorderMbr = mediaRecorder
+//    }
+//
+//    fun unSetVideoRecordingSurface() {
+//        if (null != videoRecordMediaRecorderMbr) {
+//            videoRecordMediaRecorderMbr!!.release()
+//            videoRecordMediaRecorderMbr = null
+//        }
+//    }
 
 
     // 2. 카메라 세션 생성
@@ -708,6 +733,7 @@ class CameraObj private constructor(
         }
 
         // 리퀘스트 빌더 생성
+        // todo 비디오 서페이스 있으면 CameraDevice.TEMPLATE_RECORD
         captureRequestBuilderMbr =
             cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
 
