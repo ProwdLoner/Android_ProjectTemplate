@@ -43,18 +43,18 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     var isDataFirstLoadingMbr = true
 
     // (랜더 스크립트)
-    var renderScript: RenderScript = RenderScript.create(application)
+    var renderScriptMbr: RenderScript = RenderScript.create(application)
 
     // intrinsic yuv to rgb
-    var scriptIntrinsicYuvToRGB: ScriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(
-        renderScript,
-        Element.U8_4(renderScript)
+    var scriptIntrinsicYuvToRGBMbr: ScriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(
+        renderScriptMbr,
+        Element.U8_4(renderScriptMbr)
     )
 
-    var scriptCRotator : ScriptC_rotator = ScriptC_rotator(renderScript)
+    var scriptCRotatorMbr : ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
 
     // 액티비티 진입 필수 권한 요청 여부
-    var isActivityPermissionClear = false
+    var isActivityPermissionClearMbr = false
 
 
     // ---------------------------------------------------------------------------------------------
@@ -79,10 +79,10 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         executorServiceMbr = null
 
         // 랜더 스크립트 객체 해소
-        scriptIntrinsicYuvToRGB.destroy()
-        scriptCRotator.destroy()
-        renderScript.finish()
-        renderScript.destroy()
+        scriptIntrinsicYuvToRGBMbr.destroy()
+        scriptCRotatorMbr.destroy()
+        renderScriptMbr.finish()
+        renderScriptMbr.destroy()
 
         super.onCleared()
     }

@@ -43,4 +43,12 @@
         <!-- 배경 색 -->
 <!--        <item name="android:windowBackground">#FF3D7DDC</item>-->
     </style>
+
+    <!-- 카메라 화면 테마 -->
+    <style name="Theme.Camera" parent="Theme.Application">
+        <item name="android:immersive">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
 </resources>

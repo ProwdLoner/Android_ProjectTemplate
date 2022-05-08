@@ -17,9 +17,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.FitCenter
@@ -28,10 +25,13 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
+import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 
 
 // todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
+// todo : onpause - onresume 빠르게 변환시 튕김 (세마포어를 전역으로 놓아서 실행해보기)
+// todo : 바로 위 문제는, 전역변수로 두고, 이미지 리더 스레드 완전 종료 후 해제까지 확인하도록 할 것
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -76,12 +76,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         // (상태창 투명화)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
-            controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-            controller.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
 
         // (초기 객체 생성)
         createMemberObjects()
@@ -101,7 +95,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        if (viewModelMbr.isActivityPermissionClear) {
+        if (viewModelMbr.isActivityPermissionClearMbr) {
             startCamera()
         }
     }
@@ -111,8 +105,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         backCameraObjMbr?.stopCameraCaptureSession()
         backCameraObjMbr?.deleteCameraSession()
         backCameraObjMbr?.deleteCameraCaptureRequest()
-        backCameraObjMbr?.deletePreviewInfoAsync()
-        backCameraObjMbr?.deleteImageReader()
+        backCameraObjMbr?.unSetPreviewSurfaceList()
+        backCameraObjMbr?.unSetImageReaderSurface()
         backCameraObjMbr?.closeCamera()
 
         super.onPause()
@@ -183,7 +177,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
 
                 if (isGranted) { // 권한 승인
-                    viewModelMbr.isActivityPermissionClear = true
+                    viewModelMbr.isActivityPermissionClearMbr = true
                     startCamera()
                 } else { // 권한 거부
                     if (!neverAskAgain) {
@@ -232,7 +226,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             ) == PackageManager.PERMISSION_GRANTED
                                         ) { // 권한이 승인 상태
                                             // 카메라 실행
-                                            viewModelMbr.isActivityPermissionClear = true
+                                            viewModelMbr.isActivityPermissionClearMbr = true
                                             startCamera()
                                         } else { // 권한 비승인 상태
                                             viewModelMbr.confirmDialogInfoLiveDataMbr.value =
@@ -370,30 +364,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.cameraCloseBtn.setOnClickListener {
-            isImageProcessingPause = true
-            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
-                true,
-                "카메라 종료",
-                "카메라를 종료하시겠습니까?",
-                "종료",
-                "취소",
-                onPosBtnClicked = {
-                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-                    finish()
-                },
-                onNegBtnClicked = {
-                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                    isImageProcessingPause = false
-                },
-                onCanceled = {
-                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                    isImageProcessingPause = false
-                }
-            )
-        }
+        bindingMbr.logContainer.y =
+            bindingMbr.logContainer.y - CustomUtil.getNavigationBarHeightPixel(this)
 
     }
 
@@ -462,23 +434,36 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             backCameraObjMbr?.openCamera(
                 onCameraDeviceReady = {
                     // (서페이스 생성)
-                    // 이미지 리더 생성
-                    backCameraObjMbr?.createImageReader(
+                    // 이미지 리더 생성 (비율 상관 없이 지원되는 가장 큰 사이즈 이미지를 사용)
+                    val imageReaderInfoVo = backCameraObjMbr?.setImageReaderSurface(
                         CameraObj.ImageReaderConfigVo(
                             Long.MAX_VALUE,
                             0f,
                             ImageFormat.YUV_420_888,
-                            2,
                             imageReaderCallback = { reader ->
                                 processImage(reader)
                             }
                         )
                     )
 
+                    // 프리뷰를 이미지 리더 비율과 맞추기
+                    val imgWhRatio =
+                        if (backCameraObjMbr!!.isCameraAndScreenWidthHeightDifferent()) {
+                            imageReaderInfoVo!!.chosenSize.height / imageReaderInfoVo.chosenSize.width.toFloat()
+                        } else {
+                            imageReaderInfoVo!!.chosenSize.width / imageReaderInfoVo.chosenSize.height.toFloat()
+                        }
+
                     // 프리뷰 생성
-                    backCameraObjMbr?.createPreviewInfoAsync(
-                        arrayListOf(bindingMbr.cameraPreviewAutoFitTexture),
-                        onPreviewTextureReady = { // 프리뷰 서페이스 준비 완료
+                    backCameraObjMbr?.setPreviewSurfaceList(
+                        arrayListOf(
+                            CameraObj.PreviewConfigVo(
+                                imgWhRatio,
+                                bindingMbr.cameraPreviewAutoFitTexture
+                            )
+                        ),
+                        onPreviewSurfaceReady = { // 프리뷰 서페이스 준비 완료
+
                             // 카메라 세션 리퀘스트 빌더 생성
                             backCameraObjMbr?.createCameraCaptureRequest()
 
@@ -565,7 +550,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 return
             }
 
-            val imageObj: Image = reader.acquireLatestImage() ?: return
+            val imageObj: Image = reader.acquireNextImage() ?: return
 
             // yuv ByteArray 를 rgb Bitmap 으로 변환 (병렬처리)
             // 반환되는 비트맵 이미지는 카메라 센서 방향에 따라 정방향이 아닐 수 있음.
@@ -630,8 +615,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // RenderScript 사용
             val bitmap =
                 RenderScriptUtil.yuv420888ToRgbBitmapIntrinsic(
-                    viewModelMbr.renderScript,
-                    viewModelMbr.scriptIntrinsicYuvToRGB,
+                    viewModelMbr.renderScriptMbr,
+                    viewModelMbr.scriptIntrinsicYuvToRGBMbr,
                     imgWidth,
                     imgHeight,
                     yuvByteArray
