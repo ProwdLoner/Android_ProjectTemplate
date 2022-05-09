@@ -15,16 +15,19 @@ import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Size
+import android.util.SparseIntArray
 import android.view.Surface
 import android.view.TextureView
 import androidx.annotation.RequiresPermission
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
+import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.math.abs
 import kotlin.math.max
+
 
 // <Camera 디바이스 하나에 대한 obj>
 // 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체
@@ -506,39 +509,82 @@ class CameraObj private constructor(
     }
 
     // todo 동시 저장 확인
+    // todo 저장 사이즈는 프리뷰 크기 같은데, 확인할것
     // 1. 영상 저장 서페이스 생성
-//    var videoRecordMediaRecorderMbr : MediaRecorder? = null
-//    fun setVideoRecordingSurface(saveFilePath : String) {
-//        val mediaRecorder = MediaRecorder()
-//        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
-//        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-//        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-//        mediaRecorder.setOutputFile(saveFilePath)
-//        mediaRecorder.setVideoEncodingBitRate(10000000)
-//        mediaRecorder.setVideoFrameRate(30)
-//        mediaRecorder.setVideoSize(videoSize.width, videoSize.height)
-//
-//        val rotation: Int = parentActivityMbr.getWindowManager().getDefaultDisplay().getRotation()
-//        when (sensorOrientationMbr) {
-//            SENSOR_ORIENTATION_DEFAULT_DEGREES -> mediaRecorder.setOrientationHint(
-//                DEFAULT_ORIENTATIONS.get(rotation)
-//            )
-//            SENSOR_ORIENTATION_INVERSE_DEGREES -> mediaRecorder.setOrientationHint(
-//                INVERSE_ORIENTATIONS.get(rotation)
-//            )
-//        }
-//
-//        mediaRecorder.prepare()
-//
-//        videoRecordMediaRecorderMbr = mediaRecorder
-//    }
-//
-//    fun unSetVideoRecordingSurface() {
-//        if (null != videoRecordMediaRecorderMbr) {
-//            videoRecordMediaRecorderMbr!!.release()
-//            videoRecordMediaRecorderMbr = null
-//        }
-//    }
+    private var videoRecordMediaRecorderMbr: MediaRecorder? = null
+    fun setVideoRecordingSurface(videoRecorderConfigVo: VideoRecorderConfigVo): VideoRecorderInfoVO {
+        val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MediaRecorder(parentActivityMbr)
+        } else {
+            MediaRecorder()
+        }
+
+        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+        mediaRecorder.setOutputFile(videoRecorderConfigVo.saveFile.absolutePath)
+        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+
+        mediaRecorder.setVideoFrameRate(30)
+        mediaRecorder.setVideoEncodingBitRate(10000000)
+
+        // 지원되는 카메라 사이즈 배열 가져오기
+        val cameraSizes =
+            streamConfigurationMapMbr.getOutputSizes(MediaRecorder::class.java)
+
+        // 원하는 사이즈에 유사한 사이즈를 선정
+        val chosenVideoSize = chooseCameraSize(
+            cameraSizes,
+            videoRecorderConfigVo.preferredImageReaderArea,
+            videoRecorderConfigVo.preferredImageReaderWHRatio
+        )
+        mediaRecorder.setVideoSize(chosenVideoSize.width, chosenVideoSize.height)
+
+        if (videoRecorderConfigVo.isRecordAudio) {
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+        }
+
+        val rotation: Int = parentActivityMbr.windowManager.defaultDisplay.rotation
+
+        val defaultOrientation = SparseIntArray()
+        defaultOrientation.append(Surface.ROTATION_90, 0)
+        defaultOrientation.append(Surface.ROTATION_0, 90)
+        defaultOrientation.append(Surface.ROTATION_270, 180)
+        defaultOrientation.append(Surface.ROTATION_180, 270)
+
+        val inverseOrientation = SparseIntArray()
+        inverseOrientation.append(Surface.ROTATION_270, 0)
+        inverseOrientation.append(Surface.ROTATION_180, 90)
+        inverseOrientation.append(Surface.ROTATION_90, 180)
+        inverseOrientation.append(Surface.ROTATION_0, 270)
+
+        when (sensorOrientationMbr) {
+            90 ->
+                mediaRecorder.setOrientationHint(
+                    defaultOrientation.get(rotation)
+                )
+            270 ->
+                mediaRecorder.setOrientationHint(
+                    inverseOrientation.get(rotation)
+                )
+        }
+
+        mediaRecorder.prepare()
+
+        videoRecordMediaRecorderMbr = mediaRecorder
+
+        return VideoRecorderInfoVO(mediaRecorder, chosenVideoSize)
+    }
+
+    fun unSetVideoRecordingSurface() {
+        if (null != videoRecordMediaRecorderMbr) {
+            videoRecordMediaRecorderMbr!!.pause()
+            videoRecordMediaRecorderMbr!!.stop()
+            videoRecordMediaRecorderMbr!!.reset()
+            videoRecordMediaRecorderMbr!!.release()
+            videoRecordMediaRecorderMbr = null
+        }
+    }
 
 
     // 2. 카메라 세션 생성
@@ -585,7 +631,8 @@ class CameraObj private constructor(
                 onError(RuntimeException("카메라 조작 준비가 필요합니다."))
                 return@execute
             } else if ((null == imageReaderMbr &&
-                        previewSurfaceListMbr.isEmpty())
+                        previewSurfaceListMbr.isEmpty() &&
+                        videoRecordMediaRecorderMbr == null)
             ) {
                 createCameraSessionOnProgressedSemaphoreMbr.acquire()
                 createCameraSessionOnProgressedMbr = false
@@ -616,6 +663,14 @@ class CameraObj private constructor(
                     outputConfigurationList.add(
                         OutputConfiguration(
                             imageReaderMbr!!.surface
+                        )
+                    )
+                }
+
+                if (null != videoRecordMediaRecorderMbr) {
+                    outputConfigurationList.add(
+                        OutputConfiguration(
+                            videoRecordMediaRecorderMbr!!.surface
                         )
                     )
                 }
@@ -666,6 +721,12 @@ class CameraObj private constructor(
                 // 이미지 리더 서페이스 주입
                 if (null != imageReaderMbr) {
                     val surface = imageReaderMbr!!.surface
+                    surfaces.add(surface)
+                }
+
+                // 비디오 리코더 서페이스 주입
+                if (null != videoRecordMediaRecorderMbr) {
+                    val surface = videoRecordMediaRecorderMbr!!.surface
                     surfaces.add(surface)
                 }
 
@@ -726,7 +787,8 @@ class CameraObj private constructor(
             // 빌더 생성용 카메라 객체
             return
         } else if ((null == imageReaderMbr &&
-                    previewSurfaceListMbr.isEmpty())
+                    previewSurfaceListMbr.isEmpty() &&
+                    videoRecordMediaRecorderMbr == null)
         ) {
             // 출력용 서페이스가 하나도 없을 때
             return
@@ -739,6 +801,7 @@ class CameraObj private constructor(
 
         // 서페이스 주입
         imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
+        videoRecordMediaRecorderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
 
         for (previewSurface in previewSurfaceListMbr) {
             captureRequestBuilderMbr!!.addTarget(previewSurface)
@@ -1048,6 +1111,30 @@ class CameraObj private constructor(
     data class PreviewInfoVO(
         val idx: Int,
         // 계산된 카메라 프리뷰 사이즈
+        val chosenPreviewSize: Size
+    )
+
+    data class VideoRecorderConfigVo(
+        // 원하는 이미지 넓이
+        // width * height
+        // 0L 이하면 최소, Long.MAX_VALUE 이면 최대
+        val preferredImageReaderArea: Long,
+
+        // 원하는 이미지 비율
+        // width / height
+        // 0 이하 값이 있으면 비율은 생각치 않음
+        val preferredImageReaderWHRatio: Float,
+
+        val isRecordAudio: Boolean,
+
+        // ex : CamcorderProfile.QUALITY_480P
+        val videoResolution: Int,
+
+        val saveFile: File
+    )
+
+    data class VideoRecorderInfoVO(
+        val mediaRecorder: MediaRecorder,
         val chosenPreviewSize: Size
     )
 }
