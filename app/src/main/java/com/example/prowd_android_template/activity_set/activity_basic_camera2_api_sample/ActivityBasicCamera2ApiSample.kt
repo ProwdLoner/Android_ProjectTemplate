@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -90,6 +91,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 액티비티 진입 필수 권한 요청
         requestActivityPermission()
+
+        Log.e("cs", CameraObj.getCameraInfoList(this) .toString())
     }
 
     override fun onResume() {
@@ -439,7 +442,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         CameraObj.ImageReaderConfigVo(
                             Long.MAX_VALUE,
                             0f,
-                            ImageFormat.YUV_420_888,
                             imageReaderCallback = { reader ->
                                 processImage(reader)
                             }

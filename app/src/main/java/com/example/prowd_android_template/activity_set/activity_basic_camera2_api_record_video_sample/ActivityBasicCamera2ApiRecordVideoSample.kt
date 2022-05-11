@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.ImageFormat
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
 import android.media.ImageReader
@@ -440,7 +439,6 @@ class ActivityBasicCamera2ApiRecordVideoSample : AppCompatActivity() {
                         CameraObj.ImageReaderConfigVo(
                             Long.MAX_VALUE,
                             0f,
-                            ImageFormat.YUV_420_888,
                             imageReaderCallback = { reader ->
                                 processImage(reader)
                             }
