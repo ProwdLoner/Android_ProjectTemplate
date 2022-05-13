@@ -13,7 +13,6 @@ import android.provider.MediaStore
 import com.bumptech.glide.load.resource.bitmap.TransformationUtils
 import java.io.File
 import java.io.FileOutputStream
-import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit

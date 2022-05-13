@@ -613,7 +613,7 @@ class ActivityBasicCamera2ApiRecordVideoSample : AppCompatActivity() {
             // (YUV420 Image to ARGB8888 Bitmap)
             // RenderScript 사용
             val bitmap =
-                RenderScriptUtil.yuv420888ToRgbBitmapIntrinsic(
+                RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
                     viewModelMbr.renderScriptMbr,
                     viewModelMbr.scriptIntrinsicYuvToRGBMbr,
                     imgWidth,

@@ -94,7 +94,7 @@ object RenderScriptUtil {
     //        renderScript,
     //        Element.U8_4(renderScript)
     //    )
-    fun yuv420888ToRgbBitmapIntrinsic(
+    fun yuv420888ToARgb8888BitmapIntrinsic(
         renderScript: RenderScript,
         scriptIntrinsicYuvToRGB: ScriptIntrinsicYuvToRGB,
         imageWidth: Int,

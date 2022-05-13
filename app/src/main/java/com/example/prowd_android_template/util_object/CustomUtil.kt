@@ -1,6 +1,5 @@
 package com.example.prowd_android_template.util_object
 
-import android.R
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.res.TypedArray
@@ -15,6 +14,7 @@ object CustomUtil {
         ).flags and ApplicationInfo.FLAG_DEBUGGABLE
     }
 
+    // 스테이터스 바 높이 픽셀 반환
     fun getStatusBarHeightPixel(context: Context): Int {
         var statusBarHeight = 0
         val resourceId: Int =
@@ -25,11 +25,12 @@ object CustomUtil {
         return statusBarHeight
     }
 
+    // 액션 바 높이 픽셀 반환
     fun getActionBarHeightPixel(context: Context): Int {
         var actionBarHeight = 0
         val styledAttributes: TypedArray = context.theme.obtainStyledAttributes(
             intArrayOf(
-                R.attr.actionBarSize
+                android.R.attr.actionBarSize
             )
         )
         actionBarHeight = styledAttributes.getDimension(0, 0f).toInt()
@@ -38,6 +39,7 @@ object CustomUtil {
         return actionBarHeight
     }
 
+    // 네비게이션 바 높이 픽셀 반환
     fun getNavigationBarHeightPixel(context: Context): Int {
         var navigationBarHeight = 0
         val resourceId: Int =
