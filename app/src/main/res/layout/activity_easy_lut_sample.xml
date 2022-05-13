@@ -34,7 +34,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="Easy LUT 샘플"
+                android:text="EasyLUT 테스트"
                 android:textColor="#FF000000"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -53,77 +53,432 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <ScrollView
+            android:id="@+id/image_scroll"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="15dp"
-            android:paddingBottom="15dp"
-            android:scrollbars="vertical">
+            android:layout_height="0dp"
+            android:scrollbars="vertical"
+            app:layout_constraintBottom_toTopOf="@id/filter_list_container"
+            app:layout_constraintTop_toTopOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/origin_image_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="원본 이미지"
-                    android:textColor="#FF000000"
-                    app:layout_constraintStart_toStartOf="@id/origin_image"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <ImageView
-                    android:id="@+id/origin_image"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/image1_container"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginEnd="10dp"
-                    android:background="#FFEEEEEE"
-                    app:layout_constraintDimensionRatio="3:2"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/origin_image_label" />
-
-
-                <TextView
-                    android:id="@+id/filtered_image_label"
-                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="필터 처리 이미지"
-                    android:textColor="#FF000000"
-                    app:layout_constraintStart_toStartOf="@id/filtered_image"
-                    app:layout_constraintTop_toBottomOf="@id/origin_image" />
-
-                <ImageView
-                    android:id="@+id/filtered_image"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginEnd="10dp"
-                    android:background="#FFEEEEEE"
-                    app:layout_constraintDimensionRatio="3:2"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/filtered_image_label" />
-
-
-                <Button
-                    android:id="@+id/image_filter_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="필터 적용"
-                    android:textColor="#FF000000"
+                    android:background="@drawable/layer_list_layout_activity_easy_lut_sample_image1_container"
+                    android:paddingBottom="20dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/filtered_image" />
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:id="@+id/image1_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="이미지 1"
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/image1_origin_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/img_activity_easy_lut_sample_image1"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image1_label" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="원본"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image1_origin_image"
+                        app:layout_constraintTop_toTopOf="@id/image1_origin_image" />
+
+                    <ImageView
+                        android:id="@+id/image1_filtered_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image1_origin_image" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="필터 적용"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image1_filtered_image"
+                        app:layout_constraintTop_toTopOf="@id/image1_filtered_image" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/image2_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/layer_list_layout_activity_easy_lut_sample_image2_container"
+                    android:paddingBottom="20dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/image1_container">
+
+                    <TextView
+                        android:id="@+id/image2_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="이미지 2"
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/image2_origin_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/img_activity_easy_lut_sample_image2"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image2_label" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="원본"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image2_origin_image"
+                        app:layout_constraintTop_toTopOf="@id/image2_origin_image" />
+
+                    <ImageView
+                        android:id="@+id/image2_filtered_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image2_origin_image" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="필터 적용"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image2_filtered_image"
+                        app:layout_constraintTop_toTopOf="@id/image2_filtered_image" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/image3_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="20dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/image2_container">
+
+                    <TextView
+                        android:id="@+id/image3_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="이미지 3"
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/image3_origin_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/img_activity_easy_lut_sample_image3"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image3_label" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="원본"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image3_origin_image"
+                        app:layout_constraintTop_toTopOf="@id/image3_origin_image" />
+
+                    <ImageView
+                        android:id="@+id/image3_filtered_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image3_origin_image" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="필터 적용"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image3_filtered_image"
+                        app:layout_constraintTop_toTopOf="@id/image3_filtered_image" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/image4_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="20dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/image3_container">
+
+                    <TextView
+                        android:id="@+id/image4_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="이미지 4"
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/image4_origin_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/img_activity_easy_lut_sample_image4"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image4_label" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="원본"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image4_origin_image"
+                        app:layout_constraintTop_toTopOf="@id/image4_origin_image" />
+
+                    <ImageView
+                        android:id="@+id/image4_filtered_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image4_origin_image" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="필터 적용"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image4_filtered_image"
+                        app:layout_constraintTop_toTopOf="@id/image4_filtered_image" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/image5_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="20dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/image4_container">
+
+                    <TextView
+                        android:id="@+id/image5_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="이미지 5"
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/image5_origin_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/img_activity_easy_lut_sample_image5"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image5_label" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="원본"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image5_origin_image"
+                        app:layout_constraintTop_toTopOf="@id/image5_origin_image" />
+
+                    <ImageView
+                        android:id="@+id/image5_filtered_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="#FF000000"
+                        app:layout_constraintDimensionRatio="3:2"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/image5_origin_image" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="#99FFFFFF"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="5dp"
+                        android:text="필터 적용"
+                        android:textColor="#FF000000"
+                        app:layout_constraintEnd_toEndOf="@id/image5_filtered_image"
+                        app:layout_constraintTop_toTopOf="@id/image5_filtered_image" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/filter_list_container"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:background="@drawable/layer_list_layout_activity_easy_lut_sample_filter_list_container"
+            android:elevation="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/filter_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingStart="5dp"
+                android:paddingEnd="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

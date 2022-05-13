@@ -2,7 +2,12 @@ package com.example.prowd_android_template.util_object
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import android.content.res.AssetManager
 import android.content.res.TypedArray
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import java.io.IOException
+import java.io.InputStream
 
 
 object CustomUtil {
@@ -48,6 +53,19 @@ object CustomUtil {
             navigationBarHeight = context.resources.getDimensionPixelSize(resourceId)
         }
         return navigationBarHeight
+    }
+
+    fun getBitmapFromAssets(context: Context, filePath: String): Bitmap? {
+        val assetManager: AssetManager = context.getAssets()
+        val istr: InputStream
+        var bitmap: Bitmap? = null
+        try {
+            istr = assetManager.open(filePath)
+            bitmap = BitmapFactory.decodeStream(istr)
+        } catch (e: IOException) {
+            // handle exception
+        }
+        return bitmap
     }
 
 }

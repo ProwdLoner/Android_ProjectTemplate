@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.util_object.easylut.filter;
 
 import android.graphics.Bitmap;
-
 import com.example.prowd_android_template.util_object.easylut.lutimage.LUTImage;
 
 public class ApplyOnOriginal implements BitmapStrategy {

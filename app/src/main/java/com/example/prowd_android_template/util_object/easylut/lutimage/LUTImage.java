@@ -39,7 +39,6 @@ public class LUTImage {
         LUTImage lutImage = new LUTImage(lutWidth, lutBitmap.getHeight(), lutColors,
                 coordinateToColorType, lutAlignmentMode);
 
-        lutBitmap.recycle();
         return lutImage;
     }
 

@@ -351,10 +351,10 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
 
                     val selectedUri: Uri = goToGalleryIntent?.data!!
 
-                    val intent = Intent()
-                    intent.action = Intent.ACTION_VIEW
-                    intent.setDataAndType(selectedUri, "image/*")
-                    startActivity(intent)
+                    val gotoImageViewerIntent = Intent()
+                    gotoImageViewerIntent.action = Intent.ACTION_VIEW
+                    gotoImageViewerIntent.setDataAndType(selectedUri, "image/*")
+                    startActivity(gotoImageViewerIntent)
                 }
             }
             resultLauncherMbr.launch(intent)
@@ -448,7 +448,7 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
                 if (it.resultCode == RESULT_OK) {
                     cameraImageFileMbr = file
 
-                    viewModelMbr.selectedPhotoUriMbr.value = UriAndPath.getUriFromPath(this, file.absolutePath)
+                    viewModelMbr.selectedPhotoUriMbr.value = UriAndPath.getUriFromPath(file.absolutePath)
                 }
             }
 

@@ -4,7 +4,6 @@ package com.example.prowd_android_template.util_object.easylut.filter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-
 import com.example.prowd_android_template.util_object.easylut.lutimage.CoordinateToColor;
 import com.example.prowd_android_template.util_object.easylut.lutimage.LutAlignment;
 

@@ -1,22 +1,26 @@
 package com.example.prowd_android_template.activity_set.activity_easy_lut_sample
 
+import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.example.prowd_android_template.R
+import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityEasyLutSampleBinding
-import com.example.prowd_android_template.util_object.easylut.EasyLUT
-import com.example.prowd_android_template.util_object.easylut.lutimage.LutAlignment
+import com.example.prowd_android_template.util_object.UriAndPath
+import java.io.File
+import java.io.FileOutputStream
 
 
-// Todo : 필터 변경 옵션 적용
+// Todo : wide 외의 필터도 적용
+// todo : easy lut 라이브러리 코드 정리
+// todo : 선택된 필터 화면 회전 처리
 class ActivityEasyLutSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -24,6 +28,9 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ActivityEasyLutSampleViewModel
+
+    // (어뎁터 객체)
+    private lateinit var adapterSetMbr: ActivityEasyLutSampleAdapterSet
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -72,6 +79,69 @@ class ActivityEasyLutSample : AppCompatActivity() {
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
+                // 로딩 아이템 생성
+                var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+                    arrayListOf(
+                        ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                        )
+                    )
+                viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = adapterDataList
+
+                viewModelMbr.executorServiceMbr?.execute {
+                    val filterFileList = assets.list("lut_filters_wide")!!.toCollection(ArrayList())
+                    adapterDataList.clear()
+
+                    for (filterFile in filterFileList) {
+                        adapterDataList.add(
+                            ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                filterFile
+                            )
+                        )
+                    }
+
+                    // 숫자 타이틀에 따른 정렬
+                    val numTitleComp =
+                        Comparator { a: AbstractRecyclerViewAdapter.AdapterItemAbstractVO,
+                                     b: AbstractRecyclerViewAdapter.AdapterItemAbstractVO ->
+                            val num1 =
+                                (a as ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).title.split(
+                                    "."
+                                ).first().toInt()
+                            val num2 =
+                                (b as ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).title.split(
+                                    "."
+                                ).first().toInt()
+
+                            num1 - num2
+                        }
+
+                    adapterDataList.sortWith(numTitleComp)
+
+                    runOnUiThread {
+                        // 로딩 아이템 제거 및 아이템 추가
+                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
+                            ArrayList()
+
+                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
+                            adapterDataList
+
+                        val selectedFilterName = viewModelMbr.thisSpw.selectedFilterName
+
+                        if (null != selectedFilterName) {
+                            val selectedFilterIdx =
+                                adapterDataList.indexOfFirst { (it as ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).title == selectedFilterName }
+
+                            if (selectedFilterIdx != -1) {
+                                adapterSetMbr.recyclerViewAdapter.selectedItemPosition =
+                                    selectedFilterIdx
+                                bindingMbr.filterList.scrollToPosition(selectedFilterIdx)
+
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -112,6 +182,16 @@ class ActivityEasyLutSample : AppCompatActivity() {
         viewModelMbr =
             ViewModelProvider(this)[ActivityEasyLutSampleViewModel::class.java]
 
+        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
+        adapterSetMbr = ActivityEasyLutSampleAdapterSet(
+            ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter(
+                this,
+                viewModelMbr,
+                bindingMbr.filterList,
+                false,
+                null
+            )
+        )
     }
 
     // viewModel 저장용 데이터 초기화
@@ -126,61 +206,284 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        bindingMbr.image1OriginImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image1OriginImage.drawable as BitmapDrawable).bitmap
 
-        if (!this.isFinishing) {
-            Glide.with(this)
-                .load(R.drawable.img_activity_easy_lut_sample_filter_test_image)
-                .transform(CenterCrop())
-                .into(bindingMbr.originImage)
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
         }
 
-        // todo : drawable 에 존재하는 필터 리스트 제공 및
-        //  lut_filter 라는 접두사와 hald 와 같은 접미사로다양한 필터 테스트 가능하도록
-        bindingMbr.imageFilterBtn.setOnClickListener {
-            bindingMbr.imageFilterBtn.isEnabled = false
-            bindingMbr.imageFilterBtn.isClickable = false
+        bindingMbr.image1FilteredImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image1FilteredImage.drawable as BitmapDrawable).bitmap
 
-            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                DialogProgressLoading.DialogInfoVO(
-                    false,
-                    "필터 적용중입니다.",
-                    onCanceled = {}
-                )
-
-            viewModelMbr.executorServiceMbr?.execute {
-                // 원본 이미지 가져오기
-                val drawable = AppCompatResources.getDrawable(this, R.drawable.img_activity_easy_lut_sample_filter_test_image)
-                val bitmapDrawable = drawable as BitmapDrawable
-                val originBitmap = bitmapDrawable.bitmap
-
-                // LUT 필터 생성
-                val filter = R.drawable.filter_hald_8_00
-                val filterKind = LutAlignment.Mode.HALD
-
-                val lutFilter = EasyLUT
-                    .fromResourceId()
-                    .withResources(resources)
-                    .withLutBitmapId(filter)
-                    .withAlignmentMode(filterKind)
-                    .createFilter()
-
-                // 필터 적용
-                val filterBitmap = lutFilter?.apply(originBitmap)
-
-                runOnUiThread {
-                    if (!this.isFinishing) {
-                        Glide.with(this)
-                            .load(filterBitmap)
-                            .transform(CenterCrop())
-                            .into(bindingMbr.filteredImage)
-                    }
-
-                    viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-
-                    bindingMbr.imageFilterBtn.isEnabled = true
-                    bindingMbr.imageFilterBtn.isClickable = true
-                }
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
             }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
+        }
+
+        bindingMbr.image2OriginImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image2OriginImage.drawable as BitmapDrawable).bitmap
+
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
+        }
+
+        bindingMbr.image2FilteredImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image2FilteredImage.drawable as BitmapDrawable).bitmap
+
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
+        }
+
+        bindingMbr.image3OriginImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image3OriginImage.drawable as BitmapDrawable).bitmap
+
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
+        }
+
+        bindingMbr.image3FilteredImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image3FilteredImage.drawable as BitmapDrawable).bitmap
+
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
+        }
+
+        bindingMbr.image4OriginImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image4OriginImage.drawable as BitmapDrawable).bitmap
+
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
+        }
+
+        bindingMbr.image4FilteredImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image4FilteredImage.drawable as BitmapDrawable).bitmap
+
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
+        }
+
+        bindingMbr.image5OriginImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image5OriginImage.drawable as BitmapDrawable).bitmap
+
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
+        }
+
+        bindingMbr.image5FilteredImage.setOnClickListener {
+            val imageBitmap = (bindingMbr.image5FilteredImage.drawable as BitmapDrawable).bitmap
+
+            val imageFileName =
+                "ActivityMainIntentExtraTemp.jpg"
+            val imageFile =
+                File(cacheDir, imageFileName)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+
+            imageFile.createNewFile()
+            val warpFileOut =
+                FileOutputStream(imageFile)
+            imageBitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                100,
+                warpFileOut
+            )
+            warpFileOut.close()
+
+            val gotoImageViewerIntent = Intent()
+            gotoImageViewerIntent.action = Intent.ACTION_VIEW
+            gotoImageViewerIntent.setDataAndType(UriAndPath.getUriFromPath(imageFile.absolutePath), "image/*")
+            startActivity(gotoImageViewerIntent)
+
         }
     }
 
@@ -231,6 +534,86 @@ class ActivityEasyLutSample : AppCompatActivity() {
             } else {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
+            }
+        }
+
+        // recyclerViewAdapter 데이터 리스트
+        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
+            adapterSetMbr.recyclerViewAdapter.setNewItemList(it)
+        }
+
+        viewModelMbr.filteredImage1LiveDataMbr.observe(this){
+            if (it == null){
+                if (!isFinishing) {
+                    bindingMbr.image1FilteredImage.setImageResource(android.R.color.transparent)
+                }
+            }else{
+                if (!isFinishing) {
+                    Glide.with(this)
+                        .load(it)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.image1FilteredImage)
+                }
+            }
+        }
+
+        viewModelMbr.filteredImage2LiveDataMbr.observe(this){
+            if (it == null){
+                if (!isFinishing) {
+                    bindingMbr.image2FilteredImage.setImageResource(android.R.color.transparent)
+                }
+            }else{
+                if (!isFinishing) {
+                    Glide.with(this)
+                        .load(it)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.image2FilteredImage)
+                }
+            }
+        }
+
+        viewModelMbr.filteredImage3LiveDataMbr.observe(this){
+            if (it == null){
+                if (!isFinishing) {
+                    bindingMbr.image3FilteredImage.setImageResource(android.R.color.transparent)
+                }
+            }else{
+                if (!isFinishing) {
+                    Glide.with(this)
+                        .load(it)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.image3FilteredImage)
+                }
+            }
+        }
+
+        viewModelMbr.filteredImage4LiveDataMbr.observe(this){
+            if (it == null){
+                if (!isFinishing) {
+                    bindingMbr.image4FilteredImage.setImageResource(android.R.color.transparent)
+                }
+            }else{
+                if (!isFinishing) {
+                    Glide.with(this)
+                        .load(it)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.image4FilteredImage)
+                }
+            }
+        }
+
+        viewModelMbr.filteredImage5LiveDataMbr.observe(this){
+            if (it == null){
+                if (!isFinishing) {
+                    bindingMbr.image5FilteredImage.setImageResource(android.R.color.transparent)
+                }
+            }else{
+                if (!isFinishing) {
+                    Glide.with(this)
+                        .load(it)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.image5FilteredImage)
+                }
             }
         }
     }
