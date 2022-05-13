@@ -5,9 +5,6 @@ import android.graphics.Bitmap;
 import com.example.prowd_android_template.util_object.easylut.lutimage.LUTImage;
 
 public interface BitmapStrategy {
-
-    String TAG = BitmapStrategy.class.getSimpleName();
-
     Bitmap applyLut(Bitmap src, LUTImage lutImage);
 
     enum Type{

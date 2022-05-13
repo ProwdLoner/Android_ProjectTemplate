@@ -2,10 +2,12 @@ package com.example.prowd_android_template.util_object.easylut.lutimage;
 
 import android.graphics.Bitmap;
 
+import androidx.annotation.NonNull;
+
 public class LUTImage {
     private static final int COLOR_DEPTH = 256;
 
-    private final int lutColors[];
+    private final int[] lutColors;
 
     protected final int lutWidth;
     protected final int lutHeight;
@@ -34,12 +36,11 @@ public class LUTImage {
                                           CoordinateToColor.Type coordinateToColorType,
                                           LutAlignment.Mode lutAlignmentMode) {
         final int lutWidth = lutBitmap.getWidth();
-        int lutColors[] = new int[lutWidth * lutBitmap.getHeight()];
+        int[] lutColors = new int[lutWidth * lutBitmap.getHeight()];
         lutBitmap.getPixels(lutColors, 0, lutWidth, 0, 0, lutWidth, lutBitmap.getHeight());
-        LUTImage lutImage = new LUTImage(lutWidth, lutBitmap.getHeight(), lutColors,
-                coordinateToColorType, lutAlignmentMode);
 
-        return lutImage;
+        return new LUTImage(lutWidth, lutBitmap.getHeight(), lutColors,
+                coordinateToColorType, lutAlignmentMode);
     }
 
     private int sideSize() {
@@ -48,8 +49,8 @@ public class LUTImage {
             final double lutRoot = Math.pow(lutWidth * lutWidth, 1d / 3d);
             return (int) Math.round(lutRoot);
         }
-        int smallerSide = lutWidth > lutHeight ? lutHeight : lutWidth;
-        int longerSide = lutWidth > lutHeight ? lutWidth : lutHeight;
+        int smallerSide = Math.min(lutWidth, lutHeight);
+        int longerSide = Math.max(lutWidth, lutHeight);
 
         double lutRoot = Math.pow(smallerSide * longerSide, 1d / 3d);
         return (int) Math.round(lutRoot);
@@ -76,6 +77,7 @@ public class LUTImage {
         return lutY * lutWidth + lutX;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "LUTImage{" +
