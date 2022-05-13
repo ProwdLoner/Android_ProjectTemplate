@@ -3,6 +3,7 @@ package com.example.prowd_android_template.abstract_class
 import android.app.Activity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.prowd_android_template.util_class.LogObj
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
@@ -14,6 +15,9 @@ abstract class AbstractRecyclerViewAdapter(
     onScrollHitBottom: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
+    // (로그 변수)
+    private val logObjMbr = LogObj("AbstractRecyclerViewAdapter")
+
     // 현 화면에 표시된 어뎁터 데이터 리스트
     val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = arrayListOf()
 
@@ -21,7 +25,7 @@ abstract class AbstractRecyclerViewAdapter(
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
     // Long 값 최소에서 최대로 갈 때까지 진행되므로, 그때까지 아이템 리스트에 남아있을 가능성은 매우 드뭄
     // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재(심각한 에러는 아님)
-    var maxUid = Long.MIN_VALUE
+    var maxUidMbr = Long.MIN_VALUE
         get() {
             return field++
         }

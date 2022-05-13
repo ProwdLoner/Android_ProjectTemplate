@@ -12,9 +12,13 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicBottomSheetNavigationSampleBinding
+import com.example.prowd_android_template.util_class.LogObj
 
 class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // <멤버 변수 공간>
+    // (로그 변수)
+    private val logObjMbr = LogObj("ActivityBasicBottomSheetNavigationSample")
+
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityBasicBottomSheetNavigationSampleBinding
 
@@ -124,7 +128,8 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr =
+                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
 

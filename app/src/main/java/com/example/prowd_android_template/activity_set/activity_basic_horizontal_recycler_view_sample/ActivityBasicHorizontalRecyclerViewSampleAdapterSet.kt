@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
 import com.example.prowd_android_template.databinding.*
+import com.example.prowd_android_template.util_class.LogObj
 
 class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
     val recyclerViewAdapter: RecyclerViewAdapter
@@ -25,6 +26,8 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
+        // (로그 변수)
+        private val logObjMbr = LogObj("ActivityBasicHorizontalRecyclerViewSampleAdapterSet_RecyclerViewAdapter")
 
 
         // ---------------------------------------------------------------------------------------------

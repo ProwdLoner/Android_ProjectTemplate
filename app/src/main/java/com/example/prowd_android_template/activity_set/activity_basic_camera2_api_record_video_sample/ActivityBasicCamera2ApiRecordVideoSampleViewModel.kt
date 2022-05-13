@@ -12,12 +12,16 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.util_class.LogObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class ActivityBasicCamera2ApiRecordVideoSampleViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
+    // (로그 변수)
+    private val logObjMbr = LogObj("ActivityBasicCamera2ApiRecordVideoSampleViewModel")
+
     private val applicationMbr = application
 
     // (repository 모델)
@@ -51,7 +55,7 @@ class ActivityBasicCamera2ApiRecordVideoSampleViewModel(application: Application
         Element.U8_4(renderScriptMbr)
     )
 
-    var scriptCRotatorMbr : ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
+    var scriptCRotatorMbr: ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
 
     // 액티비티 진입 필수 권한 요청 여부
     var isActivityPermissionClearMbr = false

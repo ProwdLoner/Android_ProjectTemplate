@@ -7,9 +7,13 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
 import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment2Binding
+import com.example.prowd_android_template.util_class.LogObj
 
 class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
     // <멤버 변수 공간>
+    // (로그 변수)
+    private val logObjMbr = LogObj("FragmentActivityBasicBottomSheetNavigationSampleFragment2")
+
     // (뷰 바인더 객체)
     private lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment2Binding
 
@@ -51,14 +55,16 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
         if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr && // 화면 회전이 아니면서,
             isVisible // 현재 보이는 상황일 때
         ) {
-            val sessionToken = parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            val sessionToken =
+                parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
             if (parentActivityMbr.viewModelMbr.fragment2Data.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != parentActivityMbr.viewModelMbr.fragment2Data.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
             ) {
                 // 진입 플래그 변경
                 parentActivityMbr.viewModelMbr.fragment2Data.isDataFirstLoadingMbr = false
-                parentActivityMbr.viewModelMbr.fragment2Data.currentUserSessionTokenMbr = sessionToken
+                parentActivityMbr.viewModelMbr.fragment2Data.currentUserSessionTokenMbr =
+                    sessionToken
 
                 //  데이터 로딩
             }
@@ -83,7 +89,8 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
         if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            parentActivityMbr.viewModelMbr.fragment2Data.currentUserSessionTokenMbr = parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            parentActivityMbr.viewModelMbr.fragment2Data.currentUserSessionTokenMbr =
+                parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
 

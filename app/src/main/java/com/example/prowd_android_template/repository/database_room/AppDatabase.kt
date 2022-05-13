@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.*
 import com.example.prowd_android_template.repository.database_room.table_set.test_info.TestInfoDao
 import com.example.prowd_android_template.repository.database_room.table_set.test_info.TestInfoTable
+import com.example.prowd_android_template.util_class.LogObj
 import java.util.concurrent.Semaphore
 
 @Database(

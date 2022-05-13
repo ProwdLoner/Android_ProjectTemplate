@@ -93,12 +93,12 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
                 viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.value =
                     arrayListOf(
                         ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Header.ItemVO(
-                            adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
+                            adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUidMbr,
                             null,
                             null
                         ),
                         ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Footer.ItemVO(
-                            adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
+                            adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUidMbr,
                             null,
                             null
                         )
@@ -244,7 +244,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
                         true
 
                     // 추가할 아이템
-                    val itemUid = adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
+                    val itemUid = adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUidMbr
                     val newItem =
                         ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
                             itemUid,
@@ -937,7 +937,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
         screenVerticalRecyclerViewAdapterDataListCopy.add(
             itemLastIdx + 1,
             ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.ItemLoader.ItemVO(
-                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid
+                adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUidMbr
             )
         )
 
@@ -991,7 +991,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
                         for (data in getScreenVerticalRecyclerViewAdapterItemDataNextPageOnVMAsyncResult.testList) {
                             adapterDataList.add(
                                 ActivityNetworkRecyclerViewSampleAdapterSet.ScreenVerticalRecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUid,
+                                    adapterSetMbr.screenVerticalRecyclerViewAdapter.maxUidMbr,
                                     data.uid,
                                     data.title,
                                     data.content,

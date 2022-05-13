@@ -41,6 +41,9 @@ import kotlin.math.max
 class CameraObj private constructor(
     private val parentActivityMbr: Activity
 ) {
+    // (로그 변수)
+    private val logObjMbr = LogObj("CameraObj")
+
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // 카메라 아이디
     lateinit var cameraIdMbr: String
@@ -168,8 +171,8 @@ class CameraObj private constructor(
 
                 cameraInfoList.add(
                     CameraInfo(
-                        facing,
                         id,
+                        facing,
                         previewInfoList,
                         imageReaderInfoList,
                         mediaRecorderInfoList,
@@ -1259,8 +1262,8 @@ class CameraObj private constructor(
     // 기타 카메라. value : 2
     // image reader format : YUV 420 888 을 사용
     data class CameraInfo(
-        val facing: Int,
         val cameraId: String,
+        val facing: Int,
         val previewInfoList: ArrayList<DeviceInfo>,
         val imageReaderInfoList: ArrayList<DeviceInfo>,
         val mediaRecorderInfoList: ArrayList<DeviceInfo>,

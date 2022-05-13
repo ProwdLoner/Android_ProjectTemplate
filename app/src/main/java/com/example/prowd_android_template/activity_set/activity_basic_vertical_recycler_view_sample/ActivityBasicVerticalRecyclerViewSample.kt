@@ -72,7 +72,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
                     arrayListOf(
                         ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                            adapterSetMbr.recyclerViewAdapter.maxUid
+                            adapterSetMbr.recyclerViewAdapter.maxUidMbr
                         )
                     )
                 viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = adapterDataList
@@ -88,35 +88,35 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                         adapterDataList.addAll(
                             arrayListOf(
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item1"
                                 ),
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item2"
                                 ),
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item3"
                                 ),
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item4"
                                 ),
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item5"
                                 ),
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item6"
                                 ),
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item7"
                                 ),
                                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item8"
                                 )
                             )

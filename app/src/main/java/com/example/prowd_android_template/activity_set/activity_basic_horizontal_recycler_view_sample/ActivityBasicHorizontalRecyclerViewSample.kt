@@ -8,9 +8,13 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicHorizontalRecyclerViewSampleBinding
+import com.example.prowd_android_template.util_class.LogObj
 
 class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
+    // (로그 변수)
+    private val logObjMbr = LogObj("ActivityBasicHorizontalRecyclerViewSample")
+
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityBasicHorizontalRecyclerViewSampleBinding
 
@@ -71,7 +75,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                 var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
                     arrayListOf(
                         ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                            adapterSetMbr.recyclerViewAdapter.maxUid
+                            adapterSetMbr.recyclerViewAdapter.maxUidMbr
                         )
                     )
                 viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = adapterDataList
@@ -87,42 +91,42 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                         adapterDataList.addAll(
                             arrayListOf(
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item1"
                                 ),
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item2"
                                 ),
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item3"
                                 ),
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item4"
                                 ),
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item5"
                                 ),
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item6"
                                 ),
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item7"
                                 ),
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUid,
+                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
                                     "item8"
                                 )
                             )
                         )
 
                         // 로딩 아이템 제거
-                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =ArrayList()
+                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = ArrayList()
 
                         // 데이터 반영
                         viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =

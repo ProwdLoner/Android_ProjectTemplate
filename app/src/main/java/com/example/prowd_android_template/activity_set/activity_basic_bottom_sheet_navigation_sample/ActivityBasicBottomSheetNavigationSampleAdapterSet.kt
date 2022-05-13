@@ -3,6 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_basic_bottom_sh
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.example.prowd_android_template.util_class.LogObj
 
 data class ActivityBasicBottomSheetNavigationSampleAdapterSet(
     val screenViewPagerFragmentStateAdapter: ScreenViewPagerFragmentStateAdapter
@@ -13,6 +14,10 @@ data class ActivityBasicBottomSheetNavigationSampleAdapterSet(
         parentViewMbr: ActivityBasicBottomSheetNavigationSample
     ) : FragmentStateAdapter(parentViewMbr) {
         // <멤버 변수 공간>
+        // (로그 변수)
+        private val logObjMbr =
+            LogObj("ActivityBasicBottomSheetNavigationSampleAdapterSet_ScreenViewPagerFragmentStateAdapter")
+
         private val adapterMainDataMbr: ArrayList<Fragment> = ArrayList()
 
 

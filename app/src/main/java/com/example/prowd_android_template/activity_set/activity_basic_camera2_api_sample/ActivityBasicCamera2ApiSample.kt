@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
-import android.util.Log
 import android.view.WindowManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -26,6 +25,7 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
+import com.example.prowd_android_template.util_class.LogObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 
@@ -35,6 +35,9 @@ import com.example.prowd_android_template.util_object.RenderScriptUtil
 // todo : 바로 위 문제는, 전역변수로 두고, 이미지 리더 스레드 완전 종료 후 해제까지 확인하도록 할 것
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
+    // (로그 변수)
+    private val logObjMbr = LogObj("ActivityBasicCamera2ApiSample")
+
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityBasicCamera2ApiSampleBinding
 
@@ -92,7 +95,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 액티비티 진입 필수 권한 요청
         requestActivityPermission()
 
-        Log.e("cs", CameraObj.getCameraInfoList(this) .toString())
+        logObjMbr.de(this, CameraObj.getCameraInfoList(this) .toString())
     }
 
     override fun onResume() {

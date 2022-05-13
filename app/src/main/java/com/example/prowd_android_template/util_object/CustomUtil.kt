@@ -2,11 +2,19 @@ package com.example.prowd_android_template.util_object
 
 import android.R
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.res.TypedArray
-import android.util.Size
 
 
 object CustomUtil {
+    // 현재 실행 환경이 디버그 모드인지 파악하는 함수
+    fun isDebuggable(context: Context): Boolean {
+        return 0 != context.packageManager.getApplicationInfo(
+            context.packageName,
+            0
+        ).flags and ApplicationInfo.FLAG_DEBUGGABLE
+    }
+
     fun getStatusBarHeightPixel(context: Context): Int {
         var statusBarHeight = 0
         val resourceId: Int =

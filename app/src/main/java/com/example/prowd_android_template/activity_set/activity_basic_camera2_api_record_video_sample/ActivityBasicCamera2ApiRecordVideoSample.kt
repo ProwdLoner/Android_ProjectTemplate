@@ -25,11 +25,15 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiRecordVideoSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
+import com.example.prowd_android_template.util_class.LogObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 
 class ActivityBasicCamera2ApiRecordVideoSample : AppCompatActivity() {
     // <멤버 변수 공간>
+    // (로그 변수)
+    private val logObjMbr = LogObj("ActivityBasicCamera2ApiRecordVideoSample")
+
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityBasicCamera2ApiRecordVideoSampleBinding
 

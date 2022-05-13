@@ -6,6 +6,9 @@ import android.os.HandlerThread
 // <안드로이드 스레드셋 오브젝트 클래스>
 class HandlerThreadObj(val threadName: String) {
     // <멤버 변수 공간>
+    // (로그 변수)
+    private val logObjMbr = LogObj("HandlerThreadObj")
+
     // (스레드 정보 객체)
     private var handlerThread: HandlerThread? = null
     var handler: Handler? = null
