@@ -1,6 +1,7 @@
 package com.example.prowd_android_template.activity_set.activity_system_camera_photo_sample
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -51,6 +52,8 @@ class ActivitySystemCameraPhotoSampleViewModel(application: Application) :
     // 확인 다이얼로그 출력 정보
     val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
+
+    val selectedPhotoUriMbr : MutableLiveData<Uri?> = MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------

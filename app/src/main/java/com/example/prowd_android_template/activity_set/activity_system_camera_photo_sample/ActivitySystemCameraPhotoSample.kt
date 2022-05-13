@@ -23,6 +23,7 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivitySystemCameraPhotoSampleBinding
 import com.example.prowd_android_template.util_object.GalleryUtil
+import com.example.prowd_android_template.util_object.UriAndPath
 import java.io.File
 
 
@@ -350,11 +351,10 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
 
                     val selectedUri: Uri = goToGalleryIntent?.data!!
 
-                    Glide.with(this)
-                        .load(selectedUri)
-                        .transform(CenterCrop())
-                        .into(bindingMbr.fileImg)
-
+                    val intent = Intent()
+                    intent.action = Intent.ACTION_VIEW
+                    intent.setDataAndType(selectedUri, "image/*")
+                    startActivity(intent)
                 }
             }
             resultLauncherMbr.launch(intent)
@@ -410,6 +410,21 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
                 confirmDialogMbr = null
             }
         }
+
+        viewModelMbr.selectedPhotoUriMbr.observe(this){
+            if (it == null){
+                if (!isDestroyed) {
+                    bindingMbr.fileImg.setImageResource(android.R.color.transparent)
+                }
+            }else{
+                if (!isDestroyed) {
+                    Glide.with(this)
+                        .load(it)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.fileImg)
+                }
+            }
+        }
     }
 
     // 시스템 카메라 시작 : 카메라 관련 권한이 충족된 상태
@@ -433,11 +448,7 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
                 if (it.resultCode == RESULT_OK) {
                     cameraImageFileMbr = file
 
-                    // 저장된 파일 이미지 보기
-                    Glide.with(this)
-                        .load(file)
-                        .transform(CenterCrop())
-                        .into(bindingMbr.fileImg)
+                    viewModelMbr.selectedPhotoUriMbr.value = UriAndPath.getUriFromPath(this, file.absolutePath)
                 }
             }
 
