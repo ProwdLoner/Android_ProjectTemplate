@@ -13,7 +13,7 @@ interface TestInfoDao {
                 "where " +
                 "uid = :uid"
     )
-    fun selectTestInfoColAll(uid : Int): TestInfoTable
+    fun selectTestInfoColAll(uid: Int): TestInfoTable
 
     @Query(
         "SELECT " +

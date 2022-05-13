@@ -43,13 +43,13 @@ class ActivityBasicBottomSheetNavigationSampleViewModel(application: Application
 
     // (Fragment 화면 데이터)
     // Fragment1
-    var fragment1Data = FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData()
+    var fragment1DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData()
 
     // Fragment2
-    var fragment2Data = FragmentActivityBasicBottomSheetNavigationSampleFragment2VmData()
+    var fragment2DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment2VmData()
 
     // Fragment3
-    var fragment3Data = FragmentActivityBasicBottomSheetNavigationSampleFragment3VmData()
+    var fragment3DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment3VmData()
 
 
     // ---------------------------------------------------------------------------------------------

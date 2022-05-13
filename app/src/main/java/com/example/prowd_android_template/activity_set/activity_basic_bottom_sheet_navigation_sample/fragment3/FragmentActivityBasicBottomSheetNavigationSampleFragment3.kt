@@ -11,7 +11,7 @@ import com.example.prowd_android_template.databinding.FragmentActivityBasicBotto
 class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
+    lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
 
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
     private lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
@@ -54,12 +54,12 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
             val sessionToken =
                 parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
-            if (parentActivityMbr.viewModelMbr.fragment3Data.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-                sessionToken != parentActivityMbr.viewModelMbr.fragment3Data.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
+            if (parentActivityMbr.viewModelMbr.fragment3DataMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
+                sessionToken != parentActivityMbr.viewModelMbr.fragment3DataMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
             ) {
                 // 진입 플래그 변경
-                parentActivityMbr.viewModelMbr.fragment3Data.isDataFirstLoadingMbr = false
-                parentActivityMbr.viewModelMbr.fragment3Data.currentUserSessionTokenMbr =
+                parentActivityMbr.viewModelMbr.fragment3DataMbr.isDataFirstLoadingMbr = false
+                parentActivityMbr.viewModelMbr.fragment3DataMbr.currentUserSessionTokenMbr =
                     sessionToken
 
                 //  데이터 로딩
@@ -85,7 +85,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
         if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            parentActivityMbr.viewModelMbr.fragment3Data.currentUserSessionTokenMbr =
+            parentActivityMbr.viewModelMbr.fragment3DataMbr.currentUserSessionTokenMbr =
                 parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
@@ -104,7 +104,8 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
             if (null == it) {
                 bindingMbr.clickedByValueTxt.text = "클릭 없음"
             } else {
-                bindingMbr.clickedByValueTxt.text = "${it}번 플래그먼트"
+                val textMsg = "${it}번 플래그먼트"
+                bindingMbr.clickedByValueTxt.text = textMsg
             }
         }
 

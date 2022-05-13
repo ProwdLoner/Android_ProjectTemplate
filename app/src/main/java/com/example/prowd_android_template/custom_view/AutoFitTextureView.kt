@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.custom_view
 
 import android.content.Context
-import android.graphics.*
 import android.util.AttributeSet
 import android.view.TextureView
 

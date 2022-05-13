@@ -9,7 +9,7 @@ data class TestInfoTable(
 
     @ColumnInfo(name = "age")
     val age: Int
-){
+) {
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "uid")
     var uid: Int = 0

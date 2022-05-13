@@ -73,7 +73,6 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
                 //  데이터 로딩
             }
         }
-
     }
 
     override fun onStop() {
