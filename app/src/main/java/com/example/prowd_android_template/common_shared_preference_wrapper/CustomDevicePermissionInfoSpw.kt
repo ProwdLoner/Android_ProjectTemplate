@@ -17,14 +17,14 @@ class CustomDevicePermissionInfoSpw(application: Application) {
     var isPushPermissionGranted: Boolean
         get() {
             return spMbr.getBoolean(
-                "CustomDevicePermissionInfoSpw_isPushPermissionGranted",
+                "isPushPermissionGranted",
                 false
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putBoolean(
-                    "CustomDevicePermissionInfoSpw_isPushPermissionGranted",
+                    "isPushPermissionGranted",
                     value
                 )
                 apply()

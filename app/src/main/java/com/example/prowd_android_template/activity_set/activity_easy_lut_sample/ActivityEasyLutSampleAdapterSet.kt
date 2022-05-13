@@ -210,28 +210,10 @@ class ActivityEasyLutSampleAdapterSet(
 
                             val filterBitmap3 = lutFilter?.apply(originBitmap3)
 
-                            // 원본 이미지4
-                            val originBitmap4 = ((AppCompatResources.getDrawable(
-                                parentViewMbr,
-                                R.drawable.img_activity_easy_lut_sample_image4
-                            )) as BitmapDrawable).bitmap
-
-                            val filterBitmap4 = lutFilter?.apply(originBitmap4)
-
-                            // 원본 이미지5
-                            val originBitmap5 = ((AppCompatResources.getDrawable(
-                                parentViewMbr,
-                                R.drawable.img_activity_easy_lut_sample_image5
-                            )) as BitmapDrawable).bitmap
-
-                            val filterBitmap5 = lutFilter?.apply(originBitmap5)
-
                             parentViewMbr.runOnUiThread {
                                 parentViewModel.filteredImage1LiveDataMbr.value = filterBitmap1
                                 parentViewModel.filteredImage2LiveDataMbr.value = filterBitmap2
                                 parentViewModel.filteredImage3LiveDataMbr.value = filterBitmap3
-                                parentViewModel.filteredImage4LiveDataMbr.value = filterBitmap4
-                                parentViewModel.filteredImage5LiveDataMbr.value = filterBitmap5
 
                                 parentViewModel.progressLoadingDialogInfoLiveDataMbr.value = null
                             }

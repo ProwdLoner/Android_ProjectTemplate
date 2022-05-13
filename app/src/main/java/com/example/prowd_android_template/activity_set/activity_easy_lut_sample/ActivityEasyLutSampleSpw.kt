@@ -17,14 +17,14 @@ class ActivityEasyLutSampleSpw(application: Application) {
     var selectedFilterName: String?
         get() {
             return spMbr.getString(
-                "ActivityEasyLutSampleSpw_selectedFilterName",
+                "selectedFilterName",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "ActivityEasyLutSampleSpw_selectedFilterName",
+                    "selectedFilterName",
                     value
                 )
                 apply()

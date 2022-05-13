@@ -66,10 +66,6 @@ class ActivityEasyLutSampleViewModel(application: Application) :
 
     val filteredImage3LiveDataMbr: MutableLiveData<Bitmap?> = MutableLiveData(null)
 
-    val filteredImage4LiveDataMbr: MutableLiveData<Bitmap?> = MutableLiveData(null)
-
-    val filteredImage5LiveDataMbr: MutableLiveData<Bitmap?> = MutableLiveData(null)
-
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>

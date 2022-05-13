@@ -17,14 +17,14 @@ class CurrentLoginSessionInfoSpw(application: Application) {
     var sessionToken: String?
         get() {
             return spMbr.getString(
-                "CurrentLoginSessionInfoSpw_sessionToken",
+                "sessionToken",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "CurrentLoginSessionInfoSpw_sessionToken",
+                    "sessionToken",
                     value
                 )
                 apply()
@@ -35,14 +35,14 @@ class CurrentLoginSessionInfoSpw(application: Application) {
     var userNickName: String?
         get() {
             return spMbr.getString(
-                "CurrentLoginSessionInfoSpw_userNickName",
+                "userNickName",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "CurrentLoginSessionInfoSpw_userNickName",
+                    "userNickName",
                     value
                 )
                 apply()
@@ -55,14 +55,14 @@ class CurrentLoginSessionInfoSpw(application: Application) {
     var loginType: Int
         get() {
             return spMbr.getInt(
-                "CurrentLoginSessionInfoSpw_loginType",
+                "loginType",
                 0
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putInt(
-                    "CurrentLoginSessionInfoSpw_loginType",
+                    "loginType",
                     value
                 )
                 apply()
@@ -73,14 +73,14 @@ class CurrentLoginSessionInfoSpw(application: Application) {
     var userServerId: String?
         get(): String? {
             return spMbr.getString(
-                "CurrentLoginSessionInfoSpw_userServerId",
+                "userServerId",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "CurrentLoginSessionInfoSpw_userServerId",
+                    "userServerId",
                     value
                 )
                 apply()
@@ -91,14 +91,14 @@ class CurrentLoginSessionInfoSpw(application: Application) {
     var userServerPw: String?
         get(): String? {
             return spMbr.getString(
-                "CurrentLoginSessionInfoSpw_userServerPw",
+                "userServerPw",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "CurrentLoginSessionInfoSpw_userServerPw",
+                    "userServerPw",
                     value
                 )
                 apply()

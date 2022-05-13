@@ -17,14 +17,14 @@ class ActivityInitSpw(application: Application) {
     var isPermissionInitShownBefore: Boolean
         get() {
             return spMbr.getBoolean(
-                "ActivityInitSpw_isPermissionInitShownBefore",
+                "isPermissionInitShownBefore",
                 false
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putBoolean(
-                    "ActivityInitSpw_isPermissionInitShownBefore",
+                    "isPermissionInitShownBefore",
                     value
                 )
                 apply()
