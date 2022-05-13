@@ -26,8 +26,6 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
-        // (로그 변수)
-        private val logObjMbr = LogObj("ActivityBasicHorizontalRecyclerViewSampleAdapterSet_RecyclerViewAdapter")
 
 
         // ---------------------------------------------------------------------------------------------

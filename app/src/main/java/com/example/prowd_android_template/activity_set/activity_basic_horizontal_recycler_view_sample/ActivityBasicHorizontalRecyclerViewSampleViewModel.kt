@@ -16,9 +16,6 @@ import java.util.concurrent.Executors
 class ActivityBasicHorizontalRecyclerViewSampleViewModel(application: Application) :
     AndroidViewModel(application) {
     // <멤버 변수 공간>
-    // (로그 변수)
-    private val logObjMbr = LogObj("ActivityBasicHorizontalRecyclerViewSampleViewModel")
-
     private val applicationMbr = application
 
     // (repository 모델)

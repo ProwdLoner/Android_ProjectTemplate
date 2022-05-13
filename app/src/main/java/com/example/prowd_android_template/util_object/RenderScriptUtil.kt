@@ -9,9 +9,6 @@ import com.example.prowd_android_template.ScriptC_rotator
 import com.xxx.yyy.ScriptC_crop
 
 object RenderScriptUtil {
-    // input example :
-    //    var renderScript: RenderScript = RenderScript.create(application)
-
     // (YUV420888 Image 객체를 ByteArray 로 변환해서 반환하는 함수)
     fun yuv420888ImageToByteArray(image: Image): ByteArray {
         assert(image.format == ImageFormat.YUV_420_888)
@@ -219,7 +216,12 @@ object RenderScriptUtil {
         inputAllocation.copyFrom(sourceBitmap)
 
         val outputType =
-            Type.createXY(renderScript, Element.RGBA_8888(renderScript), roiRect.right - roiRect.left, roiRect.bottom - roiRect.top)
+            Type.createXY(
+                renderScript,
+                Element.RGBA_8888(renderScript),
+                roiRect.right - roiRect.left,
+                roiRect.bottom - roiRect.top
+            )
         val outputAllocation =
             Allocation.createTyped(renderScript, outputType, Allocation.USAGE_SCRIPT)
 
@@ -235,7 +237,11 @@ object RenderScriptUtil {
 
         scriptCCrop.forEach_doCrop(inputAllocation, launchOptions)
 
-        val resultBitmap = Bitmap.createBitmap(roiRect.right - roiRect.left, roiRect.bottom - roiRect.top, sourceBitmap.config)
+        val resultBitmap = Bitmap.createBitmap(
+            roiRect.right - roiRect.left,
+            roiRect.bottom - roiRect.top,
+            sourceBitmap.config
+        )
         outputAllocation.copyTo(resultBitmap)
 
         inputType.destroy()

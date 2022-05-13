@@ -8,13 +8,9 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicHorizontalRecyclerViewSampleBinding
-import com.example.prowd_android_template.util_class.LogObj
 
 class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
-    // (로그 변수)
-    private val logObjMbr = LogObj("ActivityBasicHorizontalRecyclerViewSample")
-
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityBasicHorizontalRecyclerViewSampleBinding
 

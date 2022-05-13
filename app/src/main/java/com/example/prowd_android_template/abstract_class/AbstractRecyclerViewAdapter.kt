@@ -3,7 +3,6 @@ package com.example.prowd_android_template.abstract_class
 import android.app.Activity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.prowd_android_template.util_class.LogObj
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
@@ -15,9 +14,6 @@ abstract class AbstractRecyclerViewAdapter(
     onScrollHitBottom: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
-    // (로그 변수)
-    private val logObjMbr = LogObj("AbstractRecyclerViewAdapter")
-
     // 현 화면에 표시된 어뎁터 데이터 리스트
     val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = arrayListOf()
 

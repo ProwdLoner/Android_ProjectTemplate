@@ -7,13 +7,9 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
 import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
-import com.example.prowd_android_template.util_class.LogObj
 
 class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     // <멤버 변수 공간>
-    // (로그 변수)
-    private val logObjMbr = LogObj("FragmentActivityBasicBottomSheetNavigationSampleFragment3")
-
     // (뷰 바인더 객체)
     private lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
 
