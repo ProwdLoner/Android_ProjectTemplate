@@ -34,6 +34,13 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // 확인 다이얼로그
     private var confirmDialogMbr: DialogConfirm? = null
 
+    // 플래그먼트 생성 (화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것)
+    // 플래그먼트는 화면 회전시 초기화 수준이 아니라 다시 생성
+    // 부모 뷰 모델에 화면 정보를 저장하고, 동작 플래그도 저장하여 반영
+    val fragment1 = FragmentActivityBasicBottomSheetNavigationSampleFragment1()
+    val fragment2 = FragmentActivityBasicBottomSheetNavigationSampleFragment2()
+    val fragment3 = FragmentActivityBasicBottomSheetNavigationSampleFragment3()
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -135,14 +142,6 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
         // 프레그먼트 어뎁터 연결
         bindingMbr.screenViewPager.adapter = adapterSetMbr.screenViewPagerFragmentStateAdapter
-
-        // 플래그먼트는 화면 회전시 초기화 수준이 아니라 다시 생성
-        // 부모 뷰 모델에 화면 정보를 저장하고, 동작 플래그도 저장하여 반영
-
-        // 플래그먼트 생성 (화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것)
-        val fragment1 = FragmentActivityBasicBottomSheetNavigationSampleFragment1()
-        val fragment2 = FragmentActivityBasicBottomSheetNavigationSampleFragment2()
-        val fragment3 = FragmentActivityBasicBottomSheetNavigationSampleFragment3()
 
         adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
             listOf(

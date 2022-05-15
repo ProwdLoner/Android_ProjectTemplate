@@ -182,9 +182,9 @@ class ActivityEasyLutSampleAdapterSet(
 
                             val lutFilter = EasyLUT
                                 .fromBitmap()
-                                .withBitmap(filter)
+                                .withBitmap(filter!!)
                                 .withAlignmentMode(filterKind)
-                                .createFilter()
+                                ?.createFilter()
 
                             // 원본 이미지1
                             val originBitmap1 = ((AppCompatResources.getDrawable(
