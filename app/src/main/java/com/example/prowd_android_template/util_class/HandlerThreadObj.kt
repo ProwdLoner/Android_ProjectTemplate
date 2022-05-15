@@ -16,6 +16,9 @@ class HandlerThreadObj(val threadName: String) {
     // <공개 메소드 공간>
     // (스레드 생성 함수)
     fun startHandlerThread() {
+        if (isThreadObjAlive()) {
+            return
+        }
         handlerThread = HandlerThread(threadName)
         handlerThread!!.start()
         handler = Handler(handlerThread!!.looper)
@@ -24,23 +27,25 @@ class HandlerThreadObj(val threadName: String) {
     // (스레드 종료 함수)
     // 스레드를 safely 하게 종료하고 스레드 관련 객체들을 비움
     fun stopHandlerThread() {
-        if (isThreadObjAlive()) {
-            handlerThread!!.quitSafely()
-            try {
-                handlerThread!!.join()
-                handlerThread = null
-                handler = null
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
-            }
+        if (!isThreadObjAlive()) {
+            return
+        }
+        handlerThread!!.quitSafely()
+        try {
+            handlerThread!!.join()
+            handlerThread = null
+            handler = null
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
         }
     }
 
     // (스레드 실행 함수)
     fun runInHandlerThread(runnable: Runnable) {
-        if (isThreadObjAlive()) {
-            handler!!.post(runnable)
+        if (!isThreadObjAlive()) {
+            return
         }
+        handler!!.post(runnable)
     }
 
 
