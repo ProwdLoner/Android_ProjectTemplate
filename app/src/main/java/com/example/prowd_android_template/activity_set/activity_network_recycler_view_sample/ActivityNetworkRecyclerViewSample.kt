@@ -518,7 +518,7 @@ class ActivityNetworkRecyclerViewSample : AppCompatActivity() {
 
         // screenVerticalRecyclerViewAdapter 데이터 리스트
         viewModelMbr.screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
-            adapterSetMbr.screenVerticalRecyclerViewAdapter.setNewItemList(it)
+            adapterSetMbr.screenVerticalRecyclerViewAdapter.setNewItemListAll(it)
         }
 
         // screenVerticalRecyclerViewAdapter 아이템 삭제 요청

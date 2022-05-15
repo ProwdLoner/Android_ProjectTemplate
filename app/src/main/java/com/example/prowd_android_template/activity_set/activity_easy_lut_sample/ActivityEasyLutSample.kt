@@ -442,7 +442,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
         // recyclerViewAdapter 데이터 리스트
         viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.setNewItemList(it)
+            adapterSetMbr.recyclerViewAdapter.setNewItemListAll(it)
         }
 
         viewModelMbr.filteredImage1LiveDataMbr.observe(this) {

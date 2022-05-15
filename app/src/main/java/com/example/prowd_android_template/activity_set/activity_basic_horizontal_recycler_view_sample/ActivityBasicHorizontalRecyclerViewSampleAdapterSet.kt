@@ -251,7 +251,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long
-            ) : AdapterItemAbstractVO(itemUid)
+            ) : AdapterHeaderAbstractVO(itemUid)
         }
 
         class Footer {
@@ -265,7 +265,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long
-            ) : AdapterItemAbstractVO(itemUid)
+            ) : AdapterFooterAbstractVO(itemUid)
         }
 
         class ItemLoader {

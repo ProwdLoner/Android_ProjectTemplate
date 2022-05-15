@@ -9,7 +9,7 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicVerticalRecyclerViewSampleBinding
 
-
+// todo : 화면 리플레시 함수 사용, 헤더 푸터 Empty로 사용, 뷰모델로 더미 데이터, 헤더, 푸터, 아이템 어싱크하게
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -248,7 +248,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
         // recyclerViewAdapter 데이터 리스트
         viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.setNewItemList(it)
+            adapterSetMbr.recyclerViewAdapter.setNewItemListAll(it)
         }
     }
 }

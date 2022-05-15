@@ -247,7 +247,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
 
         // recyclerViewAdapter 데이터 리스트
         viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.setNewItemList(it)
+            adapterSetMbr.recyclerViewAdapter.setNewItemListAll(it)
         }
     }
 }
