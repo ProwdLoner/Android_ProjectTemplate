@@ -52,6 +52,13 @@ class ActivityJniSampleViewModel(application: Application) :
     val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
+    val helloTxtLiveDataMbr: MutableLiveData<String?> =
+        MutableLiveData(null)
+
+    val assetsTxtLiveDataMbr: MutableLiveData<String?> =
+        MutableLiveData(null)
+
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>

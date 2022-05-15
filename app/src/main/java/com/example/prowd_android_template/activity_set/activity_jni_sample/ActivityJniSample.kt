@@ -111,7 +111,8 @@ class ActivityJniSample : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr =
+                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
 
@@ -121,7 +122,7 @@ class ActivityJniSample : AppCompatActivity() {
         bindingMbr.helloFromTestBtn.setOnClickListener {
             val jniResponse = NativeWrapperJniStringTest.getJniString()
 
-            bindingMbr.helloFromTestResultValue.text = jniResponse
+            viewModelMbr.helloTxtLiveDataMbr.value = jniResponse
         }
 
         // test2.cpp 테스트 버튼
@@ -131,7 +132,7 @@ class ActivityJniSample : AppCompatActivity() {
                 "jni_test.txt"
             )
 
-            bindingMbr.textFromAssetsTestResultValue.text = jniResponse
+            viewModelMbr.assetsTxtLiveDataMbr.value = jniResponse
         }
 
     }
@@ -183,6 +184,22 @@ class ActivityJniSample : AppCompatActivity() {
             } else {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
+            }
+        }
+
+        viewModelMbr.helloTxtLiveDataMbr.observe(this) {
+            if (it != null) {
+                bindingMbr.helloFromTestResultValue.text = it
+            } else {
+                bindingMbr.helloFromTestResultValue.text = ""
+            }
+        }
+
+        viewModelMbr.assetsTxtLiveDataMbr.observe(this) {
+            if (it != null) {
+                bindingMbr.textFromAssetsTestResultValue.text = it
+            } else {
+                bindingMbr.textFromAssetsTestResultValue.text = ""
             }
         }
     }
