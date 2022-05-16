@@ -11,7 +11,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicVerticalRecyclerViewSampleBinding
 import java.net.SocketTimeoutException
 
-// todo : 화면 리플레시 함수 사용, 헤더 푸터 Empty로 사용, 뷰모델로 더미 데이터, 헤더, 푸터, 아이템 어싱크하게
+// todo : 아이템 로더 간소화, 에러 화면 처리, 아이템 없을 때의 처리
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -207,7 +207,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         adapterSetMbr.recyclerViewAdapter.isFooterLoading = true
 
         // todo 아이템 로더 처리 간소화
-        var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+        val adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
             adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplicaOnlyItem()
 
         adapterDataList.add(
