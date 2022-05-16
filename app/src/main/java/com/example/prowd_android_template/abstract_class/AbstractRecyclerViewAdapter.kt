@@ -3,6 +3,7 @@ package com.example.prowd_android_template.abstract_class
 import android.app.Activity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.sync.Semaphore
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
@@ -141,145 +142,6 @@ abstract class AbstractRecyclerViewAdapter(
     }
 
     // (화면 갱신 함수)
-    // 화면 전체를 갱신하는 함수 (헤더 푸터 할 것 없이 모든 리스트를 갱신)
-    // newItemList 를 토대로 헤더 푸터 가릴것 없이 그대로 화면에 반영
-    // todo : 필요성 확인 후 제거 및 잔존
-    fun setNewItemListAll(newItemList: ArrayList<AdapterItemAbstractVO>) {
-        // (newItemList 에서 순환하며, 가장 앞에서부터 비교하며 싱크를 맞추기)
-
-        // 반영 리스트 사이즈가 0 일 때에는 모든 아이템을 제거
-        if (newItemList.size == 0) {
-            val currentEndIdx = currentItemListMbr.size
-            currentItemListMbr.clear()
-
-            notifyItemRangeRemoved(0, currentEndIdx)
-
-            return
-        }
-
-        if (currentItemListMbr.isEmpty()) {
-            // 현재 리스트가 비어있다면 모두 add
-            val newItemListSize = newItemList.size
-
-            currentItemListMbr.addAll(newItemList)
-
-            notifyItemRangeInserted(0, newItemListSize)
-            return
-        }
-
-        // 새 아이템 리스트 마지막 인덱스
-        val newItemListLastIdx = newItemList.size - 1
-
-        for (newItemListCurrentIdx in 0..newItemListLastIdx) { // newItemList 와 싱크 맞추기 시작
-            // 비교된 아이템은 유지(내용 변경, 변동 무), 이동, 삭제, 추가를 실행
-            val newItem = newItemList[newItemListCurrentIdx]
-
-            if (newItemListCurrentIdx > currentItemListMbr.size - 1) {
-                // currentItemListMbr 마지막 아이템부터 뒤로 아이템이 없을 때,
-                // currentItemListMbr 에 새로운 아이템 추가
-                val changePosition = currentItemListMbr.size
-
-                currentItemListMbr.add(getDeepCopyReplica(newItem))
-
-                notifyItemInserted(changePosition)
-            } else { // 해당 위치에 비교용 데이터가 존재할 때,
-                // 아이템 비교 실행.
-                // 아이템 유지 여부 확인
-                if (isItemSame(
-                        currentItemListMbr[newItemListCurrentIdx],
-                        newItem
-                    )
-                ) { // 두 아이템이 일치시(위치가 동일)
-                    // 아이템 수정 여부 확인
-                    if (!isContentSame(
-                            currentItemListMbr[newItemListCurrentIdx],
-                            newItem
-                        )
-                    ) {
-                        // 수정 사항이 존재
-                        currentItemListMbr[newItemListCurrentIdx] =
-                            getDeepCopyReplica(newItem)
-
-                        notifyItemChanged(newItemListCurrentIdx)
-                    }
-                } else { // 두 아이템이 일치하지 않을 때 (위치가 다르거나 새로 생성되었을 가능성이 존재)
-                    // currentItem 이동 및, newItem 추가
-                    // 이번 newItem 인덱스에서 싱크를 맞추고 다음으로 이동
-                    var searchedIdx = -1
-
-                    // 현 완료된 인덱스 뒤 + 1 (일치성 검사 끝난 다음부터) 비교
-                    // 인덱스가 존재하면 searchedIdx 에 해당 인덱스가 저장되어서 이동시키고,
-                    // 존재하지 않아서 searchedIdx 가 끝까지 -1 이라면 아이템 생성
-                    for (oldItemIdx in newItemListCurrentIdx + 1 until currentItemListMbr.size) {
-                        val oldItem = currentItemListMbr[oldItemIdx]
-
-                        // 동일한 아이템 인덱스를 발견시 searchedIdx 에 인덱스 저장 후 빠져나오기.
-                        // 없다면 -1
-                        if (isItemSame(oldItem, newItem)) {
-                            searchedIdx = oldItemIdx
-                            break
-                        }
-                    }
-
-                    if (-1 == searchedIdx) {
-                        // newItem 과 동일한 아이템이 currentItemListMbr 에 없을 때
-                        // = 아이템을 이동할 필요가 없으므로 newItem 을 생성
-                        currentItemListMbr.add(
-                            newItemListCurrentIdx,
-                            getDeepCopyReplica(newItem)
-                        )
-
-                        notifyItemInserted(newItemListCurrentIdx)
-                    } else {
-                        // searchedIdx 에 있는 아이템을 newItemIdx 위치로 이동
-                        val removedData =
-                            currentItemListMbr.removeAt(searchedIdx)
-
-                        currentItemListMbr.add(
-                            newItemListCurrentIdx,
-                            getDeepCopyReplica(removedData)
-                        )
-
-                        notifyItemMoved(searchedIdx, newItemListCurrentIdx)
-
-                        // 이동하여 위치를 동일하게 맞췄으니 컨텐츠가 동일한지 판단
-                        if (!isContentSame(
-                                currentItemListMbr[newItemListCurrentIdx],
-                                newItem
-                            )
-                        ) {
-                            // 이동된 아이템 내용이 새로운 아이템과 다를 때 = 수정
-
-                            currentItemListMbr[newItemListCurrentIdx] =
-                                getDeepCopyReplica(newItem)
-
-                            notifyItemChanged(newItemListCurrentIdx)
-                        }
-                    }
-                }
-            }
-
-            // 마지막 비교 시점에 처리를 완료하고, currentItemListMbr 의
-            // 남은 데이터(새로운 리스트에 존재하지 않아 뒤로 밀려난 데이터들)를 소멸
-            if (newItemListLastIdx == newItemListCurrentIdx && // newItemList 마지막 인덱스
-                newItemListCurrentIdx <= currentItemListMbr.size - 1
-            ) { // 비교 마지막인데 아직 아이템이 남아있을 경우
-                // currentItemListMbr 나머지 데이터를 지우기
-                val deleteStartIdx = newItemListCurrentIdx + 1
-                val deleteEndIdx = currentItemListMbr.size - 1
-                var numOfChange = 0
-
-                // 뒤에서부터 지우기
-                for (i in deleteEndIdx downTo deleteStartIdx) {
-                    currentItemListMbr.removeAt(i)
-                    numOfChange++
-                }
-
-                notifyItemRangeRemoved(deleteStartIdx - 1, numOfChange)
-            }
-        }
-    }
-
     // 헤더만 갱신
     fun updateHeader(headerItem: AdapterHeaderAbstractVO) {
         currentItemListMbr[0] = getDeepCopyReplica(headerItem)
@@ -289,10 +151,9 @@ abstract class AbstractRecyclerViewAdapter(
 
     // 푸터만 갱신
     fun updateFooter(footerItem: AdapterFooterAbstractVO) {
-        val lastIdx = currentItemListMbr.lastIndex
-        currentItemListMbr[lastIdx] = getDeepCopyReplica(footerItem)
+        currentItemListMbr[currentItemListMbr.lastIndex] = getDeepCopyReplica(footerItem)
 
-        notifyItemChanged(lastIdx)
+        notifyItemChanged(currentItemListMbr.lastIndex)
     }
 
     // todo 검증

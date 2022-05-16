@@ -9,6 +9,7 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicVerticalRecyclerViewSampleBinding
+import java.net.SocketTimeoutException
 
 // todo : 화면 리플레시 함수 사용, 헤더 푸터 Empty로 사용, 뷰모델로 더미 데이터, 헤더, 푸터, 아이템 어싱크하게
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
@@ -188,11 +189,24 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     }
 
     private fun refreshScreenData() {
-        // 아이템 데이터 초기화
+        // (데이터 초기화)
+        adapterSetMbr.recyclerViewAdapter.updateHeader(
+            ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                adapterSetMbr.recyclerViewAdapter.headerUidMbr
+            )
+        )
+        adapterSetMbr.recyclerViewAdapter.updateFooter(
+            ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                adapterSetMbr.recyclerViewAdapter.footerUidMbr
+            )
+        )
         adapterSetMbr.recyclerViewAdapter.updateItemList(ArrayList())
 
-        // todo 로더 처리 간소화
-        // 로딩 아이템 생성
+        // (로딩 처리)
+        adapterSetMbr.recyclerViewAdapter.isHeaderLoading = true
+        adapterSetMbr.recyclerViewAdapter.isFooterLoading = true
+
+        // todo 아이템 로더 처리 간소화
         var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
             adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplicaOnlyItem()
 
@@ -206,60 +220,101 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             adapterDataList
         )
 
-        viewModelMbr.executorServiceMbr?.execute {
-            // 로딩 예시를 위한 2초 대기
-            Thread.sleep(2000)
+        // (데이터 요청)
+        viewModelMbr.getRecyclerViewHeaderData(
+            onComplete = {
+                runOnUiThread {
+                    // 로더 제거
+                    adapterSetMbr.recyclerViewAdapter.isHeaderLoading = false
 
-            // 아이템 데이터 생성
-            adapterDataList = java.util.ArrayList()
-            adapterDataList.addAll(
-                arrayListOf(
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        "item1"
-                    ),
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        "item2"
-                    ),
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        "item3"
-                    ),
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        "item4"
-                    ),
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        "item5"
-                    ),
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        "item6"
-                    ),
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        "item7"
-                    ),
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        "item8"
+                    // 아이템 갱신
+                    adapterSetMbr.recyclerViewAdapter.updateHeader(
+                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.headerUidMbr
+                        )
                     )
-                )
-            )
+                }
+            },
+            onError = {
+                runOnUiThread {
+                    // 로더 제거
+                    adapterSetMbr.recyclerViewAdapter.isHeaderLoading = false
 
-            runOnUiThread {
-                // todo 로더 처리 간소화
-                adapterSetMbr.recyclerViewAdapter.updateItemList(
-                    ArrayList()
-                )
-
-                // 데이터 반영
-                adapterSetMbr.recyclerViewAdapter.updateItemList(
-                    adapterDataList
-                )
+                    if (it is SocketTimeoutException) { // 타임아웃 에러
+                        // todo
+                    } else { // 그외 에러
+                        // todo
+                    }
+                }
             }
-        }
+        )
+
+        viewModelMbr.getRecyclerViewFooterData(
+            onComplete = {
+                runOnUiThread {
+                    // 로더 제거
+                    adapterSetMbr.recyclerViewAdapter.isFooterLoading = false
+
+                    // 아이템 갱신
+                    adapterSetMbr.recyclerViewAdapter.updateFooter(
+                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.footerUidMbr
+                        )
+                    )
+                }
+            },
+            onError = {
+                runOnUiThread {
+                    // 로더 제거
+                    adapterSetMbr.recyclerViewAdapter.isFooterLoading = false
+
+                    if (it is SocketTimeoutException) { // 타임아웃 에러
+                        // todo
+                    } else { // 그외 에러
+                        // todo
+                    }
+                }
+            }
+        )
+
+        viewModelMbr.getRecyclerViewItemDataList(
+            onComplete = {
+                runOnUiThread {
+                    // 로더 제거
+                    adapterSetMbr.recyclerViewAdapter.updateItemList(
+                        ArrayList()
+                    )
+
+                    // 아이템 갱신
+                    val newItemList = ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>()
+                    for (data in it) {
+                        newItemList.add(
+                            ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                data.title
+                            )
+                        )
+                    }
+
+                    adapterSetMbr.recyclerViewAdapter.updateItemList(
+                        newItemList
+                    )
+                }
+            },
+            onError = {
+                runOnUiThread {
+                    // 로더 제거
+                    adapterSetMbr.recyclerViewAdapter.updateItemList(
+                        ArrayList()
+                    )
+
+                    if (it is SocketTimeoutException) { // 타임아웃 에러
+                        // todo
+                    } else { // 그외 에러
+                        // todo
+                    }
+                }
+            }
+        )
     }
 }

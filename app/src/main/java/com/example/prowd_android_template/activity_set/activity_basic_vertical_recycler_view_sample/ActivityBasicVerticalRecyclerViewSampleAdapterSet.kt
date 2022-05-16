@@ -1,12 +1,13 @@
 package com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet
 import com.example.prowd_android_template.databinding.*
 
 class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
@@ -27,6 +28,17 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
+        var isHeaderLoading = false
+            set(value) {
+                notifyItemChanged(0)
+                field = value
+            }
+
+        var isFooterLoading = false
+            set(value) {
+                notifyItemChanged(currentItemListMbr.lastIndex)
+                field = value
+            }
 
 
         // ---------------------------------------------------------------------------------------------
@@ -135,19 +147,30 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
-//                    val binding = holder.binding
-//                    val entity = currentItemListMbr[position] as Header.ItemVO
+                    val binding = holder.binding
+                    val entity = currentItemListMbr[position] as Header.ItemVO
+
+                    if (isHeaderLoading) {
+//                        binding.loaderContainer.visibility = View.VISIBLE
+                    } else {
+//                        binding.loaderContainer.visibility = View.GONE
+                    }
                 }
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
-//                    val binding = holder.binding
-//                    val entity = currentItemListMbr[position] as Footer.ItemVO
+                    val binding = holder.binding
+                    val entity = currentItemListMbr[position] as Footer.ItemVO
+
+                    if (isFooterLoading) {
+//                        binding.loaderContainer.visibility = View.VISIBLE
+                    } else {
+//                        binding.loaderContainer.visibility = View.GONE
+                    }
                 }
 
                 is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩
 //                    val binding = holder.binding
 //                    val entity = currentItemListMbr[position] as ItemLoader.ItemVO
-
                 }
 
                 is Item1.ViewHolder -> { // 아이템1 아이템 바인딩
@@ -265,7 +288,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long
-            ) : AdapterItemAbstractVO(itemUid)
+            ) : AdapterHeaderAbstractVO(itemUid)
         }
 
         class Footer {
@@ -279,7 +302,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long
-            ) : AdapterItemAbstractVO(itemUid)
+            ) : AdapterFooterAbstractVO(itemUid)
         }
 
         class ItemLoader {

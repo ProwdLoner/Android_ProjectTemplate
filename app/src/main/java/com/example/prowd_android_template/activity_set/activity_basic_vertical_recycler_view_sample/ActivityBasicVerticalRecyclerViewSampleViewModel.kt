@@ -25,7 +25,8 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
 
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
-    val currentLoginSessionInfoSpwMbr : CurrentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(application)
+    val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
+        CurrentLoginSessionInfoSpw(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -39,7 +40,8 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     var isDataFirstLoadingMbr = true
 
     // recyclerView 데이터
-    val recyclerViewAdapterItemDataListMbr: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> = ArrayList()
+    val recyclerViewAdapterItemDataListMbr: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+        ArrayList()
 
 
     // ---------------------------------------------------------------------------------------------
@@ -68,8 +70,67 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
+    fun getRecyclerViewHeaderData(
+        onComplete: () -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            onComplete()
+        }
+    }
+
+    fun getRecyclerViewFooterData(
+        onComplete: () -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            onComplete()
+        }
+    }
+
+    fun getRecyclerViewItemDataList(
+        onComplete: (ArrayList<GetRecyclerViewItemDataListOutputVO>) -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            val resultData = arrayListOf(
+                GetRecyclerViewItemDataListOutputVO(
+                    "item1"
+                ),
+                GetRecyclerViewItemDataListOutputVO(
+                    "item2"
+                ),
+                GetRecyclerViewItemDataListOutputVO(
+                    "item3"
+                ),
+                GetRecyclerViewItemDataListOutputVO(
+                    "item4"
+                ),
+                GetRecyclerViewItemDataListOutputVO(
+                    "item5"
+                ),
+                GetRecyclerViewItemDataListOutputVO(
+                    "item6"
+                ),
+                GetRecyclerViewItemDataListOutputVO(
+                    "item7"
+                ),
+                GetRecyclerViewItemDataListOutputVO(
+                    "item8"
+                )
+            )
+
+            // 네트워크 요청 대기 시간을 상정
+            Thread.sleep(2000)
+
+            onComplete(resultData)
+        }
+    }
 
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
+    data class GetRecyclerViewItemDataListOutputVO(
+        val title: String
+    )
 }
