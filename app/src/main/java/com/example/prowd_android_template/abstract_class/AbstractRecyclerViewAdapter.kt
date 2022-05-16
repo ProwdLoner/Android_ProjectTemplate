@@ -81,6 +81,7 @@ abstract class AbstractRecyclerViewAdapter(
         return result
     }
 
+    // todo
     // (화면 갱신 함수)
     // 화면 전체를 갱신하는 함수 (헤더 푸터 할 것 없이 모든 리스트를 갱신)
     fun setNewItemListAll(newItemList: ArrayList<AdapterItemAbstractVO>) {
@@ -93,6 +94,16 @@ abstract class AbstractRecyclerViewAdapter(
 
             notifyItemRangeRemoved(0, currentEndIdx)
 
+            return
+        }
+
+        if (currentItemListMbr.isEmpty()) {
+            // 현재 리스트가 비어있다면 모두 add
+            val newItemListSize = newItemList.size
+
+            currentItemListMbr.addAll(newItemList)
+
+            notifyItemRangeInserted(0, newItemListSize)
             return
         }
 
@@ -242,7 +253,7 @@ abstract class AbstractRecyclerViewAdapter(
                 ) { // 하나 남은 아이템이 헤더 혹은 푸터이면 return
                     return
                 } else { // 하나 남은 아이템이 헤더 혹은 푸터가 아닐 때,
-                    currentItemListMbr.clear()
+                    currentItemListMbr.removeAt(0)
 
                     notifyItemRemoved(0)
 
@@ -255,14 +266,14 @@ abstract class AbstractRecyclerViewAdapter(
                 ) { // 아이템 두개가 모두 헤더와 푸터일 때
                     return
                 } else if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
-                    // 아이템 푸터를 제거해야 할 때
+                    // 아이템 헤더만 유지
                     currentItemListMbr.removeAt(1)
 
                     notifyItemRemoved(1)
 
                     return
                 } else if (currentItemListMbr.last() is AdapterFooterAbstractVO) {
-                    // 아이템 헤더를 제거해야 할 때
+                    // 아이템 푸터만 유지
                     currentItemListMbr.removeAt(0)
 
                     notifyItemRemoved(0)
@@ -270,10 +281,9 @@ abstract class AbstractRecyclerViewAdapter(
                     return
                 } else {
                     // 아이템 두개를 모두 제거해야 할 때
-                    val currentEndIdx = currentItemListMbr.size
                     currentItemListMbr.clear()
 
-                    notifyItemRangeRemoved(0, currentEndIdx)
+                    notifyItemRangeRemoved(0, 2)
 
                     return
                 }
