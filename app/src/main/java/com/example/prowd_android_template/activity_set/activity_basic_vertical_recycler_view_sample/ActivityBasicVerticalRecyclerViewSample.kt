@@ -3,8 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_basic_vertical_
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet
+import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -207,7 +206,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         adapterSetMbr.recyclerViewAdapter.isFooterLoading = true
 
         // todo 아이템 로더 처리 간소화
-        val adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+        val adapterDataList: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO> =
             adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplicaOnlyItem()
 
         adapterDataList.add(
@@ -286,7 +285,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                     )
 
                     // 아이템 갱신
-                    val newItemList = ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>()
+                    val newItemList = ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
                     for (data in it) {
                         newItemList.add(
                             ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(

@@ -1,20 +1,5 @@
 package com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample
 
-import android.graphics.Rect
-import android.view.LayoutInflater
-import android.view.TouchDelegate
-import android.view.View
-import android.view.ViewGroup
-import android.view.animation.Animation
-import android.view.animation.AnimationUtils
-import androidx.recyclerview.widget.RecyclerView
-import com.example.prowd_android_template.R
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.databinding.*
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
-
 // todo
 class ActivityNetworkRecyclerViewSampleAdapterSet(
 //    val screenVerticalRecyclerViewAdapter: ScreenVerticalRecyclerViewAdapter

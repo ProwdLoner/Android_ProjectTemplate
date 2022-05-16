@@ -1,13 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample
 
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.custom_view.DialogBinaryChoose
-import com.example.prowd_android_template.custom_view.DialogConfirm
-import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityBasicHeaderFooterRecyclerViewSampleBinding
 
 // todo
 class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {

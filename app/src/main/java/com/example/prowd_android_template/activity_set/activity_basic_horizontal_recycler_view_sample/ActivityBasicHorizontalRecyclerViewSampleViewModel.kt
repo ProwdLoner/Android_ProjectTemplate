@@ -3,13 +3,12 @@ package com.example.prowd_android_template.activity_set.activity_basic_horizonta
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
-import com.example.prowd_android_template.util_class.LogObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -40,7 +39,7 @@ class ActivityBasicHorizontalRecyclerViewSampleViewModel(application: Applicatio
     var isDataFirstLoadingMbr = true
 
     // recyclerView 데이터
-    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>
+    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
 
 
     // ---------------------------------------------------------------------------------------------

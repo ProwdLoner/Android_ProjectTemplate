@@ -1,13 +1,11 @@
 package com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet
+import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.databinding.*
 
 class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
@@ -20,7 +18,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         isVertical: Boolean,
         initialList: ArrayList<AdapterItemAbstractVO>,
         onScrollHitBottom: (() -> Unit)?
-    ) : AbstractRecyclerViewAdapter(
+    ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,

@@ -3,12 +3,10 @@ package com.example.prowd_android_template.activity_set.activity_basic_horizonta
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.databinding.*
-import com.example.prowd_android_template.util_class.LogObj
 
 class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
     val recyclerViewAdapter: RecyclerViewAdapter
@@ -20,7 +18,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
         isVertical: Boolean,
         initialList: ArrayList<AdapterItemAbstractVO>,
         onScrollHitBottom: (() -> Unit)?
-    ) : AbstractRecyclerViewAdapter(
+    ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,

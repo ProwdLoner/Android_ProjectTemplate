@@ -1,21 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_easy_lut_sample
 
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import androidx.lifecycle.ViewModelProvider
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.custom_view.DialogBinaryChoose
-import com.example.prowd_android_template.custom_view.DialogConfirm
-import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityEasyLutSampleBinding
-import com.example.prowd_android_template.util_object.UriAndPath
-import java.io.File
-import java.io.FileOutputStream
 
 
 // Todo : wide 외의 필터도 적용

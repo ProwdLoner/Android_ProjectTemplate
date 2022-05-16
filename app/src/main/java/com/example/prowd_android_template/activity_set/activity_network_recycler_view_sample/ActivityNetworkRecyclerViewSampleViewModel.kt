@@ -3,7 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_network_recycle
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -49,7 +49,7 @@ class ActivityNetworkRecyclerViewSampleViewModel(application: Application) :
     val screenVerticalRecyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
 
     // recyclerView 데이터
-    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>
+    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
 
 
     // ---------------------------------------------------------------------------------------------

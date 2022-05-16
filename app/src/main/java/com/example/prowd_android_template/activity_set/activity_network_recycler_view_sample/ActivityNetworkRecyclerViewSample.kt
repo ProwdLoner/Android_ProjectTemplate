@@ -1,27 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample
 
-import android.app.Activity
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.util.Log
-import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
-import com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample_editor.ActivityNetworkRecyclerViewSampleEditor
-import com.example.prowd_android_template.custom_view.DialogBinaryChoose
-import com.example.prowd_android_template.custom_view.DialogConfirm
-import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityNetworkRecyclerViewSampleBinding
-import java.net.SocketTimeoutException
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
 
 // todo
 // 기본 리사이클러 뷰 샘플

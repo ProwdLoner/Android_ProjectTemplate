@@ -8,7 +8,7 @@ import kotlinx.coroutines.sync.Semaphore
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
 // 비동기 처리시 뮤텍스와 싱크에 주의할 것.
-abstract class AbstractRecyclerViewAdapter(
+abstract class ProwdRecyclerViewAdapter(
     parentView: Activity,
     targetView: RecyclerView,
     isVertical: Boolean,

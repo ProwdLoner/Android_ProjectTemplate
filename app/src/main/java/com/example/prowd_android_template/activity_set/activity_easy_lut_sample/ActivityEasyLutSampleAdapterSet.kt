@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ItemActivityEasyLutSampleAdapterRecyclerViewItem1Binding
 import com.example.prowd_android_template.databinding.ItemActivityEasyLutSampleAdapterRecyclerViewItemLoaderBinding
@@ -28,7 +28,7 @@ class ActivityEasyLutSampleAdapterSet(
         isVertical: Boolean,
         initialList : ArrayList<AdapterItemAbstractVO>,
         onScrollHitBottom: (() -> Unit)?
-    ) : AbstractRecyclerViewAdapter(
+    ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
