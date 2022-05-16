@@ -14,17 +14,21 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 ) {
     // 어뎁터 #1
     class RecyclerViewAdapter(
-        private val parentViewMbr: AppCompatActivity,
+        private val parentViewMbr: ActivityBasicVerticalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
+        initialList: ArrayList<AdapterItemAbstractVO>,
         onScrollHitBottom: (() -> Unit)?
     ) : AbstractRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
+        initialList,
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
+        val headerUidMbr = maxUidMbr
+        val footerUidMbr = maxUidMbr
 
 
         // ---------------------------------------------------------------------------------------------

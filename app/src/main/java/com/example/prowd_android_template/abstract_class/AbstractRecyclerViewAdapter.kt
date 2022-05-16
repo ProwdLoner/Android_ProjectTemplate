@@ -11,11 +11,12 @@ abstract class AbstractRecyclerViewAdapter(
     parentView: Activity,
     targetView: RecyclerView,
     isVertical: Boolean,
+    initialList: ArrayList<AdapterItemAbstractVO>,
     onScrollHitBottom: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트
-    val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = arrayListOf()
+    val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = initialList
 
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
@@ -81,7 +82,49 @@ abstract class AbstractRecyclerViewAdapter(
         return result
     }
 
-    // todo
+    // 헤더, 푸터를 제외한 아이템 리스트 클론만 반환
+    fun getCurrentItemDeepCopyReplicaOnlyItem(): ArrayList<AdapterItemAbstractVO> {
+        if (currentItemListMbr.isEmpty()) {
+            return ArrayList()
+        } else if (currentItemListMbr.size == 1) {
+            return if (currentItemListMbr[0] is AdapterHeaderAbstractVO ||
+                currentItemListMbr[0] is AdapterFooterAbstractVO
+            ) {
+                ArrayList()
+            } else {
+                currentItemListMbr
+            }
+        }
+
+        // 헤더를 제외한 아이템 시작 인덱스
+        val currentOnlyItemStartIdx =
+            if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
+                1
+            } else {
+                0
+            }
+
+        // 푸터를 제외한 아이템 끝 인덱스
+        val currentOnlyItemEndIdx = if (currentItemListMbr.last() is AdapterFooterAbstractVO) {
+            currentItemListMbr.lastIndex - 1
+        } else {
+            currentItemListMbr.lastIndex
+        }
+
+
+        val onlyItemSubList =
+            currentItemListMbr.subList(currentOnlyItemStartIdx, currentOnlyItemEndIdx + 1)
+
+        val result: ArrayList<AdapterItemAbstractVO> = ArrayList()
+
+        for (currentItem in onlyItemSubList) {
+            result.add(getDeepCopyReplica(currentItem))
+        }
+
+        return result
+    }
+
+    // todo 확인
     // (화면 갱신 함수)
     // 화면 전체를 갱신하는 함수 (헤더 푸터 할 것 없이 모든 리스트를 갱신)
     fun setNewItemListAll(newItemList: ArrayList<AdapterItemAbstractVO>) {
@@ -500,6 +543,24 @@ abstract class AbstractRecyclerViewAdapter(
                 )
             }
         }
+    }
+
+    // 아이템 리스트만 비우는 함수
+    fun clearItemList() {
+        val firstItem = currentItemListMbr.first()
+        val lastItem = currentItemListMbr.last()
+
+        val newItemList = ArrayList<AdapterItemAbstractVO>()
+
+        if (firstItem is AdapterHeaderAbstractVO) {
+            newItemList.add(firstItem)
+        }
+
+        if (lastItem is AdapterFooterAbstractVO) {
+            newItemList.add(lastItem)
+        }
+
+        setNewItemListAll(newItemList)
     }
 
 

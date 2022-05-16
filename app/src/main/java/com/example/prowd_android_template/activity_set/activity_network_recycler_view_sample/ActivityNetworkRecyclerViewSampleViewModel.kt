@@ -48,6 +48,9 @@ class ActivityNetworkRecyclerViewSampleViewModel(application: Application) :
     // ScreenVerticalRecyclerViewAdapter 아이템 접근 세마포어
     val screenVerticalRecyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
 
+    // recyclerView 데이터
+    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
@@ -80,8 +83,6 @@ class ActivityNetworkRecyclerViewSampleViewModel(application: Application) :
         MutableLiveData(null)
 
     // ScreenVerticalRecyclerViewAdapter 데이터
-    val screenVerticalRecyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
-        MutableLiveData(ArrayList())
     val isScreenVerticalRecyclerViewAdapterHeaderLoadingLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
     val isScreenVerticalRecyclerViewAdapterFooterLoadingLiveDataMbr: MutableLiveData<Boolean> =

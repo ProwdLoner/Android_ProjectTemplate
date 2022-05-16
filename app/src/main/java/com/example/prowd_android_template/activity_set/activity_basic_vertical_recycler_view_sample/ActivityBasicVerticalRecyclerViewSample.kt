@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.abstract_class.AbstractRecyclerViewAdapter
+import com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -68,71 +69,9 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
-                // 로딩 아이템 생성
-                var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
-                    arrayListOf(
-                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                            adapterSetMbr.recyclerViewAdapter.maxUidMbr
-                        )
-                    )
-                viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = adapterDataList
-
-                viewModelMbr.executorServiceMbr?.execute {
-                    // 로딩 예시를 위한 2초 대기
-                    Thread.sleep(2000)
-
-                    runOnUiThread {
-                        // 아이템 데이터 생성
-                        adapterDataList =
-                            java.util.ArrayList()
-                        adapterDataList.addAll(
-                            arrayListOf(
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    "item1"
-                                ),
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    "item2"
-                                ),
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    "item3"
-                                ),
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    "item4"
-                                ),
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    "item5"
-                                ),
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    "item6"
-                                ),
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    "item7"
-                                ),
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    "item8"
-                                )
-                            )
-                        )
-
-                        // 로딩 아이템 제거
-                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value = ArrayList()
-
-                        // 데이터 반영
-                        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.value =
-                            adapterDataList
-                    }
-                }
+                refreshScreenData()
             }
         }
-
     }
 
     override fun onStop() {
@@ -176,6 +115,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 this,
                 bindingMbr.recyclerView,
                 true,
+                viewModelMbr.recyclerViewAdapterItemDataListMbr,
                 null
             )
         )
@@ -245,10 +185,96 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 confirmDialogMbr = null
             }
         }
+    }
 
-        // recyclerViewAdapter 데이터 리스트
-        viewModelMbr.recyclerViewAdapterItemDataListLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.setNewItemListAll(it)
+    private fun refreshScreenData() {
+        if (viewModelMbr.recyclerViewAdapterItemDataListMbr.isEmpty()){
+            // 어뎁터 최초 헤더 푸터 적용
+            // todo 헤더 푸터는 uid 필요 없도록
+            adapterSetMbr.recyclerViewAdapter.setNewItemListAll(
+                arrayListOf(
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.headerUidMbr
+                    ),
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.footerUidMbr
+                    )
+                )
+            )
+        }
+
+        // 아이템 데이터 초기화
+        adapterSetMbr.recyclerViewAdapter.clearItemList()
+
+        // todo 로더 처리 간소화
+        // 로딩 아이템 생성
+        var adapterDataList: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO> =
+            adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplicaOnlyItem()
+
+        adapterDataList.add(
+            ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
+                adapterSetMbr.recyclerViewAdapter.maxUidMbr
+            )
+        )
+
+        adapterSetMbr.recyclerViewAdapter.updateItemList(
+            adapterDataList
+        )
+
+        viewModelMbr.executorServiceMbr?.execute {
+            // 로딩 예시를 위한 2초 대기
+            Thread.sleep(2000)
+
+            // 아이템 데이터 생성
+            adapterDataList = java.util.ArrayList()
+            adapterDataList.addAll(
+                arrayListOf(
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        "item1"
+                    ),
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        "item2"
+                    ),
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        "item3"
+                    ),
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        "item4"
+                    ),
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        "item5"
+                    ),
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        "item6"
+                    ),
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        "item7"
+                    ),
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        "item8"
+                    )
+                )
+            )
+
+            runOnUiThread {
+                // todo 로더 처리 간소화
+                adapterSetMbr.recyclerViewAdapter.updateItemList(
+                    ArrayList()
+                )
+
+                // 데이터 반영
+                adapterSetMbr.recyclerViewAdapter.updateItemList(
+                    adapterDataList
+                )
+            }
         }
     }
 }

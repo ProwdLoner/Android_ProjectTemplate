@@ -26,14 +26,19 @@ class ActivityEasyLutSampleAdapterSet(
         private val parentViewModel: ActivityEasyLutSampleViewModel,
         targetView: RecyclerView,
         isVertical: Boolean,
+        initialList : ArrayList<AdapterItemAbstractVO>,
         onScrollHitBottom: (() -> Unit)?
     ) : AbstractRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
+        initialList,
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
+        val headerUidMbr = maxUidMbr
+        val footerUidMbr = maxUidMbr
+
         var selectedItemPosition: Int = -1
             set(value) {
                 val oldPosition = selectedItemPosition

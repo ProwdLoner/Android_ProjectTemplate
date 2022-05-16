@@ -39,6 +39,9 @@ class ActivityBasicHeaderFooterRecyclerViewSampleViewModel(application: Applicat
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
+    // recyclerView 데이터
+    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
@@ -55,8 +58,6 @@ class ActivityBasicHeaderFooterRecyclerViewSampleViewModel(application: Applicat
         MutableLiveData(null)
 
     // recyclerView 데이터
-    val recyclerViewAdapterItemDataListLiveDataMbr: MutableLiveData<ArrayList<AbstractRecyclerViewAdapter.AdapterItemAbstractVO>> =
-        MutableLiveData(ArrayList())
     val isRecyclerViewAdapterHeaderLoadingLiveDataMbr: MutableLiveData<Boolean> =
         MutableLiveData(false)
     val isRecyclerViewAdapterFooterLoadingLiveDataMbr: MutableLiveData<Boolean> =
