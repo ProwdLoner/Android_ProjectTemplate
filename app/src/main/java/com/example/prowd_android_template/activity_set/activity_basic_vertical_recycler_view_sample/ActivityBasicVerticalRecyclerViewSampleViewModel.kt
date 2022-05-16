@@ -77,32 +77,15 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
         onError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
-            val resultData = arrayListOf(
-                GetRecyclerViewItemDataListOutputVO(
-                    "item1"
-                ),
-                GetRecyclerViewItemDataListOutputVO(
-                    "item2"
-                ),
-                GetRecyclerViewItemDataListOutputVO(
-                    "item3"
-                ),
-                GetRecyclerViewItemDataListOutputVO(
-                    "item4"
-                ),
-                GetRecyclerViewItemDataListOutputVO(
-                    "item5"
-                ),
-                GetRecyclerViewItemDataListOutputVO(
-                    "item6"
-                ),
-                GetRecyclerViewItemDataListOutputVO(
-                    "item7"
-                ),
-                GetRecyclerViewItemDataListOutputVO(
-                    "item8"
+            val resultData = ArrayList<GetRecyclerViewItemDataListOutputVO>()
+            for (idx in 0..20) {
+                val title = "item$idx"
+                resultData.add(
+                    GetRecyclerViewItemDataListOutputVO(
+                        title
+                    )
                 )
-            )
+            }
 
             // 네트워크 요청 대기 시간을 상정
             Thread.sleep(2000)

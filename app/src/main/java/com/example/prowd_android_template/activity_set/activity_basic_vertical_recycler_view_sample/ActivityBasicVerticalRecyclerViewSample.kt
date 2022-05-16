@@ -10,7 +10,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicVerticalRecyclerViewSampleBinding
 import java.net.SocketTimeoutException
 
-// todo : 아이템 로더 간소화, 에러 화면 처리, 아이템 없을 때의 처리
+// todo : 에러 화면 처리, 아이템 없을 때의 처리
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -133,7 +133,24 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        // 위로 이동 버튼
+        bindingMbr.goToUpBtn.setOnClickListener {
+            bindingMbr.recyclerView.smoothScrollToPosition(0)
+        }
 
+        // 아래로 이동 버튼
+        bindingMbr.goToDownBtn.setOnClickListener {
+            bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentItemListMbr.lastIndex)
+        }
+
+        // todo
+        // 아이템 셔플
+        bindingMbr.doShuffleBtn.setOnClickListener {
+            val item = adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplicaOnlyItem()
+            item.shuffle()
+
+            viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = item
+        }
     }
 
     // 라이브 데이터 설정
@@ -192,7 +209,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = ArrayList()
 
         // (로딩 처리)
-        // todo 아이템 로더 처리 간소화
+        // 로더 아이템을 추가
         val adapterDataList: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO> =
             adapterSetMbr.recyclerViewAdapter.getCurrentItemDeepCopyReplicaOnlyItem()
 
@@ -223,6 +240,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                     }
 
                     viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = newItemList
+
                 }
             },
             onError = {
