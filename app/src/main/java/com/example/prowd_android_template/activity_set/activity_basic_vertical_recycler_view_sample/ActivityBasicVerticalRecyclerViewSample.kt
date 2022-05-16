@@ -204,9 +204,11 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         }
     }
 
+    // 화면 데이터 전체 새로고침
     private fun refreshScreenData() {
         // (데이터 초기화)
         viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = ArrayList()
+        viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr = -1
 
         // (로딩 처리)
         // 로더 아이템을 추가
@@ -223,10 +225,17 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
         // (데이터 요청)
         viewModelMbr.getRecyclerViewItemDataList(
+            viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
+            viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
+            viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
             onComplete = {
                 runOnUiThread {
                     // 로더 제거
                     viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = ArrayList()
+
+                    if (it.isEmpty()) {
+                        return@runOnUiThread
+                    }
 
                     // 아이템 갱신
                     val newItemList = ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
@@ -234,13 +243,15 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                         newItemList.add(
                             ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
                                 adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                data.serverItemUid,
                                 data.title
                             )
                         )
                     }
 
                     viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = newItemList
-
+                    viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr =
+                        (newItemList.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
                 }
             },
             onError = {

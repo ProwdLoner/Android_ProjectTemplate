@@ -297,6 +297,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long,
+                val serverItemUid : Long,
                 val title: String
             ) : AdapterItemAbstractVO(itemUid)
         }
