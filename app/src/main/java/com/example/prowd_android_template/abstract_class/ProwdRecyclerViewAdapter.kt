@@ -3,7 +3,6 @@ package com.example.prowd_android_template.abstract_class
 import android.app.Activity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.sync.Semaphore
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
@@ -20,13 +19,30 @@ abstract class ProwdRecyclerViewAdapter(
     val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = initialList
 
 
-    // todo 헤더 푸터 고정 아이디 존재로 인해 개선 필요
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
-    // Long 값 최소에서 최대로 갈 때까지 진행되므로, 그때까지 아이템 리스트에 남아있을 가능성은 매우 드뭄
+    // Long 값 최소에서 최대까지의 범위이므로 매우 드문 현상.
     // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재(심각한 에러는 아님)
     var maxUidMbr = Long.MIN_VALUE
         get() {
-            return field++
+            val firstIssue = ++field
+            if (currentItemListMbr.indexOfFirst { it.itemUid == firstIssue } != -1) {
+                // 발행 uid 가 리스트에 존재하면,
+                while (true) {
+                    // 다음 숫자들을 대입해보기
+                    val uid = ++field
+                    if (firstIssue == uid) {
+                        // 순회해서 한바퀴를 돌았다면(== 리스트에 아이템 Long 개수만큼 아이디가 꽉 찼을 경우) 그냥 현재 필드를 반환
+                        return field
+                    }
+
+                    if (currentItemListMbr.indexOfFirst { it.itemUid == uid } == -1) {
+                        return field
+                    }
+                }
+            } else {
+                // 발행 uid 가 리스트에 존재하지 않는 것이라면
+                return field
+            }
         }
 
     val headerUidMbr = maxUidMbr
