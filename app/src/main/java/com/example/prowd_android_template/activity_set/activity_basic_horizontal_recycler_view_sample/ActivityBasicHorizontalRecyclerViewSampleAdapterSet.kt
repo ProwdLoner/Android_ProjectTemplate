@@ -28,8 +28,6 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
-        val headerUidMbr = maxUidMbr
-        val footerUidMbr = maxUidMbr
 
 
         // ---------------------------------------------------------------------------------------------

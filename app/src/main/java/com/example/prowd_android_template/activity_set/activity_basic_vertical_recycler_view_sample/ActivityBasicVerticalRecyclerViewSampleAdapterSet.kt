@@ -27,8 +27,19 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
-        val headerUidMbr = maxUidMbr
-        val footerUidMbr = maxUidMbr
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <생성자 공간>
+        init {
+            // 초기 헤더 푸터 생성
+            currentItemListMbr.addAll(
+                arrayListOf(
+                    Header.ItemVO(headerUidMbr),
+                    Footer.ItemVO(footerUidMbr)
+                )
+            )
+        }
 
 
         // ---------------------------------------------------------------------------------------------

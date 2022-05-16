@@ -188,23 +188,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     }
 
     private fun refreshScreenData() {
-        if (viewModelMbr.recyclerViewAdapterItemDataListMbr.isEmpty()){
-            // 어뎁터 최초 헤더 푸터 적용
-            // todo 헤더 푸터는 uid 필요 없도록
-            adapterSetMbr.recyclerViewAdapter.setNewItemListAll(
-                arrayListOf(
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.headerUidMbr
-                    ),
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.footerUidMbr
-                    )
-                )
-            )
-        }
-
         // 아이템 데이터 초기화
-        adapterSetMbr.recyclerViewAdapter.clearItemList()
+        adapterSetMbr.recyclerViewAdapter.updateItemList(ArrayList())
 
         // todo 로더 처리 간소화
         // 로딩 아이템 생성

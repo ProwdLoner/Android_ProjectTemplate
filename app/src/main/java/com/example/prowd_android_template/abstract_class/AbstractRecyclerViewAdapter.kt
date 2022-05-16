@@ -19,6 +19,7 @@ abstract class AbstractRecyclerViewAdapter(
     val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = initialList
 
 
+    // todo 헤더 푸터 고정 아이디 존재로 인해 개선 필요
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
     // Long 값 최소에서 최대로 갈 때까지 진행되므로, 그때까지 아이템 리스트에 남아있을 가능성은 매우 드뭄
     // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재(심각한 에러는 아님)
@@ -26,6 +27,9 @@ abstract class AbstractRecyclerViewAdapter(
         get() {
             return field++
         }
+
+    val headerUidMbr = maxUidMbr
+    val footerUidMbr = maxUidMbr
 
 
     // ---------------------------------------------------------------------------------------------
@@ -94,6 +98,18 @@ abstract class AbstractRecyclerViewAdapter(
             } else {
                 currentItemListMbr
             }
+        } else if (currentItemListMbr.size == 2) {
+            return if (currentItemListMbr.first() is AdapterHeaderAbstractVO &&
+                currentItemListMbr.last() is AdapterFooterAbstractVO
+            ) {
+                ArrayList()
+            } else {
+                if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
+                    arrayListOf(currentItemListMbr.last())
+                } else {
+                    arrayListOf(currentItemListMbr.first())
+                }
+            }
         }
 
         // 헤더를 제외한 아이템 시작 인덱스
@@ -124,9 +140,10 @@ abstract class AbstractRecyclerViewAdapter(
         return result
     }
 
-    // todo 확인
     // (화면 갱신 함수)
     // 화면 전체를 갱신하는 함수 (헤더 푸터 할 것 없이 모든 리스트를 갱신)
+    // newItemList 를 토대로 헤더 푸터 가릴것 없이 그대로 화면에 반영
+    // todo : 필요성 확인 후 제거 및 잔존
     fun setNewItemListAll(newItemList: ArrayList<AdapterItemAbstractVO>) {
         // (newItemList 에서 순환하며, 가장 앞에서부터 비교하며 싱크를 맞추기)
 
@@ -264,14 +281,14 @@ abstract class AbstractRecyclerViewAdapter(
     }
 
     // 헤더만 갱신
-    fun updateHeader(headerItem: AdapterItemAbstractVO) {
+    fun updateHeader(headerItem: AdapterHeaderAbstractVO) {
         currentItemListMbr[0] = getDeepCopyReplica(headerItem)
 
         notifyItemChanged(0)
     }
 
     // 푸터만 갱신
-    fun updateFooter(footerItem: AdapterItemAbstractVO) {
+    fun updateFooter(footerItem: AdapterFooterAbstractVO) {
         val lastIdx = currentItemListMbr.lastIndex
         currentItemListMbr[lastIdx] = getDeepCopyReplica(footerItem)
 
@@ -543,24 +560,6 @@ abstract class AbstractRecyclerViewAdapter(
                 )
             }
         }
-    }
-
-    // 아이템 리스트만 비우는 함수
-    fun clearItemList() {
-        val firstItem = currentItemListMbr.first()
-        val lastItem = currentItemListMbr.last()
-
-        val newItemList = ArrayList<AdapterItemAbstractVO>()
-
-        if (firstItem is AdapterHeaderAbstractVO) {
-            newItemList.add(firstItem)
-        }
-
-        if (lastItem is AdapterFooterAbstractVO) {
-            newItemList.add(lastItem)
-        }
-
-        setNewItemListAll(newItemList)
     }
 
 

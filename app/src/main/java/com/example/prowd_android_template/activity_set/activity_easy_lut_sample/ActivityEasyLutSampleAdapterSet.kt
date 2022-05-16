@@ -36,9 +36,6 @@ class ActivityEasyLutSampleAdapterSet(
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
-        val headerUidMbr = maxUidMbr
-        val footerUidMbr = maxUidMbr
-
         var selectedItemPosition: Int = -1
             set(value) {
                 val oldPosition = selectedItemPosition
