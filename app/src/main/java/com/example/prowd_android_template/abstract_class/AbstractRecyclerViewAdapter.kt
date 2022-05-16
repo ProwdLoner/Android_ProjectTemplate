@@ -388,8 +388,11 @@ abstract class AbstractRecyclerViewAdapter(
                 currentItemListMbr.lastIndex
             }
 
-            // todo
+            val onlyItemSubList =
+                currentItemListMbr.subList(currentOnlyItemStartIdx, currentOnlyItemEndIdx + 1)
 
+
+            // todo
 
 
 

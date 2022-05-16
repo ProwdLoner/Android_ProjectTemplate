@@ -509,7 +509,7 @@ class ActivityInit : AppCompatActivity() {
                     ActivityHome::class.java
                 )
             startActivity(intent)
-            overridePendingTransition(0,0)
+            overridePendingTransition(0, 0)
             finish()
         }
         viewModelMbr.goToNextActivitySemaphoreMbr.release()
