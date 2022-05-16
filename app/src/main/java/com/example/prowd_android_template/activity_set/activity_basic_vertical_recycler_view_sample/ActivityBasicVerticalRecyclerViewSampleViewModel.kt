@@ -39,9 +39,11 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
-    // recyclerView 데이터
-    val recyclerViewAdapterItemDataListMbr: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO> =
-        ArrayList()
+    // recyclerView 데이터 (observe 는 adapter 에서 자동 처리됨)
+    val recyclerViewAdapterDataMbr: ProwdRecyclerViewAdapter.AdapterLiveData =
+        ProwdRecyclerViewAdapter.AdapterLiveData(
+            MutableLiveData()
+        )
 
 
     // ---------------------------------------------------------------------------------------------
@@ -70,24 +72,6 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    fun getRecyclerViewHeaderData(
-        onComplete: () -> Unit,
-        onError: (Throwable) -> Unit
-    ) {
-        executorServiceMbr?.execute {
-            onComplete()
-        }
-    }
-
-    fun getRecyclerViewFooterData(
-        onComplete: () -> Unit,
-        onError: (Throwable) -> Unit
-    ) {
-        executorServiceMbr?.execute {
-            onComplete()
-        }
-    }
-
     fun getRecyclerViewItemDataList(
         onComplete: (ArrayList<GetRecyclerViewItemDataListOutputVO>) -> Unit,
         onError: (Throwable) -> Unit

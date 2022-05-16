@@ -3,6 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_basic_vertical_
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
@@ -16,40 +17,20 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         private val parentViewMbr: ActivityBasicVerticalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
-        initialList: ArrayList<AdapterItemAbstractVO>,
+        adapterLiveData : AdapterLiveData,
         onScrollHitBottom: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
-        initialList,
+        adapterLiveData,
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
-        var isHeaderLoading = false
-            set(value) {
-                notifyItemChanged(0)
-                field = value
-            }
-
-        var isFooterLoading = false
-            set(value) {
-                notifyItemChanged(currentItemListMbr.lastIndex)
-                field = value
-            }
 
 
         // ---------------------------------------------------------------------------------------------
         // <생성자 공간>
-        init {
-            // 초기 헤더 푸터 생성
-            currentItemListMbr.addAll(
-                arrayListOf(
-                    Header.ItemVO(headerUidMbr),
-                    Footer.ItemVO(footerUidMbr)
-                )
-            )
-        }
 
 
         // ---------------------------------------------------------------------------------------------
@@ -145,25 +126,13 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
-                    val binding = holder.binding
-                    val entity = currentItemListMbr[position] as Header.ItemVO
-
-                    if (isHeaderLoading) {
-//                        binding.loaderContainer.visibility = View.VISIBLE
-                    } else {
-//                        binding.loaderContainer.visibility = View.GONE
-                    }
+//                    val binding = holder.binding
+//                    val entity = currentItemListMbr[position] as Header.ItemVO
                 }
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
-                    val binding = holder.binding
-                    val entity = currentItemListMbr[position] as Footer.ItemVO
-
-                    if (isFooterLoading) {
-//                        binding.loaderContainer.visibility = View.VISIBLE
-                    } else {
-//                        binding.loaderContainer.visibility = View.GONE
-                    }
+//                    val binding = holder.binding
+//                    val entity = currentItemListMbr[position] as Footer.ItemVO
                 }
 
                 is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩

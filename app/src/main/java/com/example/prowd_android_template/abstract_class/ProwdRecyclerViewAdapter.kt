@@ -1,6 +1,7 @@
 package com.example.prowd_android_template.abstract_class
 
-import android.app.Activity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -8,15 +9,15 @@ import androidx.recyclerview.widget.RecyclerView
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
 // 비동기 처리시 뮤텍스와 싱크에 주의할 것.
 abstract class ProwdRecyclerViewAdapter(
-    parentView: Activity,
+    parentView: AppCompatActivity,
     targetView: RecyclerView,
     isVertical: Boolean,
-    initialList: ArrayList<AdapterItemAbstractVO>,
+    adapterLiveData: AdapterLiveData,
     onScrollHitBottom: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트
-    val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = initialList
+    val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = ArrayList()
 
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
@@ -45,13 +46,26 @@ abstract class ProwdRecyclerViewAdapter(
             }
         }
 
-    val headerUidMbr = maxUidMbr
-    val footerUidMbr = maxUidMbr
-
 
     // ---------------------------------------------------------------------------------------------
     // <생성자 공간>
     init {
+        adapterLiveData.headerLiveData?.observe(parentView) {
+            setHeader(it)
+        }
+
+        adapterLiveData.footerLiveData?.observe(parentView) {
+            setFooter(it)
+        }
+
+        adapterLiveData.itemListLiveData.observe(parentView) {
+            setItemList(it)
+        }
+
+        if (adapterLiveData.itemListLiveData.value == null) {
+            adapterLiveData.itemListLiveData.value = ArrayList()
+        }
+
         targetView.adapter = this
 
         val scrollAdapterLayoutManager = LinearLayoutManager(parentView)
@@ -144,7 +158,6 @@ abstract class ProwdRecyclerViewAdapter(
             currentItemListMbr.lastIndex
         }
 
-
         val onlyItemSubList =
             currentItemListMbr.subList(currentOnlyItemStartIdx, currentOnlyItemEndIdx + 1)
 
@@ -159,22 +172,30 @@ abstract class ProwdRecyclerViewAdapter(
 
     // (화면 갱신 함수)
     // 헤더만 갱신
-    fun updateHeader(headerItem: AdapterHeaderAbstractVO) {
-        currentItemListMbr[0] = getDeepCopyReplica(headerItem)
-
-        notifyItemChanged(0)
+    private fun setHeader(headerItem: AdapterHeaderAbstractVO) {
+        if (currentItemListMbr[0] !is AdapterHeaderAbstractVO) {
+            currentItemListMbr.add(0, headerItem)
+            notifyItemInserted(0)
+        } else {
+            currentItemListMbr[0] = getDeepCopyReplica(headerItem)
+            notifyItemChanged(0)
+        }
     }
 
     // 푸터만 갱신
-    fun updateFooter(footerItem: AdapterFooterAbstractVO) {
-        currentItemListMbr[currentItemListMbr.lastIndex] = getDeepCopyReplica(footerItem)
-
-        notifyItemChanged(currentItemListMbr.lastIndex)
+    private fun setFooter(footerItem: AdapterFooterAbstractVO) {
+        if (currentItemListMbr.last() !is AdapterFooterAbstractVO) {
+            currentItemListMbr.add(footerItem)
+            notifyItemInserted(currentItemListMbr.lastIndex)
+        } else {
+            currentItemListMbr[currentItemListMbr.lastIndex] = getDeepCopyReplica(footerItem)
+            notifyItemChanged(currentItemListMbr.lastIndex)
+        }
     }
 
     // todo 검증
     // 아이템 리스트 갱신 (헤더, 푸터는 제외한 아이템만 갱신)
-    fun updateItemList(
+    private fun setItemList(
         newItemList: ArrayList<AdapterItemAbstractVO>
     ) {
         // (newItemList 에서 순환하며, 가장 앞에서부터 비교하며 싱크를 맞추기)
@@ -483,4 +504,16 @@ abstract class ProwdRecyclerViewAdapter(
         AdapterItemAbstractVO(itemUid)
 
     abstract class AdapterItemAbstractVO(open val itemUid: Long)
+
+    data class AdapterLiveData(
+        val headerLiveData: MutableLiveData<AdapterHeaderAbstractVO>?,
+        val footerLiveData: MutableLiveData<AdapterFooterAbstractVO>?,
+        val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>
+    ) {
+        constructor(itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>) : this(
+            null,
+            null,
+            itemListLiveData
+        )
+    }
 }
