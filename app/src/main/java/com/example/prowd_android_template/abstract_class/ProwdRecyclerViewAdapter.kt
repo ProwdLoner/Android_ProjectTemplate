@@ -255,6 +255,8 @@ abstract class ProwdRecyclerViewAdapter(
         }
     }
 
+    // todo 아이템 로더 생성 제거 함수
+
     // todo 아이템 삭제시 문제가 발생
     // 아이템 리스트 갱신 (헤더, 푸터는 제외한 아이템만 갱신)
     private fun setItemList(
