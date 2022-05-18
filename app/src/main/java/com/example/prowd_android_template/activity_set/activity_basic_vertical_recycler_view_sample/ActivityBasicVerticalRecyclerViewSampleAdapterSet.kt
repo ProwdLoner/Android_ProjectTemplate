@@ -1,5 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +18,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         private val parentViewMbr: ActivityBasicVerticalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
-        adapterLiveData : AdapterLiveData,
+        adapterLiveData: AdapterLiveData,
         onScrollHitBottom: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
@@ -145,6 +146,30 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     val entity = currentItemListMbr[position] as Item1.ItemVO
 
                     binding.title.text = entity.title
+
+                    // todo setNewItem 을 헤더 푸터 포함 버전으로 만들기 (adapter 에서 반환하는 position)
+                    binding.deleteBtn.setOnClickListener {
+                        parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataItemSemaphore.acquire()
+
+                            val item = getCurrentItemListDeepCopyReplicaOnlyItem()
+                            val change = if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
+                                position - 1
+                            } else {
+                                position
+                            }
+
+                            item.removeAt(change)
+
+                            Log.e("item", item.toString())
+                            parentViewMbr.runOnUiThread {
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value =
+                                    item
+
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
+                            }
+                        }
+                    }
                 }
 
                 // 아이템이 늘어나면 추가
@@ -297,7 +322,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long,
-                val serverItemUid : Long,
+                val serverItemUid: Long,
                 val title: String
             ) : AdapterItemAbstractVO(itemUid)
         }
