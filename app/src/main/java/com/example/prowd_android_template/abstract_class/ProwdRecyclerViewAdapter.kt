@@ -1,6 +1,5 @@
 package com.example.prowd_android_template.abstract_class
 
-import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -120,34 +119,13 @@ abstract class ProwdRecyclerViewAdapter(
     }
 
     // 현재 아이템 리스트의 클론을 생성하여 반환 (헤더, 푸터가 존재한다면 포함시키지 않음)
-    @UiThread
     fun getCurrentItemListDeepCopyReplicaOnlyItem(): ArrayList<AdapterItemAbstractVO> {
         if (currentItemListMbr.isEmpty()) {
             return ArrayList()
-        } else if (currentItemListMbr.size == 1) {
-            return if (currentItemListMbr[0] is AdapterHeaderAbstractVO ||
-                currentItemListMbr[0] is AdapterFooterAbstractVO
-            ) {
-                ArrayList()
-            } else {
-                currentItemListMbr
-            }
-        } else if (currentItemListMbr.size == 2) {
-            return if (currentItemListMbr.first() is AdapterHeaderAbstractVO &&
-                currentItemListMbr.last() is AdapterFooterAbstractVO
-            ) {
-                ArrayList()
-            } else {
-                if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
-                    arrayListOf(currentItemListMbr.last())
-                } else {
-                    arrayListOf(currentItemListMbr.first())
-                }
-            }
         }
 
         // 헤더를 제외한 아이템 시작 인덱스
-        val currentOnlyItemStartIdx =
+        val currentOnlyItemFirstIdx =
             if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
                 1
             } else {
@@ -155,14 +133,14 @@ abstract class ProwdRecyclerViewAdapter(
             }
 
         // 푸터를 제외한 아이템 끝 인덱스
-        val currentOnlyItemEndIdx = if (currentItemListMbr.last() is AdapterFooterAbstractVO) {
+        val currentOnlyItemLastIdx = if (currentItemListMbr.last() is AdapterFooterAbstractVO) {
             currentItemListMbr.lastIndex - 1
         } else {
             currentItemListMbr.lastIndex
         }
 
         val onlyItemSubList =
-            currentItemListMbr.subList(currentOnlyItemStartIdx, currentOnlyItemEndIdx + 1)
+            currentItemListMbr.subList(currentOnlyItemFirstIdx, currentOnlyItemLastIdx + 1)
 
         val result: ArrayList<AdapterItemAbstractVO> = ArrayList()
 
@@ -174,7 +152,6 @@ abstract class ProwdRecyclerViewAdapter(
     }
 
     // 헤더, 푸터를 제외한 아이템 리스트의 첫번째 인덱스를 반환 (없다면 -1 을 반환)
-    @UiThread
     fun getCurrentItemListOnlyItemFirstIndex(): Int {
         if (currentItemListMbr.isEmpty()) {
             return -1
@@ -208,7 +185,6 @@ abstract class ProwdRecyclerViewAdapter(
     }
 
     // 헤더, 푸터를 제외한 아이템 리스트의 마지막 인덱스를 반환 (없다면 -1 을 반환)
-    @UiThread
     fun getCurrentItemListOnlyItemLastIndex(): Int {
         if (currentItemListMbr.isEmpty()) {
             return -1
@@ -249,7 +225,6 @@ abstract class ProwdRecyclerViewAdapter(
     // 새로 생성되어 비교될 수 있으니 주소로 비교시 의도치 않게 아이템이 지워졌다 생길 수 있음
     // 같은 객체에 내용만 변할수 있으니 값 전체로 비교시 무조건 아이템이 지워졌다가 다시 생김
     // 되도록 객체 동일성을 보장하는 고유값을 객체에 넣어서 사용 할것.
-    @UiThread
     private fun isItemSame(
         oldItem: AdapterItemAbstractVO,
         newItem: AdapterItemAbstractVO
@@ -259,7 +234,6 @@ abstract class ProwdRecyclerViewAdapter(
 
     // (화면 갱신 함수)
     // 헤더만 갱신
-    @UiThread
     private fun setHeader(headerItem: AdapterHeaderAbstractVO) {
         if (currentItemListMbr[0] !is AdapterHeaderAbstractVO) {
             currentItemListMbr.add(0, headerItem)
@@ -271,7 +245,6 @@ abstract class ProwdRecyclerViewAdapter(
     }
 
     // 푸터만 갱신
-    @UiThread
     private fun setFooter(footerItem: AdapterFooterAbstractVO) {
         if (currentItemListMbr.last() !is AdapterFooterAbstractVO) {
             currentItemListMbr.add(footerItem)
@@ -284,7 +257,6 @@ abstract class ProwdRecyclerViewAdapter(
 
     // todo 아이템 삭제시 문제가 발생
     // 아이템 리스트 갱신 (헤더, 푸터는 제외한 아이템만 갱신)
-    @UiThread
     private fun setItemList(
         newItemList: ArrayList<AdapterItemAbstractVO>
     ) {
