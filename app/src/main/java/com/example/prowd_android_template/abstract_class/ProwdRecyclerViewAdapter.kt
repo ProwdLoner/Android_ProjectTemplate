@@ -409,6 +409,26 @@ abstract class ProwdRecyclerViewAdapter(
         )
 
         // todo : while true 로 바꾸고 break 처리 - 리스트 아이템이 아닌 각 리스트의 동위 아이템을 비교하는 개념
+        var idx = 0
+        while (true){
+            if (idx > newItemList.lastIndex) {
+                // 현재 인덱스가 뉴 리스트 마지막 인덱스를 넘어설 때,
+                // 여기부터 현 리스트 뒤를 날려버려 뉴 리스트와 맞추기
+                val deleteEndIdx = currentItemListOnlyItemSubList.size
+                currentItemListOnlyItemSubList.subList(idx, deleteEndIdx).clear()
+                notifyItemRangeRemoved(
+                    deleteEndIdx + subListStartIdx,
+                    deleteEndIdx - idx
+                )
+                return
+            }
+
+
+
+            ++idx
+        }
+
+
         // 아이템 서브 데이터를 순회하며 뉴 리스트와 싱크를 맞추기
         for (currentListIdx in 0..currentItemListOnlyItemSubList.lastIndex) {
             if (currentListIdx > newItemList.lastIndex) {
