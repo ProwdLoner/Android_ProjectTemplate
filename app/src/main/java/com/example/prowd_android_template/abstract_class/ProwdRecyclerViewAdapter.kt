@@ -405,6 +405,29 @@ abstract class ProwdRecyclerViewAdapter(
         }
 
         // (아이템 리스트를 순회하며 현재 아이템 리스트와 비교하여 반영)
+        // 아이템 순회 비교를 위하여 새 리스트에 헤더 푸터를 붙여주기 (순회 인덱스를 맞춰주기)
+        if (currentItemListMbr.first() is AdapterHeaderAbstractVO){
+            newItemList.add(0, currentItemListMbr.first())
+        }
+        if (currentItemListMbr.last() is AdapterFooterAbstractVO){
+            newItemList.add(currentItemListMbr.last())
+        }
+
+        for (newItemIdx in 0 until newItemList.size){ // newItemList 와 싱크 맞추기 시작
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
         // 새 아이템 리스트 마지막 인덱스
         val newItemListLastIdx = newItemList.size - 1
 
