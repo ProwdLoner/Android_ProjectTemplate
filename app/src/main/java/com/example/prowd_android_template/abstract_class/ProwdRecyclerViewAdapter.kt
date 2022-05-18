@@ -262,7 +262,7 @@ abstract class ProwdRecyclerViewAdapter(
     private fun setItemList(
         newItemList: ArrayList<AdapterItemAbstractVO>
     ) {
-        // 반영 리스트 사이즈가 0 일 때에는 모든 아이템을 제거
+        // 요청 리스트 사이즈가 0 일 때에는 모든 아이템을 제거
         if (newItemList.size == 0) {
             if (currentItemListMbr.isEmpty()) {
                 // 현재 리스트도 비어있는 상태라면 return
@@ -387,135 +387,178 @@ abstract class ProwdRecyclerViewAdapter(
             return
         }
 
-
+        // 여기까지, newList 가 비어있을 때, currentList 가 비어있을 때의 처리 (이제 두 리스트는 1개 이상의 아이템을 지님)
         // 위에서 걸러지지 못했다면 본격적인 아이템 비교가 필요
 
         // 아이템 순회 비교를 위하여 기존 리스트의 헤더 푸터를 제거한 서브 리스트를 가져오기
-        val subListStart = if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
+        val subListStartIdx = if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
             1
         } else {
             0
         }
 
-        val subListEnd = if (currentItemListMbr.last() is AdapterFooterAbstractVO) {
-            currentItemListMbr.size - 1
+        val subListLastIdx = if (currentItemListMbr.last() is AdapterFooterAbstractVO) {
+            currentItemListMbr.lastIndex - 1
         } else {
-            currentItemListMbr.size
+            currentItemListMbr.lastIndex
         }
 
-        val currentItemListOnlyItemSubList = currentItemListMbr.subList(subListStart, subListEnd)
+        val currentItemListOnlyItemSubList = currentItemListMbr.subList(
+            subListStartIdx,
+            subListLastIdx + 1
+        )
 
-        // 먼저 아이템 리스트를 순회하며 현재 아이템 리스트와 비교하여 반영
-        for (newItemListCurrentIdx in 0..newItemList.lastIndex) { // newItemList 와 싱크 맞추기 시작
-            // 비교된 아이템은 "유지(내용 변경, 변동 무), 이동, 삭제, 추가" 액션을 실행
-            val newItem = newItemList[newItemListCurrentIdx]
-
-            if (newItemListCurrentIdx > currentItemListOnlyItemSubList.lastIndex) {
-                // currentItemListMbr 마지막 아이템부터 뒤로 아이템이 없을 때
-                // 한꺼번에 아이템을 추가하고 return
-                val newItemSubEndIdx = newItemList.size
-
-                val newItemSublist = newItemList.subList(newItemListCurrentIdx, newItemSubEndIdx)
-                currentItemListOnlyItemSubList.addAll(newItemSublist)
-
-                notifyItemRangeInserted(
-                    newItemListCurrentIdx,
-                    newItemSubEndIdx - newItemListCurrentIdx
+        // 아이템 서브 데이터를 순회하며 뉴 리스트와 싱크를 맞추기
+        for (currentListIdx in 0..currentItemListOnlyItemSubList.lastIndex) {
+            if (currentListIdx > newItemList.lastIndex) {
+                // 현 리스트 현재 인덱스가 뉴 리스트 마지막 인덱스를 넘어설 때,
+                // 여기부터 현 리스트 뒤를 날려버려 뉴 리스트와 맞추기
+                val deleteEndIdx = currentItemListOnlyItemSubList.size
+                currentItemListOnlyItemSubList.subList(currentListIdx, deleteEndIdx).clear()
+                notifyItemRangeRemoved(
+                    deleteEndIdx + subListStartIdx,
+                    deleteEndIdx - currentListIdx
                 )
+
                 return
-            } else { // 해당 위치에 비교용 데이터가 존재할 때,
-                // 아이템 비교 실행.
-                // 아이템 유지 여부 확인
-                if (isItemSame(
-                        currentItemListOnlyItemSubList[newItemListCurrentIdx],
-                        newItem
-                    )
-                ) { // 두 아이템이 일치시(위치가 동일)
-                    // 아이템 수정 여부 확인
-                    if (!isContentSame(
-                            currentItemListOnlyItemSubList[newItemListCurrentIdx],
-                            newItem
-                        )
-                    ) { // 수정 사항이 존재
-                        // 아이템 내용 수정
-                        currentItemListOnlyItemSubList[newItemListCurrentIdx] =
-                            getDeepCopyReplica(newItem)
+            }
 
-                        notifyItemChanged(newItemListCurrentIdx + subListStart)
-                    }
+            // 옛 리스트 아이템과 새 아이템 리스트의 비교
+            // 현 리스트의 현재 위치의 아이템은 새로 생성되었거나 제거되었거나 이동했거나 내용이 변경되었거나 동일할 수 있음
+            val oldItem = currentItemListOnlyItemSubList[currentListIdx]
+            val newItem = newItemList[currentListIdx]
+            // todo 비교 후 처리
 
-                    // 모두 일치하므로 변동 무
-                } else { // 두 아이템이 일치하지 않을 때 (위치가 다르거나 새로 생성되었을 가능성이 존재)
-                    // currentItem 이동 및, newItem 추가
-                    // 이번 newItem 인덱스에서 싱크를 맞추고 다음으로 이동
-                    var searchedIdx = -1
+            // 동일성 비교
+            if (isItemSame(oldItem, newItem)) {
+                // 두 아이템이 동일함 = 이동할 필요가 없음, 내용이 바뀌었을 가능성이 있음
+                if (!isContentSame(oldItem, newItem)) {
+                    // 아이템 내용이 수정된 상태
+                    currentItemListOnlyItemSubList[currentListIdx] = newItem
 
-                    // 현 완료된 인덱스 뒤 + 1 (일치성 검사 끝난 다음부터) 비교
-                    // 인덱스가 존재하면 searchedIdx 에 해당 인덱스가 저장되어서 이동시키고,
-                    // 존재하지 않아서 searchedIdx 가 끝까지 -1 이라면 아이템 생성
-                    for (oldItemIdx in newItemListCurrentIdx + 1..currentItemListOnlyItemSubList.lastIndex) {
-                        val oldItem = currentItemListOnlyItemSubList[oldItemIdx]
-
-                        // 동일한 아이템 인덱스를 발견시 searchedIdx 에 인덱스 저장 후 빠져나오기.
-                        // 없다면 -1
-                        if (isItemSame(oldItem, newItem)) {
-                            searchedIdx = oldItemIdx
-                            break
-                        }
-                    }
-
-                    if (-1 == searchedIdx) {
-                        // newItem 과 동일한 아이템이 currentItemListMbr 에 없을 때
-                        // = 아이템을 이동할 필요가 없으므로 newItem 을 생성
-                        currentItemListOnlyItemSubList.add(
-                            newItemListCurrentIdx,
-                            getDeepCopyReplica(newItem)
-                        )
-
-                        notifyItemInserted(newItemListCurrentIdx + subListStart)
-                    } else {
-                        // searchedIdx 에 있는 아이템을 newItemIdx 위치로 이동
-                        val removedData =
-                            currentItemListOnlyItemSubList.removeAt(searchedIdx)
-
-                        currentItemListOnlyItemSubList.add(
-                            newItemListCurrentIdx,
-                            getDeepCopyReplica(removedData)
-                        )
-
-                        notifyItemMoved(
-                            searchedIdx + subListStart,
-                            newItemListCurrentIdx + subListStart
-                        )
-
-                        // 이동하여 위치를 동일하게 맞췄으니 컨텐츠가 동일한지 판단
-                        if (!isContentSame(
-                                currentItemListOnlyItemSubList[newItemListCurrentIdx],
-                                newItem
-                            )
-                        ) {
-                            // 이동된 아이템 내용이 새로운 아이템과 다를 때 = 내용 수정
-                            currentItemListOnlyItemSubList[newItemListCurrentIdx] =
-                                getDeepCopyReplica(newItem)
-
-                            notifyItemChanged(newItemListCurrentIdx + subListStart)
-                        }
-                    }
+                    notifyItemChanged(currentListIdx + subListStartIdx)
                 }
+                // 위를 통과했다면 현 위치 아이템은 변경 필요가 없는 상태
+            } else {
+                // 두 아이템이 동일하지 않음 = old 아이템 이동, 제거, new 아이템 생성 가능성이 있음
+
             }
         }
 
-        // 비교가 끝났는데 아직 처리되지 않고 남아있는 아이템이 있을 때
-        if (newItemList.size < currentItemListOnlyItemSubList.size
-        ) {
-            val deleteStartIdx = newItemList.size
-            val deleteEndIdx = currentItemListOnlyItemSubList.size
+        // todo 서브 데이터 길이에서 싱크를 맞췄으면, 남아있는 뉴 리스트 아이템을 모두 추가
 
-            currentItemListOnlyItemSubList.subList(deleteStartIdx, deleteEndIdx).clear()
 
-            notifyItemRangeRemoved(deleteStartIdx + subListStart, deleteEndIdx - deleteStartIdx)
-        }
-
+//        // 먼저 아이템 리스트를 순회하며 현재 아이템 리스트와 비교하여 반영
+//        for (newItemListCurrentIdx in 0..newItemList.lastIndex) { // newItemList 와 싱크 맞추기 시작
+//            // 비교된 아이템은 "유지(내용 변경, 변동 무), 이동, 삭제, 추가" 액션을 실행
+//            val newItem = newItemList[newItemListCurrentIdx]
+//
+//            if (newItemListCurrentIdx > currentItemListOnlyItemSubList.lastIndex) {
+//                // currentItemListMbr 마지막 아이템부터 뒤로 아이템이 없을 때
+//                // 한꺼번에 아이템을 추가하고 return
+//                val newItemSubEndIdx = newItemList.size
+//
+//                val newItemSublist =
+//                    newItemList.subList(newItemListCurrentIdx, newItemSubEndIdx)
+//                currentItemListOnlyItemSubList.addAll(newItemSublist)
+//
+//                notifyItemRangeInserted(
+//                    newItemListCurrentIdx,
+//                    newItemSubEndIdx - newItemListCurrentIdx
+//                )
+//                return
+//            } else { // 해당 위치에 비교용 데이터가 존재할 때,
+//                // 아이템 비교 실행.
+//                // 아이템 유지 여부 확인
+//                if (isItemSame(
+//                        currentItemListOnlyItemSubList[newItemListCurrentIdx],
+//                        newItem
+//                    )
+//                ) { // 두 아이템이 일치시(위치가 동일)
+//                    // 아이템 수정 여부 확인
+//                    if (!isContentSame(
+//                            currentItemListOnlyItemSubList[newItemListCurrentIdx],
+//                            newItem
+//                        )
+//                    ) { // 수정 사항이 존재
+//                        // 아이템 내용 수정
+//                        currentItemListOnlyItemSubList[newItemListCurrentIdx] =
+//                            getDeepCopyReplica(newItem)
+//
+//                        notifyItemChanged(newItemListCurrentIdx + subListStartIdx)
+//                    }
+//
+//                    // 모두 일치하므로 변동 무
+//                } else { // 두 아이템이 일치하지 않을 때 (위치가 다르거나 새로 생성되었을 가능성이 존재)
+//                    // currentItem 이동 및, newItem 추가
+//                    // 이번 newItem 인덱스에서 싱크를 맞추고 다음으로 이동
+//                    var searchedIdx = -1
+//
+//                    // 현 완료된 인덱스 뒤 + 1 (일치성 검사 끝난 다음부터) 비교
+//                    // 인덱스가 존재하면 searchedIdx 에 해당 인덱스가 저장되어서 이동시키고,
+//                    // 존재하지 않아서 searchedIdx 가 끝까지 -1 이라면 아이템 생성
+//                    for (oldItemIdx in newItemListCurrentIdx + 1..currentItemListOnlyItemSubList.lastIndex) {
+//                        val oldItem = currentItemListOnlyItemSubList[oldItemIdx]
+//
+//                        // 동일한 아이템 인덱스를 발견시 searchedIdx 에 인덱스 저장 후 빠져나오기.
+//                        // 없다면 -1
+//                        if (isItemSame(oldItem, newItem)) {
+//                            searchedIdx = oldItemIdx
+//                            break
+//                        }
+//                    }
+//
+//                    if (-1 == searchedIdx) {
+//                        // newItem 과 동일한 아이템이 currentItemListMbr 에 없을 때
+//                        // = 아이템을 이동할 필요가 없으므로 newItem 을 생성
+//                        currentItemListOnlyItemSubList.add(
+//                            newItemListCurrentIdx,
+//                            getDeepCopyReplica(newItem)
+//                        )
+//
+//                        notifyItemInserted(newItemListCurrentIdx + subListStartIdx)
+//                    } else {
+//                        // searchedIdx 에 있는 아이템을 newItemIdx 위치로 이동
+//                        val removedData =
+//                            currentItemListOnlyItemSubList.removeAt(searchedIdx)
+//
+//                        currentItemListOnlyItemSubList.add(
+//                            newItemListCurrentIdx,
+//                            getDeepCopyReplica(removedData)
+//                        )
+//
+//                        notifyItemMoved(
+//                            searchedIdx + subListStartIdx,
+//                            newItemListCurrentIdx + subListStartIdx
+//                        )
+//
+//                        // 이동하여 위치를 동일하게 맞췄으니 컨텐츠가 동일한지 판단
+//                        if (!isContentSame(
+//                                currentItemListOnlyItemSubList[newItemListCurrentIdx],
+//                                newItem
+//                            )
+//                        ) {
+//                            // 이동된 아이템 내용이 새로운 아이템과 다를 때 = 내용 수정
+//                            currentItemListOnlyItemSubList[newItemListCurrentIdx] =
+//                                getDeepCopyReplica(newItem)
+//
+//                            notifyItemChanged(newItemListCurrentIdx + subListStartIdx)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        // 비교가 끝났는데 아직 처리되지 않고 남아있는 아이템이 있을 때
+//        if (newItemList.size < currentItemListOnlyItemSubList.size
+//        ) {
+//            val deleteStartIdx = newItemList.size
+//            val deleteEndIdx = currentItemListOnlyItemSubList.size
+//
+//            currentItemListOnlyItemSubList.subList(deleteStartIdx, deleteEndIdx).clear()
+//
+//            notifyItemRangeRemoved(deleteStartIdx + subListStartIdx, deleteEndIdx - deleteStartIdx)
+//        }
     }
 
 
