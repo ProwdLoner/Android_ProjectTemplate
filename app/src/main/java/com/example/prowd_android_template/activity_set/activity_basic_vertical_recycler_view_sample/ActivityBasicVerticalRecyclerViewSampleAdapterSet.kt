@@ -153,15 +153,12 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                             parentViewMbr.viewModelMbr.recyclerViewAdapterDataItemSemaphore.acquire()
 
                             val item = getCurrentItemListDeepCopyReplicaOnlyItem()
-                            val change = if (currentItemListMbr.first() is AdapterHeaderAbstractVO) {
-                                position - 1
-                            } else {
-                                position
+                            val change = item.indexOfFirst {
+                                it.itemUid == entity.itemUid
                             }
 
                             item.removeAt(change)
 
-                            Log.e("item", item.toString())
                             parentViewMbr.runOnUiThread {
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value =
                                     item

@@ -169,11 +169,18 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                     adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplicaOnlyItem()
                 val lastServerUid =
                     (item.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
-                item.add(
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                        lastServerUid + 1,
-                        "added ${lastServerUid + 1}"
+                item.addAll(
+                    arrayListOf(
+                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                            lastServerUid + 1,
+                            "added ${lastServerUid + 1}"
+                        ),
+                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                            lastServerUid + 2,
+                            "added ${lastServerUid + 2}"
+                        )
                     )
                 )
 

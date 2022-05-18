@@ -427,25 +427,19 @@ abstract class ProwdRecyclerViewAdapter(
             // 비교된 아이템은 "유지(내용 변경, 변동 무), 이동, 삭제, 추가" 액션을 실행
             val newItem = newItemList[newItemListCurrentIdx]
 
-
-
-
-
-
-
-
-
-
-
-
-
             if (newItemListCurrentIdx > currentItemListOnlyItemSubList.lastIndex) {
                 // currentItemListMbr 마지막 아이템부터 뒤로 아이템이 없을 때
-                // 새로운 아이템 추가
-                // todo 한꺼번에 처리하고 return
-                currentItemListOnlyItemSubList.add(newItemListCurrentIdx, getDeepCopyReplica(newItem))
+                // 한꺼번에 아이템을 추가하고 return
+                val newItemSubEndIdx = newItemList.size
 
-                notifyItemInserted(newItemListCurrentIdx + subListStart)
+                val newItemSublist = newItemList.subList(newItemListCurrentIdx, newItemSubEndIdx)
+                currentItemListOnlyItemSubList.addAll(newItemSublist)
+
+                notifyItemRangeInserted(
+                    newItemListCurrentIdx,
+                    newItemSubEndIdx - newItemListCurrentIdx
+                )
+                return
             } else { // 해당 위치에 비교용 데이터가 존재할 때,
                 // 아이템 비교 실행.
                 // 아이템 유지 여부 확인
@@ -464,7 +458,7 @@ abstract class ProwdRecyclerViewAdapter(
                         currentItemListOnlyItemSubList[newItemListCurrentIdx] =
                             getDeepCopyReplica(newItem)
 
-                        notifyItemChanged(newItemListCurrentIdx+subListStart)
+                        notifyItemChanged(newItemListCurrentIdx + subListStart)
                     }
 
                     // 모두 일치하므로 변동 무
@@ -495,7 +489,7 @@ abstract class ProwdRecyclerViewAdapter(
                             getDeepCopyReplica(newItem)
                         )
 
-                        notifyItemInserted(newItemListCurrentIdx+subListStart)
+                        notifyItemInserted(newItemListCurrentIdx + subListStart)
                     } else {
                         // searchedIdx 에 있는 아이템을 newItemIdx 위치로 이동
                         val removedData =
@@ -506,7 +500,10 @@ abstract class ProwdRecyclerViewAdapter(
                             getDeepCopyReplica(removedData)
                         )
 
-                        notifyItemMoved(searchedIdx, newItemListCurrentIdx+subListStart)
+                        notifyItemMoved(
+                            searchedIdx + subListStart,
+                            newItemListCurrentIdx + subListStart
+                        )
 
                         // 이동하여 위치를 동일하게 맞췄으니 컨텐츠가 동일한지 판단
                         if (!isContentSame(
@@ -518,7 +515,7 @@ abstract class ProwdRecyclerViewAdapter(
                             currentItemListOnlyItemSubList[newItemListCurrentIdx] =
                                 getDeepCopyReplica(newItem)
 
-                            notifyItemChanged(newItemListCurrentIdx+subListStart)
+                            notifyItemChanged(newItemListCurrentIdx + subListStart)
                         }
                     }
                 }
@@ -528,18 +525,12 @@ abstract class ProwdRecyclerViewAdapter(
         // 비교가 끝났는데 아직 처리되지 않고 남아있는 아이템이 있을 때
         if (newItemList.size < currentItemListOnlyItemSubList.size
         ) {
-
             val deleteStartIdx = newItemList.size
-            val deleteEndIdx = currentItemListMbr.size - 1
-            var numOfChange = 0
+            val deleteEndIdx = currentItemListOnlyItemSubList.size
 
-            // 뒤에서부터 지우기
-            for (i in deleteEndIdx downTo deleteStartIdx) {
-                currentItemListMbr.removeAt(i)
-                numOfChange++
-            }
+            currentItemListOnlyItemSubList.subList(deleteStartIdx, deleteEndIdx).clear()
 
-            notifyItemRangeRemoved(deleteStartIdx - 1, numOfChange)
+            notifyItemRangeRemoved(deleteStartIdx + subListStart, deleteEndIdx - deleteStartIdx)
         }
 
     }
