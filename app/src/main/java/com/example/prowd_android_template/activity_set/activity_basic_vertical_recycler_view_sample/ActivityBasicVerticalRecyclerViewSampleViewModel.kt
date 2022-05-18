@@ -81,7 +81,7 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     var getRecyclerViewItemDataListLastServerItemUidMbr: Long = -1
 
     // pageSize : 한번에 반환하는 아이템 갯수 (이 기준이 변하면 아이템 새로고침을 할 것)
-    var getRecyclerViewItemDataListPageSizeMbr: Int = 20
+    var getRecyclerViewItemDataListPageSizeMbr: Int = 10
 
     // sortCode : 무엇을 기준으로 정렬한 아이템을 가져올지에 대한 것. (이 기준이 변하면 아이템 새로고침을 할 것)
     var getRecyclerViewItemDataListSortCodeMbr: Int = 1
@@ -98,7 +98,7 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     ) {
         executorServiceMbr?.execute {
             val resultData = ArrayList<GetRecyclerViewItemDataListOutputVO>()
-            for (idx in 0..20) {
+            for (idx in 1..getRecyclerViewItemDataListPageSizeMbr) {
                 val title = "item$idx"
                 resultData.add(
                     GetRecyclerViewItemDataListOutputVO(
