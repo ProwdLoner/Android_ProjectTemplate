@@ -1,10 +1,9 @@
 package com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.MutableLiveData
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
@@ -147,7 +146,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     binding.title.text = entity.title
 
-                    // todo setNewItem 을 헤더 푸터 포함 버전으로 만들기 (adapter 에서 반환하는 position)
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
                             parentViewMbr.viewModelMbr.recyclerViewAdapterDataItemSemaphore.acquire()
@@ -166,6 +164,14 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
                             }
                         }
+                    }
+
+                    binding.root.setOnClickListener {
+                        Toast.makeText(
+                            parentViewMbr,
+                            "${entity.title} Clicked!",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
 

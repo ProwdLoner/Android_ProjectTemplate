@@ -91,26 +91,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <com.example.prowd_android_template.custom_view.CircleImageView
-            android:id="@+id/go_to_down_btn"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="20dp"
-            android:src="@drawable/img_activity_basic_vertical_recycler_view_sample_down_arrow"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <com.example.prowd_android_template.custom_view.CircleImageView
-            android:id="@+id/go_to_up_btn"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="20dp"
-            android:src="@drawable/img_activity_basic_vertical_recycler_view_sample_up_arrow"
-            app:layout_constraintBottom_toTopOf="@id/go_to_down_btn"
-            app:layout_constraintEnd_toEndOf="parent" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

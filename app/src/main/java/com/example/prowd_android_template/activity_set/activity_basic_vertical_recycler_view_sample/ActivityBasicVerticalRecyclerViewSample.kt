@@ -133,16 +133,6 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 위로 이동 버튼
-        bindingMbr.goToUpBtn.setOnClickListener {
-            bindingMbr.recyclerView.smoothScrollToPosition(0)
-        }
-
-        // 아래로 이동 버튼
-        bindingMbr.goToDownBtn.setOnClickListener {
-            bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentItemListMbr.lastIndex)
-        }
-
         // 아이템 셔플
         bindingMbr.doShuffleBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {

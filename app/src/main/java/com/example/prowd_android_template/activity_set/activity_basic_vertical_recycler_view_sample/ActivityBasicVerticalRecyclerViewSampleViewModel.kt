@@ -45,8 +45,9 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
         ProwdRecyclerViewAdapter.AdapterLiveData(
             MutableLiveData()
         )
+
     // recyclerView 데이터 아이템 접근 및 조작 세마포어 (acquire 는 메인 스레드에서 하지 말 것.)
-    val recyclerViewAdapterDataItemSemaphore : Semaphore = Semaphore(1)
+    val recyclerViewAdapterDataItemSemaphore: Semaphore = Semaphore(1)
 
 
     // ---------------------------------------------------------------------------------------------
