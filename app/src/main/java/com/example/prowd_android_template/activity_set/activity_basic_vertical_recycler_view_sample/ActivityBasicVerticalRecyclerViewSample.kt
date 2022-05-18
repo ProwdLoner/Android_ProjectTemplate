@@ -157,20 +157,16 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 // todo 반짝임 효과
                 val item =
                     adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplicaOnlyItem()
-                val lastServerUid =
+                val lastServerUid = if (item.isEmpty()) {
+                    0
+                } else {
                     (item.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
-                item.addAll(
-                    arrayListOf(
-                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                            adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                            lastServerUid + 1,
-                            "added ${lastServerUid + 1}"
-                        ),
-                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                            adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                            lastServerUid + 2,
-                            "added ${lastServerUid + 2}"
-                        )
+                }
+                item.add(
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        lastServerUid + 1,
+                        "added ${lastServerUid + 1}"
                     )
                 )
 
