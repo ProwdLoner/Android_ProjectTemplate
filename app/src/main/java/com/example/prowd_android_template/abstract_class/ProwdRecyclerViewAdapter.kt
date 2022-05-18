@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.util.concurrent.Semaphore
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
@@ -12,7 +13,7 @@ abstract class ProwdRecyclerViewAdapter(
     parentView: AppCompatActivity,
     targetView: RecyclerView,
     isVertical: Boolean,
-    adapterLiveData: AdapterLiveData,
+    adapterVmData: AdapterVmData,
     onScrollHitBottom: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
@@ -50,20 +51,20 @@ abstract class ProwdRecyclerViewAdapter(
     // ---------------------------------------------------------------------------------------------
     // <생성자 공간>
     init {
-        adapterLiveData.headerLiveData?.observe(parentView) {
+        adapterVmData.headerLiveData?.observe(parentView) {
             setHeader(it)
         }
 
-        adapterLiveData.footerLiveData?.observe(parentView) {
+        adapterVmData.footerLiveData?.observe(parentView) {
             setFooter(it)
         }
 
-        adapterLiveData.itemListLiveData.observe(parentView) {
+        adapterVmData.itemListLiveData.observe(parentView) {
             setItemList(it)
         }
 
-        if (adapterLiveData.itemListLiveData.value == null) {
-            adapterLiveData.itemListLiveData.value = ArrayList()
+        if (adapterVmData.itemListLiveData.value == null) {
+            adapterVmData.itemListLiveData.value = ArrayList()
         }
 
         targetView.adapter = this
@@ -565,15 +566,19 @@ abstract class ProwdRecyclerViewAdapter(
 
     abstract class AdapterItemAbstractVO(open val itemUid: Long)
 
-    data class AdapterLiveData(
+    data class AdapterVmData(
+        val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>,
         val headerLiveData: MutableLiveData<AdapterHeaderAbstractVO>?,
-        val footerLiveData: MutableLiveData<AdapterFooterAbstractVO>?,
-        val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>
+        val footerLiveData: MutableLiveData<AdapterFooterAbstractVO>?
     ) {
-        constructor(itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>) : this(
+        val semaphore = Semaphore(1)
+
+        constructor(
+            itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>
+        ) : this(
+            itemListLiveData,
             null,
             null,
-            itemListLiveData
         )
     }
 }

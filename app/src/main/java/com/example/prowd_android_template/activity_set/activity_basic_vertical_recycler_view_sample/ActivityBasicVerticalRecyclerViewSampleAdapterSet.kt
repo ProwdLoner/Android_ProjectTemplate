@@ -17,13 +17,13 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         private val parentViewMbr: ActivityBasicVerticalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
-        adapterLiveData: AdapterLiveData,
+        adapterVmData: AdapterVmData,
         onScrollHitBottom: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
-        adapterLiveData,
+        adapterVmData,
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>
@@ -148,7 +148,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataItemSemaphore.acquire()
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataMbr.semaphore.acquire()
 
                             val item = getCurrentItemListDeepCopyReplicaOnlyItem()
                             val change = item.indexOfFirst {
@@ -161,7 +161,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value =
                                     item
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
                             }
                         }
                     }

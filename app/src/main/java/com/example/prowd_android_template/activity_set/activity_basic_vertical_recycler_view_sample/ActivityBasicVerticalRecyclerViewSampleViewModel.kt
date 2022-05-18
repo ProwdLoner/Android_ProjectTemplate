@@ -11,7 +11,6 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.Semaphore
 
 class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application) :
     AndroidViewModel(application) {
@@ -41,13 +40,10 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     var isDataFirstLoadingMbr = true
 
     // recyclerView 데이터 (observe 는 adapter 에서 자동 처리됨)
-    val recyclerViewAdapterDataMbr: ProwdRecyclerViewAdapter.AdapterLiveData =
-        ProwdRecyclerViewAdapter.AdapterLiveData(
+    val recyclerViewAdapterDataMbr: ProwdRecyclerViewAdapter.AdapterVmData =
+        ProwdRecyclerViewAdapter.AdapterVmData(
             MutableLiveData()
         )
-
-    // recyclerView 데이터 아이템 접근 및 조작 세마포어 (acquire 는 메인 스레드에서 하지 말 것.)
-    val recyclerViewAdapterDataItemSemaphore: Semaphore = Semaphore(1)
 
 
     // ---------------------------------------------------------------------------------------------

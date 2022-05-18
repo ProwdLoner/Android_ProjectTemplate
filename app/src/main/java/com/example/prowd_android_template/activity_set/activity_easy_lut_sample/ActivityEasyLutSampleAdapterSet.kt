@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
@@ -27,13 +26,13 @@ class ActivityEasyLutSampleAdapterSet(
         private val parentViewModel: ActivityEasyLutSampleViewModel,
         targetView: RecyclerView,
         isVertical: Boolean,
-        adapterLiveData : AdapterLiveData,
+        adapterVmData : AdapterVmData,
         onScrollHitBottom: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
-        adapterLiveData,
+        adapterVmData,
         onScrollHitBottom
     ) {
         // <멤버 변수 공간>

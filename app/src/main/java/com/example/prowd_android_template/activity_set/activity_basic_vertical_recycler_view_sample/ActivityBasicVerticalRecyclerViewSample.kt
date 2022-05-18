@@ -136,7 +136,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         // 아이템 셔플
         bindingMbr.doShuffleBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
-                viewModelMbr.recyclerViewAdapterDataItemSemaphore.acquire()
+                viewModelMbr.recyclerViewAdapterDataMbr.semaphore.acquire()
                 // 현재 리스트 기반으로 변경을 주고 싶다면 아래와 같이 카피를 가져와서 조작하는 것을 권장
                 // (이동, 삭제, 생성의 경우는 그냥 current 를 해도 되지만 동일 위치의 아이템 정보 수정시에는 필수)
                 val item =
@@ -145,7 +145,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
                 runOnUiThread {
                     viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = item
-                    viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
+                    viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
                 }
             }
         }
@@ -153,7 +153,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         // 아이템 추가
         bindingMbr.addItemBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
-                viewModelMbr.recyclerViewAdapterDataItemSemaphore.acquire()
+                viewModelMbr.recyclerViewAdapterDataMbr.semaphore.acquire()
                 // todo 반짝임 효과
                 val item =
                     adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplicaOnlyItem()
@@ -177,7 +177,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 runOnUiThread {
                     viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = item
                     bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.getCurrentItemListOnlyItemLastIndex())
-                    viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
+                    viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
                 }
             }
         }
@@ -238,7 +238,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     private fun refreshScreenData() {
         viewModelMbr.executorServiceMbr?.execute {
             // (데이터 초기화)
-            viewModelMbr.recyclerViewAdapterDataItemSemaphore.acquire()
+            viewModelMbr.recyclerViewAdapterDataMbr.semaphore.acquire()
             runOnUiThread {
                 viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = ArrayList()
             }
@@ -270,7 +270,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                         viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = ArrayList()
 
                         if (it.isEmpty()) {
-                            viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
+                            viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
                             return@runOnUiThread
                         }
 
@@ -290,7 +290,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                         viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = newItemList
                         viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr =
                             (newItemList.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
-                        viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
+                        viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
                     }
                 },
                 onError = {
@@ -300,10 +300,10 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
                         if (it is SocketTimeoutException) { // 타임아웃 에러
                             // todo
-                            viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
+                            viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
                         } else { // 그외 에러
                             // todo
-                            viewModelMbr.recyclerViewAdapterDataItemSemaphore.release()
+                            viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
                         }
                     }
                 }
