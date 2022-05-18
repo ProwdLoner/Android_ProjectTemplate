@@ -21,13 +21,13 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
-    private var progressLoadingDialogMbr: DialogProgressLoading? = null
+    var progressLoadingDialogMbr: DialogProgressLoading? = null
 
     // 선택 다이얼로그
-    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
+    var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
     // 확인 다이얼로그
-    private var confirmDialogMbr: DialogConfirm? = null
+    var confirmDialogMbr: DialogConfirm? = null
 
 
     // ---------------------------------------------------------------------------------------------

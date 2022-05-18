@@ -24,13 +24,13 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
-    private var progressLoadingDialogMbr: DialogProgressLoading? = null
+    var progressLoadingDialogMbr: DialogProgressLoading? = null
 
     // 선택 다이얼로그
-    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
+    var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
     // 확인 다이얼로그
-    private var confirmDialogMbr: DialogConfirm? = null
+    var confirmDialogMbr: DialogConfirm? = null
 
     // 플래그먼트 생성 (화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것)
     // 플래그먼트는 화면 회전시 초기화 수준이 아니라 다시 생성

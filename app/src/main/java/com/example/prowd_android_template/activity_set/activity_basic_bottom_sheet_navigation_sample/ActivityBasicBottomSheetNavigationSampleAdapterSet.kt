@@ -57,6 +57,5 @@ data class ActivityBasicBottomSheetNavigationSampleAdapterSet(
 
             }).dispatchUpdatesTo(this)
         }
-
     }
 }

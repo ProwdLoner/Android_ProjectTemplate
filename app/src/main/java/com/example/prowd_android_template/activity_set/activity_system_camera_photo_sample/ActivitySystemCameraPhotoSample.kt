@@ -37,22 +37,22 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
-    private var progressLoadingDialogMbr: DialogProgressLoading? = null
+    var progressLoadingDialogMbr: DialogProgressLoading? = null
 
     // 선택 다이얼로그
-    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
+    var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
     // 확인 다이얼로그
-    private var confirmDialogMbr: DialogConfirm? = null
+    var confirmDialogMbr: DialogConfirm? = null
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
-    private var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
+    var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
 
     // (ResultLauncher 객체)
     // 액티비티 이동 복귀 객체
-    private lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
-    private var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+    lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
+    var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
 
     // ---------------------------------------------------------------------------------------------

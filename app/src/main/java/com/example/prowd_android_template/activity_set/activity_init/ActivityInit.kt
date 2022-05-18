@@ -30,17 +30,17 @@ class ActivityInit : AppCompatActivity() {
     private var progressLoadingDialogMbr: DialogProgressLoading? = null
 
     // 선택 다이얼로그
-    private var binaryChooseDialogMbr: DialogBinaryChoose? = null
+    var binaryChooseDialogMbr: DialogBinaryChoose? = null
 
     // 확인 다이얼로그
-    private var confirmDialogMbr: DialogConfirm? = null
+    var confirmDialogMbr: DialogConfirm? = null
 
     // 카운터 객체
-    private lateinit var delayCountDownTimerMbr: CountDownTimer
+    lateinit var delayCountDownTimerMbr: CountDownTimer
 
     // (권한 요청 객체)
-    private lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
-    private var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
+    lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
+    var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
 
     // 앱 사용 권한 모음
     private val applicationPermissionArrayMbr = arrayOf(
