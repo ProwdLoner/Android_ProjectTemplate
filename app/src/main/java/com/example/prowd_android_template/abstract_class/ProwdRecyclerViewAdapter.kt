@@ -1,5 +1,6 @@
 package com.example.prowd_android_template.abstract_class
 
+import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,7 +24,7 @@ abstract class ProwdRecyclerViewAdapter(
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
     // Long 값 최소에서 최대까지의 범위이므로 매우 드문 현상.
-    // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재(심각한 에러는 아님)
+    // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재(그렇기에 외부에서 조작시에는 따로 관리 가능한 uid 를 사용할것)
     var maxUidMbr = Long.MIN_VALUE
         get() {
             val firstIssue = ++field
@@ -119,6 +120,7 @@ abstract class ProwdRecyclerViewAdapter(
     }
 
     // 현재 아이템 리스트의 클론을 생성하여 반환 (헤더, 푸터가 존재한다면 포함시키지 않음)
+    @UiThread
     fun getCurrentItemListDeepCopyReplicaOnlyItem(): ArrayList<AdapterItemAbstractVO> {
         if (currentItemListMbr.isEmpty()) {
             return ArrayList()
@@ -172,6 +174,7 @@ abstract class ProwdRecyclerViewAdapter(
     }
 
     // 헤더, 푸터를 제외한 아이템 리스트의 첫번째 인덱스를 반환 (없다면 -1 을 반환)
+    @UiThread
     fun getCurrentItemListOnlyItemFirstIndex(): Int {
         if (currentItemListMbr.isEmpty()) {
             return -1
@@ -205,6 +208,7 @@ abstract class ProwdRecyclerViewAdapter(
     }
 
     // 헤더, 푸터를 제외한 아이템 리스트의 마지막 인덱스를 반환 (없다면 -1 을 반환)
+    @UiThread
     fun getCurrentItemListOnlyItemLastIndex(): Int {
         if (currentItemListMbr.isEmpty()) {
             return -1
@@ -245,6 +249,7 @@ abstract class ProwdRecyclerViewAdapter(
     // 새로 생성되어 비교될 수 있으니 주소로 비교시 의도치 않게 아이템이 지워졌다 생길 수 있음
     // 같은 객체에 내용만 변할수 있으니 값 전체로 비교시 무조건 아이템이 지워졌다가 다시 생김
     // 되도록 객체 동일성을 보장하는 고유값을 객체에 넣어서 사용 할것.
+    @UiThread
     private fun isItemSame(
         oldItem: AdapterItemAbstractVO,
         newItem: AdapterItemAbstractVO
@@ -254,6 +259,7 @@ abstract class ProwdRecyclerViewAdapter(
 
     // (화면 갱신 함수)
     // 헤더만 갱신
+    @UiThread
     private fun setHeader(headerItem: AdapterHeaderAbstractVO) {
         if (currentItemListMbr[0] !is AdapterHeaderAbstractVO) {
             currentItemListMbr.add(0, headerItem)
@@ -265,6 +271,7 @@ abstract class ProwdRecyclerViewAdapter(
     }
 
     // 푸터만 갱신
+    @UiThread
     private fun setFooter(footerItem: AdapterFooterAbstractVO) {
         if (currentItemListMbr.last() !is AdapterFooterAbstractVO) {
             currentItemListMbr.add(footerItem)
@@ -277,6 +284,7 @@ abstract class ProwdRecyclerViewAdapter(
 
     // todo 아이템 삭제시 문제가 발생
     // 아이템 리스트 갱신 (헤더, 푸터는 제외한 아이템만 갱신)
+    @UiThread
     private fun setItemList(
         newItemList: ArrayList<AdapterItemAbstractVO>
     ) {
