@@ -408,6 +408,7 @@ abstract class ProwdRecyclerViewAdapter(
             subListLastIdx + 1
         )
 
+        // todo : while true 로 바꾸고 break 처리 - 리스트 아이템이 아닌 각 리스트의 동위 아이템을 비교하는 개념
         // 아이템 서브 데이터를 순회하며 뉴 리스트와 싱크를 맞추기
         for (currentListIdx in 0..currentItemListOnlyItemSubList.lastIndex) {
             if (currentListIdx > newItemList.lastIndex) {
@@ -440,7 +441,8 @@ abstract class ProwdRecyclerViewAdapter(
                 }
                 // 위를 통과했다면 현 위치 아이템은 변경 필요가 없는 상태
             } else {
-                // 두 아이템이 동일하지 않음 = old 아이템 이동, 제거, new 아이템 생성 가능성이 있음
+                // 두 아이템이 동일하지 않음 = old 아이템 이동/제거, new 아이템 생성 가능성이 있음
+                // todo : 현 리스트에서 뉴 아이템 위치를 구해서 존재한다면 이동한 것, 존재하지 않는다면
 
             }
         }
