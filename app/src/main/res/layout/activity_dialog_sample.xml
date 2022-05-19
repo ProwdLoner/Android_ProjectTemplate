@@ -55,8 +55,8 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="15dp"
             android:paddingTop="15dp"
+            android:paddingBottom="15dp"
             android:scrollbars="vertical">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -75,6 +75,18 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <Button
+                    android:id="@+id/test_loading_dialog_with_progress_bar_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="로딩 다이얼로그2 테스트"
+                    android:layout_marginTop="10dp"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/test_loading_dialog_btn" />
+
+                <Button
                     android:id="@+id/test_binary_choose_dialog_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -84,7 +96,7 @@
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/test_loading_dialog_btn"/>
+                    app:layout_constraintTop_toBottomOf="@id/test_loading_dialog_with_progress_bar_btn" />
 
                 <Button
                     android:id="@+id/test_confirm_dialog_btn"
@@ -96,7 +108,7 @@
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/test_binary_choose_dialog_btn"/>
+                    app:layout_constraintTop_toBottomOf="@id/test_binary_choose_dialog_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>

@@ -16,7 +16,7 @@ class DialogConfirm constructor(
 ) : Dialog(context) {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: DialogConfirmBinding
+    lateinit var bindingMbr: DialogConfirmBinding
 
 
     // ---------------------------------------------------------------------------------------------

@@ -2,6 +2,7 @@ package com.example.prowd_android_template.activity_set.activity_dialog_sample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -110,7 +111,8 @@ class ActivityDialogSample : AppCompatActivity() {
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
 
             // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            viewModelMbr.currentUserSessionTokenMbr =
+                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
         }
     }
 
@@ -133,6 +135,37 @@ class ActivityDialogSample : AppCompatActivity() {
                         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
                     }
                 )
+        }
+
+        bindingMbr.testLoadingDialogWithProgressBarBtn.setOnClickListener {
+            if (viewModelMbr.progressDialogSample2ProgressValue.value != 0
+            ) {
+                return@setOnClickListener
+            }
+
+            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "로딩중 0%",
+                    onCanceled = {}
+                )
+
+            progressLoadingDialogMbr?.bindingMbr?.progressBar?.max = 100
+
+            viewModelMbr.executorServiceMbr?.execute {
+                for (count in 0..100) {
+                    runOnUiThread {
+                        viewModelMbr.progressDialogSample2ProgressValue.value = count
+                    }
+
+                    Thread.sleep(100)
+                }
+
+                runOnUiThread {
+                    viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+                    viewModelMbr.progressDialogSample2ProgressValue.value = 0
+                }
+            }
         }
 
         // 선택 다이얼로그 테스트 버튼
@@ -258,6 +291,14 @@ class ActivityDialogSample : AppCompatActivity() {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
             }
+        }
+
+        // progressSample2 진행도
+        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
+            val loadingText = "로딩중 $it%"
+            progressLoadingDialogMbr?.bindingMbr?.progressMessageTxt?.text = loadingText
+            progressLoadingDialogMbr?.bindingMbr?.progressBar?.visibility = View.VISIBLE
+            progressLoadingDialogMbr?.bindingMbr?.progressBar?.progress = it
         }
     }
 }

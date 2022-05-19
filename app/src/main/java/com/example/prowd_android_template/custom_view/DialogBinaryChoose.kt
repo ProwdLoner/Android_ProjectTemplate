@@ -16,7 +16,7 @@ class DialogBinaryChoose constructor(
 ) : Dialog(context) {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: DialogBinaryChooseBinding
+    lateinit var bindingMbr: DialogBinaryChooseBinding
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>

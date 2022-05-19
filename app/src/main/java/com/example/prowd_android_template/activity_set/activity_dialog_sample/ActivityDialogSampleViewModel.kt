@@ -50,6 +50,9 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
+    val progressDialogSample2ProgressValue : MutableLiveData<Int> =
+        MutableLiveData(0)
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>

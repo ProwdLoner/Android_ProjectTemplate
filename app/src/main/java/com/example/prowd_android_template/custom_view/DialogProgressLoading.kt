@@ -12,11 +12,11 @@ import com.example.prowd_android_template.databinding.DialogProgressLoadingBindi
 
 class DialogProgressLoading constructor(
     context: Context,
-    var dialogInfoMbr : DialogInfoVO
+    var dialogInfoMbr: DialogInfoVO
 ) : Dialog(context) {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    private lateinit var bindingMbr: DialogProgressLoadingBinding
+    lateinit var bindingMbr: DialogProgressLoadingBinding
 
 
     // ---------------------------------------------------------------------------------------------
@@ -64,8 +64,8 @@ class DialogProgressLoading constructor(
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
     data class DialogInfoVO(
-        var isCancelable : Boolean,
-        var progressMsg : String?,
-        var onCanceled : Runnable
+        var isCancelable: Boolean,
+        var progressMsg: String?,
+        var onCanceled: Runnable
     )
 }
