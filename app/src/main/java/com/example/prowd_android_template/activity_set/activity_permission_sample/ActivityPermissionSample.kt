@@ -55,6 +55,9 @@ class ActivityPermissionSample : AppCompatActivity() {
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
+    // 앱 사용 권한 모음
+    private lateinit var applicationPermissionArrayMbr: Array<String>
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -148,6 +151,12 @@ class ActivityPermissionSample : AppCompatActivity() {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
             resultLauncherCallbackMbr = null
         }
+
+        // Manifest.xml 에 설정된 모든 권한 배열
+        applicationPermissionArrayMbr = packageManager.getPackageInfo(
+            packageName,
+            PackageManager.GET_PERMISSIONS
+        ).requestedPermissions
 
     }
 
