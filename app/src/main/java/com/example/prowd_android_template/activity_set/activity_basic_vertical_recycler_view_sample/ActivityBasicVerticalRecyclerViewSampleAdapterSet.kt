@@ -122,7 +122,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
             }
         }
 
-        // todo : 현재 아이템 삭제시 position 이 안 맞는 현상 발생
         // 아이템 뷰 생성 시점 로직
         // 주의 : 반환되는 position 이 currentDataList 인덱스와 같지 않을 수 있음.
         //     최초 실행시에는 같지만 아이템이 지워질 경우 position 을 0 부터 재정렬하는게 아님.
