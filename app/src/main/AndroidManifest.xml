@@ -14,7 +14,7 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -60,10 +60,6 @@
         <activity
             android:name=".activity_set.activity_jni_sample.ActivityJniSample"
             android:exported="false" />
-        <activity
-            android:name=".activity_set.activity_network_recycler_view_sample_editor.ActivityNetworkRecyclerViewSampleEditor"
-            android:exported="false"
-            android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample"
             android:exported="false" />
