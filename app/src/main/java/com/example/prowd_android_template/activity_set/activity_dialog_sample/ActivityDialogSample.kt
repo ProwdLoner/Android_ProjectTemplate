@@ -158,7 +158,7 @@ class ActivityDialogSample : AppCompatActivity() {
                         viewModelMbr.progressDialogSample2ProgressValue.value = count
                     }
 
-                    Thread.sleep(100)
+                    Thread.sleep(10)
                 }
 
                 runOnUiThread {
