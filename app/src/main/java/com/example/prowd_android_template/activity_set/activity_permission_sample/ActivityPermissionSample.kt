@@ -55,6 +55,7 @@ class ActivityPermissionSample : AppCompatActivity() {
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
+    // todo : manifest 에 맞춰서 버튼 추가
     // 앱 사용 권한 모음
     private lateinit var applicationPermissionArrayMbr: Array<String>
 
