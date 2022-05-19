@@ -35,7 +35,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
         var isFooterLoading = false
             set(value) {
-                notifyItemChanged(currentItemListMbr.lastIndex)
+                notifyItemChanged(currentDataListMbr.lastIndex)
                 field = value
             }
 
@@ -44,7 +44,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
         // <메소드 오버라이딩 공간>
         // 아이템 뷰 타입 결정
         override fun getItemViewType(position: Int): Int {
-            return when (currentItemListMbr[position]) {
+            return when (currentDataListMbr[position]) {
                 is Header.ItemVO -> {
                     Header::class.hashCode()
                 }
@@ -134,7 +134,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
                     val binding = holder.binding
-                    val entity = currentItemListMbr[position] as Header.ItemVO
+                    val entity = currentDataListMbr[position] as Header.ItemVO
 
                     if (isHeaderLoading) {
                         binding.loaderContainer.visibility = View.VISIBLE
@@ -147,7 +147,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
                     val binding = holder.binding
-                    val entity = currentItemListMbr[position] as Footer.ItemVO
+                    val entity = currentDataListMbr[position] as Footer.ItemVO
 
                     if (isFooterLoading) {
                         binding.loaderContainer.visibility = View.VISIBLE
@@ -166,7 +166,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                 is Item1.ViewHolder -> { // 아이템1 아이템 바인딩
                     val binding = holder.binding
-                    val entity = currentItemListMbr[position] as Item1.ItemVO
+                    val entity = currentDataListMbr[position] as Item1.ItemVO
 
                     binding.title.text = entity.title
                 }
@@ -177,8 +177,8 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
         // 아이템 내용 동일성 비교(아이템 내용/화면 변경시 사용될 기준)
         override fun isContentSame(
-            oldItem: AdapterAbstractVO,
-            newItem: AdapterAbstractVO
+            oldItem: AdapterDataAbstractVO,
+            newItem: AdapterDataAbstractVO
         ): Boolean {
             return when (oldItem) {
                 is Header.ItemVO -> {
@@ -230,7 +230,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
         }
 
         // 아이템 복제 로직 (서로 다른 타입에 대응하기 위해 구현이 필요)
-        override fun getDeepCopyReplica(newItem: AdapterAbstractVO): AdapterAbstractVO {
+        override fun getDeepCopyReplica(newItem: AdapterDataAbstractVO): AdapterDataAbstractVO {
             return when (newItem) {
                 is Header.ItemVO -> {
                     newItem.copy()
@@ -280,7 +280,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
             data class ItemVO(
                 override val itemUid: Long,
                 val title: String?
-            ) : AdapterAbstractVO(itemUid)
+            ) : AdapterDataAbstractVO(itemUid)
         }
 
         class Footer {
@@ -295,7 +295,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
             data class ItemVO(
                 override val itemUid: Long,
                 val title: String?
-            ) : AdapterAbstractVO(itemUid)
+            ) : AdapterDataAbstractVO(itemUid)
         }
 
         class ItemLoader {
@@ -309,7 +309,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long
-            ) : AdapterAbstractVO(itemUid)
+            ) : AdapterDataAbstractVO(itemUid)
         }
 
         class Item1 {
@@ -324,7 +324,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
             data class ItemVO(
                 override val itemUid: Long,
                 val title: String
-            ) : AdapterAbstractVO(itemUid)
+            ) : AdapterDataAbstractVO(itemUid)
         }
 
         // 아이템이 늘어나면 추가

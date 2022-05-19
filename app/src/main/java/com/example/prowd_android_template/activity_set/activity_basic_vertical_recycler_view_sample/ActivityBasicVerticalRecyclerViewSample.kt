@@ -140,7 +140,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 // 현재 리스트 기반으로 변경을 주고 싶다면 아래와 같이 카피를 가져와서 조작하는 것을 권장
                 // (이동, 삭제, 생성의 경우는 그냥 current 를 해도 되지만 동일 위치의 아이템 정보 수정시에는 필수)
                 val item =
-                    adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplicaOnlyItem()
+                    adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplica()
                 item.shuffle()
 
                 runOnUiThread {
@@ -155,7 +155,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             viewModelMbr.executorServiceMbr?.execute {
                 viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
                 val item =
-                    adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplicaOnlyItem()
+                    adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplica()
 
                 val lastServerUid = if (item.isEmpty()) {
                     0
@@ -175,7 +175,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
                 runOnUiThread {
                     viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
-                    bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.getCurrentItemListOnlyItemLastIndex())
+                    bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.getCurrentItemListLastIndex())
                     viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                 }
             }
@@ -246,7 +246,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             // (로딩 처리)
             // 로더 아이템을 추가
             val adapterDataList: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO> =
-                adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplicaOnlyItem()
+                adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplica()
 
             adapterDataList.add(
                 ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(

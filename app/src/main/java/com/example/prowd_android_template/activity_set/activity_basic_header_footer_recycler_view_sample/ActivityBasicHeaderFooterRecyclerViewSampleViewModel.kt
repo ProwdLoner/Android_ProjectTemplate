@@ -40,7 +40,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleViewModel(application: Applicat
     var isDataFirstLoadingMbr = true
 
     // recyclerView 데이터
-    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<ProwdRecyclerViewAdapter.AdapterAbstractVO>
+    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<ProwdRecyclerViewAdapter.AdapterDataAbstractVO>
 
 
     // ---------------------------------------------------------------------------------------------

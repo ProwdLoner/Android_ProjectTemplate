@@ -37,7 +37,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         // <메소드 오버라이딩 공간>
         // 아이템 뷰 타입 결정
         override fun getItemViewType(position: Int): Int {
-            return when (currentItemListMbr[position]) {
+            return when (currentDataListMbr[position]) {
                 is Header.ItemVO -> {
                     Header::class.hashCode()
                 }
@@ -122,44 +122,49 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
             }
         }
 
+        // todo : 현재 아이템 삭제시 position 이 안 맞는 현상 발생
         // 아이템 뷰 생성 시점 로직
+        // 주의 : 반환되는 position 이 currentDataList 인덱스와 같지 않을 수 있음.
+        //     최초 실행시에는 같지만 아이템이 지워질 경우 position 을 0 부터 재정렬하는게 아님.
+        //     고로 데이터 조작시 주의할것.
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = currentItemListMbr[position] as Header.ItemVO
+//                    val entity = getCurrentDataListDeepCopyReplica()[position] as Header.ItemVO
                 }
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = currentItemListMbr[position] as Footer.ItemVO
+//                    val entity = getCurrentDataListDeepCopyReplica()[position] as Footer.ItemVO
                 }
 
                 is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = currentItemListMbr[position] as ItemLoader.ItemVO
+//                    val entity = getCurrentDataListDeepCopyReplica()[position] as ItemLoader.ItemVO
                 }
 
                 is Item1.ViewHolder -> { // 아이템1 아이템 바인딩
                     val binding = holder.binding
-                    val entity = currentItemListMbr[position] as Item1.ItemVO
+                    val copyEntity = getCurrentDataListDeepCopyReplica()[position] as Item1.ItemVO
 
-                    binding.title.text = entity.title
+                    binding.title.text = copyEntity.title
 
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
                             parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
 
-                            val item = getCurrentItemListDeepCopyReplicaOnlyItem()
-                            val change = item.indexOfFirst {
-                                it.itemUid == entity.itemUid
-                            }
+                            val itemListCopy = getCurrentItemListDeepCopyReplica()
 
-                            item.removeAt(change)
+                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
+                            val thisItemListIdx =
+                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
+
+                            itemListCopy.removeAt(thisItemListIdx)
 
                             parentViewMbr.runOnUiThread {
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
-                                    item
+                                    itemListCopy
 
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                             }
@@ -169,22 +174,24 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     binding.root.setOnClickListener {
 
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            // todo
-//                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
-//
-//                            val item = getCurrentItemListDeepCopyReplicaOnlyItem()
-//
-//                            val cloneEntity = getDeepCopyReplica(entity) as Item1.ItemVO
-//                            cloneEntity.title = "(Item Clicked!)"
-//
-//                            item[position - getCurrentItemListOnlyItemFirstIndex()] = cloneEntity
-//
-//                            parentViewMbr.runOnUiThread {
-//                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
-//                                    item
-//
-//                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
-//                            }
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
+
+                            val itemListCopy = getCurrentItemListDeepCopyReplica()
+
+                            copyEntity.title = "(Item Clicked!)"
+
+                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
+                            val thisItemListIdx =
+                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
+
+                            itemListCopy[thisItemListIdx] = copyEntity
+
+                            parentViewMbr.runOnUiThread {
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                    itemListCopy
+
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                            }
                         }
                     }
                 }
@@ -195,8 +202,8 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
         // 아이템 내용 동일성 비교(아이템 내용/화면 변경시 사용될 기준)
         override fun isContentSame(
-            oldItem: AdapterAbstractVO,
-            newItem: AdapterAbstractVO
+            oldItem: AdapterDataAbstractVO,
+            newItem: AdapterDataAbstractVO
         ): Boolean {
             return when (oldItem) {
                 is Header.ItemVO -> {
@@ -248,7 +255,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         }
 
         // 아이템 복제 로직 (서로 다른 타입에 대응하기 위해 구현이 필요)
-        override fun getDeepCopyReplica(newItem: AdapterAbstractVO): AdapterAbstractVO {
+        override fun getDeepCopyReplica(newItem: AdapterDataAbstractVO): AdapterDataAbstractVO {
             return when (newItem) {
                 is Header.ItemVO -> {
                     newItem.copy()
