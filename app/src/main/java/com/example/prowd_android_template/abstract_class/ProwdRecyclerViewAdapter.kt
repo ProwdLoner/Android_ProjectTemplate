@@ -457,11 +457,14 @@ abstract class ProwdRecyclerViewAdapter(
                 // 있다면 구 리스트의 해당 아이템과 현 위치 아이템을 스위칭 후 이동 처리
                 // 없다면 검색 인덱스는 -1 로 하고, new Item add
                 var searchedIdx = -1
-                for (searchIdx in idx + 1..currentItemListOnlyItemSubList.lastIndex) {
-                    val searchOldItem = currentItemListOnlyItemSubList[searchIdx]
-                    if (isItemSame(searchOldItem, newItem)) {
-                        searchedIdx = searchIdx
-                        break
+                val nextSearchIdx = idx + 1 // 앞 인덱스는 뉴, 올드 상호간 동기화 된 상태이기에 현 인덱스 뒤에서 검색
+                if (nextSearchIdx <= currentItemListOnlyItemSubList.lastIndex) {
+                    for (searchIdx in nextSearchIdx..currentItemListOnlyItemSubList.lastIndex) {
+                        val searchOldItem = currentItemListOnlyItemSubList[searchIdx]
+                        if (isItemSame(searchOldItem, newItem)) {
+                            searchedIdx = searchIdx
+                            break
+                        }
                     }
                 }
 
@@ -471,12 +474,26 @@ abstract class ProwdRecyclerViewAdapter(
                     notifyItemInserted(idx + subListStartIdx)
                 } else {
                     // 동일 아이템이 검색되었다면,
-                    // 해당 위치의 old 아이템 처리 여부 결정
-                    // todo : 일단 아래 알고리즘은 삭제할 아이템이 뒤로 밀려서 한꺼번에 제거되는데, 검색해서 삭제 여부 결정하는 방식도 있음
-                    val switchItem = getDeepCopyReplica(oldItem)
-                    currentItemListOnlyItemSubList[idx] = newItem
-                    currentItemListOnlyItemSubList[searchedIdx] = switchItem
+                    // newItem 을 해당 위치로 이동시키고, 내용 동일성 검증
+
+                    // newItem 을 해당 위치로 이동
+                    // oldItem 은 newItem 위치(뒤쪽 인덱스)로 이동을 하다가 제자리로 찾아가거나,
+                    // 혹은 지워진 상태라면 나중에 한번에 삭제됨
+                    val searchedItem =
+                        getDeepCopyReplica(currentItemListOnlyItemSubList[searchedIdx])
+
+                    currentItemListOnlyItemSubList.removeAt(searchedIdx)
+                    currentItemListOnlyItemSubList.add(idx, searchedItem)
+
                     notifyItemMoved(searchedIdx + subListStartIdx, idx + subListStartIdx)
+
+                    // 내용 동일성 검증
+                    if (!isContentSame(searchedItem, newItem)) {
+                        // 내용이 변경된 경우
+                        currentItemListOnlyItemSubList[idx] = newItem
+
+                        notifyItemChanged(idx + subListStartIdx)
+                    }
                 }
             }
 
