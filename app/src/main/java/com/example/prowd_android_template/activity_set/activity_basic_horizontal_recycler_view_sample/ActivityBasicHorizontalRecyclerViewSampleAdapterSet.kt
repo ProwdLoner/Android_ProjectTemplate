@@ -149,8 +149,8 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
 
         // 아이템 내용 동일성 비교(아이템 내용/화면 변경시 사용될 기준)
         override fun isContentSame(
-            oldItem: AdapterItemAbstractVO,
-            newItem: AdapterItemAbstractVO
+            oldItem: AdapterAbstractVO,
+            newItem: AdapterAbstractVO
         ): Boolean {
             return when (oldItem) {
                 is Header.ItemVO -> {
@@ -202,7 +202,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
         }
 
         // 아이템 복제 로직 (서로 다른 타입에 대응하기 위해 구현이 필요)
-        override fun getDeepCopyReplica(newItem: AdapterItemAbstractVO): AdapterItemAbstractVO {
+        override fun getDeepCopyReplica(newItem: AdapterAbstractVO): AdapterAbstractVO {
             return when (newItem) {
                 is Header.ItemVO -> {
                     newItem.copy()
@@ -279,7 +279,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long
-            ) : AdapterItemAbstractVO(itemUid)
+            ) : AdapterAbstractVO(itemUid)
         }
 
         class Item1 {
@@ -294,7 +294,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
             data class ItemVO(
                 override val itemUid: Long,
                 val title: String
-            ) : AdapterItemAbstractVO(itemUid)
+            ) : AdapterAbstractVO(itemUid)
         }
 
         // 아이템이 늘어나면 추가

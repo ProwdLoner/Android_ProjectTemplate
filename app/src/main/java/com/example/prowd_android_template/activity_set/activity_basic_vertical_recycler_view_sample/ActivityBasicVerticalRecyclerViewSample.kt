@@ -154,17 +154,20 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         bindingMbr.addItemBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
                 viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
-                // todo 반짝임 효과
                 val item =
                     adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplicaOnlyItem()
+
                 val lastServerUid = if (item.isEmpty()) {
                     0
                 } else {
                     (item.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
                 }
+
+                val itemUid = adapterSetMbr.recyclerViewAdapter.maxUidMbr
+
                 item.add(
                     ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                        itemUid,
                         lastServerUid + 1,
                         "added ${lastServerUid + 1}"
                     )
@@ -263,7 +266,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 onComplete = {
                     runOnUiThread {
                         // 로더 제거
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = ArrayList()
+                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                            ArrayList()
 
                         if (it.isEmpty()) {
                             viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
@@ -283,7 +287,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             )
                         }
 
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = newItemList
+                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                            newItemList
                         viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr =
                             (newItemList.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
                         viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
@@ -292,7 +297,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 onError = {
                     runOnUiThread {
                         // 로더 제거
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = ArrayList()
+                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                            ArrayList()
 
                         if (it is SocketTimeoutException) { // 타임아웃 에러
                             // todo

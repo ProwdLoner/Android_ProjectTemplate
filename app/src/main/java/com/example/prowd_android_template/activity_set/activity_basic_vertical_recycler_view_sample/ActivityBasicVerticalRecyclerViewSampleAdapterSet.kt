@@ -3,7 +3,6 @@ package com.example.prowd_android_template.activity_set.activity_basic_vertical_
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
@@ -18,7 +17,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         private val parentViewMbr: ActivityBasicVerticalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
-        adapterVmData: AdapterVmData,
+        val adapterVmData: AdapterVmData,
         onScrollHitBottom: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
@@ -168,11 +167,25 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     }
 
                     binding.root.setOnClickListener {
-                        Toast.makeText(
-                            parentViewMbr,
-                            "${entity.title} Clicked!",
-                            Toast.LENGTH_SHORT
-                        ).show()
+
+                        parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
+                            // todo
+//                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
+//
+//                            val item = getCurrentItemListDeepCopyReplicaOnlyItem()
+//
+//                            val cloneEntity = getDeepCopyReplica(entity) as Item1.ItemVO
+//                            cloneEntity.title = "(Item Clicked!)"
+//
+//                            item[position - getCurrentItemListOnlyItemFirstIndex()] = cloneEntity
+//
+//                            parentViewMbr.runOnUiThread {
+//                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+//                                    item
+//
+//                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+//                            }
+                        }
                     }
                 }
 
@@ -182,8 +195,8 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
         // 아이템 내용 동일성 비교(아이템 내용/화면 변경시 사용될 기준)
         override fun isContentSame(
-            oldItem: AdapterItemAbstractVO,
-            newItem: AdapterItemAbstractVO
+            oldItem: AdapterAbstractVO,
+            newItem: AdapterAbstractVO
         ): Boolean {
             return when (oldItem) {
                 is Header.ItemVO -> {
@@ -235,7 +248,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         }
 
         // 아이템 복제 로직 (서로 다른 타입에 대응하기 위해 구현이 필요)
-        override fun getDeepCopyReplica(newItem: AdapterItemAbstractVO): AdapterItemAbstractVO {
+        override fun getDeepCopyReplica(newItem: AdapterAbstractVO): AdapterAbstractVO {
             return when (newItem) {
                 is Header.ItemVO -> {
                     newItem.copy()
@@ -282,7 +295,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
             headerLiveData,
             footerLiveData
         ) {
-
+            // 뷰모델에 저장해서 사용해야 하는 데이터들은 여기에 선언
         }
 
         // (아이템 클래스)
@@ -340,7 +353,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
             data class ItemVO(
                 override val itemUid: Long,
                 val serverItemUid: Long,
-                val title: String
+                var title: String
             ) : AdapterItemAbstractVO(itemUid)
         }
 

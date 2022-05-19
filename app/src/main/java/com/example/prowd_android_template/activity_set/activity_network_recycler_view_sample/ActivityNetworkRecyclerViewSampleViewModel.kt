@@ -49,7 +49,7 @@ class ActivityNetworkRecyclerViewSampleViewModel(application: Application) :
     val screenVerticalRecyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
 
     // recyclerView 데이터
-    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
+    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<ProwdRecyclerViewAdapter.AdapterAbstractVO>
 
 
     // ---------------------------------------------------------------------------------------------

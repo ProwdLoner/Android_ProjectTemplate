@@ -18,7 +18,7 @@ abstract class ProwdRecyclerViewAdapter(
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트
-    val currentItemListMbr: ArrayList<AdapterItemAbstractVO> = ArrayList()
+    val currentItemListMbr: ArrayList<AdapterAbstractVO> = ArrayList()
 
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
@@ -108,8 +108,8 @@ abstract class ProwdRecyclerViewAdapter(
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
     // 현재 아이템 리스트의 클론을 생성하여 반환 (헤더, 푸터가 존재한다면 포함시킴)
-    fun getCurrentItemListDeepCopyReplicaIncludeHeaderFooter(): ArrayList<AdapterItemAbstractVO> {
-        val result: ArrayList<AdapterItemAbstractVO> = ArrayList()
+    fun getCurrentItemListDeepCopyReplicaIncludeHeaderFooter(): ArrayList<AdapterAbstractVO> {
+        val result: ArrayList<AdapterAbstractVO> = ArrayList()
 
         for (currentItem in currentItemListMbr) {
             result.add(getDeepCopyReplica(currentItem))
@@ -145,7 +145,7 @@ abstract class ProwdRecyclerViewAdapter(
         val result: ArrayList<AdapterItemAbstractVO> = ArrayList()
 
         for (currentItem in onlyItemSubList) {
-            result.add(getDeepCopyReplica(currentItem))
+            result.add(getDeepCopyReplica(currentItem) as AdapterItemAbstractVO)
         }
 
         return result
@@ -226,8 +226,8 @@ abstract class ProwdRecyclerViewAdapter(
     // 같은 객체에 내용만 변할수 있으니 값 전체로 비교시 무조건 아이템이 지워졌다가 다시 생김
     // 되도록 객체 동일성을 보장하는 고유값을 객체에 넣어서 사용 할것.
     private fun isItemSame(
-        oldItem: AdapterItemAbstractVO,
-        newItem: AdapterItemAbstractVO
+        oldItem: AdapterAbstractVO,
+        newItem: AdapterAbstractVO
     ): Boolean {
         return oldItem.itemUid == newItem.itemUid
     }
@@ -507,8 +507,8 @@ abstract class ProwdRecyclerViewAdapter(
     // 아이템 내용 변화 여부를 파악하는 함수 (아이템의 수정 여부 파악을 위해 필요)
     // 화면을 변화시킬 필요가 있는 요소들을 전부 비교시킴
     protected abstract fun isContentSame(
-        oldItem: AdapterItemAbstractVO,
-        newItem: AdapterItemAbstractVO
+        oldItem: AdapterAbstractVO,
+        newItem: AdapterAbstractVO
     ): Boolean
 
     // newItem 의 깊은 복사 객체 반환
@@ -517,19 +517,22 @@ abstract class ProwdRecyclerViewAdapter(
     // 어뎁터 데이터를 수정시에 비교 대상과 새로운 데이터 내부 데이터가 항상 같아지므로,
     // isContentSame 를 제대로 동작 시키기 위해 내부 데이터는 깊은 복사를 사용
     protected abstract fun getDeepCopyReplica(
-        newItem: AdapterItemAbstractVO
-    ): AdapterItemAbstractVO
+        newItem: AdapterAbstractVO
+    ): AdapterAbstractVO
 
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
     abstract class AdapterHeaderAbstractVO(override val itemUid: Long) :
-        AdapterItemAbstractVO(itemUid)
+        AdapterAbstractVO(itemUid)
 
     abstract class AdapterFooterAbstractVO(override val itemUid: Long) :
-        AdapterItemAbstractVO(itemUid)
+        AdapterAbstractVO(itemUid)
 
-    abstract class AdapterItemAbstractVO(open val itemUid: Long)
+    abstract class AdapterItemAbstractVO(override val itemUid: Long) :
+        AdapterAbstractVO(itemUid)
+
+    abstract class AdapterAbstractVO(open val itemUid: Long)
 
     open class AdapterVmData(
         open val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>,
