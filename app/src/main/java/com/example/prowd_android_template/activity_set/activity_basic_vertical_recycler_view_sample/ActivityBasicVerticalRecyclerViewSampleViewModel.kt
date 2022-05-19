@@ -39,10 +39,12 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
-    // recyclerView 데이터 (observe 는 adapter 에서 자동 처리됨)
-    val recyclerViewAdapterDataMbr: ProwdRecyclerViewAdapter.AdapterVmData =
-        ProwdRecyclerViewAdapter.AdapterVmData(
-            MutableLiveData()
+    // recyclerView 내에서 사용되는 뷰모델 데이터 (내부 LiveData 는 adapter 에서 자동 observe 처리됨)
+    val recyclerViewAdapterVmDataMbr: ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData =
+        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData(
+            MutableLiveData(),
+            null,
+            null
         )
 
 

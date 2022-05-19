@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
@@ -148,7 +149,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataMbr.semaphore.acquire()
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
 
                             val item = getCurrentItemListDeepCopyReplicaOnlyItem()
                             val change = item.indexOfFirst {
@@ -158,10 +159,10 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                             item.removeAt(change)
 
                             parentViewMbr.runOnUiThread {
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value =
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     item
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                             }
                         }
                     }
@@ -271,6 +272,19 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <내부 클래스 공간>
+        // (Vm 저장 클래스)
+        class AdapterVmData(
+            override val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>,
+            override val headerLiveData: MutableLiveData<AdapterHeaderAbstractVO>?,
+            override val footerLiveData: MutableLiveData<AdapterFooterAbstractVO>?
+        ) : ProwdRecyclerViewAdapter.AdapterVmData(
+            itemListLiveData,
+            headerLiveData,
+            footerLiveData
+        ) {
+
+        }
+
         // (아이템 클래스)
         class Header {
             data class ViewHolder(

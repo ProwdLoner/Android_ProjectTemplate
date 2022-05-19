@@ -531,19 +531,11 @@ abstract class ProwdRecyclerViewAdapter(
 
     abstract class AdapterItemAbstractVO(open val itemUid: Long)
 
-    data class AdapterVmData(
-        val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>,
-        val headerLiveData: MutableLiveData<AdapterHeaderAbstractVO>?,
-        val footerLiveData: MutableLiveData<AdapterFooterAbstractVO>?
+    open class AdapterVmData(
+        open val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>,
+        open val headerLiveData: MutableLiveData<AdapterHeaderAbstractVO>?,
+        open val footerLiveData: MutableLiveData<AdapterFooterAbstractVO>?
     ) {
         val semaphore = Semaphore(1)
-
-        constructor(
-            itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>
-        ) : this(
-            itemListLiveData,
-            null,
-            null,
-        )
     }
 }

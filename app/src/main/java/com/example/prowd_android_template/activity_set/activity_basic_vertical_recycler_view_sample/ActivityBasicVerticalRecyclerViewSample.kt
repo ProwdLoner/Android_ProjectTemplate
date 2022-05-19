@@ -115,7 +115,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 this,
                 bindingMbr.recyclerView,
                 true,
-                viewModelMbr.recyclerViewAdapterDataMbr,
+                viewModelMbr.recyclerViewAdapterVmDataMbr,
                 null
             )
         )
@@ -136,7 +136,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         // 아이템 셔플
         bindingMbr.doShuffleBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
-                viewModelMbr.recyclerViewAdapterDataMbr.semaphore.acquire()
+                viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
                 // 현재 리스트 기반으로 변경을 주고 싶다면 아래와 같이 카피를 가져와서 조작하는 것을 권장
                 // (이동, 삭제, 생성의 경우는 그냥 current 를 해도 되지만 동일 위치의 아이템 정보 수정시에는 필수)
                 val item =
@@ -144,8 +144,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 item.shuffle()
 
                 runOnUiThread {
-                    viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = item
-                    viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
+                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
+                    viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                 }
             }
         }
@@ -153,7 +153,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         // 아이템 추가
         bindingMbr.addItemBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
-                viewModelMbr.recyclerViewAdapterDataMbr.semaphore.acquire()
+                viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
                 // todo 반짝임 효과
                 val item =
                     adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplicaOnlyItem()
@@ -171,9 +171,9 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 )
 
                 runOnUiThread {
-                    viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = item
+                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
                     bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.getCurrentItemListOnlyItemLastIndex())
-                    viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
+                    viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                 }
             }
         }
@@ -234,9 +234,9 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     private fun refreshScreenData() {
         viewModelMbr.executorServiceMbr?.execute {
             // (데이터 초기화)
-            viewModelMbr.recyclerViewAdapterDataMbr.semaphore.acquire()
+            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
             runOnUiThread {
-                viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = ArrayList()
+                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = ArrayList()
             }
             viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr = -1
 
@@ -252,7 +252,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             )
 
             runOnUiThread {
-                viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = adapterDataList
+                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = adapterDataList
             }
 
             // (데이터 요청)
@@ -263,10 +263,10 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 onComplete = {
                     runOnUiThread {
                         // 로더 제거
-                        viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = ArrayList()
+                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = ArrayList()
 
                         if (it.isEmpty()) {
-                            viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
+                            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                             return@runOnUiThread
                         }
 
@@ -283,23 +283,23 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             )
                         }
 
-                        viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = newItemList
+                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = newItemList
                         viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr =
                             (newItemList.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
-                        viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
+                        viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                     }
                 },
                 onError = {
                     runOnUiThread {
                         // 로더 제거
-                        viewModelMbr.recyclerViewAdapterDataMbr.itemListLiveData.value = ArrayList()
+                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = ArrayList()
 
                         if (it is SocketTimeoutException) { // 타임아웃 에러
                             // todo
-                            viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
+                            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                         } else { // 그외 에러
                             // todo
-                            viewModelMbr.recyclerViewAdapterDataMbr.semaphore.release()
+                            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                         }
                     }
                 }
