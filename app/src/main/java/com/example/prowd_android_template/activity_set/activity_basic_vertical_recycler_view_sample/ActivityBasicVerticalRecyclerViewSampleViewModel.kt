@@ -62,6 +62,10 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
+    // 리사이클러 뷰 데이터 리플레싱 여부
+    val isRefreshingRecyclerViewDataListMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>

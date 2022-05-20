@@ -69,7 +69,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
-                refreshScreenData()
+                refreshScreenData(onRefreshingFinish = {})
             }
         }
     }
@@ -133,6 +133,15 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        // 화면 리플레시
+        bindingMbr.screenRefreshLayout.setOnRefreshListener {
+            viewModelMbr.isRefreshingRecyclerViewDataListMbr.value = true
+
+            refreshScreenData(onRefreshingFinish = {
+                viewModelMbr.isRefreshingRecyclerViewDataListMbr.value = false
+            })
+        }
+
         // 아이템 셔플
         bindingMbr.doShuffleBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
@@ -231,86 +240,84 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 confirmDialogMbr = null
             }
         }
+
+        viewModelMbr.isRefreshingRecyclerViewDataListMbr.observe(this) {
+            bindingMbr.screenRefreshLayout.isRefreshing = it
+        }
     }
 
     // 화면 데이터 전체 새로고침
-    private fun refreshScreenData() {
+    private fun refreshScreenData(onRefreshingFinish: () -> Unit) {
+        // 세마포어 락을 위해 스레드를 사용하고, acquire 다음엔 데이터 싱크를 위해 메인 스레드 사용
         viewModelMbr.executorServiceMbr?.execute {
-            // (데이터 초기화)
             viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
-            runOnUiThread {
-                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = ArrayList()
-            }
-            viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr = -1
+            runOnUiThread runOnUiThread1@{
+                // 페이지 관련 데이터 초기화
+                viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr = -1
 
-            // (로딩 처리)
-            // 로더 아이템을 추가
-            val adapterDataList: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO> =
-                adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplica()
-
-            adapterDataList.add(
-                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                    adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                // (로딩 처리)
+                // 화면을 비우고 로더 추가
+                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = arrayListOf(
+                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                    )
                 )
-            )
 
-            runOnUiThread {
-                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = adapterDataList
-            }
+                // (데이터 요청)
+                viewModelMbr.getRecyclerViewItemDataList(
+                    viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
+                    viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
+                    viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
+                    onComplete = {
+                        runOnUiThread runOnUiThread2@{
+                            // 로더 제거
+                            viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                ArrayList()
 
-            // (데이터 요청)
-            viewModelMbr.getRecyclerViewItemDataList(
-                viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
-                viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
-                viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
-                onComplete = {
-                    runOnUiThread {
-                        // 로더 제거
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
-                            ArrayList()
+                            if (it.isEmpty()) {
+                                onRefreshingFinish()
+                                viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                                return@runOnUiThread2
+                            }
 
-                        if (it.isEmpty()) {
-                            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
-                            return@runOnUiThread
-                        }
-
-                        // 아이템 갱신
-                        val newItemList =
-                            ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
-                        for (data in it) {
-                            newItemList.add(
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
-                                    data.serverItemUid,
-                                    data.title
+                            // 아이템 갱신
+                            val newItemList =
+                                ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+                            for (data in it) {
+                                newItemList.add(
+                                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                        data.serverItemUid,
+                                        data.title
+                                    )
                                 )
-                            )
-                        }
+                            }
 
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
-                            newItemList
-                        viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr =
-                            (newItemList.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
-                    }
-                },
-                onError = {
-                    runOnUiThread {
-                        // 로더 제거
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
-                            ArrayList()
-
-                        if (it is SocketTimeoutException) { // 타임아웃 에러
-                            // todo
-                            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
-                        } else { // 그외 에러
-                            // todo
+                            viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                newItemList
+                            viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr =
+                                (newItemList.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
+                            onRefreshingFinish()
                             viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
                         }
-                    }
-                }
-            )
+                    },
+                    onError = {
+                        runOnUiThread {
+                            // 로더 제거
+                            viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                ArrayList()
+                            onRefreshingFinish()
+                            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
 
+                            if (it is SocketTimeoutException) { // 타임아웃 에러
+                                // todo
+                            } else { // 그외 에러
+                                // todo
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 }
