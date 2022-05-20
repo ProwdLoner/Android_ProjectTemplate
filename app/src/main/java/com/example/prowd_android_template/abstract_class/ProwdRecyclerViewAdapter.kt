@@ -65,7 +65,7 @@ abstract class ProwdRecyclerViewAdapter(
             setItemList(it)
         }
 
-        // (필수 데이터 충족)
+        // (필수 초기 데이터 생성)
         if (adapterVmData.headerLiveData.value == null) {
             adapterVmData.headerLiveData.value = AdapterHeaderAbstractVO()
         }

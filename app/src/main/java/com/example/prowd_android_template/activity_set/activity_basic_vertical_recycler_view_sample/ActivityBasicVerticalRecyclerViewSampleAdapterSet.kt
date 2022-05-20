@@ -38,14 +38,16 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         // 아이템 뷰 타입 결정
         override fun getItemViewType(position: Int): Int {
             return when (currentDataListMbr[position]) {
-                is Header.ItemVO -> {
+                is AdapterHeaderAbstractVO -> {
                     Header::class.hashCode()
                 }
 
-                is Footer.ItemVO -> {
+                is AdapterFooterAbstractVO -> {
                     Footer::class.hashCode()
                 }
 
+                // 여기서부터 아래로는 아이템 유형에 따른 중복 클래스를 사용하여 설정
+                // 아이템 로더 클래스 역시 아이템에 해당하여, 종류를 바꾸어 뷰를 변경
                 is ItemLoader.ItemVO -> {
                     ItemLoader::class.hashCode()
                 }
@@ -63,6 +65,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         // 아이템 뷰타입에 따른 xml 화면 반환
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             return when (viewType) {
+                // 헤더 / 푸터를 사용하지 않을 것이라면 item_empty 를 사용
                 Header::class.hashCode() -> {
                     Header.ViewHolder(
                         LayoutInflater.from(parent.context)
@@ -85,6 +88,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     )
                 }
 
+                // 아래로는 사용할 아이템 타입에 따른 뷰를 설정
                 ItemLoader::class.hashCode() -> {
                     ItemLoader.ViewHolder(
                         LayoutInflater.from(parent.context)
@@ -110,10 +114,10 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                 // 아이템이 늘어나면 추가
 
                 else -> {
-                    Header.ViewHolder(
+                    Item1.ViewHolder(
                         LayoutInflater.from(parent.context)
                             .inflate(
-                                R.layout.item_empty,
+                                R.layout.item_activity_basic_vertical_recycler_view_sample_adapter_recycler_view_item1,
                                 parent,
                                 false
                             )
@@ -297,6 +301,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         }
 
         // (아이템 클래스)
+        // 헤더 / 푸터를 사용하지 않을 것이라면 item_empty 를 사용 및 ItemVO 데이터를 임시 데이터로 채우기
         class Header {
             data class ViewHolder(
                 val view: View,
