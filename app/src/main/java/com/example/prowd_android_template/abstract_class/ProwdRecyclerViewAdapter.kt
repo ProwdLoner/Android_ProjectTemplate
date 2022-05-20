@@ -5,7 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.lang.RuntimeException
+import java.util.concurrent.Semaphore
 
+// todo : 내부 세마포어 잠재 오류 검증
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
 // 비동기 처리시 뮤텍스와 싱크에 주의할 것.
@@ -20,20 +22,26 @@ abstract class ProwdRecyclerViewAdapter(
     // 현 화면에 표시된 어뎁터 데이터 리스트 (헤더, 푸터를 포함하지 않는 서브 리스트는 아이템 리스트라고 명명)
     private val currentDataListMbr: ArrayList<AdapterDataAbstractVO> = ArrayList()
 
+    // 내부 데이터 리스트 접근 세마포어
+    private val currentDataSemaphoreMbr: Semaphore = Semaphore(1)
+
     // 데이터 리스트의 클론
     val currentDataListCloneMbr: ArrayList<AdapterDataAbstractVO>
         get() {
+            currentDataSemaphoreMbr.acquire()
             val result: ArrayList<AdapterDataAbstractVO> = ArrayList()
 
             for (currentItem in currentDataListMbr) {
                 result.add(getDeepCopyReplica(currentItem))
             }
+            currentDataSemaphoreMbr.release()
             return result
         }
 
     // 아이템 리스트의 클론
     val currentItemListCloneMbr: ArrayList<AdapterItemAbstractVO>
         get() {
+            currentDataSemaphoreMbr.acquire()
             if (currentDataListMbr.isEmpty()) {
                 return ArrayList()
             }
@@ -47,6 +55,7 @@ abstract class ProwdRecyclerViewAdapter(
                 result.add(getDeepCopyReplica(currentItem) as AdapterItemAbstractVO)
             }
 
+            currentDataSemaphoreMbr.release()
             return result
         }
 
@@ -56,6 +65,7 @@ abstract class ProwdRecyclerViewAdapter(
     // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재(그렇기에 외부에서 조작시에는 따로 관리 가능한 uid 를 사용할것)
     var maxUidMbr = Long.MIN_VALUE
         get() {
+            currentDataSemaphoreMbr.acquire()
             val firstIssue = ++field
             if (currentDataListMbr.indexOfFirst { it.itemUid == firstIssue } != -1) {
                 // 발행 uid 가 리스트에 존재하면,
@@ -64,15 +74,18 @@ abstract class ProwdRecyclerViewAdapter(
                     val uid = ++field
                     if (firstIssue == uid) {
                         // 순회해서 한바퀴를 돌았다면(== 리스트에 아이템 Long 개수만큼 아이디가 꽉 찼을 경우) 그냥 현재 필드를 반환
+                        currentDataSemaphoreMbr.release()
                         return field
                     }
 
                     if (currentDataListMbr.indexOfFirst { it.itemUid == uid } == -1) {
+                        currentDataSemaphoreMbr.release()
                         return field
                     }
                 }
             } else {
                 // 발행 uid 가 리스트에 존재하지 않는 것이라면
+                currentDataSemaphoreMbr.release()
                 return field
             }
         }
@@ -171,6 +184,7 @@ abstract class ProwdRecyclerViewAdapter(
     // (화면 갱신 함수)
     // 헤더만 갱신
     private fun setHeader(headerItem: AdapterHeaderAbstractVO) {
+        currentDataSemaphoreMbr.acquire()
         if (currentDataListMbr.isEmpty() ||
             currentDataListMbr.first() !is AdapterHeaderAbstractVO
         ) {
@@ -180,10 +194,12 @@ abstract class ProwdRecyclerViewAdapter(
             currentDataListMbr[0] = getDeepCopyReplica(headerItem)
             notifyItemChanged(0)
         }
+        currentDataSemaphoreMbr.release()
     }
 
     // 푸터만 갱신
     private fun setFooter(footerItem: AdapterFooterAbstractVO) {
+        currentDataSemaphoreMbr.acquire()
         if (currentDataListMbr.isEmpty() ||
             currentDataListMbr.last() !is AdapterFooterAbstractVO
         ) {
@@ -193,14 +209,17 @@ abstract class ProwdRecyclerViewAdapter(
             currentDataListMbr[currentDataListMbr.lastIndex] = getDeepCopyReplica(footerItem)
             notifyItemChanged(currentDataListMbr.lastIndex)
         }
+        currentDataSemaphoreMbr.release()
     }
 
     // 아이템 리스트 갱신 (헤더, 푸터는 제외한 아이템만 갱신)
     private fun setItemList(
         newItemList: ArrayList<AdapterItemAbstractVO>
     ) {
+        currentDataSemaphoreMbr.acquire()
         if (currentDataListMbr.size < 2) {
             // 헤더 / 푸터가 없는 상황은 에러라고 판단
+            currentDataSemaphoreMbr.release()
             throw RuntimeException("No Header / Footer Data")
         }
 
@@ -208,6 +227,7 @@ abstract class ProwdRecyclerViewAdapter(
         if (newItemList.size == 0) {
             if (currentDataListMbr.size == 2
             ) {
+                currentDataSemaphoreMbr.release()
                 return
             } else { // 아이템이 3개 이상일 때
                 // 헤더 푸터만 유지하고 제거
@@ -215,6 +235,7 @@ abstract class ProwdRecyclerViewAdapter(
 
                 notifyItemRangeRemoved(1, currentDataListMbr.size - 2)
 
+                currentDataSemaphoreMbr.release()
                 return
             }
         }
@@ -228,6 +249,7 @@ abstract class ProwdRecyclerViewAdapter(
 
             notifyItemRangeInserted(1, newItemListSize)
 
+            currentDataSemaphoreMbr.release()
             return
         }
 
@@ -245,6 +267,7 @@ abstract class ProwdRecyclerViewAdapter(
             if (idx > newItemList.lastIndex &&
                 idx > currentItemListOnlyItemSubList.lastIndex
             ) {
+                currentDataSemaphoreMbr.release()
                 return
             }
 
@@ -259,6 +282,7 @@ abstract class ProwdRecyclerViewAdapter(
                     deleteEndIdx - idx
                 )
 
+                currentDataSemaphoreMbr.release()
                 return
             }
 
@@ -269,6 +293,7 @@ abstract class ProwdRecyclerViewAdapter(
                 currentItemListOnlyItemSubList.addAll(newItemList.subList(idx, deleteEndIdx))
                 notifyItemRangeInserted(idx + 1, deleteEndIdx - idx)
 
+                currentDataSemaphoreMbr.release()
                 return
             }
 
