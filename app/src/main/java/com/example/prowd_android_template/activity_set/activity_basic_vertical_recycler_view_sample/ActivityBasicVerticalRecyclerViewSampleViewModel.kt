@@ -141,6 +141,32 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
         }
     }
 
+    // 아이템 데이터 제거 요청
+    fun deleteRecyclerViewItemData(
+        serverItemUid: Long,
+        onComplete: () -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            Thread.sleep(150)
+
+            onComplete()
+        }
+    }
+
+    // 아이템 데이터 변경 요청
+    fun putRecyclerViewItemData(
+        putRecyclerViewItemDataInputVo: PutRecyclerViewItemDataInputVo,
+        onComplete: () -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            Thread.sleep(150)
+
+            onComplete()
+        }
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
@@ -150,6 +176,11 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     )
 
     data class PostRecyclerViewItemDataInputVo(
+        val title: String
+    )
+
+    data class PutRecyclerViewItemDataInputVo(
+        val serverItemUid: Long,
         val title: String
     )
 }
