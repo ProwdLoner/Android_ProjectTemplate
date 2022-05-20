@@ -225,28 +225,68 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                             parentViewMbr.runOnUiThread {
                                 parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
 
-                                val itemListCopy = currentItemListCloneMbr
+                                // 처리 다이얼로그 표시
+                                parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                                    DialogProgressLoading.DialogInfoVO(
+                                        false,
+                                        "데이터를 변경합니다.",
+                                        onCanceled = {}
+                                    )
 
-                                copyEntity.title = "(Item Clicked!)"
+                                val data = "(Item Clicked!)"
 
-                                // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
-                                val thisItemListIdx =
-                                    itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
+                                parentViewMbr.viewModelMbr.putRecyclerViewItemData(
+                                    ActivityBasicVerticalRecyclerViewSampleViewModel.PutRecyclerViewItemDataInputVo(
+                                        copyEntity.serverItemUid,
+                                        data
+                                    ),
+                                    onComplete = {
+                                        parentViewMbr.runOnUiThread runOnUiThread2@{
+                                            val itemListCopy = currentItemListCloneMbr
 
-                                if (-1 == thisItemListIdx) {
-                                    return@runOnUiThread
-                                }
+                                            copyEntity.title = data
 
-                                itemListCopy[thisItemListIdx] = copyEntity
+                                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
+                                            val thisItemListIdx =
+                                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
-                                    itemListCopy
+                                            if (-1 == thisItemListIdx) {
+                                                return@runOnUiThread2
+                                            }
 
-                                parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = false
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+                                            itemListCopy[thisItemListIdx] = copyEntity
+
+                                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                                itemListCopy
+
+                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                                                null
+                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
+                                                false
+                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+                                        }
+                                    },
+                                    onError = {
+                                        parentViewMbr.runOnUiThread {
+                                            // 처리 다이얼로그 제거
+                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                                                null
+                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
+                                                false
+                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+
+                                            if (it is SocketTimeoutException) { // 타임아웃 에러
+                                                // todo
+                                            } else { // 그외 에러
+                                                // todo
+                                            }
+                                        }
+                                    }
+                                )
                             }
                         }
                     }
+                    
                 }
 
                 // 아이템이 늘어나면 추가

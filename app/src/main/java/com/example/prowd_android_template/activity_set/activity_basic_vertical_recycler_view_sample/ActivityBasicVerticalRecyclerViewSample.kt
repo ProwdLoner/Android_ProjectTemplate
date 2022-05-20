@@ -416,7 +416,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                     viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
                         DialogProgressLoading.DialogInfoVO(
                             false,
-                            "데이터를 서버에 저장합니다.",
+                            "데이터를 추가합니다.",
                             onCanceled = {}
                         )
 
