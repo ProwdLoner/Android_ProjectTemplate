@@ -151,7 +151,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphore.acquire()
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphoreMbr.acquire()
 
                             val itemListCopy = getCurrentItemListDeepCopyReplica()
 
@@ -165,7 +165,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     itemListCopy
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphore.release()
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphoreMbr.release()
                             }
                         }
                     }
@@ -173,7 +173,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     binding.root.setOnClickListener {
 
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphore.acquire()
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphoreMbr.acquire()
 
                             val itemListCopy = getCurrentItemListDeepCopyReplica()
 
@@ -189,7 +189,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     itemListCopy
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphore.release()
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphoreMbr.release()
                             }
                         }
                     }

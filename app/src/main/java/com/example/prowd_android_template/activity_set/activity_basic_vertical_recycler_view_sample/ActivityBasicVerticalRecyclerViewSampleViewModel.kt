@@ -1,6 +1,7 @@
 package com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample
 
 import android.app.Application
+import androidx.annotation.UiThread
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
@@ -47,8 +48,10 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
             null,
             null
         )
+
     // recyclerView 데이터 리스트 변경시 싱크를 위한 세마포어
-    val recyclerViewAdapterDataSemaphore = Semaphore(1)
+    val recyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
+    var isRequestNextItemListOnRecyclerViewOnProgressMbr = false
 
 
     // ---------------------------------------------------------------------------------------------
@@ -102,6 +105,14 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
         onError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
+            if (lastServerItemUid != -1L) {
+                // 네트워크 요청 대기 시간을 상정
+                Thread.sleep(2000)
+
+                onComplete(ArrayList())
+                return@execute
+            }
+
             val resultData = ArrayList<GetRecyclerViewItemDataListOutputVO>()
             for (idx in 1..getRecyclerViewItemDataListPageSizeMbr) {
                 val title = "item$idx"
