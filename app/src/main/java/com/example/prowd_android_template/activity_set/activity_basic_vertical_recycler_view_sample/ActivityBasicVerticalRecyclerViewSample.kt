@@ -194,7 +194,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                     // (로딩 처리)
                     // 아이템 리스트 마지막에 로더 추가
                     val cloneItemList =
-                        adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplica()
+                        adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
                     cloneItemList.add(
                         ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
                             adapterSetMbr.recyclerViewAdapter.maxUidMbr
@@ -360,7 +360,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             // 현재 리스트 기반으로 변경을 주고 싶다면 아래와 같이 카피를 가져와서 조작하는 것을 권장
             // (이동, 삭제, 생성의 경우는 그냥 current 를 해도 되지만 동일 위치의 아이템 정보 수정시에는 필수)
             val item =
-                adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplica()
+                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
             item.shuffle()
 
             viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
@@ -372,7 +372,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         bindingMbr.addItemBtn.setOnClickListener {
             viewModelMbr.isRecyclerViewDataLoadingMbr = true
             val item =
-                adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplica()
+                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
 
             val lastServerUid = if (item.isEmpty()) {
                 0

@@ -20,6 +20,36 @@ abstract class ProwdRecyclerViewAdapter(
     // 현 화면에 표시된 어뎁터 데이터 리스트 (헤더, 푸터를 포함하지 않는 서브 리스트는 아이템 리스트라고 명명)
     private val currentDataListMbr: ArrayList<AdapterDataAbstractVO> = ArrayList()
 
+    // 데이터 리스트의 클론
+    val currentDataListCloneMbr: ArrayList<AdapterDataAbstractVO>
+        get() {
+            val result: ArrayList<AdapterDataAbstractVO> = ArrayList()
+
+            for (currentItem in currentDataListMbr) {
+                result.add(getDeepCopyReplica(currentItem))
+            }
+            return result
+        }
+
+    // 아이템 리스트의 클론
+    val currentItemListCloneMbr: ArrayList<AdapterItemAbstractVO>
+        get() {
+            if (currentDataListMbr.isEmpty()) {
+                return ArrayList()
+            }
+
+            val onlyItemSubList =
+                currentDataListMbr.subList(1, currentDataListMbr.lastIndex)
+
+            val result: ArrayList<AdapterItemAbstractVO> = ArrayList()
+
+            for (currentItem in onlyItemSubList) {
+                result.add(getDeepCopyReplica(currentItem) as AdapterItemAbstractVO)
+            }
+
+            return result
+        }
+
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
     // Long 값 최소에서 최대까지의 범위이므로 매우 드문 현상.
@@ -122,34 +152,6 @@ abstract class ProwdRecyclerViewAdapter(
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    // 현재 데이터 리스트의 클론을 생성하여 반환 (헤더, 푸터가 존재한다면 포함시킴)
-    fun getCurrentDataListDeepCopyReplica(): ArrayList<AdapterDataAbstractVO> {
-        val result: ArrayList<AdapterDataAbstractVO> = ArrayList()
-
-        for (currentItem in currentDataListMbr) {
-            result.add(getDeepCopyReplica(currentItem))
-        }
-
-        return result
-    }
-
-    // 현재 아이템 리스트의 클론을 생성하여 반환 (데이터 리스트에서 헤더, 푸터 제외)
-    fun getCurrentItemListDeepCopyReplica(): ArrayList<AdapterItemAbstractVO> {
-        if (currentDataListMbr.isEmpty()) {
-            return ArrayList()
-        }
-
-        val onlyItemSubList =
-            currentDataListMbr.subList(1, currentDataListMbr.lastIndex)
-
-        val result: ArrayList<AdapterItemAbstractVO> = ArrayList()
-
-        for (currentItem in onlyItemSubList) {
-            result.add(getDeepCopyReplica(currentItem) as AdapterItemAbstractVO)
-        }
-
-        return result
-    }
 
 
     // ---------------------------------------------------------------------------------------------

@@ -50,7 +50,7 @@ class ActivityEasyLutSampleAdapterSet(
         // <메소드 오버라이딩 공간>
         // 아이템 뷰 타입 결정
         override fun getItemViewType(position: Int): Int {
-            return when (getCurrentDataListDeepCopyReplica()[position]) {
+            return when (currentDataListCloneMbr[position]) {
                 is Header.ItemVO -> {
                     Header::class.hashCode()
                 }
@@ -156,7 +156,7 @@ class ActivityEasyLutSampleAdapterSet(
 
                 is Item1.ViewHolder -> { // 아이템1 아이템 바인딩
                     val binding = holder.binding
-                    val entity = getCurrentDataListDeepCopyReplica()[position] as Item1.ItemVO
+                    val entity = currentDataListCloneMbr[position] as Item1.ItemVO
 
                     binding.title.text = entity.title
 

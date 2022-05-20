@@ -37,7 +37,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         // <메소드 오버라이딩 공간>
         // 아이템 뷰 타입 결정
         override fun getItemViewType(position: Int): Int {
-            return when (getCurrentDataListDeepCopyReplica()[position]) {
+            return when (currentDataListCloneMbr[position]) {
                 is AdapterHeaderAbstractVO -> {
                     Header::class.hashCode()
                 }
@@ -149,20 +149,20 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                 is Item1.ViewHolder -> { // 아이템1 아이템 바인딩
                     val binding = holder.binding
-                    val copyEntity = getCurrentDataListDeepCopyReplica()[position] as Item1.ItemVO
+                    val copyEntity = currentDataListCloneMbr[position] as Item1.ItemVO
 
                     binding.title.text = copyEntity.title
 
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
 
-                            val itemListCopy = getCurrentItemListDeepCopyReplica()
+                            val itemListCopy = currentItemListCloneMbr
 
                             // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
                             val thisItemListIdx =
                                 itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
 
-                            if (-1 == thisItemListIdx){
+                            if (-1 == thisItemListIdx) {
                                 return@execute
                             }
 
@@ -180,7 +180,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
 
-                            val itemListCopy = getCurrentItemListDeepCopyReplica()
+                            val itemListCopy = currentItemListCloneMbr
 
                             copyEntity.title = "(Item Clicked!)"
 
@@ -188,7 +188,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                             val thisItemListIdx =
                                 itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
 
-                            if (-1 == thisItemListIdx){
+                            if (-1 == thisItemListIdx) {
                                 return@execute
                             }
 

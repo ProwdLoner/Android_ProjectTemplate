@@ -35,7 +35,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
         var isFooterLoading = false
             set(value) {
-                notifyItemChanged(getCurrentDataListDeepCopyReplica().lastIndex)
+                notifyItemChanged(currentDataListCloneMbr.lastIndex)
                 field = value
             }
 
@@ -44,7 +44,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
         // <메소드 오버라이딩 공간>
         // 아이템 뷰 타입 결정
         override fun getItemViewType(position: Int): Int {
-            return when (getCurrentDataListDeepCopyReplica()[position]) {
+            return when (currentDataListCloneMbr[position]) {
                 is Header.ItemVO -> {
                     Header::class.hashCode()
                 }
@@ -134,7 +134,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
                     val binding = holder.binding
-                    val entity = getCurrentDataListDeepCopyReplica()[position] as Header.ItemVO
+                    val entity = currentDataListCloneMbr[position] as Header.ItemVO
 
                     if (isHeaderLoading) {
                         binding.loaderContainer.visibility = View.VISIBLE
@@ -147,7 +147,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
                     val binding = holder.binding
-                    val entity = getCurrentDataListDeepCopyReplica()[position] as Footer.ItemVO
+                    val entity = currentDataListCloneMbr[position] as Footer.ItemVO
 
                     if (isFooterLoading) {
                         binding.loaderContainer.visibility = View.VISIBLE
@@ -166,7 +166,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                 is Item1.ViewHolder -> { // 아이템1 아이템 바인딩
                     val binding = holder.binding
-                    val entity = getCurrentDataListDeepCopyReplica()[position] as Item1.ItemVO
+                    val entity = currentDataListCloneMbr[position] as Item1.ItemVO
 
                     binding.title.text = entity.title
                 }
