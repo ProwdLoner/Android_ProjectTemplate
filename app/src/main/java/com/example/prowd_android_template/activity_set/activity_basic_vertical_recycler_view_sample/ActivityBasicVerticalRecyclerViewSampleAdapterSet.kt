@@ -3,7 +3,6 @@ package com.example.prowd_android_template.activity_set.activity_basic_vertical_
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
@@ -155,49 +154,56 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-
-                            val itemListCopy = currentItemListCloneMbr
-
-                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
-                            val thisItemListIdx =
-                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
-
-                            if (-1 == thisItemListIdx) {
-                                return@execute
-                            }
-
-                            itemListCopy.removeAt(thisItemListIdx)
-
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
                             parentViewMbr.runOnUiThread {
+                                parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
+
+                                val itemListCopy = currentItemListCloneMbr
+
+                                // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
+                                val thisItemListIdx =
+                                    itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
+
+                                if (-1 == thisItemListIdx) {
+                                    return@runOnUiThread
+                                }
+
+                                itemListCopy.removeAt(thisItemListIdx)
+
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     itemListCopy
 
+                                parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = false
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                             }
                         }
                     }
 
                     binding.root.setOnClickListener {
-
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-
-                            val itemListCopy = currentItemListCloneMbr
-
-                            copyEntity.title = "(Item Clicked!)"
-
-                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
-                            val thisItemListIdx =
-                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
-
-                            if (-1 == thisItemListIdx) {
-                                return@execute
-                            }
-
-                            itemListCopy[thisItemListIdx] = copyEntity
-
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
                             parentViewMbr.runOnUiThread {
+                                parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
+
+                                val itemListCopy = currentItemListCloneMbr
+
+                                copyEntity.title = "(Item Clicked!)"
+
+                                // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
+                                val thisItemListIdx =
+                                    itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
+
+                                if (-1 == thisItemListIdx) {
+                                    return@runOnUiThread
+                                }
+
+                                itemListCopy[thisItemListIdx] = copyEntity
+
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     itemListCopy
 
+                                parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = false
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                             }
                         }
                     }
