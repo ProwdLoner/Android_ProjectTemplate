@@ -51,6 +51,7 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     // 중복 요청 금지를 위한 상태 플래그 (중복 요청을 허용한다면 세마포어 내부 로직이 다 실행된 후 실행됨)
     var isRecyclerViewItemLoadingMbr = false
 
+
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
     // 로딩 다이얼로그 출력 정보
@@ -118,7 +119,7 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
             }
 
             // 네트워크 요청 대기 시간을 상정
-            Thread.sleep(2000)
+            Thread.sleep(1500)
 
             onComplete(resultData)
         }
@@ -132,7 +133,7 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
         onError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
-            Thread.sleep(500)
+            Thread.sleep(150)
 
             val serverItemUid = postRecyclerViewItemDataInputVo.title.split("_").last().toLong()
 

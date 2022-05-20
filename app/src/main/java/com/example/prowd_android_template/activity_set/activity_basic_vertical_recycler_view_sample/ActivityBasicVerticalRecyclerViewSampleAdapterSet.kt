@@ -16,7 +16,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         private val parentViewMbr: ActivityBasicVerticalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
-        val adapterVmData: AdapterVmData,
+        private val adapterVmData: AdapterVmData,
         onScrollReachTheEnd: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
