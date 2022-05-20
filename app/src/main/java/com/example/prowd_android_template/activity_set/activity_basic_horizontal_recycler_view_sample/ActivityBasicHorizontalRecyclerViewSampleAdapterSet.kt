@@ -250,8 +250,8 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Long
-            ) : AdapterHeaderAbstractVO(itemUid)
+                val emptyData : Int?
+            ) : AdapterHeaderAbstractVO()
         }
 
         class Footer {
@@ -264,8 +264,8 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Long
-            ) : AdapterFooterAbstractVO(itemUid)
+                val emptyData : Int?
+            ) : AdapterFooterAbstractVO()
         }
 
         class ItemLoader {

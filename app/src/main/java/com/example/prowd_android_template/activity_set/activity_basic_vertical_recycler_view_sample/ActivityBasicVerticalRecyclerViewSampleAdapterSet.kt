@@ -292,15 +292,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         // ---------------------------------------------------------------------------------------------
         // <내부 클래스 공간>
         // (Vm 저장 클래스)
-        class AdapterVmData(
-            override val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>,
-            override val headerLiveData: MutableLiveData<AdapterHeaderAbstractVO>?,
-            override val footerLiveData: MutableLiveData<AdapterFooterAbstractVO>?
-        ) : ProwdRecyclerViewAdapter.AdapterVmData(
-            itemListLiveData,
-            headerLiveData,
-            footerLiveData
-        ) {
+        class AdapterVmData() : ProwdRecyclerViewAdapter.AdapterVmData() {
             // 뷰모델에 저장해서 사용해야 하는 데이터들은 여기에 선언
         }
 
@@ -315,8 +307,8 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Long
-            ) : AdapterHeaderAbstractVO(itemUid)
+                val emptyData: Int?
+            ) : AdapterHeaderAbstractVO()
         }
 
         class Footer {
@@ -329,8 +321,8 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                override val itemUid: Long
-            ) : AdapterFooterAbstractVO(itemUid)
+                val emptyData: Int?
+            ) : AdapterFooterAbstractVO()
         }
 
         class ItemLoader {

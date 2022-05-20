@@ -43,11 +43,7 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
 
     // recyclerView 내에서 사용되는 뷰모델 데이터 (내부 LiveData 는 adapter 에서 자동 observe 처리됨)
     val recyclerViewAdapterVmDataMbr: ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData =
-        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData(
-            MutableLiveData(),
-            null,
-            null
-        )
+        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData()
 
     // recyclerView 데이터 리스트 변경시 싱크를 위한 세마포어
     val recyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
