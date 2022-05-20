@@ -47,6 +47,8 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
 
     // recyclerView 데이터 리스트 변경시 싱크를 위한 세마포어
     val recyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
+
+
     var isRequestNextItemListOnRecyclerViewOnProgressMbr = false
 
 
