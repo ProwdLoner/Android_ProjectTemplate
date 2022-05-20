@@ -14,7 +14,7 @@ abstract class ProwdRecyclerViewAdapter(
     targetView: RecyclerView,
     isVertical: Boolean,
     adapterVmData: AdapterVmData,
-    onScrollHitBottom: (() -> Unit)?
+    onScrollReachTheEnd: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트 (헤더, 푸터를 포함하지 않는 서브 리스트는 아이템 리스트라고 명명)
@@ -81,18 +81,20 @@ abstract class ProwdRecyclerViewAdapter(
         targetView.layoutManager = scrollAdapterLayoutManager
 
         // 리사이클러 뷰 스크롤 설정
-        targetView.addOnScrollListener(object :
-            RecyclerView.OnScrollListener() {
+        targetView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (dy > 0) { // 스크롤 다운을 했을 때에만 발동
-                    val visibleItemCount = scrollAdapterLayoutManager.childCount
-                    val totalItemCount = scrollAdapterLayoutManager.itemCount
-                    val pastVisibleItems =
-                        scrollAdapterLayoutManager.findFirstVisibleItemPosition()
+                super.onScrolled(recyclerView, dx, dy)
+                if (dy > 0 || dx > 0) { // 스크롤 이동을 했을 때에만 발동
+                    val layoutManager =
+                        LinearLayoutManager::class.java.cast(recyclerView.layoutManager)
 
-                    if (visibleItemCount + pastVisibleItems >= totalItemCount) {
-                        if (onScrollHitBottom != null) {
-                            onScrollHitBottom()
+                    if (null != layoutManager) {
+                        val totalItemCount = layoutManager.itemCount
+                        val lastVisible = layoutManager.findLastCompletelyVisibleItemPosition()
+                        if (lastVisible >= totalItemCount - 1) {
+                            if (onScrollReachTheEnd != null) {
+                                onScrollReachTheEnd()
+                            }
                         }
                     }
                 }
@@ -364,7 +366,7 @@ abstract class ProwdRecyclerViewAdapter(
                     // newItem 을 해당 위치로 이동
                     // oldItem 은 newItem 위치(뒤쪽 인덱스)로 이동을 하다가 제자리로 찾아가거나,
                     // 혹은 지워진 상태라면 나중에 한번에 삭제됨
-                    val searchedItem =currentDataListMbr[searchedIdx]
+                    val searchedItem = currentDataListMbr[searchedIdx]
 
                     currentDataListMbr.removeAt(searchedIdx)
                     currentDataListMbr.add(idx, searchedItem)
@@ -668,7 +670,5 @@ abstract class ProwdRecyclerViewAdapter(
         open val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>>,
         open val headerLiveData: MutableLiveData<AdapterHeaderAbstractVO>?,
         open val footerLiveData: MutableLiveData<AdapterFooterAbstractVO>?
-    ) {
-        val semaphore = Semaphore(1)
-    }
+    )
 }

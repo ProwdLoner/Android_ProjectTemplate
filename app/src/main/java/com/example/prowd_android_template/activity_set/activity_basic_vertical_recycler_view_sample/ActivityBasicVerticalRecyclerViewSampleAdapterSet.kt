@@ -18,13 +18,13 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         targetView: RecyclerView,
         isVertical: Boolean,
         val adapterVmData: AdapterVmData,
-        onScrollHitBottom: (() -> Unit)?
+        onScrollReachTheEnd: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
         adapterVmData,
-        onScrollHitBottom
+        onScrollReachTheEnd
     ) {
         // <멤버 변수 공간>
 
@@ -151,7 +151,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphore.acquire()
 
                             val itemListCopy = getCurrentItemListDeepCopyReplica()
 
@@ -165,7 +165,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     itemListCopy
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphore.release()
                             }
                         }
                     }
@@ -173,7 +173,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     binding.root.setOnClickListener {
 
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
+                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphore.acquire()
 
                             val itemListCopy = getCurrentItemListDeepCopyReplica()
 
@@ -189,7 +189,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     itemListCopy
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphore.release()
                             }
                         }
                     }

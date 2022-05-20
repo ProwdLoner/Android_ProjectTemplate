@@ -2,6 +2,7 @@ package com.example.prowd_android_template.activity_set.activity_basic_vertical_
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -116,7 +117,9 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 bindingMbr.recyclerView,
                 true,
                 viewModelMbr.recyclerViewAdapterVmDataMbr,
-                null
+                onScrollReachTheEnd = {
+                    Log.e("hit", "bottom")
+                }
             )
         )
     }
@@ -145,7 +148,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         // 아이템 셔플
         bindingMbr.doShuffleBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
-                viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
+                viewModelMbr.recyclerViewAdapterDataSemaphore.acquire()
                 // 현재 리스트 기반으로 변경을 주고 싶다면 아래와 같이 카피를 가져와서 조작하는 것을 권장
                 // (이동, 삭제, 생성의 경우는 그냥 current 를 해도 되지만 동일 위치의 아이템 정보 수정시에는 필수)
                 val item =
@@ -154,7 +157,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
                 runOnUiThread {
                     viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
-                    viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                    viewModelMbr.recyclerViewAdapterDataSemaphore.release()
                 }
             }
         }
@@ -162,7 +165,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         // 아이템 추가
         bindingMbr.addItemBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
-                viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
+                viewModelMbr.recyclerViewAdapterDataSemaphore.acquire()
                 val item =
                     adapterSetMbr.recyclerViewAdapter.getCurrentItemListDeepCopyReplica()
 
@@ -185,7 +188,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 runOnUiThread {
                     viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
                     bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.getCurrentItemListLastIndex())
-                    viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                    viewModelMbr.recyclerViewAdapterDataSemaphore.release()
                 }
             }
         }
@@ -247,10 +250,11 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     }
 
     // 화면 데이터 전체 새로고침
+    // todo : 헤더 푸터
     private fun refreshScreenData(onRefreshingFinish: () -> Unit) {
         // 세마포어 락을 위해 스레드를 사용하고, acquire 다음엔 데이터 싱크를 위해 메인 스레드 사용
         viewModelMbr.executorServiceMbr?.execute {
-            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.acquire()
+            viewModelMbr.recyclerViewAdapterDataSemaphore.acquire()
             runOnUiThread runOnUiThread1@{
                 // 페이지 관련 데이터 초기화
                 viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr = -1
@@ -276,7 +280,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
                             if (it.isEmpty()) {
                                 onRefreshingFinish()
-                                viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                                viewModelMbr.recyclerViewAdapterDataSemaphore.release()
                                 return@runOnUiThread2
                             }
 
@@ -298,7 +302,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr =
                                 (newItemList.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
                             onRefreshingFinish()
-                            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                            viewModelMbr.recyclerViewAdapterDataSemaphore.release()
                         }
                     },
                     onError = {
@@ -307,7 +311,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                 ArrayList()
                             onRefreshingFinish()
-                            viewModelMbr.recyclerViewAdapterVmDataMbr.semaphore.release()
+                            viewModelMbr.recyclerViewAdapterDataSemaphore.release()
 
                             if (it is SocketTimeoutException) { // 타임아웃 에러
                                 // todo

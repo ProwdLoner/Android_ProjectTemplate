@@ -11,6 +11,7 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
 
 class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application) :
     AndroidViewModel(application) {
@@ -46,6 +47,8 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
             null,
             null
         )
+    // recyclerView 데이터 리스트 변경시 싱크를 위한 세마포어
+    val recyclerViewAdapterDataSemaphore = Semaphore(1)
 
 
     // ---------------------------------------------------------------------------------------------
