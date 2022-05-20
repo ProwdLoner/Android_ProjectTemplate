@@ -37,7 +37,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
         // <메소드 오버라이딩 공간>
         // 아이템 뷰 타입 결정
         override fun getItemViewType(position: Int): Int {
-            return when (currentDataListMbr[position]) {
+            return when (getCurrentDataListDeepCopyReplica()[position]) {
                 is AdapterHeaderAbstractVO -> {
                     Header::class.hashCode()
                 }
@@ -155,7 +155,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     binding.deleteBtn.setOnClickListener {
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphoreMbr.acquire()
 
                             val itemListCopy = getCurrentItemListDeepCopyReplica()
 
@@ -163,13 +162,16 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                             val thisItemListIdx =
                                 itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
 
+                            if (-1 == thisItemListIdx){
+                                return@execute
+                            }
+
                             itemListCopy.removeAt(thisItemListIdx)
 
                             parentViewMbr.runOnUiThread {
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     itemListCopy
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphoreMbr.release()
                             }
                         }
                     }
@@ -177,7 +179,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     binding.root.setOnClickListener {
 
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphoreMbr.acquire()
 
                             val itemListCopy = getCurrentItemListDeepCopyReplica()
 
@@ -187,13 +188,16 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                             val thisItemListIdx =
                                 itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
 
+                            if (-1 == thisItemListIdx){
+                                return@execute
+                            }
+
                             itemListCopy[thisItemListIdx] = copyEntity
 
                             parentViewMbr.runOnUiThread {
                                 parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     itemListCopy
 
-                                parentViewMbr.viewModelMbr.recyclerViewAdapterDataSemaphoreMbr.release()
                             }
                         }
                     }

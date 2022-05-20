@@ -1,10 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample
 
 import android.app.Application
-import androidx.annotation.UiThread
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -12,7 +10,6 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.Semaphore
 
 class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application) :
     AndroidViewModel(application) {
@@ -45,12 +42,7 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     val recyclerViewAdapterVmDataMbr: ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData =
         ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData()
 
-    // recyclerView 데이터 리스트 변경시 싱크를 위한 세마포어
-    val recyclerViewAdapterDataSemaphoreMbr = Semaphore(1)
-
-
-    var isRequestNextItemListOnRecyclerViewOnProgressMbr = false
-
+    var isRecyclerViewDataLoadingMbr = false
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
@@ -65,10 +57,6 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     // 확인 다이얼로그 출력 정보
     val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
-
-    // 리사이클러 뷰 데이터 리플레싱 여부
-    val isRefreshingRecyclerViewDataListMbr: MutableLiveData<Boolean> =
-        MutableLiveData(false)
 
 
     // ---------------------------------------------------------------------------------------------

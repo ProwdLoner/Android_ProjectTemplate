@@ -4,7 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import java.util.concurrent.Semaphore
+import java.lang.RuntimeException
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
@@ -18,8 +18,7 @@ abstract class ProwdRecyclerViewAdapter(
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
     // 현 화면에 표시된 어뎁터 데이터 리스트 (헤더, 푸터를 포함하지 않는 서브 리스트는 아이템 리스트라고 명명)
-    val currentDataListMbr: ArrayList<AdapterDataAbstractVO> = ArrayList()
-    private val currentDataListSemaphoreMbr: Semaphore = Semaphore(1)
+    private val currentDataListMbr: ArrayList<AdapterDataAbstractVO> = ArrayList()
 
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
@@ -27,7 +26,6 @@ abstract class ProwdRecyclerViewAdapter(
     // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재(그렇기에 외부에서 조작시에는 따로 관리 가능한 uid 를 사용할것)
     var maxUidMbr = Long.MIN_VALUE
         get() {
-            currentDataListSemaphoreMbr.acquire()
             val firstIssue = ++field
             if (currentDataListMbr.indexOfFirst { it.itemUid == firstIssue } != -1) {
                 // 발행 uid 가 리스트에 존재하면,
@@ -36,18 +34,15 @@ abstract class ProwdRecyclerViewAdapter(
                     val uid = ++field
                     if (firstIssue == uid) {
                         // 순회해서 한바퀴를 돌았다면(== 리스트에 아이템 Long 개수만큼 아이디가 꽉 찼을 경우) 그냥 현재 필드를 반환
-                        currentDataListSemaphoreMbr.release()
                         return field
                     }
 
                     if (currentDataListMbr.indexOfFirst { it.itemUid == uid } == -1) {
-                        currentDataListSemaphoreMbr.release()
                         return field
                     }
                 }
             } else {
                 // 발행 uid 가 리스트에 존재하지 않는 것이라면
-                currentDataListSemaphoreMbr.release()
                 return field
             }
         }
@@ -58,32 +53,21 @@ abstract class ProwdRecyclerViewAdapter(
     init {
         adapterVmData.headerLiveData.observe(parentView) {
             // 헤더 갱신
-            currentDataListSemaphoreMbr.acquire()
-            setHeader(it,
-                onFinish = {
-                    currentDataListSemaphoreMbr.release()
-                })
+            setHeader(it)
         }
 
         adapterVmData.footerLiveData.observe(parentView) {
             // 푸터 갱신
-            currentDataListSemaphoreMbr.acquire()
-            setFooter(it,
-                onFinish = {
-                    currentDataListSemaphoreMbr.release()
-                })
+            setFooter(it)
         }
 
         adapterVmData.itemListLiveData.observe(parentView) {
             // 아이템 리스트 갱신
-            currentDataListSemaphoreMbr.acquire()
-            setItemList(it,
-                onFinish = {
-                    currentDataListSemaphoreMbr.release()
-                })
+            setItemList(it)
         }
 
         // (필수 초기 데이터 생성)
+        // 헤더 푸터 데이터는 필수로 존재 : 사용을 안 할 것이라면 화면단 어뎁터에서 empty container 를 사용
         if (adapterVmData.headerLiveData.value == null) {
             adapterVmData.headerLiveData.value = AdapterHeaderAbstractVO()
         }
@@ -140,42 +124,23 @@ abstract class ProwdRecyclerViewAdapter(
     // <공개 메소드 공간>
     // 현재 데이터 리스트의 클론을 생성하여 반환 (헤더, 푸터가 존재한다면 포함시킴)
     fun getCurrentDataListDeepCopyReplica(): ArrayList<AdapterDataAbstractVO> {
-        currentDataListSemaphoreMbr.acquire()
         val result: ArrayList<AdapterDataAbstractVO> = ArrayList()
 
         for (currentItem in currentDataListMbr) {
             result.add(getDeepCopyReplica(currentItem))
         }
 
-        currentDataListSemaphoreMbr.release()
         return result
     }
 
     // 현재 아이템 리스트의 클론을 생성하여 반환 (데이터 리스트에서 헤더, 푸터 제외)
     fun getCurrentItemListDeepCopyReplica(): ArrayList<AdapterItemAbstractVO> {
-        currentDataListSemaphoreMbr.acquire()
         if (currentDataListMbr.isEmpty()) {
-            currentDataListSemaphoreMbr.release()
             return ArrayList()
         }
 
-        // 헤더를 제외한 아이템 시작 인덱스
-        val currentOnlyItemFirstIdx =
-            if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
-                1
-            } else {
-                0
-            }
-
-        // 푸터를 제외한 아이템 끝 인덱스
-        val currentOnlyItemLastIdx = if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
-            currentDataListMbr.lastIndex - 1
-        } else {
-            currentDataListMbr.lastIndex
-        }
-
         val onlyItemSubList =
-            currentDataListMbr.subList(currentOnlyItemFirstIdx, currentOnlyItemLastIdx + 1)
+            currentDataListMbr.subList(1, currentDataListMbr.lastIndex)
 
         val result: ArrayList<AdapterItemAbstractVO> = ArrayList()
 
@@ -183,84 +148,7 @@ abstract class ProwdRecyclerViewAdapter(
             result.add(getDeepCopyReplica(currentItem) as AdapterItemAbstractVO)
         }
 
-        currentDataListSemaphoreMbr.release()
         return result
-    }
-
-    // 헤더, 푸터를 제외한 아이템 리스트의 첫번째 인덱스를 반환 (없다면 -1 을 반환)
-    fun getCurrentItemListFirstIndex(): Int {
-        currentDataListSemaphoreMbr.acquire()
-        if (currentDataListMbr.isEmpty()) {
-            currentDataListSemaphoreMbr.release()
-            return -1
-        } else if (currentDataListMbr.size == 1) {
-            currentDataListSemaphoreMbr.release()
-            return if (currentDataListMbr[0] is AdapterHeaderAbstractVO) {
-                -1
-            } else if (currentDataListMbr[0] is AdapterFooterAbstractVO) {
-                -1
-            } else {
-                0
-            }
-        } else if (currentDataListMbr.size == 2) {
-            currentDataListSemaphoreMbr.release()
-            return if (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
-                currentDataListMbr.last() is AdapterFooterAbstractVO
-            ) {
-                -1
-            } else {
-                if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
-                    1
-                } else {
-                    0
-                }
-            }
-        } else {
-            currentDataListSemaphoreMbr.release()
-            return if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
-                1
-            } else {
-                0
-            }
-        }
-    }
-
-    // 헤더, 푸터를 제외한 아이템 리스트의 마지막 인덱스를 반환 (없다면 -1 을 반환)
-    fun getCurrentItemListLastIndex(): Int {
-        currentDataListSemaphoreMbr.acquire()
-        if (currentDataListMbr.isEmpty()) {
-            currentDataListSemaphoreMbr.release()
-            return -1
-        } else if (currentDataListMbr.size == 1) {
-            currentDataListSemaphoreMbr.release()
-            return if (currentDataListMbr[0] is AdapterHeaderAbstractVO) {
-                -1
-            } else if (currentDataListMbr[0] is AdapterFooterAbstractVO) {
-                -1
-            } else {
-                0
-            }
-        } else if (currentDataListMbr.size == 2) {
-            currentDataListSemaphoreMbr.release()
-            return if (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
-                currentDataListMbr.last() is AdapterFooterAbstractVO
-            ) {
-                -1
-            } else {
-                if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
-                    0
-                } else {
-                    1
-                }
-            }
-        } else {
-            currentDataListSemaphoreMbr.release()
-            return if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
-                currentDataListMbr.lastIndex - 1
-            } else {
-                currentDataListMbr.lastIndex
-            }
-        }
     }
 
 
@@ -280,160 +168,57 @@ abstract class ProwdRecyclerViewAdapter(
 
     // (화면 갱신 함수)
     // 헤더만 갱신
-    private fun setHeader(headerItem: AdapterHeaderAbstractVO, onFinish: () -> Unit) {
-        if (currentDataListMbr.isEmpty()) {
-            currentDataListMbr.add(0, headerItem)
-            notifyItemInserted(0)
-        } else if (currentDataListMbr[0] !is AdapterHeaderAbstractVO) {
+    private fun setHeader(headerItem: AdapterHeaderAbstractVO) {
+        if (currentDataListMbr.isEmpty() ||
+            currentDataListMbr.first() !is AdapterHeaderAbstractVO
+        ) {
             currentDataListMbr.add(0, headerItem)
             notifyItemInserted(0)
         } else {
             currentDataListMbr[0] = getDeepCopyReplica(headerItem)
             notifyItemChanged(0)
         }
-        onFinish()
     }
 
     // 푸터만 갱신
-    private fun setFooter(footerItem: AdapterFooterAbstractVO, onFinish: () -> Unit) {
-        if (currentDataListMbr.isEmpty()) {
-            currentDataListMbr.add(footerItem)
-            notifyItemInserted(currentDataListMbr.lastIndex)
-        } else if (currentDataListMbr.last() !is AdapterFooterAbstractVO) {
+    private fun setFooter(footerItem: AdapterFooterAbstractVO) {
+        if (currentDataListMbr.isEmpty() ||
+            currentDataListMbr.last() !is AdapterFooterAbstractVO
+        ) {
             currentDataListMbr.add(footerItem)
             notifyItemInserted(currentDataListMbr.lastIndex)
         } else {
             currentDataListMbr[currentDataListMbr.lastIndex] = getDeepCopyReplica(footerItem)
             notifyItemChanged(currentDataListMbr.lastIndex)
         }
-        onFinish()
     }
 
     // 아이템 리스트 갱신 (헤더, 푸터는 제외한 아이템만 갱신)
     private fun setItemList(
-        newItemList: ArrayList<AdapterItemAbstractVO>,
-        onFinish: () -> Unit
+        newItemList: ArrayList<AdapterItemAbstractVO>
     ) {
+        if (currentDataListMbr.size < 2) {
+            // 헤더 / 푸터가 없는 상황은 에러라고 판단
+            throw RuntimeException("No Header / Footer Data")
+        }
+
         // 요청 리스트 사이즈가 0 일 때에는 모든 아이템을 제거
         if (newItemList.size == 0) {
-            if (currentDataListMbr.isEmpty()) {
-                // 현재 리스트도 비어있는 상태라면 return
-                onFinish()
+            if (currentDataListMbr.size == 2
+            ) {
                 return
-            } else if (currentDataListMbr.size == 1) {
-                // 리스트 아이템이 하나
-                if (currentDataListMbr[0] is AdapterHeaderAbstractVO ||
-                    currentDataListMbr[0] is AdapterFooterAbstractVO
-                ) { // 하나 남은 아이템이 헤더 혹은 푸터이면 return
-                    onFinish()
-                    return
-                } else { // 하나 남은 아이템이 헤더 혹은 푸터가 아닐 때,
-                    currentDataListMbr.removeAt(0)
+            } else { // 아이템이 3개 이상일 때
+                // 헤더 푸터만 유지하고 제거
+                currentDataListMbr.subList(1, currentDataListMbr.lastIndex).clear()
 
-                    notifyItemRemoved(0)
+                notifyItemRangeRemoved(1, currentDataListMbr.size - 2)
 
-                    onFinish()
-                    return
-                }
-            } else if (currentDataListMbr.size == 2) {
-                // 리스트 아이템이 두개
-                if (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
-                    currentDataListMbr.last() is AdapterFooterAbstractVO
-                ) { // 아이템 두개가 모두 헤더와 푸터일 때
-                    onFinish()
-                    return
-                } else if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
-                    // 아이템 헤더만 유지
-                    currentDataListMbr.removeAt(1)
-
-                    notifyItemRemoved(1)
-
-                    onFinish()
-                    return
-                } else if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
-                    // 아이템 푸터만 유지
-                    currentDataListMbr.removeAt(0)
-
-                    notifyItemRemoved(0)
-
-                    onFinish()
-                    return
-                } else {
-                    // 아이템 두개를 모두 제거해야 할 때
-                    currentDataListMbr.clear()
-
-                    notifyItemRangeRemoved(0, 2)
-
-                    onFinish()
-                    return
-                }
-            } else {
-                // 아이템이 3개 이상일 때
-                if (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
-                    currentDataListMbr.last() is AdapterFooterAbstractVO
-                ) { // 헤더 푸터 모두 유지
-                    val itemStartIdx = 1
-                    val itemEndIdx = currentDataListMbr.lastIndex - 1
-                    val changeItemCount = currentDataListMbr.size - 2
-                    currentDataListMbr.subList(itemStartIdx, itemEndIdx + 1).clear()
-
-                    notifyItemRangeRemoved(itemStartIdx, changeItemCount)
-
-                    onFinish()
-                    return
-                } else if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
-                    // 헤더를 유지
-                    val itemStartIdx = 1
-                    val itemEndIdx = currentDataListMbr.lastIndex
-                    val changeItemCount = currentDataListMbr.size - 1
-                    currentDataListMbr.subList(itemStartIdx, itemEndIdx + 1).clear()
-
-                    notifyItemRangeRemoved(itemStartIdx, changeItemCount)
-
-                    onFinish()
-                    return
-                } else if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
-                    // 푸터를 유지
-                    val itemStartIdx = 0
-                    val itemEndIdx = currentDataListMbr.lastIndex - 1
-                    val changeItemCount = currentDataListMbr.size - 1
-                    currentDataListMbr.subList(itemStartIdx, itemEndIdx + 1).clear()
-
-                    notifyItemRangeRemoved(itemStartIdx, changeItemCount)
-
-                    onFinish()
-                    return
-                } else {
-                    // 헤더, 푸터 모두 유지하지 않음
-                    val changeItemCount = currentDataListMbr.size
-                    currentDataListMbr.clear()
-
-                    notifyItemRangeRemoved(0, changeItemCount)
-
-                    onFinish()
-                    return
-                }
+                return
             }
         }
 
         // 현재 리스트 아이템이 비어있다면 무조건 Add
-        if (currentDataListMbr.isEmpty()) {
-            // 현재 리스트 전체가 비어있다면 모두 add
-            val newItemListSize = newItemList.size
-
-            currentDataListMbr.addAll(newItemList)
-
-            notifyItemRangeInserted(0, newItemListSize)
-
-            onFinish()
-            return
-        } else if ((currentDataListMbr.size == 2 &&
-                    currentDataListMbr.first() is AdapterHeaderAbstractVO &&
-                    currentDataListMbr.last() is AdapterFooterAbstractVO) ||
-            (currentDataListMbr.size == 1 &&
-                    currentDataListMbr.first() is AdapterHeaderAbstractVO)
-        ) {
-            // 현재 리스트가 아이템이 2개고 모두 헤더와 푸터일 때와, 현재 리스트가 아이템이 1개고 헤더가 존재할 때,
+        if (currentDataListMbr.size == 2) {
             // index 1 부터 모두 add
             val newItemListSize = newItemList.size
 
@@ -441,49 +226,23 @@ abstract class ProwdRecyclerViewAdapter(
 
             notifyItemRangeInserted(1, newItemListSize)
 
-            onFinish()
-            return
-        } else if (currentDataListMbr.size == 1 &&
-            currentDataListMbr.last() is AdapterFooterAbstractVO
-        ) {
-            // 현재 리스트가 아이템이 1개고 유일한 아이템이 푸터일 때
-            val newItemListSize = newItemList.size
-
-            currentDataListMbr.addAll(0, newItemList)
-
-            notifyItemRangeInserted(0, newItemListSize)
-
-            onFinish()
             return
         }
 
         // 여기까지, newList 가 비어있을 때, currentList 가 비어있을 때의 처리 (이제 두 리스트는 1개 이상의 아이템을 지님)
         // 위에서 걸러지지 못했다면 본격적인 아이템 비교가 필요
-
-        // 아이템 순회 비교를 위하여 기존 리스트의 헤더 푸터를 제거한 서브 리스트를 가져오기
-        val subListStartIdx = if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
-            1
-        } else {
-            0
-        }
-
-        val subListLastIdx = if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
-            currentDataListMbr.lastIndex - 1
-        } else {
-            currentDataListMbr.lastIndex
-        }
-
         val currentItemListOnlyItemSubList = currentDataListMbr.subList(
-            subListStartIdx,
-            subListLastIdx + 1
+            1,
+            currentDataListMbr.lastIndex
         )
 
         // 각 리스트의 동위 아이템을 비교하는 개념
         var idx = 0
         while (true) {
             // 위치 확인
-            if (idx > newItemList.lastIndex && idx > currentItemListOnlyItemSubList.lastIndex) {
-                onFinish()
+            if (idx > newItemList.lastIndex &&
+                idx > currentItemListOnlyItemSubList.lastIndex
+            ) {
                 return
             }
 
@@ -491,13 +250,13 @@ abstract class ProwdRecyclerViewAdapter(
                 // 현재 인덱스가 뉴 리스트 마지막 인덱스를 넘어설 때,
                 // 여기부터 현 리스트 뒤를 날려버려 뉴 리스트와 맞추기
                 val deleteEndIdx = currentItemListOnlyItemSubList.size
-                currentItemListOnlyItemSubList.subList(idx, deleteEndIdx).clear()
+                currentItemListOnlyItemSubList.subList(idx, currentItemListOnlyItemSubList.size)
+                    .clear()
                 notifyItemRangeRemoved(
-                    idx + subListStartIdx,
+                    idx + 1,
                     deleteEndIdx - idx
                 )
 
-                onFinish()
                 return
             }
 
@@ -506,9 +265,8 @@ abstract class ProwdRecyclerViewAdapter(
                 // 여기부터 현 리스트 뒤에 뉴 리스트 남은 아이템들을 추가시키기
                 val deleteEndIdx = newItemList.size
                 currentItemListOnlyItemSubList.addAll(newItemList.subList(idx, deleteEndIdx))
-                notifyItemRangeInserted(idx + subListStartIdx, deleteEndIdx - idx)
+                notifyItemRangeInserted(idx + 1, deleteEndIdx - idx)
 
-                onFinish()
                 return
             }
 
@@ -523,7 +281,7 @@ abstract class ProwdRecyclerViewAdapter(
                     // 아이템 내용이 수정된 상태
                     currentItemListOnlyItemSubList[idx] = newItem
 
-                    notifyItemChanged(idx + subListStartIdx)
+                    notifyItemChanged(idx + 1)
                 }
                 // 위를 통과했다면 현 위치 아이템은 변경 필요가 없는 상태
             } else {
@@ -548,7 +306,7 @@ abstract class ProwdRecyclerViewAdapter(
                 if (-1 == searchedIdx) {
                     // 동일 아이템이 검색되지 않았다면 newItem 을 해당 위치에 생성
                     currentItemListOnlyItemSubList.add(idx, newItem)
-                    notifyItemInserted(idx + subListStartIdx)
+                    notifyItemInserted(idx + 1)
                 } else {
                     // 동일 아이템이 검색되었다면,
                     // newItem 을 해당 위치로 이동시키고, 내용 동일성 검증
@@ -562,14 +320,14 @@ abstract class ProwdRecyclerViewAdapter(
                     currentItemListOnlyItemSubList.removeAt(searchedIdx)
                     currentItemListOnlyItemSubList.add(idx, searchedItem)
 
-                    notifyItemMoved(searchedIdx + subListStartIdx, idx + subListStartIdx)
+                    notifyItemMoved(searchedIdx + 1, idx + 1)
 
                     // 내용 동일성 검증
                     if (!isContentSame(searchedItem, newItem)) {
                         // 내용이 변경된 경우
                         currentItemListOnlyItemSubList[idx] = newItem
 
-                        notifyItemChanged(idx + subListStartIdx)
+                        notifyItemChanged(idx + 1)
                     }
                 }
             }
