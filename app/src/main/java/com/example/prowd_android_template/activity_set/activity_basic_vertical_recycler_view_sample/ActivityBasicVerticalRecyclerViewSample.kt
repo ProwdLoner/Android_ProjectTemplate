@@ -405,35 +405,73 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         }
 
         // 아이템 추가
-        // todo 함수화
+        // todo 함수화, 일단 성공하면 아이템을 로컬 화면에 반영하고, 다음 데이터 받아올 때에는 제거하고 받아오기
         bindingMbr.addItemBtn.setOnClickListener {
             viewModelMbr.executorServiceMbr?.execute {
                 viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
                 runOnUiThread {
                     viewModelMbr.isRecyclerViewItemLoadingMbr = true
-                    val item =
-                        adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
 
-                    val lastServerUid = if (item.isEmpty()) {
-                        0
-                    } else {
-                        (item.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
+                    // 처리 다이얼로그 표시
+                    viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                        DialogProgressLoading.DialogInfoVO(
+                            false,
+                            "데이터를 서버에 저장합니다.",
+                            onCanceled = {}
+                        )
+
+                    val serverUid = if (adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.isEmpty()){
+                        1
+                    }else{
+                        (adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.last() as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid+1
                     }
 
-                    val itemUid = adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                    val data = "Added_$serverUid"
 
-                    item.add(
-                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                            itemUid,
-                            lastServerUid + 1,
-                            "added ${lastServerUid + 1}"
-                        )
+                    viewModelMbr.postRecyclerViewItemData(
+                        ActivityBasicVerticalRecyclerViewSampleViewModel.PostRecyclerViewItemDataInputVo(
+                            data
+                        ),
+                        onComplete = {
+                            runOnUiThread {
+                                // 처리 다이얼로그 제거
+                                viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+
+                                val currentItemListClone =
+                                    adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+                                currentItemListClone.add(
+                                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                        it,
+                                        data
+                                    )
+                                )
+
+                                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                    currentItemListClone
+
+                                bindingMbr.recyclerView.smoothScrollToPosition(currentItemListClone.lastIndex + 1)
+
+                                viewModelMbr.isRecyclerViewItemLoadingMbr = false
+                                viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+                            }
+                        },
+                        onError = {
+                            runOnUiThread {
+                                // 처리 다이얼로그 제거
+                                viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+                                viewModelMbr.isRecyclerViewItemLoadingMbr = false
+                                viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+
+                                if (it is SocketTimeoutException) { // 타임아웃 에러
+                                    // todo
+                                } else { // 그외 에러
+                                    // todo
+                                }
+                            }
+                        }
                     )
-
-                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
-                    bindingMbr.recyclerView.smoothScrollToPosition(item.lastIndex + 1)
-                    viewModelMbr.isRecyclerViewItemLoadingMbr = false
-                    viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                 }
             }
         }

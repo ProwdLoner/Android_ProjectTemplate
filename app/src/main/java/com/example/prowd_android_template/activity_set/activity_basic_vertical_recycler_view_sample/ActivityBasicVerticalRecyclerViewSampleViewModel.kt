@@ -124,11 +124,31 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
         }
     }
 
+    // 아이템 데이터 추가 요청
+    // 성공시 서버 Uid 가 반환
+    fun postRecyclerViewItemData(
+        postRecyclerViewItemDataInputVo: PostRecyclerViewItemDataInputVo,
+        onComplete: (Long) -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            Thread.sleep(500)
+
+            val serverItemUid = postRecyclerViewItemDataInputVo.title.split("_").last().toLong()
+
+            onComplete(serverItemUid)
+        }
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
     data class GetRecyclerViewItemDataListOutputVO(
         val serverItemUid: Long,
+        val title: String
+    )
+
+    data class PostRecyclerViewItemDataInputVo(
         val title: String
     )
 }
