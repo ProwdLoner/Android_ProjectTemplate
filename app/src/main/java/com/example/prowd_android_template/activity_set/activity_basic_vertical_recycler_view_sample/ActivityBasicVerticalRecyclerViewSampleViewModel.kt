@@ -48,8 +48,10 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     // 같은 아이템이라도 헤더 / 푸터와 일반 아이템은 내부적으로 싱크 처리가 되어있기에 아이템 리스트에만 적용
     val recyclerViewAdapterItemSemaphore = Semaphore(1)
 
-    // 중복 요청 금지를 위한 상태 플래그 (중복 요청을 허용한다면 세마포어 내부 로직이 다 실행된 후 실행됨)
+    // 중복 요청 금지를 위한 상태 플래그
     var isRecyclerViewItemLoadingMbr = false
+        @Synchronized get
+        @Synchronized set
 
 
     // ---------------------------------------------------------------------------------------------

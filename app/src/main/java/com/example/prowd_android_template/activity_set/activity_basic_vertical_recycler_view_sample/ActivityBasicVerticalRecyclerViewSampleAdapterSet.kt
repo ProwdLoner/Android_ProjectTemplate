@@ -156,10 +156,17 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     // 아이템 제거 버튼
                     binding.deleteBtn.setOnClickListener {
+                        if (parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr ||
+                            // 뷰가 제거되는 애니메이션이 진행되는 동안 버튼이 활성화 되는 것을 막기 위해 실제 리스트에 존재하는지를 파악
+                            currentItemListCloneMbr.indexOfFirst { it.itemUid == copyEntity.itemUid } == -1
+                        ) {
+                            return@setOnClickListener
+                        }
+                        parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
+
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
                             parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
                             parentViewMbr.runOnUiThread runOnUiThread1@{
-                                parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
 
                                 // 처리 다이얼로그 표시
                                 parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
@@ -189,12 +196,12 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                                             parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                                 itemListCopy
-
-                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
-                                                false
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
                                                 null
                                             parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+
+                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
+                                                false
                                         }
                                     },
                                     onError = {
@@ -202,8 +209,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                             // 처리 다이얼로그 제거
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
                                                 null
-                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
-                                                false
                                             parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
 
                                             if (it is SocketTimeoutException) { // 타임아웃 에러
@@ -211,6 +216,9 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                             } else { // 그외 에러
                                                 // todo
                                             }
+
+                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
+                                                false
                                         }
                                     }
                                 )
@@ -220,10 +228,14 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     // 아이템 변경
                     binding.root.setOnClickListener {
+                        if (parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr) {
+                            return@setOnClickListener
+                        }
+                        parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
+
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
                             parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
                             parentViewMbr.runOnUiThread {
-                                parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
 
                                 // 처리 다이얼로그 표시
                                 parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
@@ -286,7 +298,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                             }
                         }
                     }
-                    
+
                 }
 
                 // 아이템이 늘어나면 추가
