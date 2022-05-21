@@ -413,9 +413,11 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     )
             ) : RecyclerView.ViewHolder(view)
 
-            data class ItemVO(
-                val emptyData: Int?
-            ) : AdapterHeaderAbstractVO()
+            class ItemVO : AdapterHeaderAbstractVO() {
+                fun copy(): Footer.ItemVO {
+                    return Footer.ItemVO()
+                }
+            }
         }
 
         class Footer {
@@ -427,9 +429,11 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     )
             ) : RecyclerView.ViewHolder(view)
 
-            data class ItemVO(
-                val emptyData: Int?
-            ) : AdapterFooterAbstractVO()
+            class ItemVO : AdapterFooterAbstractVO() {
+                fun copy(): ItemVO {
+                    return ItemVO()
+                }
+            }
         }
 
         class ItemLoader {
