@@ -9,7 +9,7 @@ import java.util.concurrent.Semaphore
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
-// 내부 동기화 처리는 되어있음. 데이터 리스트 조회, 조작 기능의 뮤텍스. 다만 외부적으로도 주의가 필요
+// 내부 동기화 처리는 되어있음. 데이터 리스트 조회, 조작 기능의 뮤텍스. 다만 조회와 조작을 동시에 실행하는 비동기 기능의 경우 외부적 뮤텍스를 적용할것
 abstract class ProwdRecyclerViewAdapter(
     parentView: AppCompatActivity,
     targetView: RecyclerView,
@@ -22,6 +22,8 @@ abstract class ProwdRecyclerViewAdapter(
     private val currentDataListMbr: ArrayList<AdapterDataAbstractVO> = ArrayList()
 
     // 내부 데이터 리스트 접근 세마포어
+    // 데이터 조회, 데이터 변경
+    // 헤더, 푸터 및 아이템 정보를 비동기적으로 가져와 반영해도 라이브 데이터를 거친다면 싱크를 맞춰주는 역할
     private val currentDataSemaphoreMbr: Semaphore = Semaphore(1)
 
     // 데이터 리스트의 클론
