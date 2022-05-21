@@ -10,7 +10,7 @@ import java.util.concurrent.Semaphore
 // todo : 내부 세마포어 잠재 오류 검증
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
-// 비동기 처리시 뮤텍스와 싱크에 주의할 것.
+// 내부 동기화 처리는 되어있음. 데이터 리스트 조회, 조작 기능의 뮤텍스. 다만 외부적으로도 주의가 필요
 abstract class ProwdRecyclerViewAdapter(
     parentView: AppCompatActivity,
     targetView: RecyclerView,
@@ -61,8 +61,8 @@ abstract class ProwdRecyclerViewAdapter(
 
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
-    // Long 값 최소에서 최대까지의 범위이므로 매우 드문 현상.
-    // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재(그렇기에 외부에서 조작시에는 따로 관리 가능한 uid 를 사용할것)
+    // Long 값 최소에서 최대까지의 범위이므로 매우 드문 현상.(Long 범위의 모든 아이디가 소모된 상황)
+    // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재
     var maxUidMbr = Long.MIN_VALUE
         get() {
             currentDataSemaphoreMbr.acquire()
@@ -94,6 +94,8 @@ abstract class ProwdRecyclerViewAdapter(
     // ---------------------------------------------------------------------------------------------
     // <생성자 공간>
     init {
+        // (라이브 데이터 바인딩)
+        // 외부에서 뷰를 변경할 때에는 각 라이브 데이터에 원하는 값을 주입만 해주면 됨
         adapterVmData.headerLiveData.observe(parentView) {
             // 헤더 갱신
             setHeader(it)
