@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_basic_horizontal_recycler_view_sample.ActivityBasicHorizontalRecyclerViewSample
 import com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample.ActivityBasicVerticalRecyclerViewSample
-import com.example.prowd_android_template.activity_set.activity_network_recycler_view_sample.ActivityNetworkRecyclerViewSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -148,13 +147,14 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
             startActivity(intent)
         }
 
-        bindingMbr.goToNetworkRecyclerViewSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityNetworkRecyclerViewSample::class.java
-                )
-            startActivity(intent)
+        bindingMbr.goToMultiItemRecyclerViewSampleBtn.setOnClickListener {
+            // todo
+//            val intent =
+//                Intent(
+//                    this,
+//                    ActivityNetworkRecyclerViewSample::class.java
+//                )
+//            startActivity(intent)
         }
 
     }
