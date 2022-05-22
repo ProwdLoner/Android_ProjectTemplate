@@ -67,6 +67,7 @@ abstract class ProwdRecyclerViewAdapter(
                         (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
                                 currentDataListMbr.last() is AdapterFooterAbstractVO))
             ) {
+                currentDataSemaphoreMbr.release()
                 return ArrayList()
             }
 
@@ -108,6 +109,7 @@ abstract class ProwdRecyclerViewAdapter(
                         (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
                                 currentDataListMbr.last() is AdapterFooterAbstractVO))
             ) {
+                currentDataSemaphoreMbr.release()
                 return -1
             }
 
@@ -134,6 +136,7 @@ abstract class ProwdRecyclerViewAdapter(
                         (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
                                 currentDataListMbr.last() is AdapterFooterAbstractVO))
             ) {
+                currentDataSemaphoreMbr.release()
                 return -1
             }
 
