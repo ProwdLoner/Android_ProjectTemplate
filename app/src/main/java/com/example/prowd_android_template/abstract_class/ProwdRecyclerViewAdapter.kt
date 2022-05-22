@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import java.lang.RuntimeException
 import java.util.concurrent.Semaphore
 
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
@@ -220,13 +219,8 @@ abstract class ProwdRecyclerViewAdapter(
         newItemList: ArrayList<AdapterItemAbstractVO>
     ) {
         currentDataSemaphoreMbr.acquire()
-        if (currentDataListMbr.size < 2) {
-            // 헤더 / 푸터가 없는 상황은 에러라고 판단
-            currentDataSemaphoreMbr.release()
-            throw RuntimeException("No Header / Footer Data")
-        }
-
         // 요청 리스트 사이즈가 0 일 때에는 모든 아이템을 제거
+
         if (newItemList.size == 0) {
             if (currentDataListMbr.size == 2
             ) {
@@ -234,9 +228,10 @@ abstract class ProwdRecyclerViewAdapter(
                 return
             } else { // 아이템이 3개 이상일 때
                 // 헤더 푸터만 유지하고 제거
+                val removeItemCount = currentDataListMbr.size - 2
                 currentDataListMbr.subList(1, currentDataListMbr.lastIndex).clear()
 
-                notifyItemRangeRemoved(1, currentDataListMbr.size - 2)
+                notifyItemRangeRemoved(1, removeItemCount)
 
                 currentDataSemaphoreMbr.release()
                 return
