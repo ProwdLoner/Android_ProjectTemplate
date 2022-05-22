@@ -10,7 +10,6 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicHeaderFooterRecyclerViewSampleBinding
 import java.net.SocketTimeoutException
 
-// todo
 class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -80,12 +79,13 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                         // (로딩 처리)
                         // 화면을 비우고 로더 추가
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                             arrayListOf(
                                 ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
                                 )
                             )
+                        // todo 헤더, 푸터의 로딩화면
 
                         // (리포지토리 데이터 요청)
                         // 헤더 요청
@@ -98,7 +98,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                             it.title
                                         )
 
-                                    viewModelMbr.recyclerViewAdapterVmDataMbr.headerLiveData.value =
+                                    viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value =
                                         headerData
                                 }
                             },
@@ -129,7 +129,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                             it.title
                                         )
 
-                                    viewModelMbr.recyclerViewAdapterVmDataMbr.footerLiveData.value =
+                                    viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value =
                                         footerData
                                 }
                             },
@@ -158,7 +158,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                             onComplete = {
                                 runOnUiThread runOnUiThread2@{
                                     // 로더 제거
-                                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                         ArrayList()
 
                                     if (it.isEmpty()) {
@@ -177,14 +177,14 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     for (data in it) {
                                         newItemList.add(
                                             ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                                adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                                adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
                                                 data.serverItemUid,
                                                 data.title
                                             )
                                         )
                                     }
 
-                                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                         newItemList
 
                                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
@@ -194,7 +194,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                             onError = {
                                 runOnUiThread {
                                     // 로더 제거
-                                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                         ArrayList()
 
                                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
@@ -256,7 +256,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                 this,
                 bindingMbr.recyclerView,
                 true,
-                viewModelMbr.recyclerViewAdapterVmDataMbr,
                 onScrollReachTheEnd = {
                     if (viewModelMbr.isRecyclerViewItemLoadingMbr) {
                         return@RecyclerViewAdapter
@@ -274,10 +273,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
                             cloneItemList.add(
                                 ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
                                 )
                             )
-                            viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                 cloneItemList
 
                             // 로더 추가시 스크롤을 내리기
@@ -292,7 +291,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     runOnUiThread runOnUiThread2@{
                                         // 로더 제거
                                         cloneItemList.removeLast()
-                                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                             cloneItemList
 
                                         if (it.isEmpty()) {
@@ -311,14 +310,14 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                         for (data in it) {
                                             newItemList.add(
                                                 ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
                                                     data.serverItemUid,
                                                     data.title
                                                 )
                                             )
                                         }
 
-                                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                             newItemList
 
                                         viewModelMbr.recyclerViewAdapterItemSemaphore.release()
@@ -328,7 +327,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 onError = {
                                     runOnUiThread {
                                         // 로더 제거
-                                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                             ArrayList()
                                         viewModelMbr.recyclerViewAdapterItemSemaphore.release()
 
@@ -377,9 +376,9 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                     // (로딩 처리)
                     // 화면을 비우고 로더 추가
-                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = arrayListOf(
+                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = arrayListOf(
                         ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                            adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
                         )
                     )
 
@@ -391,7 +390,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         onComplete = {
                             runOnUiThread runOnUiThread2@{
                                 // 로더 제거
-                                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                     ArrayList()
 
                                 if (it.isEmpty()) {
@@ -411,14 +410,14 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 for (data in it) {
                                     newItemList.add(
                                         ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                            adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
                                             data.serverItemUid,
                                             data.title
                                         )
                                     )
                                 }
 
-                                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                     newItemList
 
                                 bindingMbr.screenRefreshLayout.isRefreshing = false
@@ -429,7 +428,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         onError = {
                             runOnUiThread {
                                 // 로더 제거
-                                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                     ArrayList()
 
                                 bindingMbr.screenRefreshLayout.isRefreshing = false
@@ -460,7 +459,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
                     item.shuffle()
 
-                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
+                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = item
                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                     viewModelMbr.isRecyclerViewItemLoadingMbr = false
                 }
@@ -505,16 +504,16 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                                 currentItemListClone.add(
                                     ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                        adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
                                         it,
                                         data
                                     )
                                 )
 
-                                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                     currentItemListClone
 
-                                bindingMbr.recyclerView.smoothScrollToPosition(currentItemListClone.lastIndex + 1)
+                                bindingMbr.recyclerView.scrollToPosition(adapterSetMbr.recyclerViewAdapter.currentItemListLastIndexMbr)
 
                                 viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                                 viewModelMbr.isRecyclerViewItemLoadingMbr = false
@@ -588,6 +587,19 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
             }
+        }
+
+        // 리사이클러 뷰 어뎁터 데이터 바인딩
+        viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.observe(this) {
+            adapterSetMbr.recyclerViewAdapter.setHeader(it)
+        }
+
+        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.observe(this) {
+            adapterSetMbr.recyclerViewAdapter.setItemList(it)
+        }
+
+        viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.observe(this) {
+            adapterSetMbr.recyclerViewAdapter.setFooter(it)
         }
     }
 }

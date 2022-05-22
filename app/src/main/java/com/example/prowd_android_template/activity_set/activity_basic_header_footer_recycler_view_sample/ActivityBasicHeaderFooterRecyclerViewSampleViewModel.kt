@@ -3,6 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_basic_header_fo
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -39,16 +40,11 @@ class ActivityBasicHeaderFooterRecyclerViewSampleViewModel(application: Applicat
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
-    // (RecyclerViewAdapter 데이터)
-    // recyclerView 내에서 사용되는 뷰모델 데이터 (내부 LiveData 는 adapter 에서 자동 observe 처리됨)
-    val recyclerViewAdapterVmDataMbr: ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData =
-        ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.AdapterVmData()
-
     // 리사이클러 뷰 아이템 조작 싱크를 위한 세마포어(리포지토리 요청 같은 비동기 상황을 가정하자면 필수 처리)
     // 같은 아이템이라도 헤더 / 푸터와 일반 아이템은 내부적으로 싱크 처리가 되어있기에 아이템 리스트에만 적용
     val recyclerViewAdapterItemSemaphore = Semaphore(1)
 
-    // 중복 요청 금지를 위한 상태 플래그
+    // 리사이클러 뷰 관련 중복 요청 금지를 위한 상태 플래그
     var isRecyclerViewItemLoadingMbr = false
         @Synchronized get
         @Synchronized set
@@ -67,6 +63,12 @@ class ActivityBasicHeaderFooterRecyclerViewSampleViewModel(application: Applicat
     // 확인 다이얼로그 출력 정보
     val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
+
+    // (RecyclerViewAdapter 데이터)
+    // recyclerView 내에서 사용되는 뷰모델 데이터
+    val recyclerViewAdapterHeaderLiveDataMbr : MutableLiveData<ProwdRecyclerViewAdapter.AdapterHeaderAbstractVO> = MutableLiveData()
+    val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> = MutableLiveData()
+    val recyclerViewAdapterFooterLiveDataMbr : MutableLiveData<ProwdRecyclerViewAdapter.AdapterFooterAbstractVO> = MutableLiveData()
 
 
     // ---------------------------------------------------------------------------------------------

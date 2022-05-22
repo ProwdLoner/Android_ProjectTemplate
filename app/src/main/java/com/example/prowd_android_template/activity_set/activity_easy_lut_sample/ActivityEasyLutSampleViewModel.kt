@@ -41,9 +41,6 @@ class ActivityEasyLutSampleViewModel(application: Application) :
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
-    // recyclerView 데이터
-    lateinit var recyclerViewAdapterItemDataListMbr: ArrayList<ProwdRecyclerViewAdapter.AdapterDataAbstractVO>
-
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
@@ -64,6 +61,11 @@ class ActivityEasyLutSampleViewModel(application: Application) :
     val filteredImage2LiveDataMbr: MutableLiveData<Bitmap?> = MutableLiveData(null)
 
     val filteredImage3LiveDataMbr: MutableLiveData<Bitmap?> = MutableLiveData(null)
+
+    // (RecyclerViewAdapter 데이터)
+    // recyclerView 내에서 사용되는 뷰모델 데이터
+    val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
+        MutableLiveData()
 
 
     // ---------------------------------------------------------------------------------------------

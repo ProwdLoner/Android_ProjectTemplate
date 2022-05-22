@@ -3,7 +3,6 @@ package com.example.prowd_android_template.activity_set.activity_basic_header_fo
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
@@ -19,13 +18,11 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
         private val parentViewMbr: ActivityBasicHeaderFooterRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
-        private val adapterVmData: AdapterVmData,
         onScrollReachTheEnd: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
-        adapterVmData,
         onScrollReachTheEnd
     ) {
         // <멤버 변수 공간>
@@ -33,15 +30,6 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <생성자 공간>
-        init {
-            adapterVmData.headerLiveData.observe(parentViewMbr){
-                notifyItemChanged(0)
-            }
-
-            adapterVmData.footerLiveData.observe(parentViewMbr){
-                notifyItemChanged(currentDataListLastIndexMbr)
-            }
-        }
 
 
         // ---------------------------------------------------------------------------------------------
@@ -148,9 +136,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     val copyEntity = currentDataListCloneMbr[position]
                     // super 어뎁터 생성시 추상 클래스로 생성되므로 타입 확인
                     if (copyEntity is Header.ItemVO) {
-                        if (adapterVmData.isHeaderLoadingLiveData.value!!) {
-                            binding.loaderContainer.visibility = View.VISIBLE
-                        }
+                        // todo 로더 확인
 
                         binding.title.text = copyEntity.title
                     }
@@ -161,9 +147,8 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     val copyEntity = currentDataListCloneMbr[position]
                     // super 어뎁터 생성시 추상 클래스로 생성되므로 타입 확인
                     if (copyEntity is Footer.ItemVO) {
-                        if (adapterVmData.isFooterLoadingLiveData.value!!) {
-                            binding.loaderContainer.visibility = View.VISIBLE
-                        }
+                        // todo 로더 확인
+
 
                         binding.title.text = copyEntity.title
                     }
@@ -220,7 +205,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                                             itemListCopy.removeAt(thisItemListIdx)
 
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                                 itemListCopy
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
                                                 null
@@ -294,7 +279,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                                             itemListCopy[thisItemListIdx] = copyEntity
 
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                                 itemListCopy
 
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
@@ -423,13 +408,6 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <내부 클래스 공간>
-        // (Vm 저장 클래스)
-        class AdapterVmData() : ProwdRecyclerViewAdapter.AdapterVmData() {
-            // 뷰모델에 저장해서 사용해야 하는 데이터들은 여기에 선언
-            var isHeaderLoadingLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
-            var isFooterLoadingLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
-        }
-
         // (아이템 클래스)
         // 헤더 / 푸터를 사용하지 않을 것이라면 item_empty 를 사용 및 ItemVO 데이터를 임시 데이터로 채우기
         class Header {

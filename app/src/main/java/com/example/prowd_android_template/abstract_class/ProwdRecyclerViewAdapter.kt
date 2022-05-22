@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.abstract_class
 
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.util.concurrent.Semaphore
@@ -13,7 +12,6 @@ abstract class ProwdRecyclerViewAdapter(
     parentView: AppCompatActivity,
     targetView: RecyclerView,
     isVertical: Boolean,
-    adapterVmData: AdapterVmData,
     onScrollReachTheEnd: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
@@ -38,16 +36,54 @@ abstract class ProwdRecyclerViewAdapter(
             return result
         }
 
+    // 데이터 리스트 마지막 인덱스
+    // 데이터가 없다면 -1 반환
+    val currentDataListLastIndexMbr: Int
+        get() {
+            currentDataSemaphoreMbr.acquire()
+            currentDataSemaphoreMbr.release()
+            return currentDataListMbr.lastIndex
+        }
+
+    // 데이터 리스트 사이즈
+    val currentDataListSizeMbr: Int
+        get() {
+            currentDataSemaphoreMbr.acquire()
+            currentDataSemaphoreMbr.release()
+            return currentDataListMbr.size
+        }
+
     // 아이템 리스트의 클론
     val currentItemListCloneMbr: ArrayList<AdapterItemAbstractVO>
         get() {
             currentDataSemaphoreMbr.acquire()
-            if (currentDataListMbr.isEmpty()) {
+
+            // 현재 리스트에 아이템이 없다면 빈 리스트를 반환
+            if (currentDataListMbr.isEmpty() ||
+                (currentDataListMbr.size == 1 &&
+                        (currentDataListMbr.first() is AdapterHeaderAbstractVO ||
+                                currentDataListMbr.last() is AdapterFooterAbstractVO)) ||
+                (currentDataListMbr.size == 2 &&
+                        (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
+                                currentDataListMbr.last() is AdapterFooterAbstractVO))
+            ) {
                 return ArrayList()
             }
 
+            val firstItemIndex = if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
+                1
+            } else {
+                0
+            }
+
+            val lastItemIndex = if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
+                currentDataListMbr.lastIndex - 1
+            } else {
+                currentDataListMbr.lastIndex
+            }
+
             val onlyItemSubList =
-                currentDataListMbr.subList(1, currentDataListMbr.lastIndex)
+                currentDataListMbr.subList(firstItemIndex, lastItemIndex + 1)
 
             val result: ArrayList<AdapterItemAbstractVO> = ArrayList()
 
@@ -59,18 +95,70 @@ abstract class ProwdRecyclerViewAdapter(
             return result
         }
 
-    val currentDataListLastIndexMbr: Int
+    val currentItemListFirstIndexMbr: Int
+        get() {
+            currentDataSemaphoreMbr.acquire()
+
+            // 아이템 리스트가 비어있다면 -1 반환
+            if (currentDataListMbr.isEmpty() ||
+                (currentDataListMbr.size == 1 &&
+                        (currentDataListMbr.first() is AdapterHeaderAbstractVO ||
+                                currentDataListMbr.last() is AdapterFooterAbstractVO)) ||
+                (currentDataListMbr.size == 2 &&
+                        (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
+                                currentDataListMbr.last() is AdapterFooterAbstractVO))
+            ) {
+                return -1
+            }
+
+            val result = if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
+                1
+            } else {
+                0
+            }
+
+            currentDataSemaphoreMbr.release()
+            return result
+        }
+
+    val currentItemListLastIndexMbr: Int
+        get() {
+            currentDataSemaphoreMbr.acquire()
+
+            // 아이템 리스트가 비어있다면 -1 반환
+            if (currentDataListMbr.isEmpty() ||
+                (currentDataListMbr.size == 1 &&
+                        (currentDataListMbr.first() is AdapterHeaderAbstractVO ||
+                                currentDataListMbr.last() is AdapterFooterAbstractVO)) ||
+                (currentDataListMbr.size == 2 &&
+                        (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
+                                currentDataListMbr.last() is AdapterFooterAbstractVO))
+            ) {
+                return -1
+            }
+
+            val result = if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
+                currentDataListMbr.lastIndex - 1
+            } else {
+                currentDataListMbr.lastIndex
+            }
+
+            currentDataSemaphoreMbr.release()
+            return result
+        }
+
+    val currentItemListSizeMbr: Int
         get() {
             currentDataSemaphoreMbr.acquire()
             currentDataSemaphoreMbr.release()
-            return currentDataListMbr.lastIndex
+            return currentDataListMbr.size
         }
 
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
     // Long 값 최소에서 최대까지의 범위이므로 매우 드문 현상.(Long 범위의 모든 아이디가 소모된 상황)
     // 오동작 유형 : setNewItemList 를 했을 때, 동일 id로 인하여 아이템 변경 애니메이션이 잘못 실행될 가능성 존재
-    var maxUidMbr = Long.MIN_VALUE
+    var nextItemUidMbr = Long.MIN_VALUE
         get() {
             currentDataSemaphoreMbr.acquire()
             val firstIssue = ++field
@@ -101,37 +189,6 @@ abstract class ProwdRecyclerViewAdapter(
     // ---------------------------------------------------------------------------------------------
     // <생성자 공간>
     init {
-        // (라이브 데이터 바인딩)
-        // 외부에서 뷰를 변경할 때에는 각 라이브 데이터에 원하는 값을 주입만 해주면 됨
-        adapterVmData.headerLiveData.observe(parentView) {
-            // 헤더 갱신
-            setHeader(it)
-        }
-
-        adapterVmData.footerLiveData.observe(parentView) {
-            // 푸터 갱신
-            setFooter(it)
-        }
-
-        adapterVmData.itemListLiveData.observe(parentView) {
-            // 아이템 리스트 갱신
-            setItemList(it)
-        }
-
-        // (필수 초기 데이터 생성)
-        // 헤더 푸터 데이터는 필수로 존재 : 사용을 안 할 것이라면 화면단 어뎁터에서 empty container 를 사용
-        if (adapterVmData.headerLiveData.value == null) {
-            adapterVmData.headerLiveData.value = AdapterHeaderAbstractVO()
-        }
-
-        if (adapterVmData.footerLiveData.value == null) {
-            adapterVmData.footerLiveData.value = AdapterFooterAbstractVO()
-        }
-
-        if (adapterVmData.itemListLiveData.value == null) {
-            adapterVmData.itemListLiveData.value = ArrayList()
-        }
-
         targetView.adapter = this
 
         val scrollAdapterLayoutManager = LinearLayoutManager(parentView)
@@ -175,24 +232,9 @@ abstract class ProwdRecyclerViewAdapter(
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
 
-
-    // ---------------------------------------------------------------------------------------------
-    // <비공개 메소드 공간>
-    // 객체 동일성을 비교하는 함수 (아이템의 이동, 삭제 여부 파악을 위해 필요)
-    // 객체 고유값을 설정해 객체 고유성을 유지시키는 것이 중요
-    // 새로 생성되어 비교될 수 있으니 주소로 비교시 의도치 않게 아이템이 지워졌다 생길 수 있음
-    // 같은 객체에 내용만 변할수 있으니 값 전체로 비교시 무조건 아이템이 지워졌다가 다시 생김
-    // 되도록 객체 동일성을 보장하는 고유값을 객체에 넣어서 사용 할것.
-    private fun isItemSame(
-        oldItem: AdapterDataAbstractVO,
-        newItem: AdapterDataAbstractVO
-    ): Boolean {
-        return oldItem.itemUid == newItem.itemUid
-    }
-
     // (화면 갱신 함수)
     // 헤더만 갱신
-    private fun setHeader(headerItem: AdapterHeaderAbstractVO) {
+    fun setHeader(headerItem: AdapterHeaderAbstractVO) {
         currentDataSemaphoreMbr.acquire()
         if (currentDataListMbr.isEmpty() ||
             currentDataListMbr.first() !is AdapterHeaderAbstractVO
@@ -206,8 +248,26 @@ abstract class ProwdRecyclerViewAdapter(
         currentDataSemaphoreMbr.release()
     }
 
+    // 존재하는 헤더를 제거
+    fun removeHeader() {
+        currentDataSemaphoreMbr.acquire()
+
+        // 헤더가 존재하지 않으면 그냥 return
+        if (currentDataListMbr.isEmpty() ||
+            currentDataListMbr.first() !is AdapterHeaderAbstractVO
+        ) {
+            currentDataSemaphoreMbr.release()
+            return
+        }
+
+        currentDataListMbr.removeFirst()
+        notifyItemRemoved(0)
+
+        currentDataSemaphoreMbr.release()
+    }
+
     // 푸터만 갱신
-    private fun setFooter(footerItem: AdapterFooterAbstractVO) {
+    fun setFooter(footerItem: AdapterFooterAbstractVO) {
         currentDataSemaphoreMbr.acquire()
         if (currentDataListMbr.isEmpty() ||
             currentDataListMbr.last() !is AdapterFooterAbstractVO
@@ -221,24 +281,74 @@ abstract class ProwdRecyclerViewAdapter(
         currentDataSemaphoreMbr.release()
     }
 
+    // 존재하는 푸터를 제거
+    fun removeFooter() {
+        currentDataSemaphoreMbr.acquire()
+
+        // 헤더가 존재하지 않으면 그냥 return
+        if (currentDataListMbr.isEmpty() ||
+            currentDataListMbr.last() !is AdapterFooterAbstractVO
+        ) {
+            currentDataSemaphoreMbr.release()
+            return
+        }
+
+        val removeIndex = currentDataListMbr.lastIndex
+        currentDataListMbr.removeLast()
+        notifyItemRemoved(removeIndex)
+
+        currentDataSemaphoreMbr.release()
+    }
+
     // 아이템 리스트 갱신 (헤더, 푸터는 제외한 아이템만 갱신)
-    private fun setItemList(
+    fun setItemList(
         newItemList: ArrayList<AdapterItemAbstractVO>
     ) {
         currentDataSemaphoreMbr.acquire()
-        // 요청 리스트 사이즈가 0 일 때에는 모든 아이템을 제거
 
-        if (newItemList.size == 0) {
-            if (currentDataListMbr.size == 2
+        if (newItemList.size == 0) { // 요청 리스트 사이즈가 0 일 때에는 모든 아이템을 제거
+
+            // 아이템 리스트가 비어있다면 그냥 return
+            if (currentDataListMbr.isEmpty()) {
+                currentDataSemaphoreMbr.release()
+                return
+            } else if (currentDataListMbr.size == 1 &&
+                (currentDataListMbr.first() is AdapterHeaderAbstractVO ||
+                        currentDataListMbr.last() is AdapterFooterAbstractVO)
             ) {
                 currentDataSemaphoreMbr.release()
                 return
-            } else { // 아이템이 3개 이상일 때
-                // 헤더 푸터만 유지하고 제거
-                val removeItemCount = currentDataListMbr.size - 2
-                currentDataListMbr.subList(1, currentDataListMbr.lastIndex).clear()
+            } else if (currentDataListMbr.size == 2 &&
+                (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
+                        currentDataListMbr.last() is AdapterFooterAbstractVO)
+            ) {
+                currentDataSemaphoreMbr.release()
+                return
+            } else { // 아이템이 1개 이상일 때는 제거
 
-                notifyItemRangeRemoved(1, removeItemCount)
+                // (헤더 푸터를 제외한 순수 아이템 관련 정보 및 서브 리스트 추출)
+                val firstItemIndex = if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
+                    1
+                } else {
+                    0
+                }
+
+                val lastItemIndex = if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
+                    currentDataListMbr.lastIndex - 1
+                } else {
+                    currentDataListMbr.lastIndex
+                }
+
+                val onlyItemSubList =
+                    currentDataListMbr.subList(firstItemIndex, lastItemIndex + 1)
+
+                // 제거당할 아이템 개수
+                val removeItemCount = onlyItemSubList.size
+
+                // 아이템 제거
+                onlyItemSubList.clear()
+
+                notifyItemRangeRemoved(firstItemIndex, removeItemCount)
 
                 currentDataSemaphoreMbr.release()
                 return
@@ -246,8 +356,42 @@ abstract class ProwdRecyclerViewAdapter(
         }
 
         // 현재 리스트 아이템이 비어있다면 무조건 Add
-        if (currentDataListMbr.size == 2) {
-            // index 1 부터 모두 add
+        if (currentDataListMbr.isEmpty()) {
+            // 헤더가 없으므로 0번 인덱스에 추가
+            val newItemListSize = newItemList.size
+
+            currentDataListMbr.addAll(0, newItemList)
+
+            notifyItemRangeInserted(0, newItemListSize)
+
+            currentDataSemaphoreMbr.release()
+            return
+        } else if (currentDataListMbr.size == 1) {
+            if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
+                // 헤더만 존재하므로 1번 인덱스에 추가
+                val newItemListSize = newItemList.size
+
+                currentDataListMbr.addAll(1, newItemList)
+
+                notifyItemRangeInserted(1, newItemListSize)
+
+                currentDataSemaphoreMbr.release()
+                return
+            } else if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
+                // 푸터만 존재하므로 0번 인덱스에 추가
+                val newItemListSize = newItemList.size
+
+                currentDataListMbr.addAll(0, newItemList)
+
+                notifyItemRangeInserted(0, newItemListSize)
+
+                currentDataSemaphoreMbr.release()
+            }
+        } else if (currentDataListMbr.size == 2 &&
+            (currentDataListMbr.first() is AdapterHeaderAbstractVO &&
+                    currentDataListMbr.last() is AdapterFooterAbstractVO)
+        ) {
+            // 헤더, 푸터만 존재하므로 1번 인덱스에 추가
             val newItemListSize = newItemList.size
 
             currentDataListMbr.addAll(1, newItemList)
@@ -260,10 +404,22 @@ abstract class ProwdRecyclerViewAdapter(
 
         // 여기까지, newList 가 비어있을 때, currentList 가 비어있을 때의 처리 (이제 두 리스트는 1개 이상의 아이템을 지님)
         // 위에서 걸러지지 못했다면 본격적인 아이템 비교가 필요
-        val currentItemListOnlyItemSubList = currentDataListMbr.subList(
-            1,
+
+        // (헤더 푸터를 제외한 순수 아이템 관련 정보 및 서브 리스트 추출)
+        val firstItemIndex = if (currentDataListMbr.first() is AdapterHeaderAbstractVO) {
+            1
+        } else {
+            0
+        }
+
+        val lastItemIndex = if (currentDataListMbr.last() is AdapterFooterAbstractVO) {
+            currentDataListMbr.lastIndex - 1
+        } else {
             currentDataListMbr.lastIndex
-        )
+        }
+
+        val currentItemListOnlyItemSubList =
+            currentDataListMbr.subList(firstItemIndex, lastItemIndex + 1)
 
         // 각 리스트의 동위 아이템을 비교하는 개념
         var idx = 0
@@ -283,7 +439,7 @@ abstract class ProwdRecyclerViewAdapter(
                 currentItemListOnlyItemSubList.subList(idx, currentItemListOnlyItemSubList.size)
                     .clear()
                 notifyItemRangeRemoved(
-                    idx + 1,
+                    idx + firstItemIndex,
                     deleteEndIdx - idx
                 )
 
@@ -296,7 +452,7 @@ abstract class ProwdRecyclerViewAdapter(
                 // 여기부터 현 리스트 뒤에 뉴 리스트 남은 아이템들을 추가시키기
                 val deleteEndIdx = newItemList.size
                 currentItemListOnlyItemSubList.addAll(newItemList.subList(idx, deleteEndIdx))
-                notifyItemRangeInserted(idx + 1, deleteEndIdx - idx)
+                notifyItemRangeInserted(idx + firstItemIndex, deleteEndIdx - idx)
 
                 currentDataSemaphoreMbr.release()
                 return
@@ -313,7 +469,7 @@ abstract class ProwdRecyclerViewAdapter(
                     // 아이템 내용이 수정된 상태
                     currentItemListOnlyItemSubList[idx] = newItem
 
-                    notifyItemChanged(idx + 1)
+                    notifyItemChanged(idx + firstItemIndex)
                 }
                 // 위를 통과했다면 현 위치 아이템은 변경 필요가 없는 상태
             } else {
@@ -338,7 +494,7 @@ abstract class ProwdRecyclerViewAdapter(
                 if (-1 == searchedIdx) {
                     // 동일 아이템이 검색되지 않았다면 newItem 을 해당 위치에 생성
                     currentItemListOnlyItemSubList.add(idx, newItem)
-                    notifyItemInserted(idx + 1)
+                    notifyItemInserted(idx + firstItemIndex)
                 } else {
                     // 동일 아이템이 검색되었다면,
                     // newItem 을 해당 위치로 이동시키고, 내용 동일성 검증
@@ -352,20 +508,35 @@ abstract class ProwdRecyclerViewAdapter(
                     currentItemListOnlyItemSubList.removeAt(searchedIdx)
                     currentItemListOnlyItemSubList.add(idx, searchedItem)
 
-                    notifyItemMoved(searchedIdx + 1, idx + 1)
+                    notifyItemMoved(searchedIdx + firstItemIndex, idx + firstItemIndex)
 
                     // 내용 동일성 검증
                     if (!isContentSame(searchedItem, newItem)) {
                         // 내용이 변경된 경우
                         currentItemListOnlyItemSubList[idx] = newItem
 
-                        notifyItemChanged(idx + 1)
+                        notifyItemChanged(idx + firstItemIndex)
                     }
                 }
             }
 
             ++idx
         }
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <비공개 메소드 공간>
+    // 객체 동일성을 비교하는 함수 (아이템의 이동, 삭제 여부 파악을 위해 필요)
+    // 객체 고유값을 설정해 객체 고유성을 유지시키는 것이 중요
+    // 새로 생성되어 비교될 수 있으니 주소로 비교시 의도치 않게 아이템이 지워졌다 생길 수 있음
+    // 같은 객체에 내용만 변할수 있으니 값 전체로 비교시 무조건 아이템이 지워졌다가 다시 생김
+    // 되도록 객체 동일성을 보장하는 고유값을 객체에 넣어서 사용 할것.
+    private fun isItemSame(
+        oldItem: AdapterDataAbstractVO,
+        newItem: AdapterDataAbstractVO
+    ): Boolean {
+        return oldItem.itemUid == newItem.itemUid
     }
 
 
@@ -402,10 +573,4 @@ abstract class ProwdRecyclerViewAdapter(
         AdapterDataAbstractVO(itemUid)
 
     abstract class AdapterDataAbstractVO(open val itemUid: Long)
-
-    open class AdapterVmData {
-        val itemListLiveData: MutableLiveData<ArrayList<AdapterItemAbstractVO>> = MutableLiveData()
-        val headerLiveData: MutableLiveData<AdapterHeaderAbstractVO> = MutableLiveData()
-        val footerLiveData: MutableLiveData<AdapterFooterAbstractVO> = MutableLiveData()
-    }
 }

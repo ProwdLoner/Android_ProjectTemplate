@@ -79,10 +79,10 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
 
                         // (로딩 처리)
                         // 화면을 비우고 로더 추가
-                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                             arrayListOf(
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
                                 )
                             )
 
@@ -94,7 +94,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                             onComplete = {
                                 runOnUiThread runOnUiThread2@{
                                     // 로더 제거
-                                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                         ArrayList()
 
                                     if (it.isEmpty()) {
@@ -113,14 +113,14 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                                     for (data in it) {
                                         newItemList.add(
                                             ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                                adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                                adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
                                                 data.serverItemUid,
                                                 data.title
                                             )
                                         )
                                     }
 
-                                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                         newItemList
 
                                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
@@ -130,7 +130,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                             onError = {
                                 runOnUiThread {
                                     // 로더 제거
-                                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                         ArrayList()
 
                                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
@@ -192,7 +192,6 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                 this,
                 bindingMbr.recyclerView,
                 false,
-                viewModelMbr.recyclerViewAdapterVmDataMbr,
                 onScrollReachTheEnd = {
                     if (viewModelMbr.isRecyclerViewItemLoadingMbr) {
                         return@RecyclerViewAdapter
@@ -210,10 +209,10 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
                             cloneItemList.add(
                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
                                 )
                             )
-                            viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                 cloneItemList
 
                             // 로더 추가시 스크롤을 내리기
@@ -228,7 +227,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                                     runOnUiThread runOnUiThread2@{
                                         // 로더 제거
                                         cloneItemList.removeLast()
-                                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                             cloneItemList
 
                                         if (it.isEmpty()) {
@@ -247,14 +246,14 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                                         for (data in it) {
                                             newItemList.add(
                                                 ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                                    adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
                                                     data.serverItemUid,
                                                     data.title
                                                 )
                                             )
                                         }
 
-                                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                             newItemList
 
                                         viewModelMbr.recyclerViewAdapterItemSemaphore.release()
@@ -264,7 +263,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                                 onError = {
                                     runOnUiThread {
                                         // 로더 제거
-                                        viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                             ArrayList()
                                         viewModelMbr.recyclerViewAdapterItemSemaphore.release()
 
@@ -396,7 +395,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                         adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
                     item.shuffle()
 
-                    viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value = item
+                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = item
                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                     viewModelMbr.isRecyclerViewItemLoadingMbr = false
                 }
@@ -441,16 +440,16 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
 
                                 currentItemListClone.add(
                                     ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                        adapterSetMbr.recyclerViewAdapter.maxUidMbr,
+                                        adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
                                         it,
                                         data
                                     )
                                 )
 
-                                viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                     currentItemListClone
 
-                                bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr)
+                                bindingMbr.recyclerView.scrollToPosition(adapterSetMbr.recyclerViewAdapter.currentItemListLastIndexMbr)
 
                                 viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                                 viewModelMbr.isRecyclerViewItemLoadingMbr = false
@@ -524,6 +523,11 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
             }
+        }
+
+        // 리사이클러 뷰 어뎁터 데이터 바인딩
+        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.observe(this) {
+            adapterSetMbr.recyclerViewAdapter.setItemList(it)
         }
     }
 }

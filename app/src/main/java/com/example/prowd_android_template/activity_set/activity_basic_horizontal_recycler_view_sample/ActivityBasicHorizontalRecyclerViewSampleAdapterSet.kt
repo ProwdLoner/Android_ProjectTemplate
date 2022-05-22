@@ -19,13 +19,11 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
         private val parentViewMbr: ActivityBasicHorizontalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
-        private val adapterVmData: AdapterVmData,
         onScrollReachTheEnd: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
-        adapterVmData,
         onScrollReachTheEnd
     ) {
         // <멤버 변수 공간>
@@ -201,7 +199,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
 
                                             itemListCopy.removeAt(thisItemListIdx)
 
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                                 itemListCopy
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
                                                 null
@@ -275,7 +273,7 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
 
                                             itemListCopy[thisItemListIdx] = copyEntity
 
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
+                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                                 itemListCopy
 
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
@@ -404,11 +402,6 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <내부 클래스 공간>
-        // (Vm 저장 클래스)
-        class AdapterVmData() : ProwdRecyclerViewAdapter.AdapterVmData() {
-            // 뷰모델에 저장해서 사용해야 하는 데이터들은 여기에 선언
-        }
-
         // (아이템 클래스)
         // 헤더 / 푸터를 사용하지 않을 것이라면 item_empty 를 사용 및 ItemVO 데이터를 임시 데이터로 채우기
         class Header {
