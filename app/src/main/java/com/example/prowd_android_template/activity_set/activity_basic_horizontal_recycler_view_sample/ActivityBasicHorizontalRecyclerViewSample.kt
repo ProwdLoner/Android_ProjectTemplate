@@ -450,7 +450,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.recyclerViewAdapterVmDataMbr.itemListLiveData.value =
                                     currentItemListClone
 
-                                bindingMbr.recyclerView.smoothScrollToPosition(currentItemListClone.lastIndex + 1)
+                                bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr)
 
                                 viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                                 viewModelMbr.isRecyclerViewItemLoadingMbr = false

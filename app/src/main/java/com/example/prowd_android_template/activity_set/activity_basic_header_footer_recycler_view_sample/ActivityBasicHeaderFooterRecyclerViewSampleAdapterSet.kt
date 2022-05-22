@@ -3,6 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_basic_header_fo
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
@@ -32,6 +33,15 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <생성자 공간>
+        init {
+            adapterVmData.headerLiveData.observe(parentViewMbr){
+                notifyItemChanged(0)
+            }
+
+            adapterVmData.footerLiveData.observe(parentViewMbr){
+                notifyItemChanged(currentDataListLastIndexMbr)
+            }
+        }
 
 
         // ---------------------------------------------------------------------------------------------
@@ -134,18 +144,34 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
-//                    val binding = holder.binding
-//                    val entity = getCurrentDataListDeepCopyReplica()[position] as Header.ItemVO
+                    val binding = holder.binding
+                    val copyEntity = currentDataListCloneMbr[position]
+                    // super 어뎁터 생성시 추상 클래스로 생성되므로 타입 확인
+                    if (copyEntity is Header.ItemVO) {
+                        if (adapterVmData.isHeaderLoadingLiveData.value!!) {
+                            binding.loaderContainer.visibility = View.VISIBLE
+                        }
+
+                        binding.title.text = copyEntity.title
+                    }
                 }
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
-//                    val binding = holder.binding
-//                    val entity = getCurrentDataListDeepCopyReplica()[position] as Footer.ItemVO
+                    val binding = holder.binding
+                    val copyEntity = currentDataListCloneMbr[position]
+                    // super 어뎁터 생성시 추상 클래스로 생성되므로 타입 확인
+                    if (copyEntity is Footer.ItemVO) {
+                        if (adapterVmData.isFooterLoadingLiveData.value!!) {
+                            binding.loaderContainer.visibility = View.VISIBLE
+                        }
+
+                        binding.title.text = copyEntity.title
+                    }
                 }
 
                 is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = getCurrentDataListDeepCopyReplica()[position] as ItemLoader.ItemVO
+//                    val copyEntity = currentDataListCloneMbr[position] as ItemLoader.ItemVO
                 }
 
                 is Item1.ViewHolder -> { // 아이템1 아이템 바인딩
@@ -400,6 +426,8 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
         // (Vm 저장 클래스)
         class AdapterVmData() : ProwdRecyclerViewAdapter.AdapterVmData() {
             // 뷰모델에 저장해서 사용해야 하는 데이터들은 여기에 선언
+            var isHeaderLoadingLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
+            var isFooterLoadingLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
         }
 
         // (아이템 클래스)
@@ -413,11 +441,9 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     )
             ) : RecyclerView.ViewHolder(view)
 
-            class ItemVO : AdapterHeaderAbstractVO() {
-                fun copy(): Footer.ItemVO {
-                    return Footer.ItemVO()
-                }
-            }
+            data class ItemVO(
+                var title: String
+            ) : AdapterHeaderAbstractVO()
         }
 
         class Footer {
@@ -429,11 +455,9 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     )
             ) : RecyclerView.ViewHolder(view)
 
-            class ItemVO : AdapterFooterAbstractVO() {
-                fun copy(): ItemVO {
-                    return ItemVO()
-                }
-            }
+            data class ItemVO(
+                var title: String
+            ) : AdapterFooterAbstractVO()
         }
 
         class ItemLoader {

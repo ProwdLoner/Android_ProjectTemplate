@@ -218,7 +218,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                 cloneItemList
 
                             // 로더 추가시 스크롤을 내리기
-                            bindingMbr.recyclerView.smoothScrollToPosition(cloneItemList.lastIndex + 1)
+                            bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr)
 
                             // (리포지토리 데이터 요청)
                             viewModelMbr.getRecyclerViewItemDataList(

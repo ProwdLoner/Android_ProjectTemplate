@@ -169,6 +169,30 @@ class ActivityBasicHeaderFooterRecyclerViewSampleViewModel(application: Applicat
         }
     }
 
+    // 헤더 데이터 요청
+    fun getRecyclerViewHeaderData(
+        onComplete: (GetRecyclerViewHeaderDataOutputVO) -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            Thread.sleep(1000)
+
+            onComplete(GetRecyclerViewHeaderDataOutputVO("Header Test"))
+        }
+    }
+
+    // 푸터 데이터 요청
+    fun getRecyclerViewFooterData(
+        onComplete: (GetRecyclerViewFooterDataOutputVO) -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            Thread.sleep(1000)
+
+            onComplete(GetRecyclerViewFooterDataOutputVO("Footer Test"))
+        }
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
@@ -183,6 +207,14 @@ class ActivityBasicHeaderFooterRecyclerViewSampleViewModel(application: Applicat
 
     data class PutRecyclerViewItemDataInputVo(
         val serverItemUid: Long,
+        val title: String
+    )
+
+    data class GetRecyclerViewHeaderDataOutputVO(
+        val title: String
+    )
+
+    data class GetRecyclerViewFooterDataOutputVO(
         val title: String
     )
 }

@@ -59,6 +59,13 @@ abstract class ProwdRecyclerViewAdapter(
             return result
         }
 
+    val currentDataListLastIndexMbr: Int
+        get() {
+            currentDataSemaphoreMbr.acquire()
+            currentDataSemaphoreMbr.release()
+            return currentDataListMbr.lastIndex
+        }
+
 
     // 잠재적 오동작 : 값은 오버플로우로 순환함, 만약 Long 타입 아이디가 전부 소모되고 순환될 때까지 이전 아이디가 남아있으면 아이디 중복 현상 발생
     // Long 값 최소에서 최대까지의 범위이므로 매우 드문 현상.(Long 범위의 모든 아이디가 소모된 상황)

@@ -88,6 +88,69 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                             )
 
                         // (리포지토리 데이터 요청)
+                        // 헤더 요청
+                        // todo
+                        viewModelMbr.getRecyclerViewHeaderData(
+                            onComplete = {
+                                runOnUiThread {
+                                    val headerData =
+                                        ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                                            it.title
+                                        )
+
+                                    viewModelMbr.recyclerViewAdapterVmDataMbr.headerLiveData.value =
+                                        headerData
+                                }
+                            },
+                            onError = {
+                                runOnUiThread {
+                                    // todo 로더 제거 세마포어 확인
+
+                                    viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+
+                                    if (it is SocketTimeoutException) { // 타임아웃 에러
+                                        // todo
+                                    } else { // 그외 에러
+                                        // todo
+                                    }
+
+                                    viewModelMbr.isRecyclerViewItemLoadingMbr = false
+                                }
+                            }
+                        )
+
+                        // 푸터 요청
+                        // todo
+                        viewModelMbr.getRecyclerViewFooterData(
+                            onComplete = {
+                                runOnUiThread {
+                                    val footerData =
+                                        ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                                            it.title
+                                        )
+
+                                    viewModelMbr.recyclerViewAdapterVmDataMbr.footerLiveData.value =
+                                        footerData
+                                }
+                            },
+                            onError = {
+                                runOnUiThread {
+                                    // todo 로더 제거 세마포어 확인
+
+                                    viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+
+                                    if (it is SocketTimeoutException) { // 타임아웃 에러
+                                        // todo
+                                    } else { // 그외 에러
+                                        // todo
+                                    }
+
+                                    viewModelMbr.isRecyclerViewItemLoadingMbr = false
+                                }
+                            }
+                        )
+
+                        // 아이템 리스트 요청
                         viewModelMbr.getRecyclerViewItemDataList(
                             viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
                             viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
@@ -218,7 +281,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 cloneItemList
 
                             // 로더 추가시 스크롤을 내리기
-                            bindingMbr.recyclerView.smoothScrollToPosition(cloneItemList.lastIndex + 1)
+                            bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr)
 
                             // (리포지토리 데이터 요청)
                             viewModelMbr.getRecyclerViewItemDataList(

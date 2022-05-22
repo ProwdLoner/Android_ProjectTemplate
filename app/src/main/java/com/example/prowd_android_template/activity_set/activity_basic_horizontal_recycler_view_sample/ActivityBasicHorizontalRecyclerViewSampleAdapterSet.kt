@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
+import com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.*
 import java.net.SocketTimeoutException
@@ -135,12 +136,18 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = getCurrentDataListDeepCopyReplica()[position] as Header.ItemVO
+//                    val copyEntity = currentDataListCloneMbr[position]
+//                    if (copyEntity is Header.ItemVO){
+//
+//                    }
                 }
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = getCurrentDataListDeepCopyReplica()[position] as Footer.ItemVO
+//                    val copyEntity = currentDataListCloneMbr[position]
+//                    if (copyEntity is Footer.ItemVO){
+//
+//                    }
                 }
 
                 is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩
