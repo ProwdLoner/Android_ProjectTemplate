@@ -97,8 +97,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
                             )
 
                         // (데이터 준비)
-                        val filterFileList =
-                            assets.list("lut_filters_wide")!!.toCollection(ArrayList())
+                        val filterFileList = assets.list("lut_filters_wide")!!
 
                         val adapterDataList =
                             ArrayList<ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO>()
@@ -131,6 +130,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
                         // 로더 제거
                         viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = ArrayList()
 
+                        // 아이템 반영
                         viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                             adapterDataList as ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
 
