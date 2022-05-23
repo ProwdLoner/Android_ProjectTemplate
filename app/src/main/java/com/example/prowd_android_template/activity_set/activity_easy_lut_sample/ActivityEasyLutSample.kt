@@ -22,6 +22,7 @@ import java.io.FileOutputStream
 // todo : easy lut 라이브러리 코드 정리
 // todo : 선택된 필터 화면 회전 처리
 // todo : recyclerview 정리
+// todo : 이미지 클릭으로 자세히 보기 에러 해결
 class ActivityEasyLutSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -146,6 +147,9 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
                             }
                         }
+
+                        viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+                        viewModelMbr.isRecyclerViewItemLoadingMbr = false
                     }
                 }
             }
@@ -215,7 +219,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
             val imageBitmap = (bindingMbr.image1OriginImage.drawable as BitmapDrawable).bitmap
 
             val imageFileName =
-                "ActivityMainIntentExtraTemp.jpg"
+                "ActivityMainIntentExtraTemp.png"
             val imageFile =
                 File(cacheDir, imageFileName)
             if (imageFile.exists()) {
@@ -226,7 +230,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
             val warpFileOut =
                 FileOutputStream(imageFile)
             imageBitmap.compress(
-                Bitmap.CompressFormat.JPEG,
+                Bitmap.CompressFormat.PNG,
                 100,
                 warpFileOut
             )

@@ -88,6 +88,7 @@ class ActivityInit : AppCompatActivity() {
                 }
 
                 override fun onFinish() {
+                    viewModelMbr.countDownNumberLiveDataMbr.value = 0
                     viewModelMbr.delayGoToNextActivityAsyncCompletedOnceMbr = true
                     goToNextActivity()
                 }
