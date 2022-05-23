@@ -61,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:background="#E6E6E6"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="푸터"
+                android:text="푸터입니다. 푸터라구요."
                 android:textColor="#E6E6E6"
                 android:textSize="16sp" />
         </com.facebook.shimmer.ShimmerFrameLayout>

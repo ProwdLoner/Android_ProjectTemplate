@@ -51,17 +51,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
-
-        // 헤더 푸터 최초 정보 입력
-        viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value =
-            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
-                null
-            )
-        viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value =
-            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
-                null
-            )
-
     }
 
     override fun onResume() {
@@ -96,11 +85,21 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
                                 )
                             )
-                        // todo 헤더, 푸터의 로딩화면
+
+                        // 헤더, 푸터의 로더 처리
+                        viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value =
+                            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                                null
+                            )
+                        viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value =
+                            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                                null
+                            )
+                        viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value = true
+                        viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value = true
 
                         // (리포지토리 데이터 요청)
                         // 헤더 요청
-                        // todo
                         viewModelMbr.getRecyclerViewHeaderData(
                             onComplete = {
                                 runOnUiThread {
@@ -109,14 +108,18 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                             it.title
                                         )
 
+                                    // 로더 제거
+                                    viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value =
+                                        false
                                     viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value =
                                         headerData
                                 }
                             },
                             onError = {
                                 runOnUiThread {
-                                    // todo 로더 제거 세마포어 확인
-
+                                    // 로더 제거
+                                    viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value =
+                                        false
                                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
 
                                     if (it is SocketTimeoutException) { // 타임아웃 에러
@@ -131,7 +134,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         )
 
                         // 푸터 요청
-                        // todo
                         viewModelMbr.getRecyclerViewFooterData(
                             onComplete = {
                                 runOnUiThread {
@@ -140,14 +142,18 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                             it.title
                                         )
 
+                                    // 로더 제거
+                                    viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value =
+                                        false
                                     viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value =
                                         footerData
                                 }
                             },
                             onError = {
                                 runOnUiThread {
-                                    // todo 로더 제거 세마포어 확인
-
+                                    // 로더 제거
+                                    viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value =
+                                        false
                                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
 
                                     if (it is SocketTimeoutException) { // 타임아웃 에러
@@ -394,7 +400,88 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         )
                     )
 
+                    // 헤더, 푸터의 로더 처리
+                    viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value =
+                        ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                            null
+                        )
+                    viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value =
+                        ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                            null
+                        )
+
+                    viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value = true
+                    viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value = true
+
                     // (리포지토리 데이터 요청)
+                    // 헤더 요청
+                    viewModelMbr.getRecyclerViewHeaderData(
+                        onComplete = {
+                            runOnUiThread {
+                                val headerData =
+                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                                        it.title
+                                    )
+
+                                // 로더 제거
+                                viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value =
+                                    false
+                                viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value =
+                                    headerData
+                            }
+                        },
+                        onError = {
+                            runOnUiThread {
+                                // 로더 제거
+                                viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value =
+                                    false
+                                viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+
+                                if (it is SocketTimeoutException) { // 타임아웃 에러
+                                    // todo
+                                } else { // 그외 에러
+                                    // todo
+                                }
+
+                                viewModelMbr.isRecyclerViewItemLoadingMbr = false
+                            }
+                        }
+                    )
+
+                    // 푸터 요청
+                    viewModelMbr.getRecyclerViewFooterData(
+                        onComplete = {
+                            runOnUiThread {
+                                val footerData =
+                                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                                        it.title
+                                    )
+
+                                // 로더 제거
+                                viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value =
+                                    false
+                                viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value =
+                                    footerData
+                            }
+                        },
+                        onError = {
+                            runOnUiThread {
+                                // 로더 제거
+                                viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value =
+                                    false
+                                viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+
+                                if (it is SocketTimeoutException) { // 타임아웃 에러
+                                    // todo
+                                } else { // 그외 에러
+                                    // todo
+                                }
+
+                                viewModelMbr.isRecyclerViewItemLoadingMbr = false
+                            }
+                        }
+                    )
+
                     viewModelMbr.getRecyclerViewItemDataList(
                         viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
                         viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
@@ -617,6 +704,14 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
         viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.observe(this) {
             bindingMbr.screenRefreshLayout.isRefreshing = it
+        }
+
+        viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.observe(this) {
+            adapterSetMbr.recyclerViewAdapter.isHeaderLoadingMbr = it
+        }
+
+        viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.observe(this) {
+            adapterSetMbr.recyclerViewAdapter.isFooterLoadingMbr = it
         }
     }
 }

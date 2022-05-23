@@ -66,11 +66,27 @@ class ActivityBasicHeaderFooterRecyclerViewSampleViewModel(application: Applicat
 
     // (RecyclerViewAdapter 데이터)
     // recyclerView 내에서 사용되는 뷰모델 데이터
-    val recyclerViewAdapterHeaderLiveDataMbr : MutableLiveData<ProwdRecyclerViewAdapter.AdapterHeaderAbstractVO> = MutableLiveData()
-    val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> = MutableLiveData()
-    val recyclerViewAdapterFooterLiveDataMbr : MutableLiveData<ProwdRecyclerViewAdapter.AdapterFooterAbstractVO> = MutableLiveData()
+    val recyclerViewAdapterHeaderLiveDataMbr: MutableLiveData<ProwdRecyclerViewAdapter.AdapterHeaderAbstractVO> =
+        MutableLiveData(
+            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                null
+            )
+        )
+    val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
+        MutableLiveData(ArrayList())
+    val recyclerViewAdapterFooterLiveDataMbr: MutableLiveData<ProwdRecyclerViewAdapter.AdapterFooterAbstractVO> =
+        MutableLiveData(
+            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                null
+            )
+        )
 
-    val screenRefreshLayoutOnLoadingLiveDataMbr : MutableLiveData<Boolean> = MutableLiveData(false)
+    val screenRefreshLayoutOnLoadingLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+
+    val screenRefreshLayoutHeaderOnLoadingLiveDataMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
+    val screenRefreshLayoutFooterOnLoadingLiveDataMbr: MutableLiveData<Boolean> =
+        MutableLiveData(false)
 
 
     // ---------------------------------------------------------------------------------------------

@@ -26,6 +26,17 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
         onScrollReachTheEnd
     ) {
         // <멤버 변수 공간>
+        var isHeaderLoadingMbr: Boolean = false
+            set(value) {
+                field = value
+                notifyItemChanged(0)
+            }
+
+        var isFooterLoadingMbr: Boolean = false
+            set(value) {
+                field = value
+                notifyItemChanged(currentDataListLastIndexMbr)
+            }
 
 
         // ---------------------------------------------------------------------------------------------
@@ -137,6 +148,11 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     // super 어뎁터 생성시 추상 클래스로 생성되므로 타입 확인
                     if (copyEntity is Header.ItemVO) {
                         // todo 로더 확인
+                        if (isHeaderLoadingMbr) {
+                            binding.loaderContainer.visibility = View.VISIBLE
+                        } else {
+                            binding.loaderContainer.visibility = View.INVISIBLE
+                        }
 
                         binding.title.text = copyEntity.title
                     }
@@ -148,7 +164,11 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     // super 어뎁터 생성시 추상 클래스로 생성되므로 타입 확인
                     if (copyEntity is Footer.ItemVO) {
                         // todo 로더 확인
-
+                        if (isFooterLoadingMbr) {
+                            binding.loaderContainer.visibility = View.VISIBLE
+                        } else {
+                            binding.loaderContainer.visibility = View.INVISIBLE
+                        }
 
                         binding.title.text = copyEntity.title
                     }
