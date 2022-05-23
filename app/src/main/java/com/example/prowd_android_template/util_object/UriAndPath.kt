@@ -17,7 +17,7 @@ object UriAndPath {
     }
 
     // Path 를 Uri 객체로 변환
-    fun getUriFromPath(path: String): Uri {
-        return Uri.fromFile(File(path))
+    fun getUriFromPath(fileAbsolutePath: String): Uri {
+        return Uri.parse(fileAbsolutePath)
     }
 }
