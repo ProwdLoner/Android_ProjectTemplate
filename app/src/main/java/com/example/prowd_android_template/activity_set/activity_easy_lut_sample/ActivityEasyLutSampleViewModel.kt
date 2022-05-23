@@ -12,6 +12,7 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
 
 class ActivityEasyLutSampleViewModel(application: Application) :
     AndroidViewModel(application) {
@@ -41,6 +42,15 @@ class ActivityEasyLutSampleViewModel(application: Application) :
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
 
+    // 리사이클러 뷰 아이템 조작 싱크를 위한 세마포어(리포지토리 요청 같은 비동기 상황을 가정하자면 필수 처리)
+    // 같은 아이템이라도 헤더 / 푸터와 일반 아이템은 내부적으로 싱크 처리가 되어있기에 아이템 리스트에만 적용
+    val recyclerViewAdapterItemSemaphore = Semaphore(1)
+
+    // 중복 요청 금지를 위한 상태 플래그
+    var isRecyclerViewItemLoadingMbr = false
+        @Synchronized get
+        @Synchronized set
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
@@ -65,7 +75,7 @@ class ActivityEasyLutSampleViewModel(application: Application) :
     // (RecyclerViewAdapter 데이터)
     // recyclerView 내에서 사용되는 뷰모델 데이터
     val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
-        MutableLiveData()
+        MutableLiveData(ArrayList())
 
 
     // ---------------------------------------------------------------------------------------------

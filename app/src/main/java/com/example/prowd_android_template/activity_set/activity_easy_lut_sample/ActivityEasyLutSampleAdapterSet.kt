@@ -9,6 +9,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
+import com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample.ActivityBasicVerticalRecyclerViewSampleAdapterSet
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ItemActivityEasyLutSampleAdapterRecyclerViewItem1Binding
 import com.example.prowd_android_template.databinding.ItemActivityEasyLutSampleAdapterRecyclerViewItemLoaderBinding
@@ -23,15 +24,14 @@ class ActivityEasyLutSampleAdapterSet(
     // 어뎁터 #1
     class RecyclerViewAdapter(
         private val parentViewMbr: ActivityEasyLutSample,
-        private val parentViewModel: ActivityEasyLutSampleViewModel,
         targetView: RecyclerView,
         isVertical: Boolean,
-        onScrollHitBottom: (() -> Unit)?
+        onScrollReachTheEnd: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
-        onScrollHitBottom
+        onScrollReachTheEnd
     ) {
         // <멤버 변수 공간>
         var selectedItemPosition: Int = -1
@@ -138,17 +138,23 @@ class ActivityEasyLutSampleAdapterSet(
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = currentItemListMbr[position] as Header.ItemVO
+//                    val copyEntity = currentDataListCloneMbr[position]
+//                    if (copyEntity is Header.ItemVO){
+//
+//                    }
                 }
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = currentItemListMbr[position] as Footer.ItemVO
+//                    val copyEntity = currentDataListCloneMbr[position]
+//                    if (copyEntity is Footer.ItemVO){
+//
+//                    }
                 }
 
                 is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩
 //                    val binding = holder.binding
-//                    val entity = currentItemListMbr[position] as ItemLoader.ItemVO
+//                    val copyEntity = currentDataListCloneMbr[position] as ItemLoader.ItemVO
 
                 }
 
@@ -165,14 +171,14 @@ class ActivityEasyLutSampleAdapterSet(
 
                         // 필터 적용
                         // 다이얼로그 표시
-                        parentViewModel.progressLoadingDialogInfoLiveDataMbr.value =
+                        parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
                             DialogProgressLoading.DialogInfoVO(
                                 false,
                                 "필터 적용중입니다.",
                                 onCanceled = {}
                             )
 
-                        parentViewModel.executorServiceMbr?.execute {
+                        parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
                             // LUT 필터 생성
                             val filter = CustomUtil.getBitmapFromAssets(
                                 parentViewMbr,
@@ -211,11 +217,15 @@ class ActivityEasyLutSampleAdapterSet(
                             val filterBitmap3 = lutFilter?.apply(originBitmap3)
 
                             parentViewMbr.runOnUiThread {
-                                parentViewModel.filteredImage1LiveDataMbr.value = filterBitmap1
-                                parentViewModel.filteredImage2LiveDataMbr.value = filterBitmap2
-                                parentViewModel.filteredImage3LiveDataMbr.value = filterBitmap3
+                                parentViewMbr.viewModelMbr.filteredImage1LiveDataMbr.value =
+                                    filterBitmap1
+                                parentViewMbr.viewModelMbr.filteredImage2LiveDataMbr.value =
+                                    filterBitmap2
+                                parentViewMbr.viewModelMbr.filteredImage3LiveDataMbr.value =
+                                    filterBitmap3
 
-                                parentViewModel.progressLoadingDialogInfoLiveDataMbr.value = null
+                                parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                                    null
                             }
                         }
                     } else {
@@ -225,7 +235,7 @@ class ActivityEasyLutSampleAdapterSet(
 
                     binding.root.setOnClickListener {
                         // 선택 필터 파일명 저장
-                        parentViewModel.thisSpw.selectedFilterName = entity.title
+                        parentViewMbr.viewModelMbr.thisSpw.selectedFilterName = entity.title
 
                         // 선택 아이템 변경 반영
                         selectedItemPosition = position
@@ -338,9 +348,11 @@ class ActivityEasyLutSampleAdapterSet(
                     )
             ) : RecyclerView.ViewHolder(view)
 
-            data class ItemVO(
-                override val itemUid: Long
-            ) : AdapterDataAbstractVO(itemUid)
+            class ItemVO : AdapterHeaderAbstractVO() {
+                fun copy(): ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO {
+                    return ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO()
+                }
+            }
         }
 
         class Footer {
@@ -352,9 +364,11 @@ class ActivityEasyLutSampleAdapterSet(
                     )
             ) : RecyclerView.ViewHolder(view)
 
-            data class ItemVO(
-                override val itemUid: Long
-            ) : AdapterDataAbstractVO(itemUid)
+            class ItemVO : AdapterFooterAbstractVO() {
+                fun copy(): ItemVO {
+                    return ItemVO()
+                }
+            }
         }
 
         class ItemLoader {
@@ -368,7 +382,7 @@ class ActivityEasyLutSampleAdapterSet(
 
             data class ItemVO(
                 override val itemUid: Long
-            ) : AdapterDataAbstractVO(itemUid)
+            ) : AdapterItemAbstractVO(itemUid)
         }
 
         class Item1 {
@@ -383,7 +397,7 @@ class ActivityEasyLutSampleAdapterSet(
             data class ItemVO(
                 override val itemUid: Long,
                 val title: String
-            ) : AdapterDataAbstractVO(itemUid)
+            ) : AdapterItemAbstractVO(itemUid)
         }
 
         // 아이템이 늘어나면 추가

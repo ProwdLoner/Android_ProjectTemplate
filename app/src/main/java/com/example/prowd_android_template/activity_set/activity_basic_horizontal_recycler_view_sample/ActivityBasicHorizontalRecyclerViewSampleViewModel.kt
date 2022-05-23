@@ -67,7 +67,7 @@ class ActivityBasicHorizontalRecyclerViewSampleViewModel(application: Applicatio
     // (RecyclerViewAdapter 데이터)
     // recyclerView 내에서 사용되는 뷰모델 데이터
     val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
-        MutableLiveData()
+        MutableLiveData(ArrayList())
 
 
     // ---------------------------------------------------------------------------------------------
