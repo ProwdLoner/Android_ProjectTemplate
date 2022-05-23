@@ -362,10 +362,11 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
         // 화면 리플레시
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
             if (viewModelMbr.isRecyclerViewItemLoadingMbr) {
-                bindingMbr.screenRefreshLayout.isRefreshing = false
+                viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
                 return@setOnRefreshListener
             }
             viewModelMbr.isRecyclerViewItemLoadingMbr = true
+            viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = true
 
             viewModelMbr.executorServiceMbr?.execute {
                 viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
@@ -394,7 +395,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     ArrayList()
 
                                 if (it.isEmpty()) {
-                                    bindingMbr.screenRefreshLayout.isRefreshing = false
+                                    viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
                                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                                     viewModelMbr.isRecyclerViewItemLoadingMbr = false
                                     return@runOnUiThread2
@@ -420,7 +421,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                     newItemList
 
-                                bindingMbr.screenRefreshLayout.isRefreshing = false
+                                viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
                                 viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                                 viewModelMbr.isRecyclerViewItemLoadingMbr = false
                             }
@@ -431,7 +432,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
                                     ArrayList()
 
-                                bindingMbr.screenRefreshLayout.isRefreshing = false
+                                viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
                                 viewModelMbr.recyclerViewAdapterItemSemaphore.release()
 
                                 if (it is SocketTimeoutException) { // 타임아웃 에러
@@ -600,6 +601,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
         viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.observe(this) {
             adapterSetMbr.recyclerViewAdapter.setFooter(it)
+        }
+
+        viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.observe(this){
+            bindingMbr.screenRefreshLayout.isRefreshing = it
         }
     }
 }

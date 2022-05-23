@@ -69,6 +69,8 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
         MutableLiveData()
 
+    val screenRefreshLayoutOnLoadingLiveDataMbr: MutableLiveData<Boolean> = MutableLiveData(false)
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
