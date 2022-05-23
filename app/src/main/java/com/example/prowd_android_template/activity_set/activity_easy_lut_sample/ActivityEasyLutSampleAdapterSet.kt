@@ -37,10 +37,9 @@ class ActivityEasyLutSampleAdapterSet(
         var selectedItemPosition: Int = -1
             set(value) {
                 val oldPosition = selectedItemPosition
-                val newPosition = value
                 field = value
                 notifyItemChanged(oldPosition)
-                notifyItemChanged(newPosition)
+                notifyItemChanged(value)
             }
 
 

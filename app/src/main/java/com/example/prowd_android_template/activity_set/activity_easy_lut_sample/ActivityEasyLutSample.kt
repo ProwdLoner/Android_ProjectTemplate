@@ -22,7 +22,6 @@ import java.io.FileOutputStream
 // todo : easy lut 라이브러리 코드 정리
 // todo : 선택된 필터 화면 회전 처리
 // todo : recyclerview 정리
-// todo : 이미지 클릭으로 자세히 보기 에러 해결
 class ActivityEasyLutSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -100,7 +99,8 @@ class ActivityEasyLutSample : AppCompatActivity() {
                         val filterFileList = assets.list("lut_filters_wide")!!
 
                         val adapterDataList =
-                            ArrayList<ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO>()
+                            ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+
                         for (filterFile in filterFileList) {
                             adapterDataList.add(
                                 ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
@@ -125,18 +125,22 @@ class ActivityEasyLutSample : AppCompatActivity() {
                                 num1 - num2
                             }
 
-                        adapterDataList.sortWith(numTitleComp)
+                        @Suppress("UNCHECKED_CAST")
+                        (adapterDataList as ArrayList<ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO>).sortWith(
+                            numTitleComp
+                        )
 
                         // 로더 제거
                         viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = ArrayList()
 
                         // 아이템 반영
-                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                            adapterDataList as ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
+                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = adapterDataList
 
+                        // 이전에 선택되었던 필터명을 가져오기
                         val selectedFilterName = viewModelMbr.thisSpw.selectedFilterName
 
                         if (null != selectedFilterName) {
+                            // 이전에 선택된 필터명의 위치에 따른 처리 및 해당 위치 스크롤
                             val selectedFilterIdx =
                                 adapterDataList.indexOfFirst { it.title == selectedFilterName }
 
@@ -215,6 +219,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+// todo : 이미지 클릭으로 자세히 보기 에러 해결
         bindingMbr.image1OriginImage.setOnClickListener {
             val imageBitmap = (bindingMbr.image1OriginImage.drawable as BitmapDrawable).bitmap
 
