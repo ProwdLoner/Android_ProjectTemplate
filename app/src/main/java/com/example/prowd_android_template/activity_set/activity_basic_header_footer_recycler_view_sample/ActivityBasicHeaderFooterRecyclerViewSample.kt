@@ -51,6 +51,17 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
+
+        // 헤더 푸터 최초 정보 입력
+        viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value =
+            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                null
+            )
+        viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value =
+            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                null
+            )
+
     }
 
     override fun onResume() {
@@ -395,7 +406,8 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     ArrayList()
 
                                 if (it.isEmpty()) {
-                                    viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
+                                    viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value =
+                                        false
                                     viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                                     viewModelMbr.isRecyclerViewItemLoadingMbr = false
                                     return@runOnUiThread2
@@ -603,7 +615,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             adapterSetMbr.recyclerViewAdapter.setFooter(it)
         }
 
-        viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.observe(this){
+        viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.observe(this) {
             bindingMbr.screenRefreshLayout.isRefreshing = it
         }
     }

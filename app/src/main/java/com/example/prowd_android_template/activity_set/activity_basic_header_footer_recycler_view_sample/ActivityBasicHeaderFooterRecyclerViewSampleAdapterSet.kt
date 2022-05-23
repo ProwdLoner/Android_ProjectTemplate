@@ -420,7 +420,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                var title: String
+                var title: String?
             ) : AdapterHeaderAbstractVO()
         }
 
@@ -434,7 +434,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
             ) : RecyclerView.ViewHolder(view)
 
             data class ItemVO(
-                var title: String
+                var title: String?
             ) : AdapterFooterAbstractVO()
         }
 
