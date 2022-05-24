@@ -2,7 +2,6 @@ package com.example.prowd_android_template.activity_set.activity_video_file_fram
 
 import android.media.MediaMetadataRetriever
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
@@ -10,7 +9,6 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityVideoFileFrameBitmapGetterSampleBinding
-import com.example.prowd_android_template.util_object.UriAndPath
 
 
 class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
@@ -132,10 +130,11 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         // 비디오 뷰 비율을 비디오 파일 크기에 맞추기
-        val layoutParams = bindingMbr.sampleVideoView.layoutParams as ConstraintLayout.LayoutParams
-        layoutParams.dimensionRatio =
+        val videoLayoutParams =
+            bindingMbr.sampleVideoView.layoutParams as ConstraintLayout.LayoutParams
+        videoLayoutParams.dimensionRatio =
             "${viewModelMbr.sampleVideoWidthMbr}:${viewModelMbr.sampleVideoHeightMbr}"
-        bindingMbr.sampleVideoView.layoutParams = layoutParams
+        bindingMbr.sampleVideoView.layoutParams = videoLayoutParams
 
         // 비디오 파일 연결
         bindingMbr.sampleVideoView.setOnPreparedListener {
@@ -146,6 +145,12 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
         bindingMbr.sampleVideoView.requestFocus()
         bindingMbr.sampleVideoView.start()
 
+        // 추출 프레임 이미지 뷰 비율을 비디오 파일 크기에 맞추기
+        val imageLayoutParams =
+            bindingMbr.videoFrameImageView.layoutParams as ConstraintLayout.LayoutParams
+        imageLayoutParams.dimensionRatio =
+            "${viewModelMbr.sampleVideoWidthMbr}:${viewModelMbr.sampleVideoHeightMbr}"
+        bindingMbr.videoFrameImageView.layoutParams = imageLayoutParams
     }
 
     // 라이브 데이터 설정

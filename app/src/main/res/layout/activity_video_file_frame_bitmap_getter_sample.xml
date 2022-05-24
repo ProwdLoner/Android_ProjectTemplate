@@ -87,6 +87,31 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/sample_video_title" />
 
+                <TextView
+                    android:id="@+id/video_frame_image_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                    android:text="추출 프레임"
+                    android:textColor="#FF000000"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/sample_video_view" />
+
+                <ImageView
+                    android:id="@+id/video_frame_image_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginEnd="20dp"
+                    android:background="#FF888888"
+                    app:layout_constraintDimensionRatio="3:2"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/video_frame_image_title" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
 
