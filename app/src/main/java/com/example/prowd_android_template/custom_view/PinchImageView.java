@@ -22,9 +22,12 @@ import androidx.appcompat.widget.AppCompatImageView;
 
 public class PinchImageView extends AppCompatImageView {
     // <멤버 변수 공간>
-    private PhotoViewAttacher attacher;
+    final PhotoViewAttacher attacher = new PhotoViewAttacher(this);
     private ScaleType pendingScaleType;
 
+
+    // ---------------------------------------------------------------------------------------------
+    // <생성자 공간>
     public PinchImageView(Context context) {
         this(context, null);
     }
@@ -38,19 +41,7 @@ public class PinchImageView extends AppCompatImageView {
         init();
     }
 
-
-    // ---------------------------------------------------------------------------------------------
-    // <공개 메소드 공간>
-
-
-    // ---------------------------------------------------------------------------------------------
-    // <비공개 메소드 공간>
-
-
-    // ---------------------------------------------------------------------------------------------
-    // <중첩 클래스 공간>
     private void init() {
-        attacher = new PhotoViewAttacher(this);
         super.setScaleType(ScaleType.MATRIX);
         if (pendingScaleType != null) {
             setScaleType(pendingScaleType);
@@ -58,10 +49,9 @@ public class PinchImageView extends AppCompatImageView {
         }
     }
 
-    public PhotoViewAttacher getAttacher() {
-        return attacher;
-    }
 
+    // ---------------------------------------------------------------------------------------------
+    // <클래스 생명주기 공간>
     @Override
     public ScaleType getScaleType() {
         return attacher.getScaleType();
@@ -125,6 +115,9 @@ public class PinchImageView extends AppCompatImageView {
         return changed;
     }
 
+
+    // ---------------------------------------------------------------------------------------------
+    // <공개 메소드 공간>
     public void setRotationTo(float rotationDegree) {
         attacher.setRotationTo(rotationDegree);
     }
@@ -149,7 +142,6 @@ public class PinchImageView extends AppCompatImageView {
         attacher.getDisplayMatrix(matrix);
     }
 
-    @SuppressWarnings("UnusedReturnValue")
     public boolean setDisplayMatrix(Matrix finalRectangle) {
         return attacher.setDisplayMatrix(finalRectangle);
     }
@@ -246,6 +238,13 @@ public class PinchImageView extends AppCompatImageView {
         attacher.setOnSingleFlingListener(onSingleFlingListener);
     }
 
+
+    // ---------------------------------------------------------------------------------------------
+    // <비공개 메소드 공간>
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <중첩 클래스 공간>
     class PhotoViewAttacher implements View.OnTouchListener,
             View.OnLayoutChangeListener {
 
@@ -1190,99 +1189,38 @@ public class PinchImageView extends AppCompatImageView {
     }
 
     interface OnGestureListener {
-
         void onDrag(float dx, float dy);
-
         void onFling(float startX, float startY, float velocityX,
                      float velocityY);
-
         void onScale(float scaleFactor, float focusX, float focusY);
-
         void onScale(float scaleFactor, float focusX, float focusY, float dx, float dy);
     }
 
     interface OnMatrixChangedListener {
-
-        /**
-         * Callback for when the Matrix displaying the Drawable has changed. This could be because
-         * the View's bounds have changed, or the user has zoomed.
-         *
-         * @param rect - Rectangle displaying the Drawable's new bounds.
-         */
         void onMatrixChanged(RectF rect);
     }
 
     interface OnOutsidePhotoTapListener {
-
-        /**
-         * The outside of the photo has been tapped
-         */
         void onOutsidePhotoTap(ImageView imageView);
     }
 
     interface OnPhotoTapListener {
-
-        /**
-         * A callback to receive where the user taps on a photo. You will only receive a callback if
-         * the user taps on the actual photo, tapping on 'whitespace' will be ignored.
-         *
-         * @param view ImageView the user tapped.
-         * @param x    where the user tapped from the of the Drawable, as percentage of the
-         *             Drawable width.
-         * @param y    where the user tapped from the top of the Drawable, as percentage of the
-         *             Drawable height.
-         */
         void onPhotoTap(ImageView view, float x, float y);
     }
 
     interface OnScaleChangedListener {
-
-        /**
-         * Callback for when the scale changes
-         *
-         * @param scaleFactor the scale factor (less than 1 for zoom out, greater than 1 for zoom in)
-         * @param focusX      focal point X position
-         * @param focusY      focal point Y position
-         */
         void onScaleChange(float scaleFactor, float focusX, float focusY);
     }
 
     interface OnSingleFlingListener {
-
-        /**
-         * A callback to receive where the user flings on a ImageView. You will receive a callback if
-         * the user flings anywhere on the view.
-         *
-         * @param e1        MotionEvent the user first touch.
-         * @param e2        MotionEvent the user last touch.
-         * @param velocityX distance of user's horizontal fling.
-         * @param velocityY distance of user's vertical fling.
-         */
         boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY);
     }
 
     interface OnViewDragListener {
-
-        /**
-         * Callback for when the photo is experiencing a drag event. This cannot be invoked when the
-         * user is scaling.
-         *
-         * @param dx The change of the coordinates in the x-direction
-         * @param dy The change of the coordinates in the y-direction
-         */
         void onDrag(float dx, float dy);
     }
 
     interface OnViewTapListener {
-
-        /**
-         * A callback to receive where the user taps on a ImageView. You will receive a callback if
-         * the user taps anywhere on the view, tapping on 'whitespace' will not be ignored.
-         *
-         * @param view - View the user tapped.
-         * @param x    - where the user tapped from the left of the View.
-         * @param y    - where the user tapped from the top of the View.
-         */
         void onViewTap(View view, float x, float y);
     }
 

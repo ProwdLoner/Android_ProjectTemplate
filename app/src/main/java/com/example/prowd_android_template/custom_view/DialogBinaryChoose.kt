@@ -18,6 +18,7 @@ class DialogBinaryChoose constructor(
     // (뷰 바인더 객체)
     lateinit var bindingMbr: DialogBinaryChooseBinding
 
+
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
     override fun onCreate(savedInstanceState: Bundle?) {
