@@ -1,22 +1,14 @@
-package com.example.prowd_android_template.custom_view
+package com.example.prowd_android_template.custom_view.pv
 
 import android.content.Context
 import android.graphics.Matrix
 import kotlin.jvm.JvmOverloads
 import androidx.appcompat.widget.AppCompatImageView
-import com.example.prowd_android_template.custom_view.pv.PhotoViewAttacher
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.AttributeSet
-import com.example.prowd_android_template.custom_view.pv.OnMatrixChangedListener
-import com.example.prowd_android_template.custom_view.pv.OnPhotoTapListener
-import com.example.prowd_android_template.custom_view.pv.OnOutsidePhotoTapListener
-import com.example.prowd_android_template.custom_view.pv.OnViewTapListener
-import com.example.prowd_android_template.custom_view.pv.OnViewDragListener
 import android.view.GestureDetector
-import com.example.prowd_android_template.custom_view.pv.OnScaleChangedListener
-import com.example.prowd_android_template.custom_view.pv.OnSingleFlingListener
 
 class PinchImageView @JvmOverloads constructor(
     context: Context,
