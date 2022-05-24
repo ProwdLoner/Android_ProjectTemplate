@@ -21,7 +21,7 @@ import android.widget.OverScroller;
 import androidx.appcompat.widget.AppCompatImageView;
 
 public class PinchImageView extends AppCompatImageView {
-
+    // <멤버 변수 공간>
     private PhotoViewAttacher attacher;
     private ScaleType pendingScaleType;
 
@@ -38,6 +38,17 @@ public class PinchImageView extends AppCompatImageView {
         init();
     }
 
+
+    // ---------------------------------------------------------------------------------------------
+    // <공개 메소드 공간>
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <비공개 메소드 공간>
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <중첩 클래스 공간>
     private void init() {
         attacher = new PhotoViewAttacher(this);
         super.setScaleType(ScaleType.MATRIX);

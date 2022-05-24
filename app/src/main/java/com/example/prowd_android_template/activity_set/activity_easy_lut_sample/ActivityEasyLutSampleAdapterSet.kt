@@ -336,7 +336,7 @@ class ActivityEasyLutSampleAdapterSet(
 
 
         // ---------------------------------------------------------------------------------------------
-        // <내부 클래스 공간>
+        // <중첩 클래스 공간>
         // (아이템 클래스)
         class Header {
             data class ViewHolder(
