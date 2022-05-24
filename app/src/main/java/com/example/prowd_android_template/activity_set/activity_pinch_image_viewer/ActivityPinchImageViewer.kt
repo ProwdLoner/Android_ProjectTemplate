@@ -128,7 +128,6 @@ class ActivityPinchImageViewer : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // todo 핀치 뷰어로 변경
         val imageFilePath = intent.getStringExtra("image_file_path")!!
 
         if (!isFinishing) {
