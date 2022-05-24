@@ -1,14 +1,15 @@
 package com.example.prowd_android_template.activity_set.activity_easy_lut_sample
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
+import com.example.prowd_android_template.activity_set.activity_pinch_image_viewer.ActivityPinchImageViewer
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -219,186 +220,147 @@ class ActivityEasyLutSample : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         bindingMbr.image1OriginImage.setOnClickListener {
-            val imageBitmap = (bindingMbr.image1OriginImage.drawable as BitmapDrawable).bitmap
+            val imageDrawable = bindingMbr.image1OriginImage.drawable
 
-            val imageFile =
-                File(cacheDir.absolutePath + "/ActivityMainIntentExtraTemp.png")
-            if (imageFile.exists()) {
-                imageFile.delete()
+            if (imageDrawable is BitmapDrawable) {
+                val imageBitmap = imageDrawable.bitmap
+
+                // 비트맵을 파일로 저장
+                val tempFile = File(cacheDir, "temp.jpg")
+                tempFile.createNewFile()
+                val out = FileOutputStream(tempFile)
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                out.close()
+
+                val intent =
+                    Intent(
+                        this,
+                        ActivityPinchImageViewer::class.java
+                    )
+                intent.putExtra("image_file_path", tempFile.absolutePath)
+
+                startActivity(intent)
             }
-
-            val fos =
-                FileOutputStream(imageFile)
-            imageBitmap.compress(
-                Bitmap.CompressFormat.PNG,
-                100,
-                fos
-            )
-            fos.close()
-
-            if (!isFinishing) {
-                Glide.with(this)
-                    .load(imageFile)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-                    .transform(CenterCrop())
-                    .into(bindingMbr.test)
-            }
-
-            // todo : 이미지 뷰어 액티비티
         }
 
         bindingMbr.image1FilteredImage.setOnClickListener {
-            val imageBitmap = (bindingMbr.image1FilteredImage.drawable as BitmapDrawable).bitmap
+            val imageDrawable = bindingMbr.image1FilteredImage.drawable
 
-            val imageFile =
-                File(cacheDir.absolutePath + "/ActivityMainIntentExtraTemp.png")
-            if (imageFile.exists()) {
-                imageFile.delete()
+            if (imageDrawable is BitmapDrawable) {
+                val imageBitmap = imageDrawable.bitmap
+
+                // 비트맵을 파일로 저장
+                val tempFile = File(cacheDir, "temp.jpg")
+                tempFile.createNewFile()
+                val out = FileOutputStream(tempFile)
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                out.close()
+
+                val intent =
+                    Intent(
+                        this,
+                        ActivityPinchImageViewer::class.java
+                    )
+                intent.putExtra("image_file_path", tempFile.absolutePath)
+
+                startActivity(intent)
             }
-
-            val fos =
-                FileOutputStream(imageFile)
-            imageBitmap.compress(
-                Bitmap.CompressFormat.PNG,
-                100,
-                fos
-            )
-            fos.close()
-
-            if (!isFinishing) {
-                Glide.with(this)
-                    .load(imageFile)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-                    .transform(CenterCrop())
-                    .into(bindingMbr.test)
-            }
-
-            // todo : 이미지 뷰어 액티비티
         }
 
         bindingMbr.image2OriginImage.setOnClickListener {
-            val imageBitmap = (bindingMbr.image2OriginImage.drawable as BitmapDrawable).bitmap
+            val imageDrawable = bindingMbr.image2OriginImage.drawable
 
-            val imageFile =
-                File(cacheDir.absolutePath + "/ActivityMainIntentExtraTemp.png")
-            if (imageFile.exists()) {
-                imageFile.delete()
+            if (imageDrawable is BitmapDrawable) {
+                val imageBitmap = imageDrawable.bitmap
+
+                // 비트맵을 파일로 저장
+                val tempFile = File(cacheDir, "temp.jpg")
+                tempFile.createNewFile()
+                val out = FileOutputStream(tempFile)
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                out.close()
+
+                val intent =
+                    Intent(
+                        this,
+                        ActivityPinchImageViewer::class.java
+                    )
+                intent.putExtra("image_file_path", tempFile.absolutePath)
+
+                startActivity(intent)
             }
-
-            val fos =
-                FileOutputStream(imageFile)
-            imageBitmap.compress(
-                Bitmap.CompressFormat.PNG,
-                100,
-                fos
-            )
-            fos.close()
-
-            if (!isFinishing) {
-                Glide.with(this)
-                    .load(imageFile)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-                    .transform(CenterCrop())
-                    .into(bindingMbr.test)
-            }
-
-            // todo : 이미지 뷰어 액티비티
-
         }
 
         bindingMbr.image2FilteredImage.setOnClickListener {
-            val imageBitmap = (bindingMbr.image2FilteredImage.drawable as BitmapDrawable).bitmap
+            val imageDrawable = bindingMbr.image2FilteredImage.drawable
 
-            val imageFile =
-                File(cacheDir.absolutePath + "/ActivityMainIntentExtraTemp.png")
-            if (imageFile.exists()) {
-                imageFile.delete()
+            if (imageDrawable is BitmapDrawable) {
+                val imageBitmap = imageDrawable.bitmap
+
+                // 비트맵을 파일로 저장
+                val tempFile = File(cacheDir, "temp.jpg")
+                tempFile.createNewFile()
+                val out = FileOutputStream(tempFile)
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                out.close()
+
+                val intent =
+                    Intent(
+                        this,
+                        ActivityPinchImageViewer::class.java
+                    )
+                intent.putExtra("image_file_path", tempFile.absolutePath)
+
+                startActivity(intent)
             }
-
-            val fos =
-                FileOutputStream(imageFile)
-            imageBitmap.compress(
-                Bitmap.CompressFormat.PNG,
-                100,
-                fos
-            )
-            fos.close()
-
-            if (!isFinishing) {
-                Glide.with(this)
-                    .load(imageFile)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-                    .transform(CenterCrop())
-                    .into(bindingMbr.test)
-            }
-
-            // todo : 이미지 뷰어 액티비티
-
         }
 
         bindingMbr.image3OriginImage.setOnClickListener {
-            val imageBitmap = (bindingMbr.image3OriginImage.drawable as BitmapDrawable).bitmap
+            val imageDrawable = bindingMbr.image3OriginImage.drawable
 
-            val imageFile =
-                File(cacheDir.absolutePath + "/ActivityMainIntentExtraTemp.png")
-            if (imageFile.exists()) {
-                imageFile.delete()
+            if (imageDrawable is BitmapDrawable) {
+                val imageBitmap = imageDrawable.bitmap
+
+                // 비트맵을 파일로 저장
+                val tempFile = File(cacheDir, "temp.jpg")
+                tempFile.createNewFile()
+                val out = FileOutputStream(tempFile)
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                out.close()
+
+                val intent =
+                    Intent(
+                        this,
+                        ActivityPinchImageViewer::class.java
+                    )
+                intent.putExtra("image_file_path", tempFile.absolutePath)
+
+                startActivity(intent)
             }
-
-            val fos =
-                FileOutputStream(imageFile)
-            imageBitmap.compress(
-                Bitmap.CompressFormat.PNG,
-                100,
-                fos
-            )
-            fos.close()
-
-            if (!isFinishing) {
-                Glide.with(this)
-                    .load(imageFile)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-                    .transform(CenterCrop())
-                    .into(bindingMbr.test)
-            }
-
-            // todo : 이미지 뷰어 액티비티
         }
 
         bindingMbr.image3FilteredImage.setOnClickListener {
-            val imageBitmap = (bindingMbr.image3FilteredImage.drawable as BitmapDrawable).bitmap
+            val imageDrawable = bindingMbr.image3FilteredImage.drawable
 
-            val imageFile =
-                File(cacheDir.absolutePath + "/ActivityMainIntentExtraTemp.png")
-            if (imageFile.exists()) {
-                imageFile.delete()
+            if (imageDrawable is BitmapDrawable) {
+                val imageBitmap = imageDrawable.bitmap
+
+                // 비트맵을 파일로 저장
+                val tempFile = File(cacheDir, "temp.jpg")
+                tempFile.createNewFile()
+                val out = FileOutputStream(tempFile)
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                out.close()
+
+                val intent =
+                    Intent(
+                        this,
+                        ActivityPinchImageViewer::class.java
+                    )
+                intent.putExtra("image_file_path", tempFile.absolutePath)
+
+                startActivity(intent)
             }
-
-            val fos =
-                FileOutputStream(imageFile)
-            imageBitmap.compress(
-                Bitmap.CompressFormat.PNG,
-                100,
-                fos
-            )
-            fos.close()
-
-            if (!isFinishing) {
-                Glide.with(this)
-                    .load(imageFile)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-                    .transform(CenterCrop())
-                    .into(bindingMbr.test)
-            }
-
-            // todo : 이미지 뷰어 액티비티
-
         }
     }
 
