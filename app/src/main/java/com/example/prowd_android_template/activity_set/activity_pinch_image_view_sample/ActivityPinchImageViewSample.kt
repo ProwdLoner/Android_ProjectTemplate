@@ -1,29 +1,26 @@
-package com.example.prowd_android_template.activity_set.activity_home
+package com.example.prowd_android_template.activity_set.activity_pinch_image_view_sample
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_camera_sample_list.ActivityCameraSampleList
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
-import com.example.prowd_android_template.activity_set.activity_image_processing_sample_list.ActivityImageProcessingSampleList
-import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
-import com.example.prowd_android_template.activity_set.activity_media_player_sample_list.ActivityMediaPlayerSampleList
-import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
-import com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList
-import com.example.prowd_android_template.activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleList
+import com.example.prowd_android_template.R
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
+import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample
+import com.example.prowd_android_template.activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleListViewModel
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityHomeBinding
+import com.example.prowd_android_template.databinding.ActivityPinchImageViewSampleBinding
+import com.example.prowd_android_template.databinding.ActivityViewPagerSampleListBinding
 
-class ActivityHome : AppCompatActivity() {
+class ActivityPinchImageViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityHomeBinding
+    lateinit var bindingMbr: ActivityPinchImageViewSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityHomeViewModel
+    lateinit var viewModelMbr: ActivityPinchImageViewSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -42,7 +39,7 @@ class ActivityHome : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityHomeBinding.inflate(layoutInflater)
+        bindingMbr = ActivityPinchImageViewSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -62,7 +59,6 @@ class ActivityHome : AppCompatActivity() {
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-
             val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
@@ -95,7 +91,7 @@ class ActivityHome : AppCompatActivity() {
         // 다이얼로그 객체 해소
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
-        confirmDialogMbr?.dismiss()
+        progressLoadingDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -110,7 +106,7 @@ class ActivityHome : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityHomeViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityPinchImageViewSampleViewModel::class.java]
 
     }
 
@@ -126,84 +122,9 @@ class ActivityHome : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 권한 샘플 이동 버튼
-        bindingMbr.goToPermissionSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityPermissionSample::class.java
-                )
-            startActivity(intent)
-        }
+        bindingMbr.sampleImage.setOnClickListener {
+            // todo
 
-        // 다이얼로그 샘플 이동 버튼
-        bindingMbr.goToDialogSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityDialogSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 리사이클러 뷰 샘플 목록 이동 버튼
-        bindingMbr.goToRecyclerViewSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityRecyclerViewSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 뷰 페이저 샘플 목록 이동 버튼
-        bindingMbr.goToViewPagerSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityViewPagerSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        // jni 샘플 이동 버튼
-        bindingMbr.goToJniSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityJniSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 카메라 샘플 목록 이동 버튼
-        bindingMbr.goToCameraSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityCameraSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 이미지 처리 샘플 목록 이동 버튼
-        bindingMbr.goToImageProcessingSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityImageProcessingSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 미디어 플레이어 샘플 목록 이동 버튼
-        bindingMbr.goToMediaPlayerSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityMediaPlayerSampleList::class.java
-                )
-            startActivity(intent)
         }
 
     }
