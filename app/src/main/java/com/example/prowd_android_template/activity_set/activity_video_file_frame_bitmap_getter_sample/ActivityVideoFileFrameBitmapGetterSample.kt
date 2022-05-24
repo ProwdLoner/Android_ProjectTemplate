@@ -1,23 +1,20 @@
-package com.example.prowd_android_template.activity_set.activity_image_processing_sample_list
+package com.example.prowd_android_template.activity_set.activity_video_file_frame_bitmap_getter_sample
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_easy_lut_sample.ActivityEasyLutSample
-import com.example.prowd_android_template.activity_set.activity_video_file_frame_bitmap_getter_sample.ActivityVideoFileFrameBitmapGetterSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityImageProcessingSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityVideoFileFrameBitmapGetterSampleBinding
 
-class ActivityImageProcessingSampleList : AppCompatActivity() {
+class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityImageProcessingSampleListBinding
+    lateinit var bindingMbr: ActivityVideoFileFrameBitmapGetterSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityImageProcessingSampleListViewModel
+    lateinit var viewModelMbr: ActivityVideoFileFrameBitmapGetterSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -36,7 +33,7 @@ class ActivityImageProcessingSampleList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityImageProcessingSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityVideoFileFrameBitmapGetterSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -88,7 +85,7 @@ class ActivityImageProcessingSampleList : AppCompatActivity() {
         // 다이얼로그 객체 해소
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
-        confirmDialogMbr?.dismiss()
+        progressLoadingDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -103,8 +100,7 @@ class ActivityImageProcessingSampleList : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr =
-            ViewModelProvider(this)[ActivityImageProcessingSampleListViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityVideoFileFrameBitmapGetterSampleViewModel::class.java]
 
     }
 
@@ -120,23 +116,6 @@ class ActivityImageProcessingSampleList : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.goToEasyLutSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityEasyLutSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToVideoFileFrameGetterSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityVideoFileFrameBitmapGetterSample::class.java
-                )
-            startActivity(intent)
-        }
 
     }
 

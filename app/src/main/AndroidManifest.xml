@@ -24,6 +24,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_video_file_frame_bitmap_getter_sample.ActivityVideoFileFrameBitmapGetterSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_pinch_image_viewer.ActivityPinchImageViewer"
             android:exported="false" />
         <activity
