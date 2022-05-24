@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     tools:context=".activity_set.activity_pinch_image_viewer.ActivityPinchImageViewer">
 
-    <ImageView
+    <com.example.prowd_android_template.custom_view.PinchImageView
         android:id="@+id/image_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
