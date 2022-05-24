@@ -1,18 +1,20 @@
 package com.example.prowd_android_template.activity_set.activity_pinch_image_view_sample
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
-import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample
-import com.example.prowd_android_template.activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleListViewModel
+import com.example.prowd_android_template.activity_set.activity_pinch_image_viewer.ActivityPinchImageViewer
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityPinchImageViewSampleBinding
-import com.example.prowd_android_template.databinding.ActivityViewPagerSampleListBinding
+import java.io.File
+import java.io.FileOutputStream
 
 class ActivityPinchImageViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -123,8 +125,40 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         bindingMbr.sampleImage.setOnClickListener {
-            // todo
+            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+                DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "다음 액티비티에 넘겨줄 이미지를 준비중입니다.",
+                    onCanceled = {}
+                )
 
+            viewModelMbr.executorServiceMbr?.execute {
+                // 비트맵 추출
+                val bitmap = (AppCompatResources.getDrawable(
+                    this,
+                    R.drawable.img_activity_pinch_image_view_sample
+                ) as BitmapDrawable).bitmap
+
+                // 비트맵을 파일로 저장
+                val tempFile = File(cacheDir, "temp.jpg")
+                tempFile.createNewFile()
+                val out = FileOutputStream(tempFile)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                out.close()
+
+                val intent =
+                    Intent(
+                        this,
+                        ActivityPinchImageViewer::class.java
+                    )
+                intent.putExtra("image_file_path", tempFile.absolutePath)
+
+                runOnUiThread {
+                    viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+
+                    startActivity(intent)
+                }
+            }
         }
 
     }

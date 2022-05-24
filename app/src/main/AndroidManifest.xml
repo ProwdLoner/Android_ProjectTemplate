@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.prowd_android_template" >
+    package="com.example.prowd_android_template">
     <!-- (필요 디바이스 기능 설정) -->
     <!-- <uses-feature -->
     <!-- android:name="android.hardware.camera" -->
@@ -22,7 +22,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Application" >
+        android:theme="@style/Theme.Application">
+        <activity
+            android:name=".activity_set.activity_pinch_image_viewer.ActivityPinchImageViewer"
+            android:exported="false" />
         <activity
             android:name=".activity_set.activity_media_player_sample_list.ActivityMediaPlayerSampleList"
             android:exported="false" />
@@ -87,7 +90,7 @@
         <activity
             android:name=".activity_set.activity_init.ActivityInit"
             android:exported="true"
-            android:theme="@style/Theme.ActivityInit" >
+            android:theme="@style/Theme.ActivityInit">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -99,7 +102,7 @@
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
-            android:grantUriPermissions="true" >
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_provider_paths" />
