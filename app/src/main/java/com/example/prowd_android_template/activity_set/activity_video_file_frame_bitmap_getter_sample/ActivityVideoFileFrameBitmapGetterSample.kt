@@ -1,10 +1,14 @@
 package com.example.prowd_android_template.activity_set.activity_video_file_frame_bitmap_getter_sample
 
+import android.content.res.AssetFileDescriptor
 import android.media.MediaMetadataRetriever
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.view.SurfaceHolder
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
+import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -29,6 +33,9 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
 
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
+
+    // 비디오 뷰에 띄워줄 영상 관련 플레이어 객체
+    private var videoViewMediaPlayerMbr: MediaPlayer? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -55,6 +62,44 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        // 영상 플레이어 설정
+        val assetFileDescriptor: AssetFileDescriptor = application.resources.openRawResourceFd(
+            R.raw.video_activity_video_file_frame_bitmap_getter_sample_test
+        )
+
+        videoViewMediaPlayerMbr = MediaPlayer()
+        videoViewMediaPlayerMbr!!.setDataSource(
+            assetFileDescriptor.fileDescriptor,
+            assetFileDescriptor.startOffset,
+            assetFileDescriptor.length
+        )
+        assetFileDescriptor.close()
+        videoViewMediaPlayerMbr!!.isLooping = true
+
+        bindingMbr.sampleVideoView.holder.addCallback(object : SurfaceHolder.Callback {
+            override fun surfaceCreated(holder: SurfaceHolder) {
+                videoViewMediaPlayerMbr!!.setDisplay(holder)
+                videoViewMediaPlayerMbr!!.prepareAsync()
+
+                videoViewMediaPlayerMbr!!.setOnPreparedListener {
+                    // 뷰 모델에 저장된 이전 위치 설정
+                    videoViewMediaPlayerMbr!!.seekTo(viewModelMbr.videoViewMediaPlayerPositionMsMbr)
+                    videoViewMediaPlayerMbr!!.setOnSeekCompleteListener { videoViewMediaPlayerMbr!!.start() }
+                }
+            }
+
+            override fun surfaceChanged(
+                holder: SurfaceHolder,
+                format: Int,
+                width: Int,
+                height: Int
+            ) {
+            }
+
+            override fun surfaceDestroyed(holder: SurfaceHolder) {
+            }
+        })
+
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
             val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
@@ -70,6 +115,15 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
             }
         }
 
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModelMbr.videoViewMediaPlayerPositionMsMbr = videoViewMediaPlayerMbr!!.currentPosition
+        videoViewMediaPlayerMbr!!.pause()
+        videoViewMediaPlayerMbr!!.stop()
+        videoViewMediaPlayerMbr!!.reset()
+        videoViewMediaPlayerMbr!!.release()
     }
 
     override fun onStop() {
@@ -106,7 +160,6 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
         // 뷰 모델 객체 생성
         viewModelMbr =
             ViewModelProvider(this)[ActivityVideoFileFrameBitmapGetterSampleViewModel::class.java]
-
     }
 
     // viewModel 저장용 데이터 초기화
@@ -117,7 +170,7 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
             viewModelMbr.currentUserSessionTokenMbr =
                 viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
-
+            // 영상 크기 구하기
             val retriever = MediaMetadataRetriever()
             retriever.setDataSource(this, viewModelMbr.sampleVideoFileUriMbr)
             viewModelMbr.sampleVideoWidthMbr =
@@ -125,6 +178,7 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
             viewModelMbr.sampleVideoHeightMbr =
                 Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)!!)
             retriever.release()
+
         }
     }
 
@@ -136,15 +190,6 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
         videoLayoutParams.dimensionRatio =
             "${viewModelMbr.sampleVideoWidthMbr}:${viewModelMbr.sampleVideoHeightMbr}"
         bindingMbr.sampleVideoView.layoutParams = videoLayoutParams
-
-        // 비디오 파일 연결
-        bindingMbr.sampleVideoView.setOnPreparedListener {
-            // 비디오 반복
-            it.isLooping = true
-        }
-        bindingMbr.sampleVideoView.setVideoURI(viewModelMbr.sampleVideoFileUriMbr)
-        bindingMbr.sampleVideoView.requestFocus()
-        bindingMbr.sampleVideoView.start()
 
         // 추출 프레임 이미지 뷰 비율을 비디오 파일 크기에 맞추기
         val imageLayoutParams =

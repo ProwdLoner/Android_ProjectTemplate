@@ -1,8 +1,11 @@
 package com.example.prowd_android_template.activity_set.activity_video_file_frame_bitmap_getter_sample
 
 import android.app.Application
+import android.content.res.AssetFileDescriptor
+import android.media.MediaPlayer
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -38,6 +41,13 @@ class ActivityVideoFileFrameBitmapGetterSampleViewModel(application: Application
 
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
+
+    // 미디어 플레이어 재생위치 MilliSecond
+    var videoViewMediaPlayerPositionMsMbr = 0
+
+
+
+
 
     private val videoFileNameMbr = "video_activity_video_file_frame_bitmap_getter_sample_test"
     val sampleVideoFileUriMbr = UriAndPath.getUriFromPath(
