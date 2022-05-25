@@ -8,7 +8,7 @@
 //#include <android/bitmap.h>
 
 // (서드 라이브러리)
-#include "jni_string_test_lib.h"
+#include "ffmpeg_wrapper_lib.h"
 
 // LOG define 함수 모음
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "<native_wrapper_jni_string_test.cpp>", __VA_ARGS__)

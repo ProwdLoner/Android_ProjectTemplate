@@ -58,7 +58,7 @@ target_link_libraries(
 )
 
 
-# [asset_manager_test]
+# (asset_manager_test)
 # 서브 라이브러리
 include_directories(${CMAKE_SOURCE_DIR}/jni_libs/asset_manager_test/sub_libs/include)
 add_subdirectory(${CMAKE_SOURCE_DIR}/jni_libs/asset_manager_test/sub_libs)
@@ -73,6 +73,26 @@ add_library(
 target_link_libraries(
         native_wrapper_asset_manager_test
         asset_manager_test_lib
+        ${log-lib}
+        ${android-lib}
+)
+
+
+# (ffmpeg_wrapper)
+# 서브 라이브러리
+include_directories(${CMAKE_SOURCE_DIR}/jni_libs/ffmpeg_wrapper/sub_libs/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/jni_libs/ffmpeg_wrapper/sub_libs)
+
+# JNI 래퍼
+add_library(
+        native_wrapper_ffmpeg_wrapper # 자바용 라이브러리 이름
+        SHARED # 종류
+        jni_libs/ffmpeg_wrapper/native_wrapper_ffmpeg_wrapper.cpp # CPP 라이브러리 파일
+)
+
+target_link_libraries(
+        native_wrapper_ffmpeg_wrapper
+        ffmpeg_wrapper_lib
         ${log-lib}
         ${android-lib}
 )
