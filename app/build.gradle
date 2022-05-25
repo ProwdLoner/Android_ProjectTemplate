@@ -120,10 +120,6 @@ dependencies {
     // socket 라이브러리
     implementation 'com.squareup.okio:okio:3.0.0'
 
-    // 비디오 파일 프레임 추출
-    implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever-core:1.0.16'
-    implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever-native:1.0.16'
-
     
     // (뷰 라이브러리)
     // Glide

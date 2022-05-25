@@ -2,10 +2,10 @@
 cmake_minimum_required(VERSION 3.18.1)
 
 # 프로젝트명
-project("prowd_android_template_native_wrapper")
+project("native_wrapper")
 
 
-# (NDK 라이브러리 탐색)
+# [NDK 라이브러리 추가]
 # 로그 라이브러리
 find_library(
         log-lib
@@ -17,8 +17,8 @@ find_library(android-lib
         android)
 
 
-# (서드 라이브러리 추가)
-# opencv 라이브러리
+# [서드 라이브러리 추가]
+# (opencv 라이브러리)
 include_directories(${OpenCV_DIR}/jni/include)
 add_library(lib_opencv SHARED IMPORTED)
 set_target_properties(
@@ -27,7 +27,7 @@ set_target_properties(
         ${OpenCV_DIR}/libs/${ANDROID_ABI}/libopencv_java4.so
 )
 
-# dlib 라이브러리
+# (dlib 라이브러리)
 include_directories(${dlib_DIR}/include)
 add_library(dlib STATIC IMPORTED)
 set_target_properties(
@@ -37,22 +37,17 @@ set_target_properties(
 )
 
 
-# (라이브러리 추가)
-# jni_string_test_lib
-include_directories(${CMAKE_SOURCE_DIR}/libs/jni_string_test_lib/include)
-add_subdirectory(${CMAKE_SOURCE_DIR}/libs/jni_string_test_lib)
+# [JNI 라이브러리 추가]
+# (jni_string_test)
+# 서브 라이브러리
+include_directories(${CMAKE_SOURCE_DIR}/jni_libs/jni_string_test_lib/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/jni_libs/jni_string_test_lib)
 
-# asset_manager_test_lib
-include_directories(${CMAKE_SOURCE_DIR}/libs/asset_manager_test_lib/include)
-add_subdirectory(${CMAKE_SOURCE_DIR}/libs/asset_manager_test_lib)
-
-
-# (래퍼 라이브러리 추가)
-# native_wrapper_test1.cpp
+# JNI 래퍼
 add_library(
         native_wrapper_jni_string_test # 자바용 라이브러리 이름
         SHARED # 종류
-        wrappers/native_wrapper_jni_string_test.cpp # CPP 라이브러리 파일
+        jni_wrappers/native_wrapper_jni_string_test.cpp # CPP 라이브러리 파일
 )
 
 target_link_libraries(
@@ -62,11 +57,17 @@ target_link_libraries(
         ${android-lib}
 )
 
-# native_wrapper_asset_manager_test.cpp
+
+# [asset_manager_test]
+# 서브 라이브러리
+include_directories(${CMAKE_SOURCE_DIR}/jni_libs/asset_manager_test_lib/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/jni_libs/asset_manager_test_lib)
+
+# JNI 래퍼
 add_library(
         native_wrapper_asset_manager_test # 자바용 라이브러리 이름
         SHARED # 종류
-        wrappers/native_wrapper_asset_manager_test.cpp # CPP 라이브러리 파일
+        jni_wrappers/native_wrapper_asset_manager_test.cpp # CPP 라이브러리 파일
 )
 
 target_link_libraries(
