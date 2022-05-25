@@ -8,7 +8,7 @@
 //#include <android/bitmap.h>
 
 // (서드 라이브러리)
-#include "jni_string_test.h"
+
 
 // LOG define 함수 모음
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "<native_wrapper_jni_string_test.cpp>", __VA_ARGS__)
@@ -31,8 +31,8 @@ Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperJniString
     LOGI("getJniString_start");
 
     // 서드 라이브러리 요청
-    std::string testString = getLibraryString();
+    std::string hello = "Hello from test jni";
 
     LOGI("getJniString_end");
-    return env->NewStringUTF(testString.c_str());
+    return env->NewStringUTF(hello.c_str());
 }

@@ -8,7 +8,6 @@
 //#include <android/bitmap.h>
 
 // (서드 라이브러리)
-#include "asset_manager_test_lib.h"
 
 // LOG define 함수 모음
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "<native_wrapper_asset_manager_test.cpp>", __VA_ARGS__)

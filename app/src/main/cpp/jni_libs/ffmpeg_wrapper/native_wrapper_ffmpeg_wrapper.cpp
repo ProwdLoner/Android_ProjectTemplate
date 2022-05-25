@@ -8,7 +8,12 @@
 //#include <android/bitmap.h>
 
 // (서드 라이브러리)
-#include "ffmpeg_wrapper_lib.h"
+
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavfilter/avfilter.h>
+}
 
 // LOG define 함수 모음
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "<native_wrapper_ffmpeg_wrapper.cpp>", __VA_ARGS__)
@@ -28,5 +33,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperFFMpegWrapper_libTest(
         JNIEnv *env, jobject thiz) {
-    test();
+    LOGE("ffmpeg_test");
+
+    av_register_all();
 }
