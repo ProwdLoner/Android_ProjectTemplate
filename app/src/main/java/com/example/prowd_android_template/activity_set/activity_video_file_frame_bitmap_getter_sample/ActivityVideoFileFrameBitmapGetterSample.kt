@@ -9,6 +9,7 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityVideoFileFrameBitmapGetterSampleBinding
+import com.example.prowd_android_template.native_wrapper.NativeWrapperFFMpegWrapper
 
 
 class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
@@ -151,6 +152,9 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
         imageLayoutParams.dimensionRatio =
             "${viewModelMbr.sampleVideoWidthMbr}:${viewModelMbr.sampleVideoHeightMbr}"
         bindingMbr.videoFrameImageView.layoutParams = imageLayoutParams
+
+
+        NativeWrapperFFMpegWrapper.libTest()
     }
 
     // 라이브 데이터 설정

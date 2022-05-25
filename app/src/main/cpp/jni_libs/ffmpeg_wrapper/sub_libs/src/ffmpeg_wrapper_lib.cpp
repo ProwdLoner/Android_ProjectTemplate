@@ -3,3 +3,6 @@
 //
 #include "ffmpeg_wrapper_lib.h"
 
+void test(){
+
+}

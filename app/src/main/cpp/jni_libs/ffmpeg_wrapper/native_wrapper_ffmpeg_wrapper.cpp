@@ -24,3 +24,9 @@
 
 
 // [functions]
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperFFMpegWrapper_libTest(
+        JNIEnv *env, jobject thiz) {
+    test();
+}

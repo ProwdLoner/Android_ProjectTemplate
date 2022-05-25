@@ -6,4 +6,5 @@ object NativeWrapperFFMpegWrapper {
     }
 
     // [래핑 함수]
+    external fun libTest()
 }

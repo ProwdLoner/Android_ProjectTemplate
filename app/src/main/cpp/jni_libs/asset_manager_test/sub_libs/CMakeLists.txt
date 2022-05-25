@@ -1,9 +1,9 @@
 # cmake 최소 버전
 cmake_minimum_required(VERSION 3.18.1)
 
-# (서드 라이브러리 추가)
+# [서드 라이브러리 추가]
 
-# (유저 라이브러리 추가)
+# [유저 라이브러리 추가]
 # test1
 add_library(
         asset_manager_test_lib # 자바용 라이브러리 이름
