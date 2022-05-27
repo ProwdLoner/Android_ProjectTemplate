@@ -1,10 +1,12 @@
 package com.example.prowd_android_template.activity_set.activity_media_player_api_simple_video_sample
 
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.SurfaceHolder
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -137,12 +139,28 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
     private fun viewSetting() {
         // 초기 미디어 소스 설정
         viewModelMbr.simpleVideoMediaPlayerMbr = MediaPlayer()
+        val videoUri: Uri =
+            Uri.parse("android.resource://" + packageName + "/" + R.raw.video_common_video_sample)
         viewModelMbr.simpleVideoMediaPlayerMbr!!.setDataSource(
             this,
-            Uri.parse("android.resource://" + packageName + "/" + R.raw.video_common_video_sample)
+            videoUri
         )
-        // todo : 영상에 맞게 뷰 크기를 변경
 
+        // 영상 크기 구하기
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(this, videoUri)
+        val videoWidth =
+            Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)!!)
+        val videoHeight =
+            Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)!!)
+        retriever.release()
+
+        // 영상 사이즈에 맞게 뷰 크기를 변경
+        val videoLayoutParams =
+            bindingMbr.simpleVideo.layoutParams as ConstraintLayout.LayoutParams
+        videoLayoutParams.dimensionRatio =
+            "${videoWidth}:${videoHeight}"
+        bindingMbr.simpleVideo.layoutParams = videoLayoutParams
 
         viewModelMbr.simpleVideoMediaPlayerMbr!!.prepare()
 

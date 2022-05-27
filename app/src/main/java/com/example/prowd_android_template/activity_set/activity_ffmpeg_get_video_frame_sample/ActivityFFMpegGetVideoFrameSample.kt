@@ -1,28 +1,28 @@
-package com.example.prowd_android_template.activity_set.activity_video_file_frame_bitmap_getter_sample
+package com.example.prowd_android_template.activity_set.activity_ffmpeg_get_video_frame_sample
 
-import android.content.res.AssetFileDescriptor
 import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
+import android.net.Uri
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.SurfaceHolder
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityVideoFileFrameBitmapGetterSampleBinding
-import com.example.prowd_android_template.native_wrapper.NativeWrapperFFMpegWrapper
+import com.example.prowd_android_template.databinding.ActivityFfmpegGetVideoFrameSampleBinding
 
 
-class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
+// todo : FFMpeg 프레임 추출
+class ActivityFFMpegGetVideoFrameSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityVideoFileFrameBitmapGetterSampleBinding
+    lateinit var bindingMbr: ActivityFfmpegGetVideoFrameSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityVideoFileFrameBitmapGetterSampleViewModel
+    lateinit var viewModelMbr: ActivityFFMpegGetVideoFrameSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -34,9 +34,6 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
 
-    // 비디오 뷰에 띄워줄 영상 관련 플레이어 객체
-    private var videoViewMediaPlayerMbr: MediaPlayer? = null
-
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -44,7 +41,7 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityVideoFileFrameBitmapGetterSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityFfmpegGetVideoFrameSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -62,43 +59,7 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        // 영상 플레이어 설정
-        val assetFileDescriptor: AssetFileDescriptor = application.resources.openRawResourceFd(
-            R.raw.video_common_video_sample
-        )
-
-        videoViewMediaPlayerMbr = MediaPlayer()
-        videoViewMediaPlayerMbr!!.setDataSource(
-            assetFileDescriptor.fileDescriptor,
-            assetFileDescriptor.startOffset,
-            assetFileDescriptor.length
-        )
-        assetFileDescriptor.close()
-        videoViewMediaPlayerMbr!!.isLooping = true
-
-        bindingMbr.sampleVideoView.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
-                videoViewMediaPlayerMbr!!.setDisplay(holder)
-                videoViewMediaPlayerMbr!!.prepareAsync()
-
-                videoViewMediaPlayerMbr!!.setOnPreparedListener {
-                    // 뷰 모델에 저장된 이전 위치 설정
-                    videoViewMediaPlayerMbr!!.seekTo(viewModelMbr.videoViewMediaPlayerPositionMsMbr)
-                    videoViewMediaPlayerMbr!!.setOnSeekCompleteListener { videoViewMediaPlayerMbr!!.start() }
-                }
-            }
-
-            override fun surfaceChanged(
-                holder: SurfaceHolder,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-            }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-            }
-        })
+        viewModelMbr.simpleVideoMediaPlayerMbr?.start()
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
@@ -118,12 +79,9 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
     }
 
     override fun onPause() {
+        viewModelMbr.simpleVideoMediaPlayerMbr?.pause()
+
         super.onPause()
-        viewModelMbr.videoViewMediaPlayerPositionMsMbr = videoViewMediaPlayerMbr!!.currentPosition
-        videoViewMediaPlayerMbr!!.pause()
-        videoViewMediaPlayerMbr!!.stop()
-        videoViewMediaPlayerMbr!!.reset()
-        videoViewMediaPlayerMbr!!.release()
     }
 
     override fun onStop() {
@@ -143,7 +101,13 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
         // 다이얼로그 객체 해소
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
-        progressLoadingDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
+
+        // 화면 회전시 재생 시간 저장
+        viewModelMbr.simpleVideoMediaPlayerPositionMbr =
+            viewModelMbr.simpleVideoMediaPlayerMbr?.currentPosition
+        viewModelMbr.simpleVideoMediaPlayerMbr?.release()
+        viewModelMbr.simpleVideoMediaPlayerMbr = null
 
         super.onDestroy()
     }
@@ -159,7 +123,8 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
         viewModelMbr =
-            ViewModelProvider(this)[ActivityVideoFileFrameBitmapGetterSampleViewModel::class.java]
+            ViewModelProvider(this)[ActivityFFMpegGetVideoFrameSampleViewModel::class.java]
+
     }
 
     // viewModel 저장용 데이터 초기화
@@ -169,37 +134,63 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
             // 현 액티비티 진입 유저 저장
             viewModelMbr.currentUserSessionTokenMbr =
                 viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-
-            // 영상 크기 구하기
-            val retriever = MediaMetadataRetriever()
-            retriever.setDataSource(this, viewModelMbr.sampleVideoFileUriMbr)
-            viewModelMbr.sampleVideoWidthMbr =
-                Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)!!)
-            viewModelMbr.sampleVideoHeightMbr =
-                Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)!!)
-            retriever.release()
-
         }
     }
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 비디오 뷰 비율을 비디오 파일 크기에 맞추기
+        // 초기 미디어 소스 설정
+        viewModelMbr.simpleVideoMediaPlayerMbr = MediaPlayer()
+        val videoUri: Uri =
+            Uri.parse("android.resource://" + packageName + "/" + R.raw.video_common_video_sample)
+        viewModelMbr.simpleVideoMediaPlayerMbr!!.setDataSource(
+            this,
+            videoUri
+        )
+
+        // 영상 크기 구하기
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(this, videoUri)
+        val videoWidth =
+            Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)!!)
+        val videoHeight =
+            Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)!!)
+        retriever.release()
+
+        // 영상 사이즈에 맞게 뷰 크기를 변경
         val videoLayoutParams =
-            bindingMbr.sampleVideoView.layoutParams as ConstraintLayout.LayoutParams
+            bindingMbr.originVideo.layoutParams as ConstraintLayout.LayoutParams
         videoLayoutParams.dimensionRatio =
-            "${viewModelMbr.sampleVideoWidthMbr}:${viewModelMbr.sampleVideoHeightMbr}"
-        bindingMbr.sampleVideoView.layoutParams = videoLayoutParams
+            "${videoWidth}:${videoHeight}"
+        bindingMbr.originVideo.layoutParams = videoLayoutParams
 
-        // 추출 프레임 이미지 뷰 비율을 비디오 파일 크기에 맞추기
-        val imageLayoutParams =
-            bindingMbr.videoFrameImageView.layoutParams as ConstraintLayout.LayoutParams
-        imageLayoutParams.dimensionRatio =
-            "${viewModelMbr.sampleVideoWidthMbr}:${viewModelMbr.sampleVideoHeightMbr}"
-        bindingMbr.videoFrameImageView.layoutParams = imageLayoutParams
+        viewModelMbr.simpleVideoMediaPlayerMbr!!.prepare()
 
+        // 화면 회전시 기존 저장된 재생 시간부터 시작
+        if (viewModelMbr.simpleVideoMediaPlayerPositionMbr != null) {
+            viewModelMbr.simpleVideoMediaPlayerMbr!!.seekTo(viewModelMbr.simpleVideoMediaPlayerPositionMbr!!)
+            viewModelMbr.simpleVideoMediaPlayerPositionMbr = null
+        }
+        viewModelMbr.simpleVideoMediaPlayerMbr!!.isLooping = true
 
-        NativeWrapperFFMpegWrapper.libTest()
+        // MediaPlayer 출력 뷰 설정
+        bindingMbr.originVideo.holder.addCallback(object : SurfaceHolder.Callback {
+            override fun surfaceCreated(holder: SurfaceHolder) {
+                viewModelMbr.simpleVideoMediaPlayerMbr!!.setDisplay(holder)
+            }
+
+            override fun surfaceChanged(
+                holder: SurfaceHolder,
+                format: Int,
+                width: Int,
+                height: Int
+            ) {
+            }
+
+            override fun surfaceDestroyed(holder: SurfaceHolder) {
+            }
+        })
+
     }
 
     // 라이브 데이터 설정
