@@ -1,23 +1,20 @@
-package com.example.prowd_android_template.activity_set.activity_media_player_sample_list
+package com.example.prowd_android_template.activity_set.activity_media_player_api_sample
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_media_player_api_sample.ActivityMediaPlayerApiSample
-import com.example.prowd_android_template.activity_set.activity_pinch_image_view_sample.ActivityPinchImageViewSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.databinding.ActivityMediaPlayerSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityMediaPlayerApiSampleBinding
 
-class ActivityMediaPlayerSampleList : AppCompatActivity() {
+class ActivityMediaPlayerApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityMediaPlayerSampleListBinding
+    lateinit var bindingMbr: ActivityMediaPlayerApiSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityMediaPlayerSampleListViewModel
+    lateinit var viewModelMbr: ActivityMediaPlayerApiSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -36,7 +33,7 @@ class ActivityMediaPlayerSampleList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityMediaPlayerSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityMediaPlayerApiSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -103,7 +100,7 @@ class ActivityMediaPlayerSampleList : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityMediaPlayerSampleListViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityMediaPlayerApiSampleViewModel::class.java]
 
     }
 
@@ -119,23 +116,7 @@ class ActivityMediaPlayerSampleList : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.goToPinchImageViewSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityPinchImageViewSample::class.java
-                )
-            startActivity(intent)
-        }
 
-        bindingMbr.goToMediaPlayerApiSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityMediaPlayerApiSample::class.java
-                )
-            startActivity(intent)
-        }
     }
 
     // 라이브 데이터 설정

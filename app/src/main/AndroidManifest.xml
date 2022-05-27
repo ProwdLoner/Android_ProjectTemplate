@@ -24,6 +24,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_media_player_api_sample.ActivityMediaPlayerApiSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_video_file_frame_bitmap_getter_sample.ActivityVideoFileFrameBitmapGetterSample"
             android:exported="false" />
         <activity
