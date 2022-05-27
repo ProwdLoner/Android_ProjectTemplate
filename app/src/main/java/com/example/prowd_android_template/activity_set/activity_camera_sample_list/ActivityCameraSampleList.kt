@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_basic_camera2_api_record_video_sample.ActivityBasicCamera2ApiRecordVideoSample
 import com.example.prowd_android_template.activity_set.activity_basic_camera2_api_sample.ActivityBasicCamera2ApiSample
 import com.example.prowd_android_template.activity_set.activity_system_camera_photo_sample.ActivitySystemCameraPhotoSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -144,12 +143,12 @@ class ActivityCameraSampleList : AppCompatActivity() {
         // 기본 Camera2 api 동영상 촬용 샘플 이동 버튼
         bindingMbr.goToBasicCamera2ApiVideoSampleBtn.setOnClickListener {
             // 액티비티 이동
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicCamera2ApiRecordVideoSample::class.java
-                )
-            startActivity(intent)
+//            val intent =
+//                Intent(
+//                    this,
+//                    ActivityBasicCamera2ApiRecordVideoSample::class.java
+//                )
+//            startActivity(intent)
         }
     }
 

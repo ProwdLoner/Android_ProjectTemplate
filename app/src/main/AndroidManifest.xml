@@ -39,11 +39,6 @@
             android:name=".activity_set.activity_pinch_image_view_sample.ActivityPinchImageViewSample"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_basic_camera2_api_record_video_sample.ActivityBasicCamera2ApiRecordVideoSample"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.Camera" />
-        <activity
             android:name=".activity_set.activity_easy_lut_sample.ActivityEasyLutSample"
             android:exported="false" />
         <activity
