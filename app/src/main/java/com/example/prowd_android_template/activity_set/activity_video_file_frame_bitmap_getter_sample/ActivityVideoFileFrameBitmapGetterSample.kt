@@ -64,7 +64,7 @@ class ActivityVideoFileFrameBitmapGetterSample : AppCompatActivity() {
 
         // 영상 플레이어 설정
         val assetFileDescriptor: AssetFileDescriptor = application.resources.openRawResourceFd(
-            R.raw.video_activity_video_file_frame_bitmap_getter_sample_test
+            R.raw.video_common_video_sample
         )
 
         videoViewMediaPlayerMbr = MediaPlayer()

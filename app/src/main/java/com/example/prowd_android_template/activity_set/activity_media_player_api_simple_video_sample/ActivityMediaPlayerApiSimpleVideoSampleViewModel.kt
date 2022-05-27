@@ -1,8 +1,10 @@
 package com.example.prowd_android_template.activity_set.activity_media_player_api_simple_video_sample
 
 import android.app.Application
+import android.media.MediaPlayer
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -37,6 +39,10 @@ class ActivityMediaPlayerApiSimpleVideoSampleViewModel(application: Application)
 
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
+
+    // 미디어 재생 객체
+    var simpleVideoMediaPlayerMbr: MediaPlayer? = null
+    var simpleVideoMediaPlayerPositionMbr : Int? = null // 화면 회전시 위치 복귀용 현재 플레이 위치
 
 
     // ---------------------------------------------------------------------------------------------

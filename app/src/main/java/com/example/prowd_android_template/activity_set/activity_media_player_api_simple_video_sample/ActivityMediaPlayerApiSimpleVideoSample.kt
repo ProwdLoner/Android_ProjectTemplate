@@ -1,8 +1,12 @@
 package com.example.prowd_android_template.activity_set.activity_media_player_api_simple_video_sample
 
+import android.media.MediaPlayer
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.SurfaceHolder
 import androidx.lifecycle.ViewModelProvider
+import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -51,6 +55,8 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        viewModelMbr.simpleVideoMediaPlayerMbr?.start()
+
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
             val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
@@ -63,9 +69,16 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
                 //  데이터 로딩
+
             }
         }
 
+    }
+
+    override fun onPause() {
+        viewModelMbr.simpleVideoMediaPlayerMbr?.pause()
+
+        super.onPause()
     }
 
     override fun onStop() {
@@ -87,6 +100,12 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
 
+        // 화면 회전시 재생 시간 저장
+        viewModelMbr.simpleVideoMediaPlayerPositionMbr =
+            viewModelMbr.simpleVideoMediaPlayerMbr?.currentPosition
+        viewModelMbr.simpleVideoMediaPlayerMbr?.release()
+        viewModelMbr.simpleVideoMediaPlayerMbr = null
+
         super.onDestroy()
     }
 
@@ -100,8 +119,8 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityMediaPlayerApiSimpleVideoSampleViewModel::class.java]
-
+        viewModelMbr =
+            ViewModelProvider(this)[ActivityMediaPlayerApiSimpleVideoSampleViewModel::class.java]
     }
 
     // viewModel 저장용 데이터 초기화
@@ -116,7 +135,41 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        // 초기 미디어 소스 설정
+        viewModelMbr.simpleVideoMediaPlayerMbr = MediaPlayer()
+        viewModelMbr.simpleVideoMediaPlayerMbr!!.setDataSource(
+            this,
+            Uri.parse("android.resource://" + packageName + "/" + R.raw.video_common_video_sample)
+        )
+        // todo : 영상에 맞게 뷰 크기를 변경
 
+
+        viewModelMbr.simpleVideoMediaPlayerMbr!!.prepare()
+
+        // 화면 회전시 기존 저장된 재생 시간부터 시작
+        if (viewModelMbr.simpleVideoMediaPlayerPositionMbr != null) {
+            viewModelMbr.simpleVideoMediaPlayerMbr!!.seekTo(viewModelMbr.simpleVideoMediaPlayerPositionMbr!!)
+            viewModelMbr.simpleVideoMediaPlayerPositionMbr = null
+        }
+        viewModelMbr.simpleVideoMediaPlayerMbr!!.isLooping = true
+
+        // MediaPlayer 출력 뷰 설정
+        bindingMbr.simpleVideo.holder.addCallback(object : SurfaceHolder.Callback {
+            override fun surfaceCreated(holder: SurfaceHolder) {
+                viewModelMbr.simpleVideoMediaPlayerMbr!!.setDisplay(holder)
+            }
+
+            override fun surfaceChanged(
+                holder: SurfaceHolder,
+                format: Int,
+                width: Int,
+                height: Int
+            ) {
+            }
+
+            override fun surfaceDestroyed(holder: SurfaceHolder) {
+            }
+        })
     }
 
     // 라이브 데이터 설정
