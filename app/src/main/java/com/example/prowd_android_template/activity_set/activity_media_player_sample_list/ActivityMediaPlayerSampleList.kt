@@ -4,7 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_media_player_api_sample.ActivityMediaPlayerApiSample
+import com.example.prowd_android_template.activity_set.activity_media_player_api_simple_video_sample.ActivityMediaPlayerApiSimpleVideoSample
 import com.example.prowd_android_template.activity_set.activity_pinch_image_view_sample.ActivityPinchImageViewSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -128,11 +128,11 @@ class ActivityMediaPlayerSampleList : AppCompatActivity() {
             startActivity(intent)
         }
 
-        bindingMbr.goToMediaPlayerApiSampleBtn.setOnClickListener {
+        bindingMbr.goToMediaPlayerApiSimpleVideoSampleBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
-                    ActivityMediaPlayerApiSample::class.java
+                    ActivityMediaPlayerApiSimpleVideoSample::class.java
                 )
             startActivity(intent)
         }
