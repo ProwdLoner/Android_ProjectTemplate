@@ -57,8 +57,6 @@
             android:id="@+id/sample_image"
             android:layout_width="200dp"
             android:layout_height="300dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/img_activity_pinch_image_view_sample"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

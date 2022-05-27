@@ -441,6 +441,105 @@ class ActivityPermissionSample : AppCompatActivity() {
             }
         }
 
+        // 오디오 녹음 권한
+        bindingMbr.audioRecordPermissionSwitch.setOnClickListener {
+            if (bindingMbr.audioRecordPermissionSwitch.isChecked) { // 체크시
+                // 권한 요청
+                permissionRequestCallbackMbr = { permissions ->
+                    // 카메라 권한
+                    val isGranted = permissions[Manifest.permission.RECORD_AUDIO]!!
+                    val neverAskAgain =
+                        !shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
+
+                    if (isGranted) { // 권한 승인
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                            DialogConfirm.DialogInfoVO(
+                                true,
+                                "오디오 녹음 권한",
+                                "오디오 녹음 권한이 승인 되었습니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+                                },
+                                onCanceled = {
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        null
+                                }
+                            )
+                    } else { // 권한 거부
+                        if (!neverAskAgain) {
+                            // 단순 거부
+
+                            // 뷰 상태 되돌리기
+                            bindingMbr.audioRecordPermissionSwitch.isChecked = false
+                        } else {
+                            // 다시 묻지 않기 선택
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                        // 권한 설정 페이지 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        val uri = Uri.fromParts("package", packageName, null)
+                                        intent.data = uri
+                                        resultLauncherCallbackMbr = { }
+                                        resultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                        // 뷰 상태 되돌리기
+                                        bindingMbr.cameraPermissionSwitch.isChecked =
+                                            false
+                                    },
+                                    onCanceled = {
+                                        // 취소 불가
+                                    }
+                                )
+                        }
+                    }
+                }
+                permissionRequestMbr.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+            } else {
+                // 체크 해제시
+                // 권한 해제 다이얼로그
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                    DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "오디오 녹음 권한 해제",
+                        "오디오 녹음 권한을 해제하시겠습니까?\n(권한 설정 화면으로 이동합니다.)",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            // 권한 설정 페이지 이동
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            val uri = Uri.fromParts("package", packageName, null)
+                            intent.data = uri
+                            resultLauncherCallbackMbr = { }
+                            resultLauncherMbr.launch(intent)
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            bindingMbr.cameraPermissionSwitch.isChecked = true
+                        },
+                        onCanceled = {
+                            // 취소 불가
+                        }
+                    )
+            }
+        }
+
         // 위치 정보 조회 권한
         bindingMbr.locationPermissionSwitch.setOnClickListener {
             if (bindingMbr.locationPermissionSwitch.isChecked) { // 체크시
@@ -749,17 +848,27 @@ class ActivityPermissionSample : AppCompatActivity() {
                 Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED
 
+        // 오디오 녹음 권한 설정 여부 반영
+        bindingMbr.audioRecordPermissionSwitch.isChecked =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+
+        // 상세 위치 정보 권한 설정 여부 반영
         val fineLocationGranted = ActivityCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
+        // 대략 위치 정보 권한 설정 여부 반영
         val coarseLocationGranted =
             ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
 
+        // 두 위치 정보의 상호 상태에 따른 뷰 처리
         when {
             fineLocationGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
                 bindingMbr.locationPermissionSwitch.isChecked = true

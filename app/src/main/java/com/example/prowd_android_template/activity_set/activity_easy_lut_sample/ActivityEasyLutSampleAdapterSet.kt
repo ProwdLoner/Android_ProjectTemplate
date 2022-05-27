@@ -136,24 +136,18 @@ class ActivityEasyLutSampleAdapterSet(
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (holder) {
                 is Header.ViewHolder -> { // 헤더 아이템 바인딩
-//                    val binding = holder.binding
-//                    val copyEntity = currentDataListCloneMbr[position]
-//                    if (copyEntity is Header.ItemVO){
-//
-//                    }
+                    val binding = holder.binding
+                    val entity = currentDataListCloneMbr[position] as Header.ItemVO
                 }
 
                 is Footer.ViewHolder -> { // 푸터 아이템 바인딩
-//                    val binding = holder.binding
-//                    val copyEntity = currentDataListCloneMbr[position]
-//                    if (copyEntity is Footer.ItemVO){
-//
-//                    }
+                    val binding = holder.binding
+                    val entity = currentDataListCloneMbr[position] as Footer.ItemVO
                 }
 
                 is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩
-//                    val binding = holder.binding
-//                    val copyEntity = currentDataListCloneMbr[position] as ItemLoader.ItemVO
+                    val binding = holder.binding
+                    val entity = currentDataListCloneMbr[position] as ItemLoader.ItemVO
 
                 }
 

@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.activity_set.activity_pinch_image_viewer.ActivityPinchImageViewer
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -124,6 +126,15 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        // 이미지가 너무 크면 xml 에서 곧바로 설정시 에러 발생. 고로 Glide 를 사용해줌
+        // (혹은 drawable 폴더 각 해상도에 맞게 각 사이즈 이미지를 분배하는 것도 좋음)
+        if (!isFinishing) {
+            Glide.with(this)
+                .load(R.drawable.img_activity_pinch_image_view_sample)
+                .transform(CenterCrop())
+                .into(bindingMbr.sampleImage)
+        }
+
         bindingMbr.sampleImage.setOnClickListener {
             viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
                 DialogProgressLoading.DialogInfoVO(
