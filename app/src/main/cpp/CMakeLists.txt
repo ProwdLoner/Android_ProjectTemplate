@@ -19,21 +19,21 @@ find_library(android-lib
 
 # [서드 라이브러리 추가]
 # (opencv 라이브러리)
-include_directories(${OpenCV_DIR}/jni/include)
+include_directories(${CMAKE_SOURCE_DIR}/third_libs/opencv_4_5_5/native/jni/include)
 add_library(lib_opencv SHARED IMPORTED)
 set_target_properties(
         lib_opencv
         PROPERTIES IMPORTED_LOCATION
-        ${OpenCV_DIR}/libs/${ANDROID_ABI}/libopencv_java4.so
+        ${CMAKE_SOURCE_DIR}/third_libs/opencv_4_5_5/native/libs/${ANDROID_ABI}/libopencv_java4.so
 )
 
 # (dlib 라이브러리)
-include_directories(${dlib_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/third_libs/dlib_19_23/include)
 add_library(dlib STATIC IMPORTED)
 set_target_properties(
         dlib
         PROPERTIES IMPORTED_LOCATION
-        ${dlib_DIR}/lib/${ANDROID_ABI}/libdlib.a
+        ${CMAKE_SOURCE_DIR}/third_libs/dlib_19_23/lib/${ANDROID_ABI}/libdlib.a
 )
 
 # (ffmpeg 라이브러리)

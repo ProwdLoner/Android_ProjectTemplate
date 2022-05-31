@@ -27,9 +27,7 @@ android {
                 cppFlags '-std=c++17 -frtti -fexceptions'
                 arguments "-DANDROID_PLATFORM=android-24",
                         "-DANDROID_TOOLCHAIN=clang",
-                        "-DANDROID_STL=c++_shared",
-                        "-DOpenCV_DIR=" + projectDir.absolutePath + "/src/main/cpp/third_lib/opencv_4_5_5/native",
-                        "-Ddlib_DIR=" + projectDir.absolutePath + "/src/main/cpp/third_lib/dlib_19_23"
+                        "-DANDROID_STL=c++_shared"
             }
         }
     }
