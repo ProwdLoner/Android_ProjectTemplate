@@ -231,6 +231,8 @@ class ActivityInit : AppCompatActivity() {
                             if (!viewModelMbr.checkLoginSessionAsyncOnProgressedMbr) {
                                 // 메소드 실행중이 아닐 때,
 
+                                val isAutoLogin : Boolean =
+                                    viewModelMbr.currentLoginSessionInfoSpwMbr.isAutoLogin
                                 val loginType: Int =
                                     viewModelMbr.currentLoginSessionInfoSpwMbr.loginType
                                 val serverId: String? =
@@ -240,6 +242,7 @@ class ActivityInit : AppCompatActivity() {
 
                                 viewModelMbr.checkLoginSessionAsync(
                                     ActivityInitViewModel.CheckLoginSessionParameterVO(
+                                        isAutoLogin,
                                         loginType,
                                         serverId,
                                         serverPw
@@ -247,6 +250,8 @@ class ActivityInit : AppCompatActivity() {
                                     onComplete = { checkLoginSessionResult ->
                                         runOnUiThread checkLoginSessionAsyncComplete@{
                                             // 검증 후 결과를 sharedPreferences 에 대입
+                                            viewModelMbr.currentLoginSessionInfoSpwMbr.isAutoLogin =
+                                                checkLoginSessionResult.isAutoLogin
                                             viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken =
                                                 checkLoginSessionResult.sessionToken
                                             viewModelMbr.currentLoginSessionInfoSpwMbr.userNickName =
@@ -502,7 +507,8 @@ class ActivityInit : AppCompatActivity() {
         if (viewModelMbr.delayGoToNextActivityAsyncCompletedOnceMbr && // 앱 대기 시간이 끝났을 때
             viewModelMbr.checkAppVersionAsyncCompletedOnceMbr && // 앱 버전 검증이 끝났을 때
             viewModelMbr.checkLoginSessionAsyncCompletedOnceMbr && // 로그인 검증이 끝났을 때
-            viewModelMbr.isCheckAppPermissionsCompletedOnceMbr // 앱 권한 체크가 끝났을 때
+            viewModelMbr.isCheckAppPermissionsCompletedOnceMbr && // 앱 권한 체크가 끝났을 때
+            (!viewModelMbr.isChangingConfigurationsMbr && !isFinishing)
         ) {
             val intent =
                 Intent(

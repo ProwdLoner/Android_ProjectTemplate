@@ -13,6 +13,24 @@ class CurrentLoginSessionInfoSpw(application: Application) {
         Context.MODE_PRIVATE
     )
 
+    // (autoLogin)
+    var isAutoLogin: Boolean
+        get() {
+            return spMbr.getBoolean(
+                "isAutoLogin",
+                false
+            )
+        }
+        set(value) {
+            with(spMbr.edit()) {
+                putBoolean(
+                    "isAutoLogin",
+                    value
+                )
+                apply()
+            }
+        }
+
     // (sessionToken)
     var sessionToken: String?
         get() {

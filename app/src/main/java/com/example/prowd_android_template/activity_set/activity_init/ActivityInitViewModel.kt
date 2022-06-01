@@ -105,8 +105,8 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
             checkAppVersionAsyncOnProgressedMbr = true
 
             if (checkAppVersionAsyncCompletedOnceMbr) { // 이전에 완료된 경우
-                onComplete(checkAppVersionAsyncResultMbr!!)
                 checkAppVersionAsyncOnProgressedMbr = false
+                onComplete(checkAppVersionAsyncResultMbr!!)
                 checkAppVersionAsyncSemaphoreMbr.release()
                 return@execute
             }
@@ -136,9 +136,9 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     || currVersionSplit[1].toInt() < minUpdateVersionSplit[1].toInt() // 중간 버전 확인
                                     || currVersionSplit[2].toInt() < minUpdateVersionSplit[2].toInt())
 
-                        onComplete(checkAppVersionAsyncResultMbr!!)
                         checkAppVersionAsyncCompletedOnceMbr = true
                         checkAppVersionAsyncOnProgressedMbr = false
+                        onComplete(checkAppVersionAsyncResultMbr!!)
                         checkAppVersionAsyncSemaphoreMbr.release()
                     }
                     else -> { // 정의된 응답 코드 외의 응답일 때 = 크래쉬를 발생
@@ -146,8 +146,8 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                     }
                 }
             } catch (t: Throwable) {
-                onError(t)
                 checkAppVersionAsyncOnProgressedMbr = false
+                onError(t)
                 checkAppVersionAsyncSemaphoreMbr.release()
             }
         }
@@ -173,30 +173,39 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
             checkLoginSessionAsyncOnProgressedMbr = true
 
             if (checkLoginSessionAsyncCompletedOnceMbr) { // 이전에 완료된 경우
-                onComplete(checkLoginSessionAsyncResultMbr!!)
                 checkLoginSessionAsyncOnProgressedMbr = false
+                onComplete(checkLoginSessionAsyncResultMbr!!)
+                checkLoginSessionAsyncSemaphoreMbr.release()
+
+                return@execute
+            }
+
+            // 오토 로그인 여부 확인
+            if (parameterVO.loginType == 0 ||
+                !parameterVO.isAutoLogin
+            ) {
+                // 오토 로그인 설정이 아닐 때, 혹은 비회원 설정일 때
+                // 현재 로그인 상태를 비회원 설정으로 전환
+
+                // 로그인 세션 변경
+                checkLoginSessionAsyncResultMbr =
+                    CheckLoginSessionResultVO(
+                        0,
+                        false,
+                        null,
+                        null,
+                        null,
+                        null
+                    )
+                checkLoginSessionAsyncCompletedOnceMbr = true
+                checkLoginSessionAsyncOnProgressedMbr = false
+                onComplete(checkLoginSessionAsyncResultMbr!!)
                 checkLoginSessionAsyncSemaphoreMbr.release()
 
                 return@execute
             }
 
             when (parameterVO.loginType) {
-                0 -> { // 비회원 상태
-                    // 로그인 세션 변경
-                    checkLoginSessionAsyncResultMbr =
-                        CheckLoginSessionResultVO(
-                            0,
-                            null,
-                            null,
-                            null,
-                            null
-                        )
-                    onComplete(checkLoginSessionAsyncResultMbr!!)
-                    checkLoginSessionAsyncCompletedOnceMbr = true
-                    checkLoginSessionAsyncOnProgressedMbr = false
-                    checkLoginSessionAsyncSemaphoreMbr.release()
-                }
-
                 1 -> { // 자체 서버 로그인 상태
                     // 로그인 요청 후 세션 토큰을 받아오기
                     try {
@@ -216,14 +225,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     checkLoginSessionAsyncResultMbr =
                                         CheckLoginSessionResultVO(
                                             1,
+                                            true,
                                             serverToken,
                                             serverUserNickname,
                                             parameterVO.serverId,
                                             parameterVO.serverPw
                                         )
-                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncCompletedOnceMbr = true
                                     checkLoginSessionAsyncOnProgressedMbr = false
+                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncSemaphoreMbr.release()
 
                                 } else { // 검증 실패
@@ -231,14 +241,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     checkLoginSessionAsyncResultMbr =
                                         CheckLoginSessionResultVO(
                                             0,
+                                            false,
                                             null,
                                             null,
                                             null,
                                             null
                                         )
-                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncCompletedOnceMbr = true
                                     checkLoginSessionAsyncOnProgressedMbr = false
+                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncSemaphoreMbr.release()
 
                                 }
@@ -248,8 +259,8 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                             }
                         }
                     } catch (t: Throwable) {
-                        onError(t)
                         checkLoginSessionAsyncOnProgressedMbr = false
+                        onError(t)
                         checkLoginSessionAsyncSemaphoreMbr.release()
                     }
                 }
@@ -272,14 +283,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     checkLoginSessionAsyncResultMbr =
                                         CheckLoginSessionResultVO(
                                             2,
+                                            true,
                                             serverToken,
                                             serverUserNickname,
                                             parameterVO.serverId,
                                             parameterVO.serverPw
                                         )
-                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncCompletedOnceMbr = true
                                     checkLoginSessionAsyncOnProgressedMbr = false
+                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncSemaphoreMbr.release()
 
                                 } else { // 검증 실패
@@ -287,14 +299,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     checkLoginSessionAsyncResultMbr =
                                         CheckLoginSessionResultVO(
                                             0,
+                                            false,
                                             null,
                                             null,
                                             null,
                                             null
                                         )
-                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncCompletedOnceMbr = true
                                     checkLoginSessionAsyncOnProgressedMbr = false
+                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncSemaphoreMbr.release()
 
                                 }
@@ -304,8 +317,8 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                             }
                         }
                     } catch (t: Throwable) {
-                        onError(t)
                         checkLoginSessionAsyncOnProgressedMbr = false
+                        onError(t)
                         checkLoginSessionAsyncSemaphoreMbr.release()
                     }
                 }
@@ -328,14 +341,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     checkLoginSessionAsyncResultMbr =
                                         CheckLoginSessionResultVO(
                                             3,
+                                            true,
                                             serverToken,
                                             serverUserNickname,
                                             parameterVO.serverId,
                                             parameterVO.serverPw
                                         )
-                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncCompletedOnceMbr = true
                                     checkLoginSessionAsyncOnProgressedMbr = false
+                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncSemaphoreMbr.release()
 
                                 } else { // 검증 실패
@@ -343,14 +357,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     checkLoginSessionAsyncResultMbr =
                                         CheckLoginSessionResultVO(
                                             0,
+                                            false,
                                             null,
                                             null,
                                             null,
                                             null
                                         )
-                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncCompletedOnceMbr = true
                                     checkLoginSessionAsyncOnProgressedMbr = false
+                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncSemaphoreMbr.release()
 
                                 }
@@ -384,14 +399,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     checkLoginSessionAsyncResultMbr =
                                         CheckLoginSessionResultVO(
                                             4,
+                                            true,
                                             serverToken,
                                             serverUserNickname,
                                             parameterVO.serverId,
                                             parameterVO.serverPw
                                         )
-                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncCompletedOnceMbr = true
                                     checkLoginSessionAsyncOnProgressedMbr = false
+                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncSemaphoreMbr.release()
 
                                 } else { // 검증 실패
@@ -399,14 +415,15 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                                     checkLoginSessionAsyncResultMbr =
                                         CheckLoginSessionResultVO(
                                             0,
+                                            false,
                                             null,
                                             null,
                                             null,
                                             null
                                         )
-                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncCompletedOnceMbr = true
                                     checkLoginSessionAsyncOnProgressedMbr = false
+                                    onComplete(checkLoginSessionAsyncResultMbr!!)
                                     checkLoginSessionAsyncSemaphoreMbr.release()
 
                                 }
@@ -416,8 +433,8 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
                             }
                         }
                     } catch (t: Throwable) {
-                        onError(t)
                         checkLoginSessionAsyncOnProgressedMbr = false
+                        onError(t)
                         checkLoginSessionAsyncSemaphoreMbr.release()
                     }
                 }
@@ -433,6 +450,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
     data class CheckLoginSessionParameterVO(
+        var isAutoLogin: Boolean,
         var loginType: Int,
         var serverId: String?,
         var serverPw: String?
@@ -440,6 +458,7 @@ class ActivityInitViewModel(application: Application) : AndroidViewModel(applica
 
     data class CheckLoginSessionResultVO(
         var loginType: Int,
+        var isAutoLogin: Boolean,
         var sessionToken: String?,
         var userNickName: String?,
         var userServerId: String?,
