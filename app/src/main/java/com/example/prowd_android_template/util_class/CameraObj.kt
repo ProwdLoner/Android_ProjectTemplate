@@ -1133,9 +1133,6 @@ class CameraObj private constructor(
 
         val isRecordAudio: Boolean,
 
-        // ex : CamcorderProfile.QUALITY_480P
-        val videoResolution: Int,
-
         val saveFile: File
     )
 

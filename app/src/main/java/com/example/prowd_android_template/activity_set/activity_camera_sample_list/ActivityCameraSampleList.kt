@@ -139,17 +139,6 @@ class ActivityCameraSampleList : AppCompatActivity() {
                 )
             startActivity(intent)
         }
-
-        // 기본 Camera2 api 동영상 촬용 샘플 이동 버튼
-        bindingMbr.goToBasicCamera2ApiVideoSampleBtn.setOnClickListener {
-            // 액티비티 이동
-//            val intent =
-//                Intent(
-//                    this,
-//                    ActivityBasicCamera2ApiRecordVideoSample::class.java
-//                )
-//            startActivity(intent)
-        }
     }
 
     // 라이브 데이터 설정
