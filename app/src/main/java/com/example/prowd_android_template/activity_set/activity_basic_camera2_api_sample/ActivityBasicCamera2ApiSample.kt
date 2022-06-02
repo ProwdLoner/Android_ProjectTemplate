@@ -464,7 +464,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         backCameraObjMbr?.createCameraSession(
                             onCaptureSessionCreated = { // 카메라 세션 생성 완료
                                 // 카메라 세션 실행
-                                backCameraObjMbr?.runCameraCaptureSession()
+                                backCameraObjMbr?.runCameraCaptureSession(
+                                    onError = {}
+                                )
 
                             },
                             onError = {

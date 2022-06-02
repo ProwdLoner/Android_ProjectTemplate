@@ -61,6 +61,7 @@ class CameraObj private constructor(
     // (스레드 풀)
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
+    // Camera2 api 핸들러 스레드
     private val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
         this.startHandlerThread()
     }
@@ -263,6 +264,7 @@ class CameraObj private constructor(
     // 여기서 만들어진 객체를 실제 카메라 디바이스를 정보화 했다고 생각하면 됨.
     private var cameraDeviceMbr: CameraDevice? = null
 
+    // todo : LOCK
     fun openCamera(
         onCameraDeviceReady: () -> Unit,
         onError: (Throwable) -> Unit
@@ -324,6 +326,7 @@ class CameraObj private constructor(
     private val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader").apply {
         this.startHandlerThread()
     }
+
     fun setImageReaderSurface(imageReaderConfigVo: ImageReaderConfigVo): ImageReaderInfoVo? {
         // 카메라 디바이스에서 지원되는 이미지 사이즈 리스트
         val cameraSizes =
@@ -642,113 +645,110 @@ class CameraObj private constructor(
         onCaptureSessionCreated: () -> Unit,
         onError: (Throwable) -> Unit
     ) {
-        executorServiceMbr?.execute {
-            if (null != cameraCaptureSessionMbr) {
-                // 현재 세션 생성/소멸 도중이거나 세션이 이미 만들어진 경우는 return
-                onCaptureSessionCreated()
-                return@execute
+        if (null != cameraCaptureSessionMbr) {
+            onCaptureSessionCreated()
+            return
+        }
+
+        // 필요 사항 준비 여부
+        if (null == cameraDeviceMbr) {
+            onError(RuntimeException("need to create cameraDevice before"))
+            return
+        } else if ((null == imageReaderMbr &&
+                    previewSurfaceListMbr.isEmpty() &&
+                    videoRecordMediaRecorderMbr == null)
+        ) {
+            onError(RuntimeException("need output Setup at least one"))
+            return
+        }
+
+        // api 28 이상 / 미만의 요청 방식이 다름
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
+            // 출력 설정 객체 리스트
+            val outputConfigurationList = ArrayList<OutputConfiguration>()
+
+            // 프리뷰 서페이스 주입
+            for (previewSurface in previewSurfaceListMbr) {
+                outputConfigurationList.add(OutputConfiguration(previewSurface))
             }
 
-            // 필요 사항 준비 여부 (cameraDevice 준비 및 서페이스 준비)
-            if (null == cameraDeviceMbr) {
-                onError(RuntimeException("need to create cameraDevice before"))
-                return@execute
-            } else if ((null == imageReaderMbr &&
-                        previewSurfaceListMbr.isEmpty() &&
-                        videoRecordMediaRecorderMbr == null)
-            ) {
-                onError(RuntimeException("need output Setup at least one"))
-                return@execute
-            }
-
-            // api 28 이상 / 미만의 요청 방식이 다름
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
-                // 출력 설정 객체 리스트
-                val outputConfigurationList = ArrayList<OutputConfiguration>()
-
-                // 프리뷰 서페이스 주입
-                for (previewSurface in previewSurfaceListMbr) {
-                    outputConfigurationList.add(OutputConfiguration(previewSurface))
-                }
-
-                // 이미지 리더 서페이스 주입
-                if (null != imageReaderMbr) {
-                    outputConfigurationList.add(
-                        OutputConfiguration(
-                            imageReaderMbr!!.surface
-                        )
+            // 이미지 리더 서페이스 주입
+            if (null != imageReaderMbr) {
+                outputConfigurationList.add(
+                    OutputConfiguration(
+                        imageReaderMbr!!.surface
                     )
-                }
-
-                if (null != videoRecordMediaRecorderMbr) {
-                    outputConfigurationList.add(
-                        OutputConfiguration(
-                            videoRecordMediaRecorderMbr!!.surface
-                        )
-                    )
-                }
-
-                // todo SESSION_REGULAR 고속모드
-                cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
-                    SessionConfiguration.SESSION_REGULAR,
-                    outputConfigurationList,
-                    HandlerExecutor(cameraHandlerThreadMbr.handler!!.looper),
-                    object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr = session
-
-                            onCaptureSessionCreated()
-                        }
-
-                        // 세션 생성 실패
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr?.close()
-                            cameraCaptureSessionMbr = null
-
-                            onError(RuntimeException("Create Camera Session Failed"))
-                        }
-                    }
-                ))
-            } else {
-                // api 28 미만
-                // 출력 서페이스 리스트
-                val surfaces = ArrayList<Surface>()
-
-                // 프리뷰 서페이스 주입
-                for (previewSurface in previewSurfaceListMbr) {
-                    surfaces.add(previewSurface)
-                }
-
-                // 이미지 리더 서페이스 주입
-                if (null != imageReaderMbr) {
-                    val surface = imageReaderMbr!!.surface
-                    surfaces.add(surface)
-                }
-
-                // 비디오 리코더 서페이스 주입
-                if (null != videoRecordMediaRecorderMbr) {
-                    val surface = videoRecordMediaRecorderMbr!!.surface
-                    surfaces.add(surface)
-                }
-
-                cameraDeviceMbr?.createCaptureSession(
-                    surfaces,
-                    object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr = session
-
-                            onCaptureSessionCreated()
-                        }
-
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr?.close()
-                            cameraCaptureSessionMbr = null
-
-                            onError(RuntimeException("Create Camera Session Failed"))
-                        }
-                    }, cameraHandlerThreadMbr.handler
                 )
             }
+
+            if (null != videoRecordMediaRecorderMbr) {
+                outputConfigurationList.add(
+                    OutputConfiguration(
+                        videoRecordMediaRecorderMbr!!.surface
+                    )
+                )
+            }
+
+            // todo SESSION_REGULAR 고속모드
+            cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR,
+                outputConfigurationList,
+                HandlerExecutor(cameraHandlerThreadMbr.handler!!.looper),
+                object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        cameraCaptureSessionMbr = session
+
+                        onCaptureSessionCreated()
+                    }
+
+                    // 세션 생성 실패
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        cameraCaptureSessionMbr?.close()
+                        cameraCaptureSessionMbr = null
+
+                        onError(RuntimeException("Create Camera Session Failed"))
+                    }
+                }
+            ))
+        } else {
+            // api 28 미만
+            // 출력 서페이스 리스트
+            val surfaces = ArrayList<Surface>()
+
+            // 프리뷰 서페이스 주입
+            for (previewSurface in previewSurfaceListMbr) {
+                surfaces.add(previewSurface)
+            }
+
+            // 이미지 리더 서페이스 주입
+            if (null != imageReaderMbr) {
+                val surface = imageReaderMbr!!.surface
+                surfaces.add(surface)
+            }
+
+            // 비디오 리코더 서페이스 주입
+            if (null != videoRecordMediaRecorderMbr) {
+                val surface = videoRecordMediaRecorderMbr!!.surface
+                surfaces.add(surface)
+            }
+
+            cameraDeviceMbr?.createCaptureSession(
+                surfaces,
+                object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        cameraCaptureSessionMbr = session
+
+                        onCaptureSessionCreated()
+                    }
+
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        cameraCaptureSessionMbr?.close()
+                        cameraCaptureSessionMbr = null
+
+                        onError(RuntimeException("Create Camera Session Failed"))
+                    }
+                }, cameraHandlerThreadMbr.handler
+            )
         }
     }
 
@@ -803,11 +803,12 @@ class CameraObj private constructor(
     }
 
     // 3. 카메라 세션 실행
-    fun runCameraCaptureSession() {
-        if (cameraCaptureSessionMbr == null ||
-            captureRequestBuilderMbr == null
-        ) {
-            // todo error
+    fun runCameraCaptureSession(onError: (Throwable) -> Unit) {
+        if (null == cameraCaptureSessionMbr) {
+            onError(RuntimeException("need to create cameraCaptureSession before"))
+            return
+        } else if (null == captureRequestBuilderMbr) {
+            onError(RuntimeException("need to create captureRequestBuilder before"))
             return
         }
 
