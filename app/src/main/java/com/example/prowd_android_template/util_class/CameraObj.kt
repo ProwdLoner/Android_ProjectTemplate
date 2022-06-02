@@ -259,12 +259,6 @@ class CameraObj private constructor(
     // 1. 카메라 디바이스 객체 생성
     // 카메라 조작용 객체를 생성하는 것으로, 이후 카메라 조작의 기본이 되는 작업.
     // 여기서 만들어진 객체를 실제 카메라 디바이스를 정보화 했다고 생각하면 됨.
-
-    private var openCameraOnProgressedMbr = false
-    private var openCameraOnProgressedSemaphoreMbr = Semaphore(1)
-
-    private val cameraDeviceChangingSemaphoreMbr = Semaphore(1)
-
     private val openCameraHandlerThreadMbr = HandlerThreadObj("openCamera")
     private var cameraDeviceMbr: CameraDevice? = null
 
@@ -272,29 +266,9 @@ class CameraObj private constructor(
         onCameraDeviceReady: () -> Unit,
         onError: (Throwable) -> Unit
     ) {
-        // 카메라가 열리는 도중에 중복 요청 금지
-        openCameraOnProgressedSemaphoreMbr.acquire()
-        if (openCameraOnProgressedMbr) {
-            openCameraOnProgressedSemaphoreMbr.release()
-            return
-        } else {
-            openCameraOnProgressedMbr = true
-            openCameraOnProgressedSemaphoreMbr.release()
-        }
-
         executorServiceMbr?.execute {
-            // 카메라 생성과 닫기 간의 뮤텍스
-            cameraDeviceChangingSemaphoreMbr.acquire()
-
             if (null != cameraDeviceMbr) {
-                // 디바이스가 이미 만들어진 경우는 return
-
-                openCameraOnProgressedSemaphoreMbr.acquire()
-                openCameraOnProgressedMbr = false
-                openCameraOnProgressedSemaphoreMbr.release()
-
-                cameraDeviceChangingSemaphoreMbr.release()
-
+                onCameraDeviceReady()
                 return@execute
             }
 
@@ -318,11 +292,6 @@ class CameraObj private constructor(
                             // 객체 저장
                             cameraDeviceMbr = camera
 
-                            openCameraOnProgressedSemaphoreMbr.acquire()
-                            openCameraOnProgressedMbr = false
-                            openCameraOnProgressedSemaphoreMbr.release()
-
-                            cameraDeviceChangingSemaphoreMbr.release()
                             onCameraDeviceReady()
                         }
 
@@ -331,12 +300,6 @@ class CameraObj private constructor(
                             camera.close()
                             cameraDeviceMbr = null
 
-                            openCameraOnProgressedSemaphoreMbr.acquire()
-                            openCameraOnProgressedMbr = false
-                            openCameraOnProgressedSemaphoreMbr.release()
-
-                            cameraDeviceChangingSemaphoreMbr.release()
-
                             onError(RuntimeException("Camera No Longer Available"))
                         }
 
@@ -344,55 +307,25 @@ class CameraObj private constructor(
                             camera.close()
                             cameraDeviceMbr = null
 
-                            openCameraOnProgressedSemaphoreMbr.acquire()
-                            openCameraOnProgressedMbr = false
-                            openCameraOnProgressedSemaphoreMbr.release()
-
-                            cameraDeviceChangingSemaphoreMbr.release()
-
                             onError(RuntimeException("Error Code : $error"))
                         }
                     }, openCameraHandlerThreadMbr.handler
                 )
-            }else{
+            } else {
                 onError(RuntimeException("Camera Permission Denied!"))
             }
         }
     }
 
-    private var closeCameraOnProgressedMbr = false
-    private var closeCameraOnProgressedSemaphoreMbr = Semaphore(1)
     fun closeCamera() {
-        // 중복 요청 금지
-        closeCameraOnProgressedSemaphoreMbr.acquire()
-        if (closeCameraOnProgressedMbr) {
-            closeCameraOnProgressedSemaphoreMbr.release()
-            return
-        } else {
-            closeCameraOnProgressedMbr = true
-            closeCameraOnProgressedSemaphoreMbr.release()
-        }
-
-        cameraDeviceChangingSemaphoreMbr.acquire()
-        if (null == cameraDeviceMbr) {
-            // 카메라 디바이스가 없는 경우는 return
-            cameraDeviceChangingSemaphoreMbr.release()
-            return
-        }
-
         cameraDeviceMbr?.close()
         cameraDeviceMbr = null
         openCameraHandlerThreadMbr.stopHandlerThread()
-
-        closeCameraOnProgressedSemaphoreMbr.acquire()
-        closeCameraOnProgressedMbr = false
-        closeCameraOnProgressedSemaphoreMbr.release()
-
-        cameraDeviceChangingSemaphoreMbr.release()
     }
 
 
     // 1. 이미지 리더 서페이스 생성
+    // 이미지 리더 스트림은 1개만 생성 가능
     // 완료시 이미지 리더 생성 정보 반환, 에러시 null 반환
     private var imageReaderMbr: ImageReader? = null
     private val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader")
@@ -441,6 +374,7 @@ class CameraObj private constructor(
     }
 
     // 1. 프리뷰 서페이스 생성
+    // 프리뷰 서페이스는 복수개 존재 가능
     // 반환값 : 설정된 프리뷰 정보 리스트. 에러시 null
     val previewSurfaceListMbr: ArrayList<Surface> = ArrayList()
     fun setPreviewSurfaceList(
@@ -634,9 +568,9 @@ class CameraObj private constructor(
         previewSurfaceListMbr.clear()
     }
 
-    // todo 동시 저장 확인
-    // todo 저장 사이즈는 프리뷰 크기 같은데, 확인할것
     // 1. 영상 저장 서페이스 생성
+    // 영상 저장 스트림은 한개만 생성 가능
+    // todo: 파라미터 확인
     private var videoRecordMediaRecorderMbr: MediaRecorder? = null
     fun setVideoRecordingSurface(videoRecorderConfigVo: VideoRecorderConfigVo): VideoRecorderInfoVO {
         val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -703,21 +637,16 @@ class CameraObj private constructor(
     }
 
     fun unSetVideoRecordingSurface() {
-        if (null != videoRecordMediaRecorderMbr) {
-            videoRecordMediaRecorderMbr!!.pause()
-            videoRecordMediaRecorderMbr!!.stop()
-            videoRecordMediaRecorderMbr!!.reset()
-            videoRecordMediaRecorderMbr!!.release()
-            videoRecordMediaRecorderMbr = null
-        }
+        videoRecordMediaRecorderMbr?.pause()
+        videoRecordMediaRecorderMbr?.stop()
+        videoRecordMediaRecorderMbr?.reset()
+        videoRecordMediaRecorderMbr?.release()
+        videoRecordMediaRecorderMbr = null
     }
 
 
     // 2. 카메라 세션 생성
     // 카메라 디바이스 및 출력 서페이스 필요
-    private var createCameraSessionOnProgressedMbr = false
-    private var createCameraSessionOnProgressedSemaphoreMbr = Semaphore(1)
-    private val cameraSessionChangingSemaphoreMbr = Semaphore(1)
     private val createCameraSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession")
     private var cameraCaptureSessionMbr: CameraCaptureSession? = null
 
@@ -725,47 +654,22 @@ class CameraObj private constructor(
         onCaptureSessionCreated: () -> Unit,
         onError: (Throwable) -> Unit
     ) {
-        createCameraSessionOnProgressedSemaphoreMbr.acquire()
-        if (createCameraSessionOnProgressedMbr) {
-            createCameraSessionOnProgressedSemaphoreMbr.release()
-            return
-        } else {
-            createCameraSessionOnProgressedMbr = true
-            createCameraSessionOnProgressedSemaphoreMbr.release()
-        }
-
         executorServiceMbr?.execute {
-            cameraSessionChangingSemaphoreMbr.acquire()
             if (null != cameraCaptureSessionMbr) {
                 // 현재 세션 생성/소멸 도중이거나 세션이 이미 만들어진 경우는 return
-
-                createCameraSessionOnProgressedSemaphoreMbr.acquire()
-                createCameraSessionOnProgressedMbr = false
-                createCameraSessionOnProgressedSemaphoreMbr.release()
-
-                cameraSessionChangingSemaphoreMbr.release()
+                onCaptureSessionCreated()
                 return@execute
             }
 
             // 필요 사항 준비 여부 (cameraDevice 준비 및 서페이스 준비)
             if (null == cameraDeviceMbr) {
-                createCameraSessionOnProgressedSemaphoreMbr.acquire()
-                createCameraSessionOnProgressedMbr = false
-                createCameraSessionOnProgressedSemaphoreMbr.release()
-
-                cameraSessionChangingSemaphoreMbr.release()
-                onError(RuntimeException("카메라 조작 준비가 필요합니다."))
+                onError(RuntimeException("need to create cameraDevice before"))
                 return@execute
             } else if ((null == imageReaderMbr &&
                         previewSurfaceListMbr.isEmpty() &&
                         videoRecordMediaRecorderMbr == null)
             ) {
-                createCameraSessionOnProgressedSemaphoreMbr.acquire()
-                createCameraSessionOnProgressedMbr = false
-                createCameraSessionOnProgressedSemaphoreMbr.release()
-
-                cameraSessionChangingSemaphoreMbr.release()
-                onError(RuntimeException("적어도 하나의 출력 설정이 필요합니다."))
+                onError(RuntimeException("need output Setup at least one"))
                 return@execute
             }
 
@@ -810,12 +714,6 @@ class CameraObj private constructor(
                         override fun onConfigured(session: CameraCaptureSession) {
                             cameraCaptureSessionMbr = session
 
-                            createCameraSessionOnProgressedSemaphoreMbr.acquire()
-                            createCameraSessionOnProgressedMbr = false
-                            createCameraSessionOnProgressedSemaphoreMbr.release()
-
-                            cameraSessionChangingSemaphoreMbr.release()
-
                             onCaptureSessionCreated()
                         }
 
@@ -823,12 +721,6 @@ class CameraObj private constructor(
                         override fun onConfigureFailed(session: CameraCaptureSession) {
                             cameraCaptureSessionMbr?.close()
                             cameraCaptureSessionMbr = null
-
-                            createCameraSessionOnProgressedSemaphoreMbr.acquire()
-                            createCameraSessionOnProgressedMbr = false
-                            createCameraSessionOnProgressedSemaphoreMbr.release()
-
-                            cameraSessionChangingSemaphoreMbr.release()
 
                             onError(RuntimeException("Create Camera Session Failed"))
                         }
@@ -862,23 +754,12 @@ class CameraObj private constructor(
                         override fun onConfigured(session: CameraCaptureSession) {
                             cameraCaptureSessionMbr = session
 
-                            createCameraSessionOnProgressedSemaphoreMbr.acquire()
-                            createCameraSessionOnProgressedMbr = false
-                            createCameraSessionOnProgressedSemaphoreMbr.release()
-
-                            cameraSessionChangingSemaphoreMbr.release()
                             onCaptureSessionCreated()
                         }
 
                         override fun onConfigureFailed(session: CameraCaptureSession) {
                             cameraCaptureSessionMbr?.close()
                             cameraCaptureSessionMbr = null
-
-                            createCameraSessionOnProgressedSemaphoreMbr.acquire()
-                            createCameraSessionOnProgressedMbr = false
-                            createCameraSessionOnProgressedSemaphoreMbr.release()
-
-                            cameraSessionChangingSemaphoreMbr.release()
 
                             onError(RuntimeException("Create Camera Session Failed"))
                         }
@@ -889,18 +770,9 @@ class CameraObj private constructor(
     }
 
     fun deleteCameraSession() {
-        cameraSessionChangingSemaphoreMbr.acquire()
-        if (null == cameraCaptureSessionMbr) {
-            // 현재 세션 생성/소멸 도중이거나 세션이 비어있는 경우는 return
-            cameraSessionChangingSemaphoreMbr.release()
-            return
-        }
-
         cameraCaptureSessionMbr?.close()
         cameraCaptureSessionMbr = null
         createCameraSessionHandlerThreadMbr.stopHandlerThread()
-
-        cameraSessionChangingSemaphoreMbr.release()
     }
 
     // 2. 카메라 세션 리퀘스트 빌더 생성
@@ -949,21 +821,14 @@ class CameraObj private constructor(
     }
 
     // 3. 카메라 세션 실행
-    private val runCameraCaptureSessionSemaphoreMbr = Semaphore(1)
     private val runCameraCaptureSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession")
-    private var isCameraSessionRunMbr = false
     fun runCameraCaptureSession() {
-        runCameraCaptureSessionSemaphoreMbr.acquire()
-
-        if (isCameraSessionRunMbr ||
-            cameraCaptureSessionMbr == null ||
+        if (cameraCaptureSessionMbr == null ||
             captureRequestBuilderMbr == null
         ) {
-            runCameraCaptureSessionSemaphoreMbr.release()
+            // todo error
             return
         }
-
-        isCameraSessionRunMbr = true
 
         if (!runCameraCaptureSessionHandlerThreadMbr.isThreadObjAlive()) {
             // 카메라 사용 스레드가 아직 실행되지 않았을 때
@@ -975,16 +840,11 @@ class CameraObj private constructor(
             object : CameraCaptureSession.CaptureCallback() {},
             runCameraCaptureSessionHandlerThreadMbr.handler
         )
-
-        runCameraCaptureSessionSemaphoreMbr.release()
     }
 
     fun stopCameraCaptureSession() {
-        runCameraCaptureSessionSemaphoreMbr.acquire()
         cameraCaptureSessionMbr?.stopRepeating()
         runCameraCaptureSessionHandlerThreadMbr.stopHandlerThread()
-        isCameraSessionRunMbr = false
-        runCameraCaptureSessionSemaphoreMbr.release()
     }
 
     // 카메라와 폰 디바이스 width height 개념이 같은지 여부(90도 회전되었다면 width, height 가 서로 바뀜)
