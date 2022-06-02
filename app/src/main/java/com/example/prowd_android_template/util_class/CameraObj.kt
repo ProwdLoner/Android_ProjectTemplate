@@ -20,14 +20,12 @@ import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
 import android.view.TextureView
-import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.Semaphore
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -62,6 +60,10 @@ class CameraObj private constructor(
 
     // (스레드 풀)
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
+
+    private val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
+        this.startHandlerThread()
+    }
 
 
     // ---------------------------------------------------------------------------------------------
@@ -259,9 +261,6 @@ class CameraObj private constructor(
     // 1. 카메라 디바이스 객체 생성
     // 카메라 조작용 객체를 생성하는 것으로, 이후 카메라 조작의 기본이 되는 작업.
     // 여기서 만들어진 객체를 실제 카메라 디바이스를 정보화 했다고 생각하면 됨.
-    private val openCameraHandlerThreadMbr = HandlerThreadObj("openCamera").apply {
-        this.startHandlerThread()
-    }
     private var cameraDeviceMbr: CameraDevice? = null
 
     fun openCamera(
@@ -305,7 +304,7 @@ class CameraObj private constructor(
 
                         onError(RuntimeException("Error Code : $error"))
                     }
-                }, openCameraHandlerThreadMbr.handler
+                }, cameraHandlerThreadMbr.handler
             )
         } else {
             onError(RuntimeException("Camera Permission Denied!"))
@@ -637,9 +636,6 @@ class CameraObj private constructor(
 
     // 2. 카메라 세션 생성
     // 카메라 디바이스 및 출력 서페이스 필요
-    private val createCameraSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession").apply {
-        this.startHandlerThread()
-    }
     private var cameraCaptureSessionMbr: CameraCaptureSession? = null
 
     fun createCameraSession(
@@ -696,7 +692,7 @@ class CameraObj private constructor(
                 cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
                     SessionConfiguration.SESSION_REGULAR,
                     outputConfigurationList,
-                    HandlerExecutor(createCameraSessionHandlerThreadMbr.handler!!.looper),
+                    HandlerExecutor(cameraHandlerThreadMbr.handler!!.looper),
                     object : CameraCaptureSession.StateCallback() {
                         override fun onConfigured(session: CameraCaptureSession) {
                             cameraCaptureSessionMbr = session
@@ -750,7 +746,7 @@ class CameraObj private constructor(
 
                             onError(RuntimeException("Create Camera Session Failed"))
                         }
-                    }, createCameraSessionHandlerThreadMbr.handler
+                    }, cameraHandlerThreadMbr.handler
                 )
             }
         }
@@ -807,9 +803,6 @@ class CameraObj private constructor(
     }
 
     // 3. 카메라 세션 실행
-    private val runCameraCaptureSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession").apply {
-        this.startHandlerThread()
-    }
     fun runCameraCaptureSession() {
         if (cameraCaptureSessionMbr == null ||
             captureRequestBuilderMbr == null
@@ -821,7 +814,7 @@ class CameraObj private constructor(
         cameraCaptureSessionMbr!!.setRepeatingRequest(
             captureRequestBuilderMbr!!.build(),
             object : CameraCaptureSession.CaptureCallback() {},
-            runCameraCaptureSessionHandlerThreadMbr.handler
+            cameraHandlerThreadMbr.handler
         )
     }
 
