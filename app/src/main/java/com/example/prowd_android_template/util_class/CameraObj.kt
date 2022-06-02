@@ -72,7 +72,7 @@ class CameraObj private constructor(
     // ---------------------------------------------------------------------------------------------
     // <스태틱 메소드 공간>
     companion object {
-        // (카메라 리스트 반환)
+        // (가용 카메라 리스트 반환)
         fun getCameraInfoList(parentActivity: Activity): ArrayList<CameraInfo> {
             val cameraInfoList: ArrayList<CameraInfo> = ArrayList()
 
