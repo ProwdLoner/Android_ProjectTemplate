@@ -3,6 +3,7 @@ package com.example.prowd_android_template.util_class
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.ImageFormat
 import android.graphics.Matrix
@@ -20,6 +21,7 @@ import android.util.SparseIntArray
 import android.view.Surface
 import android.view.TextureView
 import androidx.annotation.RequiresPermission
+import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.io.File
@@ -266,7 +268,6 @@ class CameraObj private constructor(
     private val openCameraHandlerThreadMbr = HandlerThreadObj("openCamera")
     private var cameraDeviceMbr: CameraDevice? = null
 
-    @RequiresPermission(Manifest.permission.CAMERA)
     fun openCamera(
         onCameraDeviceReady: () -> Unit,
         onError: (Throwable) -> Unit
@@ -303,51 +304,59 @@ class CameraObj private constructor(
             }
 
             // cameraDevice open 요청
-            cameraManagerMbr.openCamera(
-                cameraIdMbr,
-                object : CameraDevice.StateCallback() {
-                    // 카메라 디바이스 연결
-                    override fun onOpened(camera: CameraDevice) {
-                        // cameraDevice 가 열리면,
-                        // 객체 저장
-                        cameraDeviceMbr = camera
+            if (ActivityCompat.checkSelfPermission(
+                    parentActivityMbr,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                cameraManagerMbr.openCamera(
+                    cameraIdMbr,
+                    object : CameraDevice.StateCallback() {
+                        // 카메라 디바이스 연결
+                        override fun onOpened(camera: CameraDevice) {
+                            // cameraDevice 가 열리면,
+                            // 객체 저장
+                            cameraDeviceMbr = camera
 
-                        openCameraOnProgressedSemaphoreMbr.acquire()
-                        openCameraOnProgressedMbr = false
-                        openCameraOnProgressedSemaphoreMbr.release()
+                            openCameraOnProgressedSemaphoreMbr.acquire()
+                            openCameraOnProgressedMbr = false
+                            openCameraOnProgressedSemaphoreMbr.release()
 
-                        cameraDeviceChangingSemaphoreMbr.release()
-                        onCameraDeviceReady()
-                    }
+                            cameraDeviceChangingSemaphoreMbr.release()
+                            onCameraDeviceReady()
+                        }
 
-                    // 카메라 디바이스 연결 끊김
-                    override fun onDisconnected(camera: CameraDevice) {
-                        camera.close()
-                        cameraDeviceMbr = null
+                        // 카메라 디바이스 연결 끊김
+                        override fun onDisconnected(camera: CameraDevice) {
+                            camera.close()
+                            cameraDeviceMbr = null
 
-                        openCameraOnProgressedSemaphoreMbr.acquire()
-                        openCameraOnProgressedMbr = false
-                        openCameraOnProgressedSemaphoreMbr.release()
+                            openCameraOnProgressedSemaphoreMbr.acquire()
+                            openCameraOnProgressedMbr = false
+                            openCameraOnProgressedSemaphoreMbr.release()
 
-                        cameraDeviceChangingSemaphoreMbr.release()
+                            cameraDeviceChangingSemaphoreMbr.release()
 
-                        onError(RuntimeException("Camera No Longer Available"))
-                    }
+                            onError(RuntimeException("Camera No Longer Available"))
+                        }
 
-                    override fun onError(camera: CameraDevice, error: Int) {
-                        camera.close()
-                        cameraDeviceMbr = null
+                        override fun onError(camera: CameraDevice, error: Int) {
+                            camera.close()
+                            cameraDeviceMbr = null
 
-                        openCameraOnProgressedSemaphoreMbr.acquire()
-                        openCameraOnProgressedMbr = false
-                        openCameraOnProgressedSemaphoreMbr.release()
+                            openCameraOnProgressedSemaphoreMbr.acquire()
+                            openCameraOnProgressedMbr = false
+                            openCameraOnProgressedSemaphoreMbr.release()
 
-                        cameraDeviceChangingSemaphoreMbr.release()
+                            cameraDeviceChangingSemaphoreMbr.release()
 
-                        onError(RuntimeException("Error Code : $error"))
-                    }
-                }, openCameraHandlerThreadMbr.handler
-            )
+                            onError(RuntimeException("Error Code : $error"))
+                        }
+                    }, openCameraHandlerThreadMbr.handler
+                )
+            }else{
+                onError(RuntimeException("Camera Permission Denied!"))
+            }
         }
     }
 

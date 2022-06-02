@@ -25,7 +25,6 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
-import com.example.prowd_android_template.util_class.LogObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 
@@ -350,7 +349,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
             resultLauncherCallbackMbr = null
         }
-
     }
 
     // viewModel 저장용 데이터 초기화
@@ -425,106 +423,86 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 카메라 실행
         isImageProcessingPause = false
 
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        ) { // 권한 승인 상태
-            // (카메라 실행)
-            // 카메라 생성
-            backCameraObjMbr?.openCamera(
-                onCameraDeviceReady = {
-                    // (서페이스 생성)
-                    // 이미지 리더 생성 (비율 상관 없이 지원되는 가장 큰 사이즈 이미지를 사용)
-                    val imageReaderInfoVo = backCameraObjMbr?.setImageReaderSurface(
-                        CameraObj.ImageReaderConfigVo(
-                            Long.MAX_VALUE,
-                            0f,
-                            imageReaderCallback = { reader ->
-                                processImage(reader)
+        // (카메라 실행)
+        // 카메라 생성
+        backCameraObjMbr?.openCamera(
+            onCameraDeviceReady = {
+                // (서페이스 생성)
+                // 이미지 리더 생성 (비율 상관 없이 지원되는 가장 큰 사이즈 이미지를 사용)
+                val imageReaderInfoVo = backCameraObjMbr?.setImageReaderSurface(
+                    CameraObj.ImageReaderConfigVo(
+                        Long.MAX_VALUE,
+                        0f,
+                        imageReaderCallback = { reader ->
+                            processImage(reader)
+                        }
+                    )
+                )
+
+                // 프리뷰를 이미지 리더 비율과 맞추기
+                val imgWhRatio =
+                    if (backCameraObjMbr!!.isCameraAndScreenWidthHeightDifferent()) {
+                        imageReaderInfoVo!!.chosenSize.height / imageReaderInfoVo.chosenSize.width.toFloat()
+                    } else {
+                        imageReaderInfoVo!!.chosenSize.width / imageReaderInfoVo.chosenSize.height.toFloat()
+                    }
+
+                // 프리뷰 생성
+                backCameraObjMbr?.setPreviewSurfaceList(
+                    arrayListOf(
+                        CameraObj.PreviewConfigVo(
+                            imgWhRatio,
+                            bindingMbr.cameraPreviewAutoFitTexture
+                        )
+                    ),
+                    onPreviewSurfaceReady = { // 프리뷰 서페이스 준비 완료
+
+                        // 카메라 세션 리퀘스트 빌더 생성
+                        backCameraObjMbr?.createCameraCaptureRequest()
+
+                        // 카메라 세션 생성
+                        backCameraObjMbr?.createCameraSession(
+                            onCaptureSessionCreated = { // 카메라 세션 생성 완료
+                                // 카메라 세션 실행
+                                backCameraObjMbr?.runCameraCaptureSession()
+
+                            },
+                            onError = {
+                                // 세션 생성 실패
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "카메라 동작 에러",
+                                        "카메라 세션 생성에 실패했습니다.\n카메라를 종료합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            finish()
+                                        },
+                                        onCanceled = {
+                                            finish()
+                                        }
+                                    )
                             }
                         )
-                    )
-
-                    // 프리뷰를 이미지 리더 비율과 맞추기
-                    val imgWhRatio =
-                        if (backCameraObjMbr!!.isCameraAndScreenWidthHeightDifferent()) {
-                            imageReaderInfoVo!!.chosenSize.height / imageReaderInfoVo.chosenSize.width.toFloat()
-                        } else {
-                            imageReaderInfoVo!!.chosenSize.width / imageReaderInfoVo.chosenSize.height.toFloat()
-                        }
-
-                    // 프리뷰 생성
-                    backCameraObjMbr?.setPreviewSurfaceList(
-                        arrayListOf(
-                            CameraObj.PreviewConfigVo(
-                                imgWhRatio,
-                                bindingMbr.cameraPreviewAutoFitTexture
-                            )
-                        ),
-                        onPreviewSurfaceReady = { // 프리뷰 서페이스 준비 완료
-
-                            // 카메라 세션 리퀘스트 빌더 생성
-                            backCameraObjMbr?.createCameraCaptureRequest()
-
-                            // 카메라 세션 생성
-                            backCameraObjMbr?.createCameraSession(
-                                onCaptureSessionCreated = { // 카메라 세션 생성 완료
-                                    // 카메라 세션 실행
-                                    backCameraObjMbr?.runCameraCaptureSession()
-
-                                },
-                                onError = {
-                                    // 세션 생성 실패
-                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                        DialogConfirm.DialogInfoVO(
-                                            true,
-                                            "카메라 동작 에러",
-                                            "카메라 세션 생성에 실패했습니다.\n카메라를 종료합니다.",
-                                            null,
-                                            onCheckBtnClicked = {
-                                                finish()
-                                            },
-                                            onCanceled = {
-                                                finish()
-                                            }
-                                        )
-                                }
-                            )
-                        }
-                    )
-                },
-                onError = {
-                    // 디바이스 생성 실패
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                        true,
-                        "카메라 동작 에러",
-                        "카메라 조작 객체 생성에 실패했습니다.\n카메라를 종료합니다.",
-                        null,
-                        onCheckBtnClicked = {
-                            finish()
-                        },
-                        onCanceled = {
-                            finish()
-                        }
-                    )
-                }
-            )
-        } else { // 권한 비승인 상태
-            // 권한 필요 다이얼로그 보여주고 뒤로가기 (원래 권한이 없으면 진입이 불가하지만 보험용)
-            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                true,
-                "카메라 권한 필요",
-                "카메라 권한 승인이 필요합니다.\n카메라를 종료합니다.",
-                null,
-                onCheckBtnClicked = {
-                    finish()
-                },
-                onCanceled = {
-                    finish()
-                }
-            )
-        }
+                    }
+                )
+            },
+            onError = {
+                // 디바이스 생성 실패
+                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                    true,
+                    "카메라 동작 에러",
+                    "카메라 조작 객체 생성에 실패했습니다.\n카메라를 종료합니다.",
+                    null,
+                    onCheckBtnClicked = {
+                        finish()
+                    },
+                    onCanceled = {
+                        finish()
+                    }
+                )
+            }
+        )
 
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
