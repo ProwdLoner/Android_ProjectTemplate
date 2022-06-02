@@ -320,6 +320,10 @@ class CameraObj private constructor(
         cameraDeviceMbr = null
     }
 
+    // 1. 카메라 출력 비율 설정
+    // 원하는 이미지 비율
+    // width / height
+    var cameraOutputSurfaceWhRatio: Float = 1f
 
     // 1. 이미지 리더 서페이스 생성
     // 이미지 리더 스트림은 1개만 생성 가능
@@ -339,7 +343,7 @@ class CameraObj private constructor(
             val chosenImageReaderSize = chooseCameraSize(
                 cameraSizes,
                 imageReaderConfigVo.preferredImageReaderArea,
-                imageReaderConfigVo.preferredImageReaderWHRatio
+                cameraOutputSurfaceWhRatio
             )
 
             val imageReader = ImageReader.newInstance(
@@ -406,18 +410,10 @@ class CameraObj private constructor(
                 parentActivityMbr.resources.displayMetrics.widthPixels.toLong() *
                         parentActivityMbr.resources.displayMetrics.heightPixels.toLong()
 
-            val preferredPreviewWHRatio: Float =
-                if (previewConfigVo.preferredImageReaderWHRatio == -1f) {
-                    (parentActivityMbr.resources.displayMetrics.widthPixels.toFloat() /
-                            parentActivityMbr.resources.displayMetrics.heightPixels.toFloat())
-                } else {
-                    previewConfigVo.preferredImageReaderWHRatio
-                }
-
             chosenPreviewSize = chooseCameraSize(
                 cameraSizes,
                 preferredPreviewArea,
-                preferredPreviewWHRatio
+                cameraOutputSurfaceWhRatio
             )
 
             if (cameraPreview.isAvailable) {
@@ -589,7 +585,7 @@ class CameraObj private constructor(
         val chosenVideoSize = chooseCameraSize(
             cameraSizes,
             videoRecorderConfigVo.preferredImageReaderArea,
-            videoRecorderConfigVo.preferredImageReaderWHRatio
+            cameraOutputSurfaceWhRatio
         )
         mediaRecorder.setVideoSize(chosenVideoSize.width, chosenVideoSize.height)
 
@@ -1112,11 +1108,6 @@ class CameraObj private constructor(
         // 0L 이하면 최소, Long.MAX_VALUE 이면 최대
         val preferredImageReaderArea: Long,
 
-        // 원하는 이미지 비율
-        // width / height
-        // 0 이하 값이 있으면 비율은 생각치 않음
-        val preferredImageReaderWHRatio: Float,
-
         val imageReaderCallback: ImageReader.OnImageAvailableListener
     )
 
@@ -1125,11 +1116,6 @@ class CameraObj private constructor(
     )
 
     data class PreviewConfigVo(
-        // 원하는 이미지 비율
-        // width / height
-        // 0 이라면 비율은 생각치 않음, -1 이라면 디바이스 스크린 크기와 동일
-        val preferredImageReaderWHRatio: Float,
-
         val autoFitTextureView: AutoFitTextureView
     )
 
@@ -1144,11 +1130,6 @@ class CameraObj private constructor(
         // width * height
         // 0L 이하면 최소, Long.MAX_VALUE 이면 최대
         val preferredImageReaderArea: Long,
-
-        // 원하는 이미지 비율
-        // width / height
-        // 0 이하 값이 있으면 비율은 생각치 않음
-        val preferredImageReaderWHRatio: Float,
 
         val isRecordAudio: Boolean,
 

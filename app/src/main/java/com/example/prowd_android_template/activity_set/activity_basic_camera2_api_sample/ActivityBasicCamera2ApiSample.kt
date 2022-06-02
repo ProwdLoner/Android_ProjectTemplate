@@ -428,30 +428,23 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         backCameraObjMbr?.openCamera(
             onCameraDeviceReady = {
                 // (서페이스 생성)
-                // 이미지 리더 생성 (비율 상관 없이 지원되는 가장 큰 사이즈 이미지를 사용)
+                // 서페이스 비율 설정
+                backCameraObjMbr?.cameraOutputSurfaceWhRatio = 2f / 3f
+
+                // 이미지 리더 생성
                 val imageReaderInfoVo = backCameraObjMbr?.setImageReaderSurface(
                     CameraObj.ImageReaderConfigVo(
-                        Long.MAX_VALUE,
-                        0f,
+                        600 * 600,
                         imageReaderCallback = { reader ->
                             processImage(reader)
                         }
                     )
                 )
 
-                // 프리뷰를 이미지 리더 비율과 맞추기
-                val imgWhRatio =
-                    if (backCameraObjMbr!!.isCameraAndScreenWidthHeightDifferent()) {
-                        imageReaderInfoVo!!.chosenSize.height / imageReaderInfoVo.chosenSize.width.toFloat()
-                    } else {
-                        imageReaderInfoVo!!.chosenSize.width / imageReaderInfoVo.chosenSize.height.toFloat()
-                    }
-
                 // 프리뷰 생성
                 backCameraObjMbr?.setPreviewSurfaceList(
                     arrayListOf(
                         CameraObj.PreviewConfigVo(
-                            imgWhRatio,
                             bindingMbr.cameraPreviewAutoFitTexture
                         )
                     ),
