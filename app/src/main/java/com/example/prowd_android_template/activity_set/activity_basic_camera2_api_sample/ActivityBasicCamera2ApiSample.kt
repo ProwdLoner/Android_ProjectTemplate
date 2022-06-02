@@ -526,7 +526,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     private var isImageProcessingPause = false
     private fun processImage(reader: ImageReader) {
         try {
-            val imageObj: Image = reader.acquireLatestImage()
+            val imageObj: Image = reader.acquireLatestImage() ?: return
 
             // yuv ByteArray 를 rgb Bitmap 으로 변환 (병렬처리)
             // 반환되는 비트맵 이미지는 카메라 센서 방향에 따라 정방향이 아닐 수 있음.

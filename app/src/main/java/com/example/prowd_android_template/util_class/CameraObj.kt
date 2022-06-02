@@ -344,7 +344,7 @@ class CameraObj private constructor(
                 chosenImageReaderSize.width,
                 chosenImageReaderSize.height,
                 ImageFormat.YUV_420_888,
-                1
+                2
             ).apply {
                 setOnImageAvailableListener(
                     imageReaderConfigVo.imageReaderCallback,
