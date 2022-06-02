@@ -259,68 +259,62 @@ class CameraObj private constructor(
     // 1. 카메라 디바이스 객체 생성
     // 카메라 조작용 객체를 생성하는 것으로, 이후 카메라 조작의 기본이 되는 작업.
     // 여기서 만들어진 객체를 실제 카메라 디바이스를 정보화 했다고 생각하면 됨.
-    private val openCameraHandlerThreadMbr = HandlerThreadObj("openCamera")
+    private val openCameraHandlerThreadMbr = HandlerThreadObj("openCamera").apply {
+        this.startHandlerThread()
+    }
     private var cameraDeviceMbr: CameraDevice? = null
 
     fun openCamera(
         onCameraDeviceReady: () -> Unit,
         onError: (Throwable) -> Unit
     ) {
-        executorServiceMbr?.execute {
-            if (null != cameraDeviceMbr) {
-                onCameraDeviceReady()
-                return@execute
-            }
+        if (null != cameraDeviceMbr) {
+            onCameraDeviceReady()
+            return
+        }
 
-            if (!openCameraHandlerThreadMbr.isThreadObjAlive()) {
-                // 카메라 사용 스레드가 아직 실행되지 않았을 때
-                openCameraHandlerThreadMbr.startHandlerThread()
-            }
+        // cameraDevice open 요청
+        if (ActivityCompat.checkSelfPermission(
+                parentActivityMbr,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            cameraManagerMbr.openCamera(
+                cameraIdMbr,
+                object : CameraDevice.StateCallback() {
+                    // 카메라 디바이스 연결
+                    override fun onOpened(camera: CameraDevice) {
+                        // cameraDevice 가 열리면,
+                        // 객체 저장
+                        cameraDeviceMbr = camera
 
-            // cameraDevice open 요청
-            if (ActivityCompat.checkSelfPermission(
-                    parentActivityMbr,
-                    Manifest.permission.CAMERA
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                cameraManagerMbr.openCamera(
-                    cameraIdMbr,
-                    object : CameraDevice.StateCallback() {
-                        // 카메라 디바이스 연결
-                        override fun onOpened(camera: CameraDevice) {
-                            // cameraDevice 가 열리면,
-                            // 객체 저장
-                            cameraDeviceMbr = camera
+                        onCameraDeviceReady()
+                    }
 
-                            onCameraDeviceReady()
-                        }
+                    // 카메라 디바이스 연결 끊김
+                    override fun onDisconnected(camera: CameraDevice) {
+                        camera.close()
+                        cameraDeviceMbr = null
 
-                        // 카메라 디바이스 연결 끊김
-                        override fun onDisconnected(camera: CameraDevice) {
-                            camera.close()
-                            cameraDeviceMbr = null
+                        onError(RuntimeException("Camera No Longer Available"))
+                    }
 
-                            onError(RuntimeException("Camera No Longer Available"))
-                        }
+                    override fun onError(camera: CameraDevice, error: Int) {
+                        camera.close()
+                        cameraDeviceMbr = null
 
-                        override fun onError(camera: CameraDevice, error: Int) {
-                            camera.close()
-                            cameraDeviceMbr = null
-
-                            onError(RuntimeException("Error Code : $error"))
-                        }
-                    }, openCameraHandlerThreadMbr.handler
-                )
-            } else {
-                onError(RuntimeException("Camera Permission Denied!"))
-            }
+                        onError(RuntimeException("Error Code : $error"))
+                    }
+                }, openCameraHandlerThreadMbr.handler
+            )
+        } else {
+            onError(RuntimeException("Camera Permission Denied!"))
         }
     }
 
     fun closeCamera() {
         cameraDeviceMbr?.close()
         cameraDeviceMbr = null
-        openCameraHandlerThreadMbr.stopHandlerThread()
     }
 
 
@@ -328,13 +322,10 @@ class CameraObj private constructor(
     // 이미지 리더 스트림은 1개만 생성 가능
     // 완료시 이미지 리더 생성 정보 반환, 에러시 null 반환
     private var imageReaderMbr: ImageReader? = null
-    private val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader")
+    private val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader").apply {
+        this.startHandlerThread()
+    }
     fun setImageReaderSurface(imageReaderConfigVo: ImageReaderConfigVo): ImageReaderInfoVo? {
-        if (!imageReaderHandlerThreadMbr.isThreadObjAlive()) {
-            // 카메라 사용 스레드가 아직 실행되지 않았을 때
-            imageReaderHandlerThreadMbr.startHandlerThread()
-        }
-
         // 카메라 디바이스에서 지원되는 이미지 사이즈 리스트
         val cameraSizes =
             streamConfigurationMapMbr.getOutputSizes(ImageFormat.YUV_420_888)
@@ -370,7 +361,6 @@ class CameraObj private constructor(
     fun unSetImageReaderSurface() {
         imageReaderMbr?.close()
         imageReaderMbr = null
-        imageReaderHandlerThreadMbr.stopHandlerThread()
     }
 
     // 1. 프리뷰 서페이스 생성
@@ -647,7 +637,9 @@ class CameraObj private constructor(
 
     // 2. 카메라 세션 생성
     // 카메라 디바이스 및 출력 서페이스 필요
-    private val createCameraSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession")
+    private val createCameraSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession").apply {
+        this.startHandlerThread()
+    }
     private var cameraCaptureSessionMbr: CameraCaptureSession? = null
 
     fun createCameraSession(
@@ -671,11 +663,6 @@ class CameraObj private constructor(
             ) {
                 onError(RuntimeException("need output Setup at least one"))
                 return@execute
-            }
-
-            // 세션 실행용 스레드 생성
-            if (!createCameraSessionHandlerThreadMbr.isThreadObjAlive()) {
-                createCameraSessionHandlerThreadMbr.startHandlerThread()
             }
 
             // api 28 이상 / 미만의 요청 방식이 다름
@@ -772,7 +759,6 @@ class CameraObj private constructor(
     fun deleteCameraSession() {
         cameraCaptureSessionMbr?.close()
         cameraCaptureSessionMbr = null
-        createCameraSessionHandlerThreadMbr.stopHandlerThread()
     }
 
     // 2. 카메라 세션 리퀘스트 빌더 생성
@@ -821,18 +807,15 @@ class CameraObj private constructor(
     }
 
     // 3. 카메라 세션 실행
-    private val runCameraCaptureSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession")
+    private val runCameraCaptureSessionHandlerThreadMbr = HandlerThreadObj("createCameraSession").apply {
+        this.startHandlerThread()
+    }
     fun runCameraCaptureSession() {
         if (cameraCaptureSessionMbr == null ||
             captureRequestBuilderMbr == null
         ) {
             // todo error
             return
-        }
-
-        if (!runCameraCaptureSessionHandlerThreadMbr.isThreadObjAlive()) {
-            // 카메라 사용 스레드가 아직 실행되지 않았을 때
-            runCameraCaptureSessionHandlerThreadMbr.startHandlerThread()
         }
 
         cameraCaptureSessionMbr!!.setRepeatingRequest(
@@ -844,7 +827,6 @@ class CameraObj private constructor(
 
     fun stopCameraCaptureSession() {
         cameraCaptureSessionMbr?.stopRepeating()
-        runCameraCaptureSessionHandlerThreadMbr.stopHandlerThread()
     }
 
     // 카메라와 폰 디바이스 width height 개념이 같은지 여부(90도 회전되었다면 width, height 가 서로 바뀜)

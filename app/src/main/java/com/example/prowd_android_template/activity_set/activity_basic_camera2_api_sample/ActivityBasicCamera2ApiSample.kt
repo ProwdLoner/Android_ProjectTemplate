@@ -522,13 +522,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (카메라 이미지 실시간 처리 콜백)
     private var isImageProcessingPause = false
-    private fun processImage(reader: ImageReader?) {
+    private fun processImage(reader: ImageReader) {
         try {
-            if (null == reader) {
-                return
-            }
-
-            val imageObj: Image = reader.acquireNextImage() ?: return
+            val imageObj: Image = reader.acquireLatestImage()
 
             // yuv ByteArray 를 rgb Bitmap 으로 변환 (병렬처리)
             // 반환되는 비트맵 이미지는 카메라 센서 방향에 따라 정방향이 아닐 수 있음.
