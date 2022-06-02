@@ -14,8 +14,10 @@ import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
+import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
+import android.util.Range
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
@@ -366,6 +368,7 @@ class CameraObj private constructor(
     }
 
     // 1. 프리뷰 서페이스 생성
+    // todo : 실제 변형 확인
     // 프리뷰 서페이스는 복수개 존재 가능
     // 반환값 : 설정된 프리뷰 정보 리스트. 에러시 null
     val previewSurfaceListMbr: ArrayList<Surface> = ArrayList()
@@ -562,22 +565,21 @@ class CameraObj private constructor(
 
     // 1. 영상 저장 서페이스 생성
     // 영상 저장 스트림은 한개만 생성 가능
-    // todo: 파라미터 확인
-    private var videoRecordMediaRecorderMbr: MediaRecorder? = null
+    // todo: 파라미터 확인, 녹음 권한
+    private var mediaRecorderSurfaceMbr: Surface? = null
+    private var mediaRecorderMbr: MediaRecorder? = null
+    private var videoFpsMbr: Int? = null
     fun setVideoRecordingSurface(videoRecorderConfigVo: VideoRecorderConfigVo): VideoRecorderInfoVO {
-        val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            MediaRecorder(parentActivityMbr)
-        } else {
-            MediaRecorder()
-        }
+        mediaRecorderSurfaceMbr = MediaCodec.createPersistentInputSurface()
 
+        val mediaRecorder = MediaRecorder()
+
+        if (videoRecorderConfigVo.isRecordAudio) {
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+        }
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
         mediaRecorder.setOutputFile(videoRecorderConfigVo.saveFile.absolutePath)
-        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-
-        mediaRecorder.setVideoFrameRate(30)
-        mediaRecorder.setVideoEncodingBitRate(10000000)
 
         // 지원되는 카메라 사이즈 배열 가져오기
         val cameraSizes =
@@ -591,8 +593,18 @@ class CameraObj private constructor(
         )
         mediaRecorder.setVideoSize(chosenVideoSize.width, chosenVideoSize.height)
 
+        val targetClass = MediaRecorder::class.java
+        val secondsPerFrame =
+            streamConfigurationMapMbr.getOutputMinFrameDuration(targetClass, chosenVideoSize) /
+                    1_000_000_000.0
+        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+        mediaRecorder.setVideoFrameRate(fps)
+
+        mediaRecorder.setVideoEncodingBitRate(chosenVideoSize.width * chosenVideoSize.height * fps)
+
+        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+
         if (videoRecorderConfigVo.isRecordAudio) {
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
             mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
         }
 
@@ -621,19 +633,63 @@ class CameraObj private constructor(
                 )
         }
 
+        mediaRecorder.setInputSurface(mediaRecorderSurfaceMbr!!)
+
         mediaRecorder.prepare()
+        mediaRecorder.release()
 
-        videoRecordMediaRecorderMbr = mediaRecorder
+        // Prepare and release a dummy MediaRecorder with our new surface
+        // Required to allocate an appropriately sized buffer before passing the Surface as the
+        //  output target to the capture session
 
-        return VideoRecorderInfoVO(mediaRecorder, chosenVideoSize)
+        // 두번째
+        val mediaRecorder2 = MediaRecorder()
+
+        if (videoRecorderConfigVo.isRecordAudio) {
+            mediaRecorder2.setAudioSource(MediaRecorder.AudioSource.MIC)
+        }
+        mediaRecorder2.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+        mediaRecorder2.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+        mediaRecorder2.setOutputFile(videoRecorderConfigVo.saveFile.absolutePath)
+
+        // 지원되는 카메라 사이즈 배열 가져오기
+        mediaRecorder2.setVideoSize(chosenVideoSize.width, chosenVideoSize.height)
+        mediaRecorder2.setVideoFrameRate(fps)
+
+        mediaRecorder2.setVideoEncodingBitRate(chosenVideoSize.width * chosenVideoSize.height * fps)
+
+        mediaRecorder2.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+
+        if (videoRecorderConfigVo.isRecordAudio) {
+            mediaRecorder2.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+        }
+
+        when (sensorOrientationMbr) {
+            90 ->
+                mediaRecorder2.setOrientationHint(
+                    defaultOrientation.get(rotation)
+                )
+            270 ->
+                mediaRecorder2.setOrientationHint(
+                    inverseOrientation.get(rotation)
+                )
+        }
+
+        mediaRecorder2.setInputSurface(mediaRecorderSurfaceMbr!!)
+        mediaRecorder2.prepare()
+
+        videoFpsMbr = fps
+        mediaRecorderMbr = mediaRecorder2
+
+        return VideoRecorderInfoVO(mediaRecorder2, fps, chosenVideoSize)
     }
 
     fun unSetVideoRecordingSurface() {
-        videoRecordMediaRecorderMbr?.pause()
-        videoRecordMediaRecorderMbr?.stop()
-        videoRecordMediaRecorderMbr?.reset()
-        videoRecordMediaRecorderMbr?.release()
-        videoRecordMediaRecorderMbr = null
+        mediaRecorderMbr?.release()
+        mediaRecorderMbr = null
+        mediaRecorderSurfaceMbr?.release()
+        mediaRecorderSurfaceMbr = null
+        videoFpsMbr = null
     }
 
 
@@ -656,7 +712,7 @@ class CameraObj private constructor(
             return
         } else if ((null == imageReaderMbr &&
                     previewSurfaceListMbr.isEmpty() &&
-                    videoRecordMediaRecorderMbr == null)
+                    mediaRecorderSurfaceMbr == null)
         ) {
             onError(RuntimeException("need output Setup at least one"))
             return
@@ -681,10 +737,10 @@ class CameraObj private constructor(
                 )
             }
 
-            if (null != videoRecordMediaRecorderMbr) {
+            if (null != mediaRecorderSurfaceMbr) {
                 outputConfigurationList.add(
                     OutputConfiguration(
-                        videoRecordMediaRecorderMbr!!.surface
+                        mediaRecorderSurfaceMbr!!
                     )
                 )
             }
@@ -727,8 +783,8 @@ class CameraObj private constructor(
             }
 
             // 비디오 리코더 서페이스 주입
-            if (null != videoRecordMediaRecorderMbr) {
-                val surface = videoRecordMediaRecorderMbr!!.surface
+            if (null != mediaRecorderSurfaceMbr) {
+                val surface = mediaRecorderSurfaceMbr!!
                 surfaces.add(surface)
             }
 
@@ -768,20 +824,29 @@ class CameraObj private constructor(
             return
         } else if ((null == imageReaderMbr &&
                     previewSurfaceListMbr.isEmpty() &&
-                    videoRecordMediaRecorderMbr == null)
+                    mediaRecorderSurfaceMbr == null)
         ) {
             // 출력용 서페이스가 하나도 없을 때
             return
         }
 
         // 리퀘스트 빌더 생성
-        // todo 비디오 서페이스 있으면 CameraDevice.TEMPLATE_RECORD
-        captureRequestBuilderMbr =
-            cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+        if (mediaRecorderSurfaceMbr == null) {
+            captureRequestBuilderMbr =
+                cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+        } else {
+            // 비디오 서페이스 있으면 CameraDevice.TEMPLATE_RECORD
+            captureRequestBuilderMbr =
+                cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
+            captureRequestBuilderMbr!!.addTarget(mediaRecorderSurfaceMbr!!)
+            captureRequestBuilderMbr!!.set(
+                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                Range(videoFpsMbr!!, videoFpsMbr!!)
+            )
+        }
 
         // 서페이스 주입
         imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-        videoRecordMediaRecorderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
 
         for (previewSurface in previewSurfaceListMbr) {
             captureRequestBuilderMbr!!.addTarget(previewSurface)
@@ -1095,6 +1160,7 @@ class CameraObj private constructor(
 
     data class VideoRecorderInfoVO(
         val mediaRecorder: MediaRecorder,
+        val videoFps: Int,
         val chosenPreviewSize: Size
     )
 
