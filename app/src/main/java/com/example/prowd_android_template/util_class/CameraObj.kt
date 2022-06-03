@@ -961,6 +961,7 @@ class CameraObj private constructor(
         return isCameraDeviceAndMobileRotationDifferent
     }
 
+    // todo : 변환했을 때 기존 상태를 복원
     fun destroyCamera() {
         imageReaderHandlerThreadMbr.stopHandlerThread()
         cameraHandlerThreadMbr.stopHandlerThread()
