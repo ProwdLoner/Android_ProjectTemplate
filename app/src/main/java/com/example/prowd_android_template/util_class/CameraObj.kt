@@ -22,6 +22,7 @@ import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
 import android.view.TextureView
+import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
@@ -37,8 +38,21 @@ import kotlin.math.max
 // 센서를 조작하는 액티비티 객체와 센서 카메라 아이디 하나를 가져와서 사용
 // 외부에서는 카메라 객체를 생성 후 startCamera 를 사용하여 카메라를 실행
 // 카메라를 종료할 때에는 stopCamera 를 사용
+// Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
 
-// todo : lv1 clear, lv2 clear 등 레벨 단위 초기화 기능 추가로 더 편한 스위칭 기능
+// API 에러 코드 :
+// 0 : 함수 파라미터 출력 서페이스가 하나도 입력되어 있지 않음
+// 1 : 카메라 장치가 탐지되지 않음
+// 2 : 카메라 권한이 없음
+// 3 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
+// 4 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
+// 5 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
+// 6 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
+// 7 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
+// 8 : 생성된 서페이스가 존재하지 않음
+// 9 : 카메라 세션 생성 실패
+
+// todo : 미디어 리코드 세션, 캡쳐, 설정 변경 함수
 class CameraObj private constructor(
     private val parentActivityMbr: Activity
 ) {
@@ -66,6 +80,35 @@ class CameraObj private constructor(
     private val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
         this.startHandlerThread()
     }
+
+    // 이미지 리더 핸들러 스레드
+    private val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader").apply {
+        this.startHandlerThread()
+    }
+
+    // (카메라 부산 데이터)
+    private val cameraSessionSemaphoreMbr = Semaphore(1)
+    private var cameraDeviceMbr: CameraDevice? = null
+
+    // 카메라 출력 비율
+    // 원하는 이미지 비율 (기본 비율은 1 : 1)
+    // 0 이하라면 비율은 보지 않음
+    // width / height 으로 계산
+    private var cameraOutputSurfaceWhRatioMbr: Double = 1.0
+
+    // 이미지 리더 세팅 부산물
+    private var imageReaderMbr: ImageReader? = null
+    private var imageReaderInfoVoMbr: ImageReaderInfoVo? = null
+
+    // 프리뷰 세팅 부산물
+    private val previewSurfaceListMbr: ArrayList<Surface> = ArrayList()
+    private val previewInfoListMbr: ArrayList<PreviewInfoVO> = ArrayList()
+
+    // 카메라 리퀘스트 빌더
+    private var captureRequestBuilderMbr: CaptureRequest.Builder? = null
+
+    // 카메라 세션 객체
+    private var cameraCaptureSessionMbr: CameraCaptureSession? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -258,344 +301,188 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    // (카메라 관련 함수)
-    // 아래 번호는 진행 순서로, 동일 번호는 동일 시점에 병렬적으로 진행이 가능한 작업
-
-    // todo : 변환했을 때 기존 상태를 복원
-    // 1. 카메라 디바이스 객체 생성
-    // 카메라 조작용 객체를 생성하는 것으로, 이후 카메라 조작의 기본이 되는 작업.
-    // 여기서 만들어진 객체를 실제 카메라 디바이스를 정보화 했다고 생각하면 됨.
-    private var cameraDeviceMbr: CameraDevice? = null
-    private val cameraDeviceSemaphore = Semaphore(1)
-
-    fun openCameraAsync(
-        onCameraDeviceReady: () -> Unit,
+    // (카메라 세션 실행)
+    // 프리뷰 or 이미지 리더 or (프리뷰 and 이미지 리더)
+    fun startCameraSessionAsync(
+        cameraOutputSurfaceWhRatio: Double,
+        imageReaderConfigVo: ImageReaderConfigVo?,
+        previewConfigList: ArrayList<PreviewConfigVo>?,
         onCameraDisconnected: () -> Unit,
-        onError: (Throwable) -> Unit
+        onError: (Int) -> Unit
     ) {
         executorServiceMbr?.execute {
-            cameraDeviceSemaphore.acquire()
-            if (null != cameraDeviceMbr) {
-                cameraDeviceSemaphore.release()
-                onCameraDeviceReady()
+            cameraSessionSemaphoreMbr.acquire()
+
+            // (카메라 상태 초기화)
+            imageReaderMbr?.setOnImageAvailableListener(null, null)
+            imageReaderMbr?.close()
+            imageReaderMbr = null
+            imageReaderInfoVoMbr = null
+            cameraCaptureSessionMbr?.stopRepeating()
+            cameraCaptureSessionMbr?.close()
+            cameraCaptureSessionMbr = null
+            captureRequestBuilderMbr = null
+            previewInfoListMbr.clear()
+            previewSurfaceListMbr.clear()
+            cameraOutputSurfaceWhRatioMbr = 1.0
+
+            // (파라미터 검사)
+            if (imageReaderConfigVo == null &&
+                (previewConfigList == null ||
+                        previewConfigList.isEmpty())
+            ) {
+                cameraSessionSemaphoreMbr.release()
+                onError(0)
                 return@execute
             }
 
-            // 카메라 권한 확인
+            // (카메라 장치 검사)
+            if (!parentActivityMbr.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+                cameraSessionSemaphoreMbr.release()
+                onError(1)
+                return@execute
+            }
+
+            // (카메라 권한 검사)
             if (ActivityCompat.checkSelfPermission(
                     parentActivityMbr,
                     Manifest.permission.CAMERA
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                cameraDeviceSemaphore.release()
-                onError(RuntimeException("Camera Permission Denied!"))
+                cameraSessionSemaphoreMbr.release()
+                onError(2)
                 return@execute
             }
 
-            cameraManagerMbr.openCamera(
-                cameraIdMbr,
-                object : CameraDevice.StateCallback() {
-                    // 카메라 디바이스 연결
-                    override fun onOpened(camera: CameraDevice) {
-                        // cameraDevice 가 열리면,
-                        // 객체 저장
-                        cameraDeviceMbr = camera
+            // (카메라 디바이스 열기)
+            openCameraDevice(
+                onCameraDeviceReady = {
+                    // (카메라 출력 비율 설정)
+                    cameraOutputSurfaceWhRatioMbr = cameraOutputSurfaceWhRatio
 
-                        cameraDeviceSemaphore.release()
-                        onCameraDeviceReady()
+                    // (이미지 리더 서페이스 설정)
+                    if (imageReaderConfigVo != null) {
+                        // 카메라 디바이스에서 지원되는 이미지 사이즈 리스트
+                        val imageReaderSizes =
+                            streamConfigurationMapMbr.getOutputSizes(imageReaderConfigVo.imageFormat)
+
+                        if (imageReaderSizes.isNotEmpty()) {
+                            // 원하는 사이즈에 유사한 사이즈를 선정
+                            val chosenImageReaderSize = chooseCameraSize(
+                                imageReaderSizes,
+                                imageReaderConfigVo.preferredImageReaderArea,
+                                cameraOutputSurfaceWhRatio
+                            )
+
+                            val imageReader = ImageReader.newInstance(
+                                chosenImageReaderSize.width,
+                                chosenImageReaderSize.height,
+                                imageReaderConfigVo.imageFormat,
+                                imageReaderConfigVo.imageReaderMaxImage
+                            ).apply {
+                                setOnImageAvailableListener(
+                                    imageReaderConfigVo.imageReaderCallback,
+                                    imageReaderHandlerThreadMbr.handler
+                                )
+                            }
+
+                            imageReaderMbr = imageReader
+                            imageReaderInfoVoMbr = ImageReaderInfoVo(chosenImageReaderSize)
+                        }
                     }
 
-                    // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
-                    override fun onDisconnected(camera: CameraDevice) {
-                        camera.close()
-                        cameraDeviceMbr = null
+                    // (프리뷰 서페이스 설정)
+                    if ((previewConfigList != null &&
+                                previewConfigList.isNotEmpty())
+                    ) {
+                        setPreviewSurfaceListAsync(
+                            previewConfigList,
+                            onPreviewSurfaceReady = {
+                                // (생성 서페이스 검사)
+                                if (previewInfoListMbr.isEmpty() &&
+                                    imageReaderInfoVoMbr == null
+                                ) { // 생성 서페이스가 하나도 존재하지 않으면,
+                                    cameraSessionSemaphoreMbr.release()
+                                    onError(8)
+                                    return@setPreviewSurfaceListAsync
+                                }
 
-                        cameraDeviceSemaphore.release()
-                        onCameraDisconnected()
+                                // (리퀘스트 빌더 생성)
+                                captureRequestBuilderMbr =
+                                    cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+
+                                // 서페이스 주입
+                                imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
+                                for (previewSurface in previewSurfaceListMbr) {
+                                    captureRequestBuilderMbr!!.addTarget(previewSurface)
+                                }
+
+                                // 리퀘스트 빌더 설정
+                                captureRequestBuilderMbr!!.set(
+                                    CaptureRequest.CONTROL_AF_MODE,
+                                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                                )
+
+                                // (카메라 세션 객체 생성)
+                                createCameraSessionAsync(
+                                    onCaptureSessionCreated = {
+                                        // (카메라 실행)
+                                        cameraCaptureSessionMbr!!.setRepeatingRequest(
+                                            captureRequestBuilderMbr!!.build(),
+                                            object : CameraCaptureSession.CaptureCallback() {},
+                                            cameraHandlerThreadMbr.handler
+                                        )
+
+                                        cameraSessionSemaphoreMbr.release()
+                                    },
+                                    onError = {
+                                        cameraSessionSemaphoreMbr.release()
+                                        onError(it)
+                                    }
+                                )
+                            }
+                        )
                     }
-
-                    override fun onError(camera: CameraDevice, error: Int) {
-                        camera.close()
-                        cameraDeviceMbr = null
-
-                        cameraDeviceSemaphore.release()
-
-                        // ErrorCode :
-                        // CameraDevice.StateCallback.ERROR_CAMERA_DISABLED : 권한 등으로 인해 사용이 불가능
-                        // CameraDevice.StateCallback.ERROR_CAMERA_IN_USE : 해당 카메라가 이미 사용중
-                        // CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE : 시스템에서 허용한 카메라 동시 사용을 초과
-                        // CameraDevice.StateCallback.ERROR_CAMERA_DEVICE : 카메라 디바이스 자체적인 문제
-                        // CameraDevice.StateCallback.ERROR_CAMERA_SERVICE : 안드로이드 시스템 문제
-                        onError(RuntimeException("Error Code : $error"))
-                    }
-                }, cameraHandlerThreadMbr.handler
+                },
+                onCameraDisconnected = {
+                    cameraSessionSemaphoreMbr.release()
+                    onCameraDisconnected()
+                },
+                onError = {
+                    cameraSessionSemaphoreMbr.release()
+                    onError(it)
+                }
             )
         }
     }
 
-    // todo : 변환했을 때 기존 상태를 복원
-    fun closeCamera() {
-        cameraDeviceSemaphore.acquire()
-        cameraDeviceMbr?.close()
-        cameraDeviceMbr = null
-        cameraDeviceSemaphore.release()
-    }
+    fun clearCameraSession() {
+        cameraSessionSemaphoreMbr.acquire()
 
-    // todo : 변환했을 때 기존 상태를 복원
-    // 1. 카메라 출력 비율 설정
-    // 원하는 이미지 비율 (기본 비율은 1 : 1)
-    // 0 이하라면 비율은 보지 않음
-    // width / height 으로 계산
-    var cameraOutputSurfaceWhRatio: Double = 1.0
+        mediaRecorderMbr?.stop()
+        mediaRecorderMbr?.release()
+        mediaRecorderMbr = null
+        mediaRecorderSurfaceMbr?.release()
+        mediaRecorderSurfaceMbr = null
+        videoFpsMbr = null
 
-    // 1. 이미지 리더 서페이스 생성
-    // 이미지 리더 스트림은 1개만 생성 가능
-    // 완료시 이미지 리더 생성 정보 반환, 에러시 null 반환
-    private var imageReaderMbr: ImageReader? = null
-    private val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader").apply {
-        this.startHandlerThread()
-    }
-
-    fun setImageReaderSurface(imageReaderConfigVo: ImageReaderConfigVo): ImageReaderInfoVo? {
-        // 카메라 디바이스에서 지원되는 이미지 사이즈 리스트
-        val cameraSizes =
-            streamConfigurationMapMbr.getOutputSizes(ImageFormat.YUV_420_888)
-
-        if (cameraSizes.isNotEmpty()) {
-            // 원하는 사이즈에 유사한 사이즈를 선정
-            val chosenImageReaderSize = chooseCameraSize(
-                cameraSizes,
-                imageReaderConfigVo.preferredImageReaderArea,
-                cameraOutputSurfaceWhRatio
-            )
-
-            val imageReader = ImageReader.newInstance(
-                chosenImageReaderSize.width,
-                chosenImageReaderSize.height,
-                ImageFormat.YUV_420_888,
-                2
-            ).apply {
-                setOnImageAvailableListener(
-                    imageReaderConfigVo.imageReaderCallback,
-                    imageReaderHandlerThreadMbr.handler
-                )
-            }
-
-            imageReaderMbr = imageReader
-            return ImageReaderInfoVo(chosenImageReaderSize)
-        } else {
-            imageReaderMbr = null
-            return null
-        }
-    }
-
-    // todo : 변환했을 때 기존 상태를 복원
-    fun unSetImageReaderSurface() {
+        imageReaderMbr?.setOnImageAvailableListener(null, null)
         imageReaderMbr?.close()
         imageReaderMbr = null
-    }
-
-    // todo : 변환했을 때 기존 상태를 복원
-    // 1. 프리뷰 서페이스 생성
-    // todo : 실제 변형 확인
-    // 프리뷰 서페이스는 복수개 존재 가능
-    // 반환값 : 설정된 프리뷰 정보 리스트. 에러시 null
-    val previewSurfaceListMbr: ArrayList<Surface> = ArrayList()
-    val perviewSurfaceSemaphore: Semaphore = Semaphore(1)
-    fun setPreviewSurfaceListAsync(
-        previewConfigList: ArrayList<PreviewConfigVo>,
-        onPreviewSurfaceReady: (ArrayList<PreviewInfoVO>?) -> Unit
-    ) {
-        executorServiceMbr?.execute {
-            perviewSurfaceSemaphore.acquire()
-            previewSurfaceListMbr.clear()
-
-            if (previewConfigList.isEmpty()) {
-                perviewSurfaceSemaphore.release()
-                onPreviewSurfaceReady(null)
-                return@execute
-            }
-
-            // 지원되는 카메라 사이즈 배열 가져오기
-            val cameraSizes =
-                streamConfigurationMapMbr.getOutputSizes(SurfaceTexture::class.java)
-
-            if (cameraSizes.isEmpty()) {
-                perviewSurfaceSemaphore.release()
-                onPreviewSurfaceReady(null)
-                return@execute
-            }
-
-            val result = ArrayList<PreviewInfoVO>()
-
-            for (previewIdx in 0 until previewConfigList.size) {
-                val previewConfigVo = previewConfigList[previewIdx]
-                val cameraPreview = previewConfigVo.autoFitTextureView
-                var chosenPreviewSize: Size
-
-                // (카메라 프리뷰 사이즈 계산)
-                // 실제 지원하는 카메라 사이즈들 중 설정에 가까운 것을 선택
-                // 원하는 크기 (= 디바이스 스크린 크기와 동일하게 설정)
-                val preferredPreviewArea: Long =
-                    parentActivityMbr.resources.displayMetrics.widthPixels.toLong() *
-                            parentActivityMbr.resources.displayMetrics.heightPixels.toLong()
-
-                chosenPreviewSize = chooseCameraSize(
-                    cameraSizes,
-                    preferredPreviewArea,
-                    cameraOutputSurfaceWhRatio
-                )
-
-                if (cameraPreview.isAvailable) {
-                    val surfaceTexture = cameraPreview.surfaceTexture
-
-                    if (null != surfaceTexture) {
-                        surfaceTexture.setDefaultBufferSize(
-                            chosenPreviewSize.width,
-                            chosenPreviewSize.height
-                        )
-
-                        val previewInfoVO = PreviewInfoVO(
-                            previewIdx,
-                            chosenPreviewSize
-                        )
-
-                        result.add(previewInfoVO)
-                        previewSurfaceListMbr.add(Surface(surfaceTexture))
-
-                        // (텍스쳐 뷰 비율 변경)
-                        if (Configuration.ORIENTATION_LANDSCAPE == parentActivityMbr.resources.configuration.orientation) {
-                            // 현 디바이스가 가로모드일 때
-                            parentActivityMbr.runOnUiThread {
-                                cameraPreview.setAspectRatio(
-                                    chosenPreviewSize.width,
-                                    chosenPreviewSize.height
-                                )
-                            }
-                        } else {
-                            // 현 디바이스가 세로모드일 때
-                            parentActivityMbr.runOnUiThread {
-                                cameraPreview.setAspectRatio(
-                                    chosenPreviewSize.height,
-                                    chosenPreviewSize.width
-                                )
-                            }
-                        }
-
-                        configureTransform(
-                            cameraPreview.width,
-                            cameraPreview.height,
-                            chosenPreviewSize.width,
-                            chosenPreviewSize.height,
-                            cameraPreview
-                        )
-                    }
-
-                    if (previewIdx == previewConfigList.size - 1) {
-                        // 마지막 작업일 때
-                        if (result.isEmpty()) {
-                            perviewSurfaceSemaphore.release()
-                            onPreviewSurfaceReady(null)
-                        } else {
-                            perviewSurfaceSemaphore.release()
-                            onPreviewSurfaceReady(result)
-                        }
-                    }
-                } else {
-                    cameraPreview.surfaceTextureListener =
-                        object : TextureView.SurfaceTextureListener {
-                            override fun onSurfaceTextureAvailable(
-                                surface: SurfaceTexture,
-                                width: Int,
-                                height: Int
-                            ) {
-                                val surfaceTexture = cameraPreview.surfaceTexture
-
-                                if (null != surfaceTexture) {
-                                    surfaceTexture.setDefaultBufferSize(
-                                        chosenPreviewSize.width,
-                                        chosenPreviewSize.height
-                                    )
-
-                                    val previewInfoVO = PreviewInfoVO(
-                                        previewIdx,
-                                        chosenPreviewSize
-                                    )
-
-                                    result.add(previewInfoVO)
-                                    previewSurfaceListMbr.add(Surface(surfaceTexture))
-
-                                    // (텍스쳐 뷰 비율 변경)
-                                    if (Configuration.ORIENTATION_LANDSCAPE == parentActivityMbr.resources.configuration.orientation) {
-                                        // 현 디바이스가 가로모드일 때
-                                        parentActivityMbr.runOnUiThread {
-                                            cameraPreview.setAspectRatio(
-                                                chosenPreviewSize.width,
-                                                chosenPreviewSize.height
-                                            )
-                                        }
-                                    } else {
-                                        // 현 디바이스가 세로모드일 때
-                                        parentActivityMbr.runOnUiThread {
-                                            cameraPreview.setAspectRatio(
-                                                chosenPreviewSize.height,
-                                                chosenPreviewSize.width
-                                            )
-                                        }
-                                    }
-
-                                    configureTransform(
-                                        width,
-                                        height,
-                                        chosenPreviewSize.width,
-                                        chosenPreviewSize.height,
-                                        cameraPreview
-                                    )
-                                }
-
-                                if (previewIdx == previewConfigList.size - 1) {
-                                    // 마지막 작업일 때
-                                    if (result.isEmpty()) {
-                                        perviewSurfaceSemaphore.release()
-                                        onPreviewSurfaceReady(null)
-                                    } else {
-                                        perviewSurfaceSemaphore.release()
-                                        onPreviewSurfaceReady(result)
-                                    }
-                                }
-                            }
-
-                            override fun onSurfaceTextureSizeChanged(
-                                surface: SurfaceTexture,
-                                width: Int,
-                                height: Int
-                            ) {
-                                configureTransform(
-                                    width,
-                                    height,
-                                    chosenPreviewSize.width,
-                                    chosenPreviewSize.height,
-                                    cameraPreview
-                                )
-                            }
-
-                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-                                return true
-                            }
-
-                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
-                        }
-                }
-            }
-        }
-    }
-
-    // todo : 변환했을 때 기존 상태를 복원
-    fun unSetPreviewSurfaceList() {
-        perviewSurfaceSemaphore.acquire()
+        imageReaderInfoVoMbr = null
+        cameraCaptureSessionMbr?.stopRepeating()
+        cameraCaptureSessionMbr?.close()
+        cameraCaptureSessionMbr = null
+        captureRequestBuilderMbr = null
+        previewInfoListMbr.clear()
         previewSurfaceListMbr.clear()
-        perviewSurfaceSemaphore.release()
+        cameraOutputSurfaceWhRatioMbr = 1.0
+        cameraDeviceMbr?.close()
+        cameraDeviceMbr = null
+
+        cameraSessionSemaphoreMbr.release()
     }
+
 
     // todo : 변환했을 때 기존 상태를 복원
     // 1. 영상 저장 서페이스 생성
@@ -613,7 +500,7 @@ class CameraObj private constructor(
         val chosenVideoSize = chooseCameraSize(
             streamConfigurationMapMbr.getOutputSizes(MediaRecorder::class.java),
             videoRecorderConfigVo.preferredImageReaderArea,
-            cameraOutputSurfaceWhRatio
+            cameraOutputSurfaceWhRatioMbr
         )
 
         // 비디오 FPS
@@ -705,159 +592,11 @@ class CameraObj private constructor(
         return VideoRecorderInfoVO(mediaRecorder, videoFpsMbr!!, chosenVideoSize)
     }
 
-    // todo : 변환했을 때 기존 상태를 복원
-    fun unSetVideoRecordingSurface() {
-        mediaRecorderMbr?.release()
-        mediaRecorderSurfaceMbr?.release()
-        mediaRecorderMbr = null
-        mediaRecorderSurfaceMbr = null
-        videoFpsMbr = null
-    }
-
-
-    // todo : 변환했을 때 기존 상태를 복원
-    // 2. 카메라 세션 생성
-    // 카메라 디바이스 및 출력 서페이스 필요
-    private var cameraCaptureSessionMbr: CameraCaptureSession? = null
-    private val cameraCaptureSessionSemaphoreMbr = Semaphore(1)
-
-    fun createCameraSession(
-        onCaptureSessionCreated: () -> Unit,
-        onError: (Throwable) -> Unit
-    ) {
-        executorServiceMbr?.execute {
-            cameraCaptureSessionSemaphoreMbr.acquire()
-            if (null != cameraCaptureSessionMbr) {
-                cameraCaptureSessionSemaphoreMbr.release()
-                onCaptureSessionCreated()
-                return@execute
-            }
-
-            // 필요 사항 준비 여부
-            if (null == cameraDeviceMbr) {
-                // 카메라 디바이스 생성이 필요
-                cameraCaptureSessionSemaphoreMbr.release()
-                onError(RuntimeException("need to create cameraDevice before"))
-                return@execute
-            } else if ((null == imageReaderMbr &&
-                        previewSurfaceListMbr.isEmpty() &&
-                        mediaRecorderSurfaceMbr == null)
-            ) {
-                // 서페이스가 하나 이상이어야함
-                cameraCaptureSessionSemaphoreMbr.release()
-                onError(RuntimeException("need output Setup at least one"))
-                return@execute
-            }
-
-            // api 28 이상 / 미만의 요청 방식이 다름
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
-                // 출력 설정 객체 리스트
-                val outputConfigurationList = ArrayList<OutputConfiguration>()
-
-                // 프리뷰 서페이스 주입
-                for (previewSurface in previewSurfaceListMbr) {
-                    outputConfigurationList.add(OutputConfiguration(previewSurface))
-                }
-
-                // 이미지 리더 서페이스 주입
-                if (null != imageReaderMbr) {
-                    outputConfigurationList.add(
-                        OutputConfiguration(
-                            imageReaderMbr!!.surface
-                        )
-                    )
-                }
-
-                // 미디어 리코더 서페이스 주입
-                if (null != mediaRecorderSurfaceMbr) {
-                    outputConfigurationList.add(
-                        OutputConfiguration(
-                            mediaRecorderSurfaceMbr!!
-                        )
-                    )
-                }
-
-                // todo SESSION_REGULAR 고속모드
-                cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
-                    SessionConfiguration.SESSION_REGULAR,
-                    outputConfigurationList,
-                    HandlerExecutor(cameraHandlerThreadMbr.handler!!.looper),
-                    object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr = session
-
-                            cameraCaptureSessionSemaphoreMbr.release()
-                            onCaptureSessionCreated()
-                        }
-
-                        // 세션 생성 실패
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr?.close()
-                            cameraCaptureSessionMbr = null
-
-                            cameraCaptureSessionSemaphoreMbr.release()
-                            onError(RuntimeException("Create Camera Session Failed"))
-                        }
-                    }
-                ))
-            } else {
-                // api 28 미만
-                // 출력 서페이스 리스트
-                val surfaces = ArrayList<Surface>()
-
-                // 프리뷰 서페이스 주입
-                for (previewSurface in previewSurfaceListMbr) {
-                    surfaces.add(previewSurface)
-                }
-
-                // 이미지 리더 서페이스 주입
-                if (null != imageReaderMbr) {
-                    val surface = imageReaderMbr!!.surface
-                    surfaces.add(surface)
-                }
-
-                // 비디오 리코더 서페이스 주입
-                if (null != mediaRecorderSurfaceMbr) {
-                    val surface = mediaRecorderSurfaceMbr!!
-                    surfaces.add(surface)
-                }
-
-                cameraDeviceMbr?.createCaptureSession(
-                    surfaces,
-                    object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr = session
-
-                            cameraCaptureSessionSemaphoreMbr.release()
-                            onCaptureSessionCreated()
-                        }
-
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr?.close()
-                            cameraCaptureSessionMbr = null
-
-                            cameraCaptureSessionSemaphoreMbr.release()
-                            onError(RuntimeException("Create Camera Session Failed"))
-                        }
-                    }, cameraHandlerThreadMbr.handler
-                )
-            }
-        }
-    }
-
-    // todo : 변환했을 때 기존 상태를 복원
-    fun deleteCameraSession() {
-        cameraCaptureSessionSemaphoreMbr.acquire()
-        cameraCaptureSessionMbr?.close()
-        cameraCaptureSessionMbr = null
-        cameraCaptureSessionSemaphoreMbr.release()
-    }
 
     // todo : 변환했을 때 기존 상태를 복원
     // 2. 카메라 세션 리퀘스트 빌더 생성
     // 카메라 디바이스 및 출력 서페이스 필요
     // todo : manual change 기능 추가
-    var captureRequestBuilderMbr: CaptureRequest.Builder? = null
     fun createCameraCaptureRequest() {
         // 필요 사항 준비 여부 (cameraDevice 준비 및 서페이스 준비)
         if (null == cameraDeviceMbr) {
@@ -1113,6 +852,321 @@ class CameraObj private constructor(
         cameraPreview.setTransform(matrix)
     }
 
+    // 카메라 디바이스 생성
+    @RequiresPermission(Manifest.permission.CAMERA)
+    private fun openCameraDevice(
+        onCameraDeviceReady: () -> Unit,
+        onCameraDisconnected: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        if (cameraDeviceMbr != null) {
+            onCameraDeviceReady()
+        } else {
+            // 카메라 디바이스가 존재하지 않는다면 생성
+            cameraManagerMbr.openCamera(
+                cameraIdMbr,
+                object : CameraDevice.StateCallback() {
+                    // 카메라 디바이스 연결
+                    override fun onOpened(camera: CameraDevice) {
+                        // cameraDevice 가 열리면,
+                        // 객체 저장
+                        cameraDeviceMbr = camera
+                        onCameraDeviceReady()
+                    }
+
+                    // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
+                    override fun onDisconnected(camera: CameraDevice) {
+                        cameraDeviceMbr = null
+
+                        onCameraDisconnected()
+                    }
+
+                    override fun onError(camera: CameraDevice, error: Int) {
+                        cameraDeviceMbr = null
+
+                        when (error) {
+                            ERROR_CAMERA_DISABLED -> {
+                                onError(3)
+                            }
+                            ERROR_CAMERA_IN_USE -> {
+                                onError(4)
+                            }
+                            ERROR_MAX_CAMERAS_IN_USE -> {
+                                onError(5)
+                            }
+                            ERROR_CAMERA_DEVICE -> {
+                                onError(6)
+                            }
+                            ERROR_CAMERA_SERVICE -> {
+                                onError(7)
+                            }
+                        }
+                    }
+                }, cameraHandlerThreadMbr.handler
+            )
+        }
+    }
+
+    // 프리뷰 서페이스 리스트 생성
+    // todo : 실제 변형 확인
+    private fun setPreviewSurfaceListAsync(
+        previewConfigList: ArrayList<PreviewConfigVo>,
+        onPreviewSurfaceReady: () -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            // 지원되는 카메라 사이즈 배열 가져오기
+            val cameraSizes =
+                streamConfigurationMapMbr.getOutputSizes(SurfaceTexture::class.java)
+
+            if (cameraSizes.isEmpty()) {
+                onPreviewSurfaceReady()
+                return@execute
+            }
+
+            for (previewIdx in 0 until previewConfigList.size) {
+                val previewConfigVo = previewConfigList[previewIdx]
+                val cameraPreview = previewConfigVo.autoFitTextureView
+                var chosenPreviewSize: Size
+
+                // (카메라 프리뷰 사이즈 계산)
+                // 실제 지원하는 카메라 사이즈들 중 설정에 가까운 것을 선택
+                // 원하는 크기 (= 디바이스 스크린 크기와 동일하게 설정)
+                val preferredPreviewArea: Long =
+                    parentActivityMbr.resources.displayMetrics.widthPixels.toLong() *
+                            parentActivityMbr.resources.displayMetrics.heightPixels.toLong()
+
+                chosenPreviewSize = chooseCameraSize(
+                    cameraSizes,
+                    preferredPreviewArea,
+                    cameraOutputSurfaceWhRatioMbr
+                )
+
+                if (cameraPreview.isAvailable) {
+                    val surfaceTexture = cameraPreview.surfaceTexture
+
+                    if (null != surfaceTexture) {
+                        surfaceTexture.setDefaultBufferSize(
+                            chosenPreviewSize.width,
+                            chosenPreviewSize.height
+                        )
+
+                        val previewInfoVO = PreviewInfoVO(
+                            previewIdx,
+                            chosenPreviewSize
+                        )
+
+                        previewInfoListMbr.add(previewInfoVO)
+                        previewSurfaceListMbr.add(Surface(surfaceTexture))
+
+                        // (텍스쳐 뷰 비율 변경)
+                        if (Configuration.ORIENTATION_LANDSCAPE == parentActivityMbr.resources.configuration.orientation) {
+                            // 현 디바이스가 가로모드일 때
+                            parentActivityMbr.runOnUiThread {
+                                cameraPreview.setAspectRatio(
+                                    chosenPreviewSize.width,
+                                    chosenPreviewSize.height
+                                )
+                            }
+                        } else {
+                            // 현 디바이스가 세로모드일 때
+                            parentActivityMbr.runOnUiThread {
+                                cameraPreview.setAspectRatio(
+                                    chosenPreviewSize.height,
+                                    chosenPreviewSize.width
+                                )
+                            }
+                        }
+
+                        configureTransform(
+                            cameraPreview.width,
+                            cameraPreview.height,
+                            chosenPreviewSize.width,
+                            chosenPreviewSize.height,
+                            cameraPreview
+                        )
+                    }
+
+                    if (previewIdx == previewConfigList.size - 1) {
+                        // 마지막 작업일 때
+                        onPreviewSurfaceReady()
+                    }
+                } else {
+                    cameraPreview.surfaceTextureListener =
+                        object : TextureView.SurfaceTextureListener {
+                            override fun onSurfaceTextureAvailable(
+                                surface: SurfaceTexture,
+                                width: Int,
+                                height: Int
+                            ) {
+                                val surfaceTexture = cameraPreview.surfaceTexture
+
+                                if (null != surfaceTexture) {
+                                    surfaceTexture.setDefaultBufferSize(
+                                        chosenPreviewSize.width,
+                                        chosenPreviewSize.height
+                                    )
+
+                                    val previewInfoVO = PreviewInfoVO(
+                                        previewIdx,
+                                        chosenPreviewSize
+                                    )
+
+                                    previewInfoListMbr.add(previewInfoVO)
+                                    previewSurfaceListMbr.add(Surface(surfaceTexture))
+
+                                    // (텍스쳐 뷰 비율 변경)
+                                    if (Configuration.ORIENTATION_LANDSCAPE == parentActivityMbr.resources.configuration.orientation) {
+                                        // 현 디바이스가 가로모드일 때
+                                        parentActivityMbr.runOnUiThread {
+                                            cameraPreview.setAspectRatio(
+                                                chosenPreviewSize.width,
+                                                chosenPreviewSize.height
+                                            )
+                                        }
+                                    } else {
+                                        // 현 디바이스가 세로모드일 때
+                                        parentActivityMbr.runOnUiThread {
+                                            cameraPreview.setAspectRatio(
+                                                chosenPreviewSize.height,
+                                                chosenPreviewSize.width
+                                            )
+                                        }
+                                    }
+
+                                    configureTransform(
+                                        width,
+                                        height,
+                                        chosenPreviewSize.width,
+                                        chosenPreviewSize.height,
+                                        cameraPreview
+                                    )
+                                }
+
+                                if (previewIdx == previewConfigList.size - 1) {
+                                    // 마지막 작업일 때
+                                    onPreviewSurfaceReady()
+                                }
+                            }
+
+                            override fun onSurfaceTextureSizeChanged(
+                                surface: SurfaceTexture,
+                                width: Int,
+                                height: Int
+                            ) {
+                                configureTransform(
+                                    width,
+                                    height,
+                                    chosenPreviewSize.width,
+                                    chosenPreviewSize.height,
+                                    cameraPreview
+                                )
+                            }
+
+                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+                                return true
+                            }
+
+                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
+                        }
+                }
+            }
+        }
+    }
+
+    private fun createCameraSessionAsync(
+        onCaptureSessionCreated: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            // api 28 이상 / 미만의 요청 방식이 다름
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
+                // 출력 설정 객체 리스트
+                val outputConfigurationList = ArrayList<OutputConfiguration>()
+
+                // 프리뷰 서페이스 주입
+                for (previewSurface in previewSurfaceListMbr) {
+                    outputConfigurationList.add(OutputConfiguration(previewSurface))
+                }
+
+                // 이미지 리더 서페이스 주입
+                if (null != imageReaderMbr) {
+                    outputConfigurationList.add(
+                        OutputConfiguration(
+                            imageReaderMbr!!.surface
+                        )
+                    )
+                }
+
+                // 미디어 리코더 서페이스 주입
+                if (null != mediaRecorderSurfaceMbr) {
+                    outputConfigurationList.add(
+                        OutputConfiguration(
+                            mediaRecorderSurfaceMbr!!
+                        )
+                    )
+                }
+
+                cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
+                    SessionConfiguration.SESSION_REGULAR,
+                    outputConfigurationList,
+                    HandlerExecutor(cameraHandlerThreadMbr.handler!!.looper),
+                    object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(session: CameraCaptureSession) {
+                            cameraCaptureSessionMbr = session
+
+                            onCaptureSessionCreated()
+                        }
+
+                        // 세션 생성 실패
+                        override fun onConfigureFailed(session: CameraCaptureSession) {
+                            cameraCaptureSessionMbr = null
+
+                            onError(9)
+                        }
+                    }
+                ))
+            } else {
+                // api 28 미만
+                // 출력 서페이스 리스트
+                val surfaces = ArrayList<Surface>()
+
+                // 프리뷰 서페이스 주입
+                for (previewSurface in previewSurfaceListMbr) {
+                    surfaces.add(previewSurface)
+                }
+
+                // 이미지 리더 서페이스 주입
+                if (null != imageReaderMbr) {
+                    val surface = imageReaderMbr!!.surface
+                    surfaces.add(surface)
+                }
+
+                // 비디오 리코더 서페이스 주입
+                if (null != mediaRecorderSurfaceMbr) {
+                    val surface = mediaRecorderSurfaceMbr!!
+                    surfaces.add(surface)
+                }
+
+                cameraDeviceMbr?.createCaptureSession(
+                    surfaces,
+                    object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(session: CameraCaptureSession) {
+                            cameraCaptureSessionMbr = session
+
+                            onCaptureSessionCreated()
+                        }
+
+                        override fun onConfigureFailed(session: CameraCaptureSession) {
+                            cameraCaptureSessionMbr = null
+
+                            onError(9)
+                        }
+                    }, cameraHandlerThreadMbr.handler
+                )
+            }
+        }
+    }
+
     // 손떨림 방지
     private fun chooseStabilizationMode(builder: CaptureRequest.Builder?) {
         val availableOpticalStabilization =
@@ -1157,6 +1211,9 @@ class CameraObj private constructor(
     // ---------------------------------------------------------------------------------------------
     // <내부 클래스 공간>
     data class ImageReaderConfigVo(
+        // ex : ImageFormat.YUV_420_888
+        val imageFormat: Int,
+        val imageReaderMaxImage: Int,
         // 원하는 이미지 넓이
         // width * height
         // 0L 이하면 최소, Long.MAX_VALUE 이면 최대

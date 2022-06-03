@@ -102,12 +102,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onPause() {
         isImageProcessingPause = true
-        backCameraObjMbr?.stopCameraCaptureSession()
-        backCameraObjMbr?.deleteCameraSession()
-        backCameraObjMbr?.deleteCameraCaptureRequest()
-        backCameraObjMbr?.unSetPreviewSurfaceList()
-        backCameraObjMbr?.unSetImageReaderSurface()
-        backCameraObjMbr?.closeCamera()
+        backCameraObjMbr?.clearCameraSession()
 
         super.onPause()
     }
@@ -424,81 +419,27 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         isImageProcessingPause = false
 
         // (카메라 실행)
-        // 카메라 생성
-        backCameraObjMbr?.openCameraAsync(
-            onCameraDeviceReady = {
-                // (서페이스 생성)
-                // 서페이스 비율 설정
-                backCameraObjMbr?.cameraOutputSurfaceWhRatio = 2.0 / 3.0
-
-                // 이미지 리더 생성
-                val imageReaderInfoVo = backCameraObjMbr?.setImageReaderSurface(
-                    CameraObj.ImageReaderConfigVo(
-                        600 * 600,
-                        imageReaderCallback = { reader ->
-                            processImage(reader)
-                        }
-                    )
+        // 카메라 세션 실행
+        backCameraObjMbr?.startCameraSessionAsync(
+            2.0 / 3.0,
+            CameraObj.ImageReaderConfigVo(
+                ImageFormat.YUV_420_888,
+                2,
+                600 * 600,
+                imageReaderCallback = { reader ->
+                    processImage(reader)
+                }
+            ),
+            arrayListOf(
+                CameraObj.PreviewConfigVo(
+                    bindingMbr.cameraPreviewAutoFitTexture
                 )
-
-                // 프리뷰 생성
-                backCameraObjMbr?.setPreviewSurfaceListAsync(
-                    arrayListOf(
-                        CameraObj.PreviewConfigVo(
-                            bindingMbr.cameraPreviewAutoFitTexture
-                        )
-                    ),
-                    onPreviewSurfaceReady = { // 프리뷰 서페이스 준비 완료
-
-                        // 카메라 세션 리퀘스트 빌더 생성
-                        backCameraObjMbr?.createCameraCaptureRequest()
-
-                        // 카메라 세션 생성
-                        backCameraObjMbr?.createCameraSession(
-                            onCaptureSessionCreated = { // 카메라 세션 생성 완료
-                                // 카메라 세션 실행
-                                backCameraObjMbr?.runCameraCaptureSession(
-                                    onError = {}
-                                )
-
-                            },
-                            onError = {
-                                // 세션 생성 실패
-                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                    DialogConfirm.DialogInfoVO(
-                                        true,
-                                        "카메라 동작 에러",
-                                        "카메라 세션 생성에 실패했습니다.\n카메라를 종료합니다.",
-                                        null,
-                                        onCheckBtnClicked = {
-                                            finish()
-                                        },
-                                        onCanceled = {
-                                            finish()
-                                        }
-                                    )
-                            }
-                        )
-                    }
-                )
-            },
+            ),
             onCameraDisconnected = {
-                // 카메라 연결 끊김
+
             },
             onError = {
-                // 디바이스 생성 실패
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "카메라 동작 에러",
-                    "카메라 조작 객체 생성에 실패했습니다.\n카메라를 종료합니다.",
-                    null,
-                    onCheckBtnClicked = {
-                        finish()
-                    },
-                    onCanceled = {
-                        finish()
-                    }
-                )
+
             }
         )
 
