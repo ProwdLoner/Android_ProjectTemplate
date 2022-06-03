@@ -420,7 +420,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // (카메라 실행)
         // 카메라 세션 실행
-        backCameraObjMbr?.startCameraSessionAsync(
+        backCameraObjMbr?.readyCameraSessionAsync(
             2.0 / 3.0,
             CameraObj.ImageReaderConfigVo(
                 ImageFormat.YUV_420_888,
@@ -430,11 +430,20 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     processImage(reader)
                 }
             ),
+            null,
             arrayListOf(
                 CameraObj.PreviewConfigVo(
                     bindingMbr.cameraPreviewAutoFitTexture
                 )
             ),
+            onCameraSessionReady = {
+                backCameraObjMbr?.startPreviewSessionAsync(
+                    onError = {
+
+                    }
+                )
+
+            },
             onCameraDisconnected = {
 
             },
