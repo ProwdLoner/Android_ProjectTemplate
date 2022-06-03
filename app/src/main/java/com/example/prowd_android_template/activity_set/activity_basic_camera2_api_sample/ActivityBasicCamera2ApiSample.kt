@@ -9,9 +9,12 @@ import android.media.Image
 import android.media.ImageReader
 import android.media.MediaRecorder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
+import android.util.SparseIntArray
+import android.view.Surface
 import android.view.WindowManager
 import android.webkit.MimeTypeMap
 import androidx.activity.result.ActivityResult
@@ -377,7 +380,65 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 // 녹화 모드 실행
                 backCameraObjMbr?.startMediaRecorderSessionAsync(
                     onMediaRecordingSessionStart = {
-                        mediaRecorderMbr = it.mediaRecorder
+                        // (실사용 미디어 리코더 생성)
+                        val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
+                        videoFile = File(this.filesDir, "VID_${sdf.format(Date())}.mp4")
+
+                        val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            MediaRecorder(this)
+                        } else {
+                            MediaRecorder()
+                        }
+                        // 카메라 방향 정보
+                        val rotation: Int = windowManager.defaultDisplay.rotation
+
+                        val defaultOrientation = SparseIntArray()
+                        defaultOrientation.append(Surface.ROTATION_90, 0)
+                        defaultOrientation.append(Surface.ROTATION_0, 90)
+                        defaultOrientation.append(Surface.ROTATION_270, 180)
+                        defaultOrientation.append(Surface.ROTATION_180, 270)
+
+                        val inverseOrientation = SparseIntArray()
+                        inverseOrientation.append(Surface.ROTATION_270, 0)
+                        inverseOrientation.append(Surface.ROTATION_180, 90)
+                        inverseOrientation.append(Surface.ROTATION_90, 180)
+                        inverseOrientation.append(Surface.ROTATION_0, 270)
+
+                        // 오디오 여부
+                        val isRecordAudio = false &&
+                                ActivityCompat.checkSelfPermission(
+                                    this,
+                                    Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+
+                        if (isRecordAudio) {
+                            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+                        }
+
+                        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                        mediaRecorder.setOutputFile(videoFile.absolutePath)
+                        mediaRecorder.setVideoSize(it.chosenVideoSize.width, it.chosenVideoSize.height)
+                        mediaRecorder.setVideoFrameRate(it.mediaRecorderFps)
+                        mediaRecorder.setVideoEncodingBitRate(it.chosenVideoSize.width * it.chosenVideoSize.height * it.mediaRecorderFps)
+                        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                        if (isRecordAudio) {
+                            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                        }
+                        when (it.sensorOrientation) {
+                            90 ->
+                                mediaRecorder.setOrientationHint(
+                                    defaultOrientation.get(rotation)
+                                )
+                            270 ->
+                                mediaRecorder.setOrientationHint(
+                                    inverseOrientation.get(rotation)
+                                )
+                        }
+                        mediaRecorder.setInputSurface(it.inputSurface)
+
+                        mediaRecorderMbr = mediaRecorder
+
                         mediaRecorderMbr?.prepare()
                         mediaRecorderMbr?.start()
                         mediaRecordingStartMsMbr = System.currentTimeMillis()
@@ -465,11 +526,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         isImageProcessingPause = false
 
         // (카메라 실행)
-        val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
-        videoFile = File(this.filesDir, "VID_${sdf.format(Date())}.mp4")
-
         // 카메라 세션 실행
-        backCameraObjMbr?.readyCameraSessionAsync(
+        backCameraObjMbr?.setCameraSurfaceAsync(
             2.0 / 3.0,
             CameraObj.ImageReaderConfigVo(
                 ImageFormat.YUV_420_888,
@@ -480,9 +538,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
             ),
             CameraObj.VideoRecorderConfigVo(
-                Long.MAX_VALUE,
-                false,
-                videoFile
+                Long.MAX_VALUE
             ),
             arrayListOf(
                 CameraObj.PreviewConfigVo(
