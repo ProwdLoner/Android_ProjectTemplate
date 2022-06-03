@@ -425,11 +425,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // (카메라 실행)
         // 카메라 생성
-        backCameraObjMbr?.openCamera(
+        backCameraObjMbr?.openCameraAsync(
             onCameraDeviceReady = {
                 // (서페이스 생성)
                 // 서페이스 비율 설정
-                backCameraObjMbr?.cameraOutputSurfaceWhRatio = 2f / 3f
+                backCameraObjMbr?.cameraOutputSurfaceWhRatio = 2.0 / 3.0
 
                 // 이미지 리더 생성
                 val imageReaderInfoVo = backCameraObjMbr?.setImageReaderSurface(
@@ -442,7 +442,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 )
 
                 // 프리뷰 생성
-                backCameraObjMbr?.setPreviewSurfaceList(
+                backCameraObjMbr?.setPreviewSurfaceListAsync(
                     arrayListOf(
                         CameraObj.PreviewConfigVo(
                             bindingMbr.cameraPreviewAutoFitTexture
