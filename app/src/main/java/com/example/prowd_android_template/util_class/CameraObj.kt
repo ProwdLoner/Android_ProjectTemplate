@@ -17,7 +17,6 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
-import android.util.Log
 import android.util.Range
 import android.util.Size
 import android.util.SparseIntArray
@@ -43,7 +42,7 @@ import kotlin.math.max
 // Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
 
 
-// todo : 녹화, 캡쳐, 설정 변경 함수
+// todo : 캡쳐, 설정 변경 함수
 class CameraObj private constructor(
     private val parentActivityMbr: Activity
 ) {
@@ -566,7 +565,6 @@ class CameraObj private constructor(
     }
 
     // (프리뷰 세션을 실행하는 함수)
-    // todo : 설정 변경 다른 세션 실행중이라면 끄기
     // API 에러 코드 :
     // 0 : 적당한 출력 서페이스가 하나도 세팅되어 있지 않음
     // 1 : 카메라 세션이 생성되지 않음
