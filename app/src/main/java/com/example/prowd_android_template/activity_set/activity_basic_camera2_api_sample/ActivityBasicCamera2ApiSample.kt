@@ -482,6 +482,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     }
                 )
             },
+            onCameraDisconnected = {
+                // 카메라 연결 끊김
+            },
             onError = {
                 // 디바이스 생성 실패
                 viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(

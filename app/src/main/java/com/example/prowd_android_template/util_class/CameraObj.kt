@@ -28,6 +28,7 @@ import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -221,6 +222,7 @@ class CameraObj private constructor(
         }
 
         // (객체 생성 함수 = 조건에 맞지 않으면 null 반환)
+        // 조작하길 원하는 카메라 ID 를 설정하여 해당 카메라 정보를 생성
         fun getInstance(
             parentActivity: Activity,
             cameraId: String
@@ -265,23 +267,32 @@ class CameraObj private constructor(
     // 카메라 조작용 객체를 생성하는 것으로, 이후 카메라 조작의 기본이 되는 작업.
     // 여기서 만들어진 객체를 실제 카메라 디바이스를 정보화 했다고 생각하면 됨.
     private var cameraDeviceMbr: CameraDevice? = null
+    private val cameraDeviceSemaphore = Semaphore(1)
 
-    // todo : LOCK
     fun openCamera(
         onCameraDeviceReady: () -> Unit,
+        onCameraDisconnected: () -> Unit,
         onError: (Throwable) -> Unit
     ) {
-        if (null != cameraDeviceMbr) {
-            onCameraDeviceReady()
-            return
-        }
+        executorServiceMbr?.execute {
+            cameraDeviceSemaphore.acquire()
+            if (null != cameraDeviceMbr) {
+                cameraDeviceSemaphore.release()
+                onCameraDeviceReady()
+                return@execute
+            }
 
-        // cameraDevice open 요청
-        if (ActivityCompat.checkSelfPermission(
-                parentActivityMbr,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+            // 카메라 권한 확인
+            if (ActivityCompat.checkSelfPermission(
+                    parentActivityMbr,
+                    Manifest.permission.CAMERA
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                cameraDeviceSemaphore.release()
+                onError(RuntimeException("Camera Permission Denied!"))
+                return@execute
+            }
+
             cameraManagerMbr.openCamera(
                 cameraIdMbr,
                 object : CameraDevice.StateCallback() {
@@ -291,33 +302,43 @@ class CameraObj private constructor(
                         // 객체 저장
                         cameraDeviceMbr = camera
 
+                        cameraDeviceSemaphore.release()
                         onCameraDeviceReady()
                     }
 
-                    // 카메라 디바이스 연결 끊김
+                    // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
                     override fun onDisconnected(camera: CameraDevice) {
                         camera.close()
                         cameraDeviceMbr = null
 
-                        onError(RuntimeException("Camera No Longer Available"))
+                        cameraDeviceSemaphore.release()
+                        onCameraDisconnected()
                     }
 
                     override fun onError(camera: CameraDevice, error: Int) {
                         camera.close()
                         cameraDeviceMbr = null
 
+                        cameraDeviceSemaphore.release()
+
+                        // ErrorCode :
+                        // CameraDevice.StateCallback.ERROR_CAMERA_DISABLED : 권한 등으로 인해 사용이 불가능
+                        // CameraDevice.StateCallback.ERROR_CAMERA_IN_USE : 해당 카메라가 이미 사용중
+                        // CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE : 시스템에서 허용한 카메라 동시 사용을 초과
+                        // CameraDevice.StateCallback.ERROR_CAMERA_DEVICE : 카메라 디바이스 자체적인 문제
+                        // CameraDevice.StateCallback.ERROR_CAMERA_SERVICE : 안드로이드 시스템 문제
                         onError(RuntimeException("Error Code : $error"))
                     }
                 }, cameraHandlerThreadMbr.handler
             )
-        } else {
-            onError(RuntimeException("Camera Permission Denied!"))
         }
     }
 
     fun closeCamera() {
+        cameraDeviceSemaphore.acquire()
         cameraDeviceMbr?.close()
         cameraDeviceMbr = null
+        cameraDeviceSemaphore.release()
     }
 
     // 1. 카메라 출력 비율 설정
