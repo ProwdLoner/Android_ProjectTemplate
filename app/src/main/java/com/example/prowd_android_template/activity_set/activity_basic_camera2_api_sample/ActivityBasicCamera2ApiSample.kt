@@ -7,19 +7,23 @@ import android.graphics.*
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
 import android.media.ImageReader
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.WindowManager
+import android.webkit.MimeTypeMap
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.FitCenter
+import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -27,6 +31,9 @@ import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSam
 import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 // todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
@@ -357,10 +364,48 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // 초기 뷰 설정
+    // todo onpause 처리 레코더 해제, 리코더 사용성 개선
+    private var isRecordingMbr = false
+    private var mediaRecorderMbr: MediaRecorder? = null
+    private var mediaRecordingStartMsMbr : Long? = null
     private fun viewSetting() {
         bindingMbr.logContainer.y =
             bindingMbr.logContainer.y - CustomUtil.getNavigationBarHeightPixel(this)
 
+        bindingMbr.recordBtn.setOnClickListener {
+            if (!isRecordingMbr) {
+                // 녹화 모드 실행
+                backCameraObjMbr?.startMediaRecorderSessionAsync(
+                    onMediaRecordingSessionStart = {
+                        mediaRecorderMbr = it.mediaRecorder
+                        mediaRecorderMbr?.prepare()
+                        mediaRecorderMbr?.start()
+                        mediaRecordingStartMsMbr = System.currentTimeMillis()
+                    },
+                    onError = {
+
+                    }
+                )
+                isRecordingMbr = true
+            } else {
+                // 녹화 모드 종료
+                mediaRecorderMbr?.stop()
+
+                startActivity(Intent().apply {
+                    action = Intent.ACTION_VIEW
+                    type = MimeTypeMap.getSingleton()
+                        .getMimeTypeFromExtension(videoFile.extension)
+                    val authority = "${BuildConfig.APPLICATION_ID}.provider"
+                    data = FileProvider.getUriForFile(it.context, authority, videoFile)
+                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+                })
+
+                backCameraObjMbr?.startPreviewSessionAsync(onError = {})
+
+                isRecordingMbr = false
+            }
+        }
     }
 
     // 라이브 데이터 설정
@@ -414,11 +459,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
     }
 
+    lateinit var videoFile: File
     private fun startCamera() {
         // 카메라 실행
         isImageProcessingPause = false
 
         // (카메라 실행)
+        val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
+        videoFile = File(this.filesDir, "VID_${sdf.format(Date())}.mp4")
+
         // 카메라 세션 실행
         backCameraObjMbr?.readyCameraSessionAsync(
             2.0 / 3.0,
@@ -430,7 +479,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     processImage(reader)
                 }
             ),
-            null,
+            CameraObj.VideoRecorderConfigVo(
+                Long.MAX_VALUE,
+                false,
+                videoFile
+            ),
             arrayListOf(
                 CameraObj.PreviewConfigVo(
                     bindingMbr.cameraPreviewAutoFitTexture
