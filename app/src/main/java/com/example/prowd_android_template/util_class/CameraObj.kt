@@ -454,7 +454,11 @@ class CameraObj private constructor(
                                 ) == PackageManager.PERMISSION_GRANTED
 
                         // (할당용 미디어 리코더 준비)
-                        val preMediaRecorder = MediaRecorder()
+                        val preMediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            MediaRecorder(parentActivityMbr)
+                        } else {
+                            MediaRecorder()
+                        }
 
                         if (isRecordAudio) {
                             preMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -486,7 +490,11 @@ class CameraObj private constructor(
                         preMediaRecorder.release()
 
                         // (실사용 미디어 리코더 생성)
-                        val mediaRecorder = MediaRecorder()
+                        val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            MediaRecorder(parentActivityMbr)
+                        } else {
+                            MediaRecorder()
+                        }
 
                         if (isRecordAudio) {
                             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -581,7 +589,7 @@ class CameraObj private constructor(
             }
 
             // (세션 객체 검사)
-            if (cameraCaptureSessionMbr == null){
+            if (cameraCaptureSessionMbr == null) {
                 cameraSessionSemaphoreMbr.release()
                 onError(1)
                 return@execute
@@ -637,7 +645,7 @@ class CameraObj private constructor(
             }
 
             // (세션 객체 검사)
-            if (cameraCaptureSessionMbr == null){
+            if (cameraCaptureSessionMbr == null) {
                 cameraSessionSemaphoreMbr.release()
                 onError(1)
                 return@execute
