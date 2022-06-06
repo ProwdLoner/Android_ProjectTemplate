@@ -9,24 +9,18 @@ import android.media.Image
 import android.media.ImageReader
 import android.media.MediaRecorder
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
-import android.util.SparseIntArray
-import android.view.Surface
 import android.view.WindowManager
-import android.webkit.MimeTypeMap
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.FitCenter
-import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -37,8 +31,6 @@ import com.example.prowd_android_template.util_object.CameraUtil
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
 
 
 // todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
@@ -124,7 +116,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onPause() {
         isImageProcessingPause = true
-        backCameraObjMbr?.clearCameraSession()
+        backCameraObjMbr?.clearCameraObject()
 
         super.onPause()
     }
@@ -385,7 +377,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // todo onpause 처리 레코더 해제, 리코더 사용성 개선
     private var isRecordingMbr = false
     private var mediaRecorderMbr: MediaRecorder? = null
-    private var mediaRecordingStartMsMbr : Long? = null
+    private var mediaRecordingStartMsMbr: Long? = null
     private fun viewSetting() {
         bindingMbr.logContainer.y =
             bindingMbr.logContainer.y - CustomUtil.getNavigationBarHeightPixel(this)
@@ -394,96 +386,97 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             bindingMbr.recordBtn.y - CustomUtil.getNavigationBarHeightPixel(this)
 
         bindingMbr.recordBtn.setOnClickListener {
-            if (!isRecordingMbr) {
-                // 녹화 모드 실행
-                backCameraObjMbr?.startMediaRecorderSessionAsync(
-                    onMediaRecordingSessionStart = {
-                        // (실사용 미디어 리코더 생성)
-                        val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
-                        videoFile = File(this.filesDir, "VID_${sdf.format(Date())}.mp4")
-
-                        val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            MediaRecorder(this)
-                        } else {
-                            MediaRecorder()
-                        }
-                        // 카메라 방향 정보
-                        val rotation: Int = windowManager.defaultDisplay.rotation
-
-                        val defaultOrientation = SparseIntArray()
-                        defaultOrientation.append(Surface.ROTATION_90, 0)
-                        defaultOrientation.append(Surface.ROTATION_0, 90)
-                        defaultOrientation.append(Surface.ROTATION_270, 180)
-                        defaultOrientation.append(Surface.ROTATION_180, 270)
-
-                        val inverseOrientation = SparseIntArray()
-                        inverseOrientation.append(Surface.ROTATION_270, 0)
-                        inverseOrientation.append(Surface.ROTATION_180, 90)
-                        inverseOrientation.append(Surface.ROTATION_90, 180)
-                        inverseOrientation.append(Surface.ROTATION_0, 270)
-
-                        // 오디오 여부
-                        val isRecordAudio = false &&
-                                ActivityCompat.checkSelfPermission(
-                                    this,
-                                    Manifest.permission.RECORD_AUDIO
-                                ) == PackageManager.PERMISSION_GRANTED
-
-                        if (isRecordAudio) {
-                            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-                        }
-
-                        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
-                        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                        mediaRecorder.setOutputFile(videoFile.absolutePath)
-                        mediaRecorder.setVideoSize(it.chosenVideoSize.width, it.chosenVideoSize.height)
-                        mediaRecorder.setVideoFrameRate(it.mediaRecorderFps)
-                        mediaRecorder.setVideoEncodingBitRate(it.chosenVideoSize.width * it.chosenVideoSize.height * it.mediaRecorderFps)
-                        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                        if (isRecordAudio) {
-                            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                        }
-                        when (it.sensorOrientation) {
-                            90 ->
-                                mediaRecorder.setOrientationHint(
-                                    defaultOrientation.get(rotation)
-                                )
-                            270 ->
-                                mediaRecorder.setOrientationHint(
-                                    inverseOrientation.get(rotation)
-                                )
-                        }
-                        mediaRecorder.setInputSurface(it.inputSurface)
-
-                        mediaRecorderMbr = mediaRecorder
-
-                        mediaRecorderMbr?.prepare()
-                        mediaRecorderMbr?.start()
-                        mediaRecordingStartMsMbr = System.currentTimeMillis()
-                    },
-                    onError = {
-
-                    }
-                )
-                isRecordingMbr = true
-            } else {
-                // 녹화 모드 종료
-                mediaRecorderMbr?.stop()
-
-                startActivity(Intent().apply {
-                    action = Intent.ACTION_VIEW
-                    type = MimeTypeMap.getSingleton()
-                        .getMimeTypeFromExtension(videoFile.extension)
-                    val authority = "${BuildConfig.APPLICATION_ID}.provider"
-                    data = FileProvider.getUriForFile(it.context, authority, videoFile)
-                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                            Intent.FLAG_ACTIVITY_CLEAR_TOP
-                })
-
-                backCameraObjMbr?.startPreviewSessionAsync(onError = {})
-
-                isRecordingMbr = false
-            }
+            // todo
+//            if (!isRecordingMbr) {
+//                // 녹화 모드 실행
+//                backCameraObjMbr?.startMediaRecorderSessionAsync(
+//                    onMediaRecordingSessionStart = {
+//                        // (실사용 미디어 리코더 생성)
+//                        val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
+//                        videoFile = File(this.filesDir, "VID_${sdf.format(Date())}.mp4")
+//
+//                        val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//                            MediaRecorder(this)
+//                        } else {
+//                            MediaRecorder()
+//                        }
+//                        // 카메라 방향 정보
+//                        val rotation: Int = windowManager.defaultDisplay.rotation
+//
+//                        val defaultOrientation = SparseIntArray()
+//                        defaultOrientation.append(Surface.ROTATION_90, 0)
+//                        defaultOrientation.append(Surface.ROTATION_0, 90)
+//                        defaultOrientation.append(Surface.ROTATION_270, 180)
+//                        defaultOrientation.append(Surface.ROTATION_180, 270)
+//
+//                        val inverseOrientation = SparseIntArray()
+//                        inverseOrientation.append(Surface.ROTATION_270, 0)
+//                        inverseOrientation.append(Surface.ROTATION_180, 90)
+//                        inverseOrientation.append(Surface.ROTATION_90, 180)
+//                        inverseOrientation.append(Surface.ROTATION_0, 270)
+//
+//                        // 오디오 여부
+//                        val isRecordAudio = false &&
+//                                ActivityCompat.checkSelfPermission(
+//                                    this,
+//                                    Manifest.permission.RECORD_AUDIO
+//                                ) == PackageManager.PERMISSION_GRANTED
+//
+//                        if (isRecordAudio) {
+//                            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+//                        }
+//
+//                        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+//                        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+//                        mediaRecorder.setOutputFile(videoFile.absolutePath)
+//                        mediaRecorder.setVideoSize(it.chosenVideoSize.width, it.chosenVideoSize.height)
+//                        mediaRecorder.setVideoFrameRate(it.mediaRecorderFps)
+//                        mediaRecorder.setVideoEncodingBitRate(it.chosenVideoSize.width * it.chosenVideoSize.height * it.mediaRecorderFps)
+//                        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+//                        if (isRecordAudio) {
+//                            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+//                        }
+//                        when (it.sensorOrientation) {
+//                            90 ->
+//                                mediaRecorder.setOrientationHint(
+//                                    defaultOrientation.get(rotation)
+//                                )
+//                            270 ->
+//                                mediaRecorder.setOrientationHint(
+//                                    inverseOrientation.get(rotation)
+//                                )
+//                        }
+//                        mediaRecorder.setInputSurface(it.inputSurface)
+//
+//                        mediaRecorderMbr = mediaRecorder
+//
+//                        mediaRecorderMbr?.prepare()
+//                        mediaRecorderMbr?.start()
+//                        mediaRecordingStartMsMbr = System.currentTimeMillis()
+//                    },
+//                    onError = {
+//
+//                    }
+//                )
+//                isRecordingMbr = true
+//            } else {
+//                // 녹화 모드 종료
+//                mediaRecorderMbr?.stop()
+//
+//                startActivity(Intent().apply {
+//                    action = Intent.ACTION_VIEW
+//                    type = MimeTypeMap.getSingleton()
+//                        .getMimeTypeFromExtension(videoFile.extension)
+//                    val authority = "${BuildConfig.APPLICATION_ID}.provider"
+//                    data = FileProvider.getUriForFile(it.context, authority, videoFile)
+//                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+//                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+//                })
+//
+//                backCameraObjMbr?.startPreviewSessionAsync(onError = {})
+//
+//                isRecordingMbr = false
+//            }
         }
     }
 
@@ -545,32 +538,22 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // (카메라 실행)
         // 카메라 세션 실행
-        backCameraObjMbr?.setCameraSurfaceAsync(
+        backCameraObjMbr?.startCameraSession(
             2.0 / 3.0,
-//            CameraObj.ImageReaderConfigVo(
-//                600 * 600,
-//                imageReaderHandlerThreadMbr.handler!!,
-//                imageReaderCallback = { reader ->
-//                    processImage(reader)
-//                }
-//            ),
-            null,
-            CameraObj.VideoRecorderConfigVo(
-                Long.MAX_VALUE
+            CameraObj.ImageReaderConfigVo(
+                600 * 600,
+                imageReaderHandlerThreadMbr.handler!!,
+                imageReaderCallback = { reader ->
+                    processImage(reader)
+                }
             ),
-//            null,
+            null,
             arrayListOf(
                 CameraObj.PreviewConfigVo(
                     bindingMbr.cameraPreviewAutoFitTexture
                 )
             ),
-//            null,
-            onCameraSessionReady = {
-                backCameraObjMbr?.startPreviewSessionAsync(
-                    onError = {
-
-                    }
-                )
+            onCameraSessionStarted = {
 
             },
             onCameraDisconnected = {
