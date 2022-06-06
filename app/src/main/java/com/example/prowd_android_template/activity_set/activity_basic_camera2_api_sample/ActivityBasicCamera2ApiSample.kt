@@ -32,6 +32,8 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
+import com.example.prowd_android_template.util_class.HandlerThreadObj
+import com.example.prowd_android_template.util_object.CameraUtil
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 import java.io.File
@@ -72,6 +74,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
+
+    // Camera2 api 핸들러 스레드
+    private val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
+        this.startHandlerThread()
+    }
+
+    // 이미지 리더 핸들러 스레드
+    private val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader").apply {
+        this.startHandlerThread()
+    }
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -135,6 +147,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+
+        cameraHandlerThreadMbr.stopHandlerThread()
+        imageReaderHandlerThreadMbr.stopHandlerThread()
 
         super.onDestroy()
     }
@@ -333,10 +348,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 사용 카메라 객체 생성
         // 후방 카메라
-        val backCameraId = CameraObj.chooseCameraId(this, CameraCharacteristics.LENS_FACING_BACK)
+        val backCameraId = CameraUtil.chooseCameraId(this, CameraCharacteristics.LENS_FACING_BACK)
         if (null != backCameraId) {
             backCameraObjMbr =
-                CameraObj.getInstance(this, backCameraId)
+                CameraObj.getInstance(this, backCameraId, cameraHandlerThreadMbr.handler!!)
         }
 
         // 권한 요청 객체 생성
@@ -529,17 +544,18 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 카메라 세션 실행
         backCameraObjMbr?.setCameraSurfaceAsync(
             2.0 / 3.0,
-            CameraObj.ImageReaderConfigVo(
-                ImageFormat.YUV_420_888,
-                2,
-                600 * 600,
-                imageReaderCallback = { reader ->
-                    processImage(reader)
-                }
-            ),
-            CameraObj.VideoRecorderConfigVo(
-                Long.MAX_VALUE
-            ),
+//            CameraObj.ImageReaderConfigVo(
+//                600 * 600,
+//                imageReaderHandlerThreadMbr.handler!!,
+//                imageReaderCallback = { reader ->
+//                    processImage(reader)
+//                }
+//            ),
+            null,
+//            CameraObj.VideoRecorderConfigVo(
+//                Long.MAX_VALUE
+//            ),
+            null,
             arrayListOf(
                 CameraObj.PreviewConfigVo(
                     bindingMbr.cameraPreviewAutoFitTexture
