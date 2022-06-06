@@ -326,6 +326,26 @@ class CameraObj private constructor(
                                 )
                             }
                         )
+                    } else {
+                        if (mediaRecorderInfoVOMbr == null &&
+                            imageReaderInfoVoMbr == null
+                        ) { // 생성 서페이스가 하나도 존재하지 않으면,
+                            cameraSessionSemaphoreMbr.release()
+                            onError(8)
+                            return@openCameraDevice
+                        }
+
+                        // (카메라 세션 생성)
+                        createCameraSessionAsync(
+                            onCaptureSessionCreated = {
+                                cameraSessionSemaphoreMbr.release()
+                                onCameraSessionReady()
+                            },
+                            onError = {
+                                cameraSessionSemaphoreMbr.release()
+                                onError(it)
+                            }
+                        )
                     }
                 },
                 onCameraDisconnected = {
@@ -386,7 +406,7 @@ class CameraObj private constructor(
             // (카메라 실행)
             cameraCaptureSessionMbr!!.setRepeatingRequest(
                 captureRequestBuilderMbr!!.build(),
-                object : CameraCaptureSession.CaptureCallback() {},
+                null,
                 cameraHandlerMbr
             )
 
@@ -766,12 +786,14 @@ class CameraObj private constructor(
 
                     // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
                     override fun onDisconnected(camera: CameraDevice) {
+                        camera.close()
                         cameraDeviceMbr = null
 
                         onCameraDisconnected()
                     }
 
                     override fun onError(camera: CameraDevice, error: Int) {
+                        camera.close()
                         cameraDeviceMbr = null
 
                         when (error) {

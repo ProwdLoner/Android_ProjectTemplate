@@ -390,6 +390,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         bindingMbr.logContainer.y =
             bindingMbr.logContainer.y - CustomUtil.getNavigationBarHeightPixel(this)
 
+        bindingMbr.recordBtn.y =
+            bindingMbr.recordBtn.y - CustomUtil.getNavigationBarHeightPixel(this)
+
         bindingMbr.recordBtn.setOnClickListener {
             if (!isRecordingMbr) {
                 // 녹화 모드 실행
@@ -552,15 +555,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                }
 //            ),
             null,
-//            CameraObj.VideoRecorderConfigVo(
-//                Long.MAX_VALUE
-//            ),
-            null,
+            CameraObj.VideoRecorderConfigVo(
+                Long.MAX_VALUE
+            ),
+//            null,
             arrayListOf(
                 CameraObj.PreviewConfigVo(
                     bindingMbr.cameraPreviewAutoFitTexture
                 )
             ),
+//            null,
             onCameraSessionReady = {
                 backCameraObjMbr?.startPreviewSessionAsync(
                     onError = {
