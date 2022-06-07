@@ -528,14 +528,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // (카메라 실행)
         // 카메라 세션 실행
         backCameraObjMbr?.startCameraSession(
-//            CameraObj.ImageReaderConfigVo(
-//                600 * 600,
-//                imageReaderHandlerThreadMbr.handler!!,
-//                imageReaderCallback = { reader ->
-//                    processImage(reader)
-//                }
-//            ),
-            null,
+            CameraObj.ImageReaderConfigVo(
+                Size(4000, 3000),
+                viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
+                imageReaderCallback = { reader ->
+                    processImage(reader)
+                }
+            ),
+//            null,
             null,
             arrayListOf(
                 CameraObj.PreviewConfigVo(
@@ -628,6 +628,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 이미지 데이터가 복사되어 image 객체 해제
         imageObj.close()
+
+        if (yuvByteArray == null){
+            return
+        }
 
         yuvByteArrayToArgbBitmapAsyncOnProgressMbr = true
 
