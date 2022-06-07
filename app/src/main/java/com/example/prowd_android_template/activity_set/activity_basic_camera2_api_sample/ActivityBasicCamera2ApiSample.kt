@@ -395,6 +395,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 녹화 모드 실행
                     // todo : 서페이스 설정과 분리
                     backCameraObjMbr?.startCameraSession(
+                        arrayListOf(
+                            CameraObj.PreviewConfigVo(
+                                Size(4000, 3000),
+                                bindingMbr.cameraPreviewAutoFitTexture
+                            )
+                        ),
                         CameraObj.ImageReaderConfigVo(
                             Size(4000, 3000),
                             viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
@@ -406,12 +412,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             Size(4000, 3000),
                             videoFileMbr!!.absolutePath,
                             false
-                        ),
-                        arrayListOf(
-                            CameraObj.PreviewConfigVo(
-                                Size(4000, 3000),
-                                bindingMbr.cameraPreviewAutoFitTexture
-                            )
                         ),
                         onCameraSessionStarted = {
 
@@ -426,6 +426,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 } else {
                     // 녹화 모드 종료
                     backCameraObjMbr?.startCameraSession(
+                        arrayListOf(
+                            CameraObj.PreviewConfigVo(
+                                Size(4000, 3000),
+                                bindingMbr.cameraPreviewAutoFitTexture
+                            )
+                        ),
                         CameraObj.ImageReaderConfigVo(
                             Size(4000, 3000),
                             viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
@@ -434,12 +440,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             }
                         ),
                         null,
-                        arrayListOf(
-                            CameraObj.PreviewConfigVo(
-                                Size(4000, 3000),
-                                bindingMbr.cameraPreviewAutoFitTexture
-                            )
-                        ),
                         onCameraSessionStarted = {
                             startActivity(Intent().apply {
                                 action = Intent.ACTION_VIEW
@@ -521,6 +521,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // (카메라 실행)
         // 카메라 세션 실행
         backCameraObjMbr?.startCameraSession(
+            arrayListOf(
+                CameraObj.PreviewConfigVo(
+                    Size(4000, 3000),
+                    bindingMbr.cameraPreviewAutoFitTexture
+                )
+            ),
             CameraObj.ImageReaderConfigVo(
                 Size(4000, 3000),
                 viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
@@ -529,12 +535,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
             ),
             null,
-            arrayListOf(
-                CameraObj.PreviewConfigVo(
-                    Size(4000, 3000),
-                    bindingMbr.cameraPreviewAutoFitTexture
-                )
-            ),
             onCameraSessionStarted = {
 
             },
