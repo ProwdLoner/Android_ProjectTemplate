@@ -540,36 +540,6 @@ class CameraObj private constructor(
                             width: Int,
                             height: Int
                         ) {
-                            Log.e("pv", "w : $width, h : $height")
-                            Log.e("li", "w : ${previewObj.width}, h : ${previewObj.height}")
-
-                            previewObj.surfaceTextureListener =
-                                object : TextureView.SurfaceTextureListener {
-                                    override fun onSurfaceTextureAvailable(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
-
-                                    override fun onSurfaceTextureSizeChanged(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) {
-                                        configureTransform(
-                                            previewSize.width,
-                                            previewSize.height,
-                                            previewObj
-                                        )
-                                    }
-
-                                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                        true
-
-                                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                        Unit
-                                }
-
                             // (텍스쳐 뷰 비율 변경)
                             if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
                                 && (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) ||
@@ -591,18 +561,13 @@ class CameraObj private constructor(
                                 }
                             }
 
-                            val surfaceTexture =
-                                previewObj.surfaceTexture
+                            // 서페이스 버퍼 설정
+                            surface.setDefaultBufferSize(
+                                previewSize.width,
+                                previewSize.height
+                            )
 
-                            if (surfaceTexture != null) {
-                                // 서페이스 버퍼 설정
-                                surfaceTexture.setDefaultBufferSize(
-                                    previewSize.width,
-                                    previewSize.height
-                                )
-
-                                previewSurfaceListMbr.add(Surface(surfaceTexture))
-                            }
+                            previewSurfaceListMbr.add(Surface(surface))
 
 
                             if (previewIdx == previewConfigList.lastIndex) {
@@ -615,7 +580,13 @@ class CameraObj private constructor(
                             surface: SurfaceTexture,
                             width: Int,
                             height: Int
-                        ) = Unit
+                        ) {
+                            configureTransform(
+                                previewSize.width,
+                                previewSize.height,
+                                previewObj
+                            )
+                        }
 
                         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
                             true
