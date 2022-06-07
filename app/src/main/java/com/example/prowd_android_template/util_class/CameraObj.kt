@@ -338,7 +338,7 @@ class CameraObj private constructor(
                     mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
                     mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                     mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaFileAbsolutePath)
-                    mediaRecorderMbr!!.setVideoEncodingBitRate(10000000) // todo
+                    mediaRecorderMbr!!.setVideoEncodingBitRate(mediaRecorderConfigVo.cameraOrientSurfaceSize.width * mediaRecorderConfigVo.cameraOrientSurfaceSize.height * mediaRecorderFps * 3) // todo
                     mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
                     mediaRecorderMbr!!.setVideoSize(
                         mediaRecorderConfigVo.cameraOrientSurfaceSize.width,

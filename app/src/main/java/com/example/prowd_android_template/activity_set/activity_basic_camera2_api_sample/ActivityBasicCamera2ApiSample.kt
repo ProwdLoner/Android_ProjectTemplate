@@ -382,7 +382,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // todo
             if (backCameraObjMbr != null) {
                 if (!(backCameraObjMbr!!.isRecordingMbr)) {
-                    Log.e("st", "st")
                     videoFileMbr = File(
                         this.filesDir,
                         "VID_${
@@ -425,7 +424,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         }
                     )
                 } else {
-                    Log.e("en", "en")
                     // 녹화 모드 종료
                     backCameraObjMbr?.startCameraSession(
                         CameraObj.ImageReaderConfigVo(
@@ -443,9 +441,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             )
                         ),
                         onCameraSessionStarted = {
-
-                            Log.e("dd", videoFileMbr!!.length().toString())
-
                             startActivity(Intent().apply {
                                 action = Intent.ACTION_VIEW
                                 type = MimeTypeMap.getSingleton()
@@ -455,7 +450,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                                         Intent.FLAG_ACTIVITY_CLEAR_TOP
                             })
-
                         },
                         onCameraDisconnected = {
 
