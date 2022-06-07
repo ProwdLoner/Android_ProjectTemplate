@@ -60,12 +60,13 @@ class AutoFitTextureView : TextureView {
     // 인자로 전해준 width, height 값의 "비율에 맞게" 화면을 다시 그리기
     // ratioWidth, ratioHeight 가 설정되고 onMeasure 가 다시 실행됨
     fun setAspectRatio(width: Int, height: Int) {
-        if (width >= 0 && height >= 0) { // size 값이 음수가 아닐 때만
-            ratioWidthMbr = width
-            ratioHeightMbr = height
-
-            // 화면 갱신 = onMeasure 실행
-            requestLayout()
+        if (width < 0 || height < 0) {
+            throw IllegalArgumentException("Size cannot be negative.")
         }
+        ratioWidthMbr = width
+        ratioHeightMbr = height
+
+        // 화면 갱신 = onMeasure 실행
+        requestLayout()
     }
 }

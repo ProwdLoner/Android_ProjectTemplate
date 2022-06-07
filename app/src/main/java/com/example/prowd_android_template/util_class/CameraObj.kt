@@ -70,6 +70,7 @@ class CameraObj private constructor(
     private var imageReaderInfoVoMbr: ImageReaderInfoVo? = null
 
     // 미디어 리코더 세팅 부산물
+    private var mediaRecorderMbr :MediaRecorder? = null
     private var mediaRecorderSurfaceMbr: Surface? = null
     private var mediaRecorderInfoVOMbr: VideoRecorderInfoVO? = null
     private var mediaRecorderFpsMbr: Int? = null
@@ -155,6 +156,7 @@ class CameraObj private constructor(
             cameraSessionSemaphoreMbr.acquire()
 
             // (카메라 상태 초기화)
+            // todo
             mediaRecorderSurfaceMbr?.release()
             mediaRecorderSurfaceMbr = null
             mediaRecorderFpsMbr = null
