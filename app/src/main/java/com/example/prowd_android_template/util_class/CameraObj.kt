@@ -59,25 +59,18 @@ class CameraObj private constructor(
     private val cameraSessionSemaphoreMbr = Semaphore(1)
     private var cameraDeviceMbr: CameraDevice? = null
 
-    // 카메라 출력 비율
-    // 원하는 이미지 비율 (기본 비율은 1 : 1)
-    // 0 이하라면 비율은 보지 않음
-    // width / height 으로 계산
-    private var cameraOutputSurfaceWhRatioMbr: Double = 1.0
-
     // 이미지 리더 세팅 부산물
     private var imageReaderMbr: ImageReader? = null
     private var imageReaderInfoVoMbr: ImageReaderInfoVo? = null
 
     // 미디어 리코더 세팅 부산물
-    private var mediaRecorderMbr :MediaRecorder? = null
+    private var mediaRecorderMbr: MediaRecorder? = null
     private var mediaRecorderSurfaceMbr: Surface? = null
     private var mediaRecorderInfoVOMbr: VideoRecorderInfoVO? = null
     private var mediaRecorderFpsMbr: Int? = null
 
     // 프리뷰 세팅 부산물
     private val previewSurfaceListMbr: ArrayList<Surface> = ArrayList()
-    private val previewInfoListMbr: ArrayList<PreviewInfoVO> = ArrayList()
 
     // 카메라 리퀘스트 빌더
     private var captureRequestBuilderMbr: CaptureRequest.Builder? = null
@@ -144,7 +137,6 @@ class CameraObj private constructor(
     // 8 : 생성된 서페이스가 존재하지 않음
     // 9 : 카메라 세션 생성 실패
     fun startCameraSession(
-        cameraOutputSurfaceWhRatio: Double,
         imageReaderConfigVo: ImageReaderConfigVo?,
         videoRecorderConfigVo: VideoRecorderConfigVo?,
         previewConfigList: ArrayList<PreviewConfigVo>?,
@@ -173,10 +165,7 @@ class CameraObj private constructor(
 
             captureRequestBuilderMbr = null
 
-            previewInfoListMbr.clear()
             previewSurfaceListMbr.clear()
-
-            cameraOutputSurfaceWhRatioMbr = 1.0
 
             // (파라미터 검사)
             if (imageReaderConfigVo == null &&
@@ -210,39 +199,37 @@ class CameraObj private constructor(
             // (카메라 디바이스 열기)
             openCameraDevice(
                 onCameraDeviceReady = {
-                    // (카메라 출력 비율 설정)
-                    cameraOutputSurfaceWhRatioMbr = cameraOutputSurfaceWhRatio
-
                     // (이미지 리더 서페이스 설정)
-                    if (imageReaderConfigVo != null) {
-                        // 카메라 디바이스에서 지원되는 이미지 사이즈 리스트
-                        val imageReaderSizes =
-                            streamConfigurationMapMbr.getOutputSizes(ImageFormat.YUV_420_888)
-
-                        if (imageReaderSizes.isNotEmpty()) {
-                            // 원하는 사이즈에 유사한 사이즈를 선정
-                            val chosenImageReaderSize = chooseCameraSize(
-                                imageReaderSizes,
-                                imageReaderConfigVo.preferredImageReaderArea,
-                                cameraOutputSurfaceWhRatio
-                            )
-
-                            val imageReader = ImageReader.newInstance(
-                                chosenImageReaderSize.width,
-                                chosenImageReaderSize.height,
-                                ImageFormat.YUV_420_888,
-                                2
-                            ).apply {
-                                setOnImageAvailableListener(
-                                    imageReaderConfigVo.imageReaderCallback,
-                                    imageReaderConfigVo.imageReaderHandler
-                                )
-                            }
-
-                            imageReaderMbr = imageReader
-                            imageReaderInfoVoMbr = ImageReaderInfoVo(chosenImageReaderSize)
-                        }
-                    }
+//                    if (imageReaderConfigVo != null) {
+//                        // 카메라 디바이스에서 지원되는 이미지 사이즈 리스트
+//                        val imageReaderSizes =
+//                            streamConfigurationMapMbr.getOutputSizes(ImageFormat.YUV_420_888)
+//
+//                        // todo
+//                        if (imageReaderSizes.isNotEmpty()) {
+//                            // 원하는 사이즈에 유사한 사이즈를 선정
+//                            val chosenImageReaderSize = chooseCameraSize(
+//                                imageReaderSizes,
+//                                imageReaderConfigVo.preferredImageReaderArea,
+//                                cameraOutputSurfaceWhRatio
+//                            )
+//
+//                            val imageReader = ImageReader.newInstance(
+//                                chosenImageReaderSize.width,
+//                                chosenImageReaderSize.height,
+//                                ImageFormat.YUV_420_888,
+//                                2
+//                            ).apply {
+//                                setOnImageAvailableListener(
+//                                    imageReaderConfigVo.imageReaderCallback,
+//                                    imageReaderConfigVo.imageReaderHandler
+//                                )
+//                            }
+//
+//                            imageReaderMbr = imageReader
+//                            imageReaderInfoVoMbr = ImageReaderInfoVo(chosenImageReaderSize)
+//                        }
+//                    }
 
                     // (미디어 리코더 서페이스 설정)
                     // todo
@@ -303,7 +290,7 @@ class CameraObj private constructor(
                         setPreviewSurfaceListAsync(
                             previewConfigList,
                             onPreviewSurfaceReady = {
-                                if (previewInfoListMbr.isEmpty() &&
+                                if (previewSurfaceListMbr.isEmpty() &&
                                     mediaRecorderInfoVOMbr == null &&
                                     imageReaderInfoVoMbr == null
                                 ) { // 생성 서페이스가 하나도 존재하지 않으면,
@@ -376,7 +363,7 @@ class CameraObj private constructor(
     }
 
     // 카메라 세션을 멈추는 함수 (카메라 디바이스를 제외한 나머지 초기화)
-    fun stopCameraSession(){
+    fun stopCameraSession() {
         cameraSessionSemaphoreMbr.acquire()
 
         mediaRecorderSurfaceMbr?.release()
@@ -395,10 +382,7 @@ class CameraObj private constructor(
 
         captureRequestBuilderMbr = null
 
-        previewInfoListMbr.clear()
         previewSurfaceListMbr.clear()
-
-        cameraOutputSurfaceWhRatioMbr = 1.0
 
         cameraSessionSemaphoreMbr.release()
     }
@@ -423,10 +407,7 @@ class CameraObj private constructor(
 
         captureRequestBuilderMbr = null
 
-        previewInfoListMbr.clear()
         previewSurfaceListMbr.clear()
-
-        cameraOutputSurfaceWhRatioMbr = 1.0
 
         cameraDeviceMbr?.close()
         cameraDeviceMbr = null
@@ -739,31 +720,9 @@ class CameraObj private constructor(
     ) {
         executorServiceMbr?.execute {
             // 지원되는 카메라 사이즈 배열 가져오기
-            val cameraSizes =
-                streamConfigurationMapMbr.getOutputSizes(SurfaceTexture::class.java)
-
-            if (cameraSizes.isEmpty()) {
-                onPreviewSurfaceReady()
-                return@execute
-            }
-
             for (previewIdx in 0 until previewConfigList.size) {
                 val previewConfigVo = previewConfigList[previewIdx]
                 val cameraPreview = previewConfigVo.autoFitTextureView
-                var chosenPreviewSize: Size
-
-                // (카메라 프리뷰 사이즈 계산)
-                // 실제 지원하는 카메라 사이즈들 중 설정에 가까운 것을 선택
-                // 원하는 크기 (= 디바이스 스크린 크기와 동일하게 설정)
-                val preferredPreviewArea: Long =
-                    parentActivityMbr.resources.displayMetrics.widthPixels.toLong() *
-                            parentActivityMbr.resources.displayMetrics.heightPixels.toLong()
-
-                chosenPreviewSize = chooseCameraSize(
-                    cameraSizes,
-                    preferredPreviewArea,
-                    cameraOutputSurfaceWhRatioMbr
-                )
 
                 if (cameraPreview.isAvailable) {
                     val surfaceTexture = cameraPreview.surfaceTexture
@@ -771,28 +730,23 @@ class CameraObj private constructor(
                     if (null != surfaceTexture) {
                         // 서페이스 버퍼 설정
                         surfaceTexture.setDefaultBufferSize(
-                            chosenPreviewSize.width,
-                            chosenPreviewSize.height
+                            previewConfigVo.previewSize.width,
+                            previewConfigVo.previewSize.height
                         )
 
-                        val previewInfoVO = PreviewInfoVO(
-                            chosenPreviewSize
-                        )
-
-                        previewInfoListMbr.add(previewInfoVO)
                         previewSurfaceListMbr.add(Surface(surfaceTexture))
 
                         // (텍스쳐 뷰 비율 변경)
-                        var viewWidth = chosenPreviewSize.width
-                        var viewHeight = chosenPreviewSize.height
+                        var viewWidth = previewConfigVo.previewSize.width
+                        var viewHeight = previewConfigVo.previewSize.height
 
                         if (((sensorOrientationMbr == 0 || sensorOrientationMbr == 180) &&
                                     Configuration.ORIENTATION_LANDSCAPE == parentActivityMbr.resources.configuration.orientation) ||
                             ((sensorOrientationMbr == 90 || sensorOrientationMbr == 270) &&
                                     Configuration.ORIENTATION_PORTRAIT == parentActivityMbr.resources.configuration.orientation)
                         ) {
-                            viewWidth = chosenPreviewSize.height
-                            viewHeight = chosenPreviewSize.width
+                            viewWidth = previewConfigVo.previewSize.height
+                            viewHeight = previewConfigVo.previewSize.width
                         }
 
                         parentActivityMbr.runOnUiThread {
@@ -802,9 +756,10 @@ class CameraObj private constructor(
                             )
                         }
 
+                        // todo
                         configureTransform(
-                            chosenPreviewSize.width,
-                            chosenPreviewSize.height,
+                            previewConfigVo.previewSize.width,
+                            previewConfigVo.previewSize.height,
                             cameraPreview
                         )
                     }
@@ -823,28 +778,23 @@ class CameraObj private constructor(
                             ) {
                                 // 서페이스 버퍼 설정
                                 surfaceTexture.setDefaultBufferSize(
-                                    chosenPreviewSize.width,
-                                    chosenPreviewSize.height
+                                    previewConfigVo.previewSize.width,
+                                    previewConfigVo.previewSize.height
                                 )
 
-                                val previewInfoVO = PreviewInfoVO(
-                                    chosenPreviewSize
-                                )
-
-                                previewInfoListMbr.add(previewInfoVO)
                                 previewSurfaceListMbr.add(Surface(surfaceTexture))
 
                                 // (텍스쳐 뷰 비율 변경)
-                                var viewWidth = chosenPreviewSize.width
-                                var viewHeight = chosenPreviewSize.height
+                                var viewWidth = previewConfigVo.previewSize.width
+                                var viewHeight = previewConfigVo.previewSize.height
 
                                 if (((sensorOrientationMbr == 0 || sensorOrientationMbr == 180) &&
                                             Configuration.ORIENTATION_LANDSCAPE == parentActivityMbr.resources.configuration.orientation) ||
                                     ((sensorOrientationMbr == 90 || sensorOrientationMbr == 270) &&
                                             Configuration.ORIENTATION_PORTRAIT == parentActivityMbr.resources.configuration.orientation)
                                 ) {
-                                    viewWidth = chosenPreviewSize.height
-                                    viewHeight = chosenPreviewSize.width
+                                    viewWidth = previewConfigVo.previewSize.height
+                                    viewHeight = previewConfigVo.previewSize.width
                                 }
 
                                 parentActivityMbr.runOnUiThread {
@@ -854,9 +804,10 @@ class CameraObj private constructor(
                                     )
                                 }
 
+                                // todo
                                 configureTransform(
-                                    chosenPreviewSize.width,
-                                    chosenPreviewSize.height,
+                                    previewConfigVo.previewSize.width,
+                                    previewConfigVo.previewSize.height,
                                     cameraPreview
                                 )
 
@@ -871,9 +822,10 @@ class CameraObj private constructor(
                                 width: Int,
                                 height: Int
                             ) {
+                                // todo
                                 configureTransform(
-                                    chosenPreviewSize.width,
-                                    chosenPreviewSize.height,
+                                    previewConfigVo.previewSize.width,
+                                    previewConfigVo.previewSize.height,
                                     cameraPreview
                                 )
                             }
@@ -1040,12 +992,8 @@ class CameraObj private constructor(
     )
 
     data class PreviewConfigVo(
+        val previewSize: Size,
         val autoFitTextureView: AutoFitTextureView
-    )
-
-    data class PreviewInfoVO(
-        // 계산된 카메라 프리뷰 사이즈
-        val chosenPreviewSize: Size
     )
 
     data class VideoRecorderConfigVo(

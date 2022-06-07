@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
+import android.util.Size
 import android.view.WindowManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -539,17 +540,18 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // (카메라 실행)
         // 카메라 세션 실행
         backCameraObjMbr?.startCameraSession(
-            2.0 / 3.0,
-            CameraObj.ImageReaderConfigVo(
-                600 * 600,
-                imageReaderHandlerThreadMbr.handler!!,
-                imageReaderCallback = { reader ->
-                    processImage(reader)
-                }
-            ),
+//            CameraObj.ImageReaderConfigVo(
+//                600 * 600,
+//                imageReaderHandlerThreadMbr.handler!!,
+//                imageReaderCallback = { reader ->
+//                    processImage(reader)
+//                }
+//            ),
+            null,
             null,
             arrayListOf(
                 CameraObj.PreviewConfigVo(
+                    Size(1088,1088),
                     bindingMbr.cameraPreviewAutoFitTexture
                 )
             ),
