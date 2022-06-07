@@ -12,6 +12,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.util_class.HandlerThreadObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -51,10 +52,20 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         Element.U8_4(renderScriptMbr)
     )
 
-    var scriptCRotatorMbr : ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
+    var scriptCRotatorMbr: ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
 
     // 액티비티 진입 필수 권한 요청 여부
     var isActivityPermissionClearMbr = false
+
+    // Camera2 api 핸들러 스레드
+    val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
+        this.startHandlerThread()
+    }
+
+    // 이미지 리더 핸들러 스레드
+    val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader").apply {
+        this.startHandlerThread()
+    }
 
 
     // ---------------------------------------------------------------------------------------------
@@ -83,6 +94,10 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         scriptCRotatorMbr.destroy()
         renderScriptMbr.finish()
         renderScriptMbr.destroy()
+
+        // 카메라 스레드 해소
+        cameraHandlerThreadMbr.stopHandlerThread()
+        imageReaderHandlerThreadMbr.stopHandlerThread()
 
         super.onCleared()
     }

@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.RectF
 import android.graphics.SurfaceTexture
@@ -14,7 +13,6 @@ import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
-import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
@@ -26,13 +24,11 @@ import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
-import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.collections.ArrayList
 import kotlin.math.abs
-import kotlin.math.max
 
 // <Camera 디바이스 하나에 대한 obj>
 // 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체
@@ -144,62 +140,98 @@ class CameraObj private constructor(
         onCameraDisconnected: () -> Unit,
         onError: (Int) -> Unit
     ) {
-        executorServiceMbr?.execute {
-            cameraSessionSemaphoreMbr.acquire()
+        cameraSessionSemaphoreMbr.acquire()
 
-            // (카메라 상태 초기화)
-            // todo
-            mediaRecorderSurfaceMbr?.release()
-            mediaRecorderSurfaceMbr = null
-            mediaRecorderFpsMbr = null
-            mediaRecorderInfoVOMbr = null
+        // 프리뷰 설정이 존재하면 프리뷰 생성이 모두 클리어 된 상태에서 넘어가기
+        waitAllPreviewObjectReady(
+            previewConfigList,
+            onPreviewAllReady = {
+                // (카메라 상태 초기화)
+                mediaRecorderSurfaceMbr?.release()
+                mediaRecorderSurfaceMbr = null
+                mediaRecorderFpsMbr = null
+                mediaRecorderInfoVOMbr = null
 
-            imageReaderMbr?.setOnImageAvailableListener(null, null)
-            imageReaderMbr?.close()
-            imageReaderMbr = null
-            imageReaderInfoVoMbr = null
+                imageReaderMbr?.setOnImageAvailableListener(null, null)
+                imageReaderMbr?.close()
+                imageReaderMbr = null
+                imageReaderInfoVoMbr = null
 
-            cameraCaptureSessionMbr?.stopRepeating()
-            cameraCaptureSessionMbr?.close()
-            cameraCaptureSessionMbr = null
+                cameraCaptureSessionMbr?.stopRepeating()
+                cameraCaptureSessionMbr?.close()
+                cameraCaptureSessionMbr = null
 
-            captureRequestBuilderMbr = null
+                captureRequestBuilderMbr = null
 
-            previewSurfaceListMbr.clear()
+                previewSurfaceListMbr.clear()
 
-            // (파라미터 검사)
-            if (imageReaderConfigVo == null &&
-                videoRecorderConfigVo == null &&
-                (previewConfigList == null ||
-                        previewConfigList.isEmpty())
-            ) {
-                cameraSessionSemaphoreMbr.release()
-                onError(0)
-                return@execute
-            }
+                // (파라미터 검사)
+                if (imageReaderConfigVo == null &&
+                    videoRecorderConfigVo == null &&
+                    (previewConfigList == null ||
+                            previewConfigList.isEmpty())
+                ) {
+                    cameraSessionSemaphoreMbr.release()
+                    onError(0)
+                    return@waitAllPreviewObjectReady
+                }
 
-            // (카메라 장치 검사)
-            if (!parentActivityMbr.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-                cameraSessionSemaphoreMbr.release()
-                onError(1)
-                return@execute
-            }
+                // (카메라 장치 검사)
+                if (!parentActivityMbr.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+                    cameraSessionSemaphoreMbr.release()
+                    onError(1)
+                    return@waitAllPreviewObjectReady
+                }
 
-            // (카메라 권한 검사)
-            if (ActivityCompat.checkSelfPermission(
-                    parentActivityMbr,
-                    Manifest.permission.CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                cameraSessionSemaphoreMbr.release()
-                onError(2)
-                return@execute
-            }
+                // (카메라 권한 검사)
+                if (ActivityCompat.checkSelfPermission(
+                        parentActivityMbr,
+                        Manifest.permission.CAMERA
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    cameraSessionSemaphoreMbr.release()
+                    onError(2)
+                    return@waitAllPreviewObjectReady
+                }
 
-            // (카메라 디바이스 열기)
-            openCameraDevice(
-                onCameraDeviceReady = {
-                    // (이미지 리더 서페이스 설정)
+                // (서페이스 설정)
+                // 프리뷰 서페이스
+                if ((previewConfigList != null &&
+                            previewConfigList.isNotEmpty())
+                ) {
+                    for (previewConfigVo in previewConfigList) {
+                        // (텍스쳐 뷰 비율 변경)
+                        if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                            previewConfigVo.autoFitTextureView.setAspectRatio(
+                                previewConfigVo.cameraOrientSurfaceSize.width,
+                                previewConfigVo.cameraOrientSurfaceSize.height
+                            )
+                        } else {
+                            previewConfigVo.autoFitTextureView.setAspectRatio(
+                                previewConfigVo.cameraOrientSurfaceSize.height,
+                                previewConfigVo.cameraOrientSurfaceSize.width
+                            )
+                        }
+
+                        configureTransform(
+                            previewConfigVo.cameraOrientSurfaceSize.width,
+                            previewConfigVo.cameraOrientSurfaceSize.height,
+                            previewConfigVo.autoFitTextureView
+                        )
+
+                        val surfaceTexture =
+                            previewConfigVo.autoFitTextureView.surfaceTexture!!
+
+                        // 서페이스 버퍼 설정
+                        surfaceTexture.setDefaultBufferSize(
+                            previewConfigVo.cameraOrientSurfaceSize.width,
+                            previewConfigVo.cameraOrientSurfaceSize.height
+                        )
+
+                        previewSurfaceListMbr.add(Surface(surfaceTexture))
+                    }
+                }
+                // (이미지 리더 서페이스 설정)
 //                    if (imageReaderConfigVo != null) {
 //                        // 카메라 디바이스에서 지원되는 이미지 사이즈 리스트
 //                        val imageReaderSizes =
@@ -231,8 +263,8 @@ class CameraObj private constructor(
 //                        }
 //                    }
 
-                    // (미디어 리코더 서페이스 설정)
-                    // todo
+                // (미디어 리코더 서페이스 설정)
+                // todo
 //                    if (videoRecorderConfigVo != null) {
 //                        // 코덱 서페이스 생성
 //                        mediaRecorderSurfaceMbr = MediaCodec.createPersistentInputSurface()
@@ -283,52 +315,18 @@ class CameraObj private constructor(
 //                            )
 //                    }
 
-                    // (프리뷰 서페이스 설정)
-                    if ((previewConfigList != null &&
-                                previewConfigList.isNotEmpty())
-                    ) {
-                        setPreviewSurfaceListAsync(
-                            previewConfigList,
-                            onPreviewSurfaceReady = {
-                                if (previewSurfaceListMbr.isEmpty() &&
-                                    mediaRecorderInfoVOMbr == null &&
-                                    imageReaderInfoVoMbr == null
-                                ) { // 생성 서페이스가 하나도 존재하지 않으면,
-                                    cameraSessionSemaphoreMbr.release()
-                                    onError(8)
-                                    return@setPreviewSurfaceListAsync
-                                }
+                if (previewSurfaceListMbr.isEmpty() &&
+                    mediaRecorderInfoVOMbr == null &&
+                    imageReaderInfoVoMbr == null
+                ) { // 생성 서페이스가 하나도 존재하지 않으면,
+                    cameraSessionSemaphoreMbr.release()
+                    onError(8)
+                    return@waitAllPreviewObjectReady
+                }
 
-                                // (카메라 세션 생성)
-                                createCameraSessionAsync(
-                                    onCaptureSessionCreated = {
-                                        if (mediaRecorderInfoVOMbr == null) {
-                                            startPreviewSessionAsync(onSessionStarted = {
-                                                onCameraSessionStarted()
-                                                cameraSessionSemaphoreMbr.release()
-                                            })
-                                        } else {
-                                            // todo 미디어 레코드 세션 실행
-                                            onCameraSessionStarted()
-                                            cameraSessionSemaphoreMbr.release()
-                                        }
-                                    },
-                                    onError = {
-                                        cameraSessionSemaphoreMbr.release()
-                                        onError(it)
-                                    }
-                                )
-                            }
-                        )
-                    } else {
-                        if (mediaRecorderInfoVOMbr == null &&
-                            imageReaderInfoVoMbr == null
-                        ) { // 생성 서페이스가 하나도 존재하지 않으면,
-                            cameraSessionSemaphoreMbr.release()
-                            onError(8)
-                            return@openCameraDevice
-                        }
-
+                // (카메라 디바이스 열기)
+                openCameraDevice(
+                    onCameraDeviceReady = {
                         // (카메라 세션 생성)
                         createCameraSessionAsync(
                             onCaptureSessionCreated = {
@@ -348,18 +346,17 @@ class CameraObj private constructor(
                                 onError(it)
                             }
                         )
+                    },
+                    onCameraDisconnected = {
+                        cameraSessionSemaphoreMbr.release()
+                        onCameraDisconnected()
+                    },
+                    onError = {
+                        cameraSessionSemaphoreMbr.release()
+                        onError(it)
                     }
-                },
-                onCameraDisconnected = {
-                    cameraSessionSemaphoreMbr.release()
-                    onCameraDisconnected()
-                },
-                onError = {
-                    cameraSessionSemaphoreMbr.release()
-                    onError(it)
-                }
-            )
-        }
+                )
+            })
     }
 
     // 카메라 세션을 멈추는 함수 (카메라 디바이스를 제외한 나머지 초기화)
@@ -418,6 +415,60 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
+    // (프리뷰 객체가 모두 생성될 때까지 기다리는 함수)
+    // 프리뷰 객체 설정이 없다면 곧바로 콜백을 실행
+    private fun waitAllPreviewObjectReady(
+        previewConfigList: ArrayList<PreviewConfigVo>?,
+        onPreviewAllReady: () -> Unit
+    ) {
+        if (previewConfigList == null || previewConfigList.isEmpty()) {
+            onPreviewAllReady()
+        } else {
+            for (previewIdx in 0 until previewConfigList.size) {
+                val previewConfigVo = previewConfigList[previewIdx]
+                val cameraPreview = previewConfigVo.autoFitTextureView
+
+                if (cameraPreview.isAvailable) {
+                    if (previewIdx == previewConfigList.lastIndex) {
+                        // 마지막 작업일 때
+                        onPreviewAllReady()
+                    }
+                } else {
+                    cameraPreview.surfaceTextureListener =
+                        object : TextureView.SurfaceTextureListener {
+                            override fun onSurfaceTextureAvailable(
+                                surface: SurfaceTexture,
+                                width: Int,
+                                height: Int
+                            ) {
+                                if (previewIdx == previewConfigList.lastIndex) {
+                                    // 마지막 작업일 때
+                                    onPreviewAllReady()
+                                }
+                            }
+
+                            override fun onSurfaceTextureSizeChanged(
+                                surface: SurfaceTexture,
+                                width: Int,
+                                height: Int
+                            ) {
+                                configureTransform(
+                                    previewConfigVo.cameraOrientSurfaceSize.width,
+                                    previewConfigVo.cameraOrientSurfaceSize.height,
+                                    cameraPreview
+                                )
+                            }
+
+                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+                                return true
+                            }
+
+                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
+                        }
+                }
+            }
+        }
+    }
 
     // (프리뷰 세션을 실행하는 함수)
     private fun startPreviewSessionAsync(onSessionStarted: () -> Unit) {
@@ -609,49 +660,24 @@ class CameraObj private constructor(
         chosenHeight: Int,
         cameraPreview: AutoFitTextureView
     ) {
-        val rotation =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                parentActivityMbr.display!!.rotation
-            } else {
-                parentActivityMbr.windowManager.defaultDisplay.rotation
-            }
-
+        val rotation = parentActivityMbr.windowManager.defaultDisplay.rotation
         val matrix = Matrix()
-        val viewRect = RectF(
-            0f,
-            0f,
-            cameraPreview.width.toFloat(),
-            cameraPreview.height.toFloat()
-        )
-        val bufferRect = RectF(
-            0f,
-            0f,
-            chosenHeight.toFloat(),
-            chosenWidth.toFloat()
-        )
+        val viewRect = RectF(0f, 0f, cameraPreview.width.toFloat(), cameraPreview.height.toFloat())
+        val bufferRect = RectF(0f, 0f, chosenHeight.toFloat(), chosenWidth.toFloat())
         val centerX = viewRect.centerX()
         val centerY = viewRect.centerY()
 
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
-            bufferRect.offset(
-                centerX - bufferRect.centerX(),
-                centerY - bufferRect.centerY()
-            )
-            val scale = max(
+            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY())
+            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL)
+            val scale = Math.max(
                 cameraPreview.height.toFloat() / chosenHeight,
                 cameraPreview.width.toFloat() / chosenWidth
             )
             with(matrix) {
-                setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL)
                 postScale(scale, scale, centerX, centerY)
-                postRotate(
-                    (90 * (rotation - 2)).toFloat(),
-                    centerX,
-                    centerY
-                )
+                postRotate((90 * (rotation - 2)).toFloat(), centerX, centerY)
             }
-        } else if (Surface.ROTATION_180 == rotation) {
-            matrix.postRotate(180f, centerX, centerY)
         }
         cameraPreview.setTransform(matrix)
     }
@@ -710,134 +736,6 @@ class CameraObj private constructor(
                     }
                 }, cameraHandlerMbr
             )
-        }
-    }
-
-    // 프리뷰 서페이스 리스트 생성
-    private fun setPreviewSurfaceListAsync(
-        previewConfigList: ArrayList<PreviewConfigVo>,
-        onPreviewSurfaceReady: () -> Unit
-    ) {
-        executorServiceMbr?.execute {
-            // 지원되는 카메라 사이즈 배열 가져오기
-            for (previewIdx in 0 until previewConfigList.size) {
-                val previewConfigVo = previewConfigList[previewIdx]
-                val cameraPreview = previewConfigVo.autoFitTextureView
-
-                if (cameraPreview.isAvailable) {
-                    val surfaceTexture = cameraPreview.surfaceTexture
-
-                    if (null != surfaceTexture) {
-                        // 서페이스 버퍼 설정
-                        surfaceTexture.setDefaultBufferSize(
-                            previewConfigVo.previewSize.width,
-                            previewConfigVo.previewSize.height
-                        )
-
-                        previewSurfaceListMbr.add(Surface(surfaceTexture))
-
-                        // (텍스쳐 뷰 비율 변경)
-                        var viewWidth = previewConfigVo.previewSize.width
-                        var viewHeight = previewConfigVo.previewSize.height
-
-                        if (((sensorOrientationMbr == 0 || sensorOrientationMbr == 180) &&
-                                    Configuration.ORIENTATION_LANDSCAPE == parentActivityMbr.resources.configuration.orientation) ||
-                            ((sensorOrientationMbr == 90 || sensorOrientationMbr == 270) &&
-                                    Configuration.ORIENTATION_PORTRAIT == parentActivityMbr.resources.configuration.orientation)
-                        ) {
-                            viewWidth = previewConfigVo.previewSize.height
-                            viewHeight = previewConfigVo.previewSize.width
-                        }
-
-                        parentActivityMbr.runOnUiThread {
-                            cameraPreview.setAspectRatio(
-                                viewWidth,
-                                viewHeight
-                            )
-                        }
-
-                        // todo
-                        configureTransform(
-                            previewConfigVo.previewSize.width,
-                            previewConfigVo.previewSize.height,
-                            cameraPreview
-                        )
-                    }
-
-                    if (previewIdx == previewConfigList.size - 1) {
-                        // 마지막 작업일 때
-                        onPreviewSurfaceReady()
-                    }
-                } else {
-                    cameraPreview.surfaceTextureListener =
-                        object : TextureView.SurfaceTextureListener {
-                            override fun onSurfaceTextureAvailable(
-                                surfaceTexture: SurfaceTexture,
-                                width: Int,
-                                height: Int
-                            ) {
-                                // 서페이스 버퍼 설정
-                                surfaceTexture.setDefaultBufferSize(
-                                    previewConfigVo.previewSize.width,
-                                    previewConfigVo.previewSize.height
-                                )
-
-                                previewSurfaceListMbr.add(Surface(surfaceTexture))
-
-                                // (텍스쳐 뷰 비율 변경)
-                                var viewWidth = previewConfigVo.previewSize.width
-                                var viewHeight = previewConfigVo.previewSize.height
-
-                                if (((sensorOrientationMbr == 0 || sensorOrientationMbr == 180) &&
-                                            Configuration.ORIENTATION_LANDSCAPE == parentActivityMbr.resources.configuration.orientation) ||
-                                    ((sensorOrientationMbr == 90 || sensorOrientationMbr == 270) &&
-                                            Configuration.ORIENTATION_PORTRAIT == parentActivityMbr.resources.configuration.orientation)
-                                ) {
-                                    viewWidth = previewConfigVo.previewSize.height
-                                    viewHeight = previewConfigVo.previewSize.width
-                                }
-
-                                parentActivityMbr.runOnUiThread {
-                                    cameraPreview.setAspectRatio(
-                                        viewWidth,
-                                        viewHeight
-                                    )
-                                }
-
-                                // todo
-                                configureTransform(
-                                    previewConfigVo.previewSize.width,
-                                    previewConfigVo.previewSize.height,
-                                    cameraPreview
-                                )
-
-                                if (previewIdx == previewConfigList.size - 1) {
-                                    // 마지막 작업일 때
-                                    onPreviewSurfaceReady()
-                                }
-                            }
-
-                            override fun onSurfaceTextureSizeChanged(
-                                surface: SurfaceTexture,
-                                width: Int,
-                                height: Int
-                            ) {
-                                // todo
-                                configureTransform(
-                                    previewConfigVo.previewSize.width,
-                                    previewConfigVo.previewSize.height,
-                                    cameraPreview
-                                )
-                            }
-
-                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-                                return true
-                            }
-
-                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
-                        }
-                }
-            }
         }
     }
 
@@ -992,7 +890,7 @@ class CameraObj private constructor(
     )
 
     data class PreviewConfigVo(
-        val previewSize: Size,
+        val cameraOrientSurfaceSize: Size,
         val autoFitTextureView: AutoFitTextureView
     )
 
