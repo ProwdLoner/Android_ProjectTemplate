@@ -539,7 +539,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             null,
             arrayListOf(
                 CameraObj.PreviewConfigVo(
-                    Size(1088, 1088),
+                    Size(4000, 3000),
                     bindingMbr.cameraPreviewAutoFitTexture
                 )
             ),

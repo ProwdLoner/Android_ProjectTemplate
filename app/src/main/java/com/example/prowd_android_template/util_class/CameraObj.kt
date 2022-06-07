@@ -16,6 +16,7 @@ import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
+import android.util.Log
 import android.util.Range
 import android.util.Size
 import android.view.Surface
@@ -37,7 +38,7 @@ import kotlin.math.abs
 // 카메라를 종료할 때에는 stopCamera 를 사용
 // Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
 
-// todo : 캡쳐, 설정 변경 함수, 세션 일시정지, 재개, 프리뷰 비율, 미디어 레코더 실행 프로세스
+// todo : 캡쳐, 설정 변경 함수, 세션 일시정지, 재개, 프리뷰 비율, 미디어 레코더 실행 프로세스, 설정 사이즈 검증
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -157,13 +158,13 @@ class CameraObj private constructor(
                 imageReaderMbr = null
                 imageReaderInfoVoMbr = null
 
+                previewSurfaceListMbr.clear()
+
                 cameraCaptureSessionMbr?.stopRepeating()
                 cameraCaptureSessionMbr?.close()
                 cameraCaptureSessionMbr = null
 
                 captureRequestBuilderMbr = null
-
-                previewSurfaceListMbr.clear()
 
                 // (파라미터 검사)
                 if (imageReaderConfigVo == null &&
@@ -201,17 +202,46 @@ class CameraObj private constructor(
                 ) {
                     for (previewConfigVo in previewConfigList) {
                         // (텍스쳐 뷰 비율 변경)
-                        if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                            previewConfigVo.autoFitTextureView.setAspectRatio(
-                                previewConfigVo.cameraOrientSurfaceSize.width,
-                                previewConfigVo.cameraOrientSurfaceSize.height
-                            )
-                        } else {
+                        if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                            && (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) ||
+                            parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                            && (sensorOrientationMbr == 90 || sensorOrientationMbr == 270)
+                        ) {
                             previewConfigVo.autoFitTextureView.setAspectRatio(
                                 previewConfigVo.cameraOrientSurfaceSize.height,
                                 previewConfigVo.cameraOrientSurfaceSize.width
                             )
+                        } else {
+                            previewConfigVo.autoFitTextureView.setAspectRatio(
+                                previewConfigVo.cameraOrientSurfaceSize.width,
+                                previewConfigVo.cameraOrientSurfaceSize.height
+                            )
                         }
+                        previewConfigVo.autoFitTextureView.surfaceTextureListener =
+                            object : TextureView.SurfaceTextureListener {
+                                override fun onSurfaceTextureAvailable(
+                                    surface: SurfaceTexture,
+                                    width: Int,
+                                    height: Int
+                                ) = Unit
+
+                                override fun onSurfaceTextureSizeChanged(
+                                    surface: SurfaceTexture,
+                                    width: Int,
+                                    height: Int
+                                ) {
+                                    configureTransform(
+                                        previewConfigVo.cameraOrientSurfaceSize.width,
+                                        previewConfigVo.cameraOrientSurfaceSize.height,
+                                        previewConfigVo.autoFitTextureView
+                                    )
+                                }
+
+                                override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                    true
+
+                                override fun onSurfaceTextureUpdated(surface: SurfaceTexture) = Unit
+                            }
 
                         configureTransform(
                             previewConfigVo.cameraOrientSurfaceSize.width,
@@ -220,15 +250,17 @@ class CameraObj private constructor(
                         )
 
                         val surfaceTexture =
-                            previewConfigVo.autoFitTextureView.surfaceTexture!!
+                            previewConfigVo.autoFitTextureView.surfaceTexture
 
-                        // 서페이스 버퍼 설정
-                        surfaceTexture.setDefaultBufferSize(
-                            previewConfigVo.cameraOrientSurfaceSize.width,
-                            previewConfigVo.cameraOrientSurfaceSize.height
-                        )
+                        if (surfaceTexture != null) {
+                            // 서페이스 버퍼 설정
+                            surfaceTexture.setDefaultBufferSize(
+                                previewConfigVo.cameraOrientSurfaceSize.width,
+                                previewConfigVo.cameraOrientSurfaceSize.height
+                            )
 
-                        previewSurfaceListMbr.add(Surface(surfaceTexture))
+                            previewSurfaceListMbr.add(Surface(surfaceTexture))
+                        }
                     }
                 }
                 // (이미지 리더 서페이스 설정)
@@ -451,19 +483,12 @@ class CameraObj private constructor(
                                 surface: SurfaceTexture,
                                 width: Int,
                                 height: Int
-                            ) {
-                                configureTransform(
-                                    previewConfigVo.cameraOrientSurfaceSize.width,
-                                    previewConfigVo.cameraOrientSurfaceSize.height,
-                                    cameraPreview
-                                )
-                            }
+                            ) = Unit
 
-                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-                                return true
-                            }
+                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                true
 
-                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
+                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) = Unit
                         }
                 }
             }
@@ -655,6 +680,7 @@ class CameraObj private constructor(
         }
     }
 
+    // todo sensororientation 에 따라 다른 변환
     private fun configureTransform(
         chosenWidth: Int,
         chosenHeight: Int,
@@ -662,12 +688,13 @@ class CameraObj private constructor(
     ) {
         val rotation = parentActivityMbr.windowManager.defaultDisplay.rotation
         val matrix = Matrix()
-        val viewRect = RectF(0f, 0f, cameraPreview.width.toFloat(), cameraPreview.height.toFloat())
-        val bufferRect = RectF(0f, 0f, chosenHeight.toFloat(), chosenWidth.toFloat())
-        val centerX = viewRect.centerX()
-        val centerY = viewRect.centerY()
 
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+            val viewRect =
+                RectF(0f, 0f, cameraPreview.width.toFloat(), cameraPreview.height.toFloat())
+            val bufferRect = RectF(0f, 0f, chosenHeight.toFloat(), chosenWidth.toFloat())
+            val centerX = viewRect.centerX()
+            val centerY = viewRect.centerY()
             bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY())
             matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL)
             val scale = Math.max(
@@ -679,6 +706,7 @@ class CameraObj private constructor(
                 postRotate((90 * (rotation - 2)).toFloat(), centerX, centerY)
             }
         }
+
         cameraPreview.setTransform(matrix)
     }
 
