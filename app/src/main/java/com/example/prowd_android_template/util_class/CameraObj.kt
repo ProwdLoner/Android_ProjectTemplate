@@ -17,8 +17,8 @@ import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
-import android.util.Range
 import android.util.Size
+import android.util.SparseIntArray
 import android.view.Surface
 import android.view.TextureView
 import androidx.annotation.RequiresPermission
@@ -61,9 +61,8 @@ class CameraObj private constructor(
 
     // 미디어 리코더 세팅 부산물
     private var mediaRecorderMbr: MediaRecorder? = null
-    private var mediaRecorderSurfaceMbr: Surface? = null
-    private var mediaRecorderInfoVOMbr: VideoRecorderInfoVO? = null
-    private var mediaRecorderFpsMbr: Int? = null
+    var isRecordingMbr: Boolean = false
+        private set
 
     // 프리뷰 세팅 부산물
     private val previewSurfaceListMbr: ArrayList<Surface> = ArrayList()
@@ -134,7 +133,7 @@ class CameraObj private constructor(
     // 9 : 카메라 세션 생성 실패
     fun startCameraSession(
         imageReaderConfigVo: ImageReaderConfigVo?,
-        videoRecorderConfigVo: VideoRecorderConfigVo?,
+        mediaRecorderConfigVo: MediaRecorderConfigVo?,
         previewConfigList: ArrayList<PreviewConfigVo>?,
         onCameraSessionStarted: () -> Unit,
         onCameraDisconnected: () -> Unit,
@@ -147,11 +146,12 @@ class CameraObj private constructor(
             previewConfigList,
             onPreviewAllReady = {
                 // (카메라 상태 초기화)
-                // todo
-                mediaRecorderSurfaceMbr?.release()
-                mediaRecorderSurfaceMbr = null
-                mediaRecorderFpsMbr = null
-                mediaRecorderInfoVOMbr = null
+
+                isRecordingMbr = false
+                mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
+                mediaRecorderMbr?.release()
+                mediaRecorderMbr = null
 
                 imageReaderMbr?.setOnImageAvailableListener(null, null)
                 imageReaderMbr?.close()
@@ -167,7 +167,7 @@ class CameraObj private constructor(
 
                 // (파라미터 검사)
                 if (imageReaderConfigVo == null &&
-                    videoRecorderConfigVo == null &&
+                    mediaRecorderConfigVo == null &&
                     (previewConfigList == null ||
                             previewConfigList.isEmpty())
                 ) {
@@ -283,59 +283,77 @@ class CameraObj private constructor(
 
                 // (미디어 리코더 서페이스 설정)
                 // todo
-//                    if (videoRecorderConfigVo != null) {
-//                        // 코덱 서페이스 생성
-//                        mediaRecorderSurfaceMbr = MediaCodec.createPersistentInputSurface()
-//
-//                        // (리코더 정보 가져오기)
-//                        // 원하는 사이즈에 유사한 사이즈를 선정
-//                        val chosenVideoSize = chooseCameraSize(
-//                            streamConfigurationMapMbr.getOutputSizes(MediaRecorder::class.java),
-//                            videoRecorderConfigVo.preferredImageReaderArea,
-//                            cameraOutputSurfaceWhRatioMbr
-//                        )
-//
-//                        // 비디오 FPS
-//                        val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
-//                            MediaRecorder::class.java,
-//                            chosenVideoSize
-//                        ) / 1_000_000_000.0)
-//                        mediaRecorderFpsMbr = if (spf > 0) (1.0 / spf).toInt() else 0
-//
-//                        // (할당용 미디어 리코더 준비)
-//                        val preMediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                            MediaRecorder(parentActivityMbr)
-//                        } else {
-//                            MediaRecorder()
-//                        }
-//
-//                        val tempFile = File(parentActivityMbr.filesDir, "temp.mp4")
-//
-//                        preMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
-//                        preMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-//                        preMediaRecorder.setOutputFile(tempFile.absolutePath)
-//                        preMediaRecorder.setVideoSize(chosenVideoSize.width, chosenVideoSize.height)
-//                        preMediaRecorder.setVideoFrameRate(mediaRecorderFpsMbr!!)
-//                        preMediaRecorder.setVideoEncodingBitRate(chosenVideoSize.width * chosenVideoSize.height * mediaRecorderFpsMbr!!)
-//                        preMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-//                        preMediaRecorder.setInputSurface(mediaRecorderSurfaceMbr!!)
-//
-//                        // 카메라 스트림 지원을 위해 미디어 리코더를 만들었다가 바로 해제
-//                        preMediaRecorder.prepare()
-//                        preMediaRecorder.release()
-//
-//                        mediaRecorderInfoVOMbr =
-//                            VideoRecorderInfoVO(
-//                                mediaRecorderFpsMbr!!,
-//                                chosenVideoSize,
-//                                sensorOrientationMbr,
-//                                mediaRecorderSurfaceMbr!!
-//                            )
-//                    }
+                if (mediaRecorderConfigVo != null) {
+                    mediaRecorderMbr =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            MediaRecorder(parentActivityMbr)
+                        } else {
+                            MediaRecorder()
+                        }
+
+                    // 카메라 방향 정보
+                    val rotation: Int = parentActivityMbr.windowManager.defaultDisplay.rotation
+
+                    val defaultOrientation = SparseIntArray()
+                    defaultOrientation.append(Surface.ROTATION_90, 0)
+                    defaultOrientation.append(Surface.ROTATION_0, 90)
+                    defaultOrientation.append(Surface.ROTATION_270, 180)
+                    defaultOrientation.append(Surface.ROTATION_180, 270)
+
+                    val inverseOrientation = SparseIntArray()
+                    inverseOrientation.append(Surface.ROTATION_270, 0)
+                    inverseOrientation.append(Surface.ROTATION_180, 90)
+                    inverseOrientation.append(Surface.ROTATION_90, 180)
+                    inverseOrientation.append(Surface.ROTATION_0, 270)
+
+                    // 비디오 FPS
+                    val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
+                        MediaRecorder::class.java,
+                        mediaRecorderConfigVo.cameraOrientSurfaceSize
+                    ) / 1_000_000_000.0)
+                    val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
+
+                    // 오디오 여부
+                    val isRecordAudio = mediaRecorderConfigVo.isAudioRecording &&
+                            ActivityCompat.checkSelfPermission(
+                                parentActivityMbr,
+                                Manifest.permission.RECORD_AUDIO
+                            ) == PackageManager.PERMISSION_GRANTED
+
+                    // (레코더 설정)
+                    when (sensorOrientationMbr) {
+                        90 ->
+                            mediaRecorderMbr!!.setOrientationHint(
+                                defaultOrientation.get(rotation)
+                            )
+                        270 ->
+                            mediaRecorderMbr!!.setOrientationHint(
+                                inverseOrientation.get(rotation)
+                            )
+                    }
+
+                    if (isRecordAudio) {
+                        mediaRecorderMbr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
+                    }
+                    mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                    mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaFileAbsolutePath)
+                    mediaRecorderMbr!!.setVideoEncodingBitRate(10000000) // todo
+                    mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
+                    mediaRecorderMbr!!.setVideoSize(
+                        mediaRecorderConfigVo.cameraOrientSurfaceSize.width,
+                        mediaRecorderConfigVo.cameraOrientSurfaceSize.height
+                    )
+                    mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                    if (isRecordAudio) {
+                        mediaRecorderMbr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                    }
+                    mediaRecorderMbr!!.prepare()
+                }
 
                 if (previewSurfaceListMbr.isEmpty() &&
                     imageReaderMbr == null &&
-                    mediaRecorderInfoVOMbr == null
+                    mediaRecorderMbr == null
                 ) { // 생성 서페이스가 하나도 존재하지 않으면,
                     cameraSessionSemaphoreMbr.release()
                     onError(8)
@@ -348,24 +366,26 @@ class CameraObj private constructor(
                         // (카메라 세션 생성)
                         createCameraSessionAsync(
                             onCaptureSessionCreated = {
-                                if (mediaRecorderInfoVOMbr == null) {
+                                if (mediaRecorderMbr == null) {
                                     startPreviewSessionAsync(onSessionStarted = {
                                         cameraSessionSemaphoreMbr.release()
                                         onCameraSessionStarted()
                                     })
                                 } else {
-                                    // todo 미디어 레코드 세션 실행
-                                    cameraSessionSemaphoreMbr.release()
-                                    onCameraSessionStarted()
+                                    startMediaRecorderSessionAsync(onSessionStarted = {
+                                        cameraSessionSemaphoreMbr.release()
+                                        onCameraSessionStarted()
+                                    })
                                 }
                             },
                             onError = { errorCode, cameraCaptureSession ->
                                 // (카메라 상태 초기화)
-                                // todo
-                                mediaRecorderSurfaceMbr?.release()
-                                mediaRecorderSurfaceMbr = null
-                                mediaRecorderFpsMbr = null
-                                mediaRecorderInfoVOMbr = null
+
+                                isRecordingMbr = false
+                                mediaRecorderMbr?.stop()
+                                mediaRecorderMbr?.reset()
+                                mediaRecorderMbr?.release()
+                                mediaRecorderMbr = null
 
                                 imageReaderMbr?.setOnImageAvailableListener(null, null)
                                 imageReaderMbr?.close()
@@ -386,11 +406,12 @@ class CameraObj private constructor(
                     },
                     onCameraDisconnected = {
                         // (카메라 상태 초기화)
-                        // todo
-                        mediaRecorderSurfaceMbr?.release()
-                        mediaRecorderSurfaceMbr = null
-                        mediaRecorderFpsMbr = null
-                        mediaRecorderInfoVOMbr = null
+
+                        isRecordingMbr = false
+                        mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
+                        mediaRecorderMbr?.release()
+                        mediaRecorderMbr = null
 
                         imageReaderMbr?.setOnImageAvailableListener(null, null)
                         imageReaderMbr?.close()
@@ -412,11 +433,12 @@ class CameraObj private constructor(
                     },
                     onError = { errorCode, camera ->
                         // (카메라 상태 초기화)
-                        // todo
-                        mediaRecorderSurfaceMbr?.release()
-                        mediaRecorderSurfaceMbr = null
-                        mediaRecorderFpsMbr = null
-                        mediaRecorderInfoVOMbr = null
+
+                        isRecordingMbr = false
+                        mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
+                        mediaRecorderMbr?.release()
+                        mediaRecorderMbr = null
 
                         imageReaderMbr?.setOnImageAvailableListener(null, null)
                         imageReaderMbr?.close()
@@ -444,11 +466,11 @@ class CameraObj private constructor(
     fun stopCameraSession() {
         cameraSessionSemaphoreMbr.acquire()
 
-        // todo
-        mediaRecorderSurfaceMbr?.release()
-        mediaRecorderSurfaceMbr = null
-        mediaRecorderFpsMbr = null
-        mediaRecorderInfoVOMbr = null
+        isRecordingMbr = false
+        mediaRecorderMbr?.stop()
+        mediaRecorderMbr?.reset()
+        mediaRecorderMbr?.release()
+        mediaRecorderMbr = null
 
         imageReaderMbr?.setOnImageAvailableListener(null, null)
         imageReaderMbr?.close()
@@ -469,11 +491,11 @@ class CameraObj private constructor(
     fun clearCameraObject() {
         cameraSessionSemaphoreMbr.acquire()
 
-        // todo
-        mediaRecorderSurfaceMbr?.release()
-        mediaRecorderSurfaceMbr = null
-        mediaRecorderFpsMbr = null
-        mediaRecorderInfoVOMbr = null
+        isRecordingMbr = false
+        mediaRecorderMbr?.stop()
+        mediaRecorderMbr?.reset()
+        mediaRecorderMbr?.release()
+        mediaRecorderMbr = null
 
         imageReaderMbr?.setOnImageAvailableListener(null, null)
         imageReaderMbr?.close()
@@ -546,96 +568,69 @@ class CameraObj private constructor(
 
     // (프리뷰 세션을 실행하는 함수)
     private fun startPreviewSessionAsync(onSessionStarted: () -> Unit) {
-        executorServiceMbr?.execute {
-            // (리퀘스트 빌더 생성)
-            captureRequestBuilderMbr =
-                cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+        // (리퀘스트 빌더 생성)
+        captureRequestBuilderMbr =
+            cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
 
-            // 서페이스 주입
-            imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-            for (previewSurface in previewSurfaceListMbr) {
-                captureRequestBuilderMbr!!.addTarget(previewSurface)
-            }
-
-            // 리퀘스트 빌더 설정
-            captureRequestBuilderMbr!!.set(
-                CaptureRequest.CONTROL_MODE,
-                CameraMetadata.CONTROL_MODE_AUTO
-            )
-
-            // (카메라 실행)
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                null,
-                cameraHandlerMbr
-            )
-
-            onSessionStarted()
+        // 서페이스 주입
+        imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
+        for (previewSurface in previewSurfaceListMbr) {
+            captureRequestBuilderMbr!!.addTarget(previewSurface)
         }
+
+        // 리퀘스트 빌더 설정
+        captureRequestBuilderMbr!!.set(
+            CaptureRequest.CONTROL_MODE,
+            CameraMetadata.CONTROL_MODE_AUTO
+        )
+
+        // (카메라 실행)
+        cameraCaptureSessionMbr!!.setRepeatingRequest(
+            captureRequestBuilderMbr!!.build(),
+            null,
+            cameraHandlerMbr
+        )
+
+        onSessionStarted()
     }
 
     // (녹화 세션을 실행하는 함수)
-    // API 에러 코드 :
-    // 0 : 미디어 리코더 서페이스가 세팅되어 있지 않음
-    // 1 : 카메라 세션이 생성되지 않음
     private fun startMediaRecorderSessionAsync(
-        onMediaRecordingSessionStart: (VideoRecorderInfoVO) -> Unit,
-        onError: (Int) -> Unit
+        onSessionStarted: () -> Unit
     ) {
-        executorServiceMbr?.execute {
-            cameraSessionSemaphoreMbr.acquire()
-            // (생성 서페이스 검사)
-            if (mediaRecorderInfoVOMbr == null
-            ) { // 서페이스가 존재하지 않으면,
-                cameraSessionSemaphoreMbr.release()
-                onError(0)
-                return@execute
-            }
+        // (리퀘스트 빌더 생성)
+        captureRequestBuilderMbr =
+            cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
 
-            // (세션 객체 검사)
-            if (cameraCaptureSessionMbr == null) {
-                cameraSessionSemaphoreMbr.release()
-                onError(1)
-                return@execute
-            }
-
-            // (기존 실행 세션 정리)
-            captureRequestBuilderMbr = null
-            cameraCaptureSessionMbr!!.stopRepeating()
-
-            // (리퀘스트 빌더 생성)
-            captureRequestBuilderMbr =
-                cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-
-            // 서페이스 주입
-            imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-            for (previewSurface in previewSurfaceListMbr) {
-                captureRequestBuilderMbr!!.addTarget(previewSurface)
-            }
-            captureRequestBuilderMbr!!.addTarget(mediaRecorderSurfaceMbr!!)
-
-            // 리퀘스트 빌더 설정
-            captureRequestBuilderMbr!!.set(
-                CaptureRequest.CONTROL_MODE,
-                CameraMetadata.CONTROL_MODE_AUTO
-            )
-
-            captureRequestBuilderMbr!!.set(
-                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-                Range(mediaRecorderFpsMbr!!, mediaRecorderFpsMbr!!)
-            )
-
-            // (카메라 실행)
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                object : CameraCaptureSession.CaptureCallback() {},
-                cameraHandlerMbr
-            )
-
-            onMediaRecordingSessionStart(mediaRecorderInfoVOMbr!!)
-
-            cameraSessionSemaphoreMbr.release()
+        // 서페이스 주입
+        imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
+        for (previewSurface in previewSurfaceListMbr) {
+            captureRequestBuilderMbr!!.addTarget(previewSurface)
         }
+        captureRequestBuilderMbr!!.addTarget(mediaRecorderMbr!!.surface)
+
+        // 리퀘스트 빌더 설정
+        captureRequestBuilderMbr!!.set(
+            CaptureRequest.CONTROL_MODE,
+            CameraMetadata.CONTROL_MODE_AUTO
+        )
+
+//            captureRequestBuilderMbr!!.set(
+//                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+//                Range(mediaRecorderFpsMbr!!, mediaRecorderFpsMbr!!)
+//            )
+
+        // (카메라 실행)
+        cameraCaptureSessionMbr!!.setRepeatingRequest(
+            captureRequestBuilderMbr!!.build(),
+            null,
+            cameraHandlerMbr
+        )
+
+        isRecordingMbr = true
+        mediaRecorderMbr!!.start()
+
+        onSessionStarted()
     }
 
     // (cameraSizes 들 중에 preferredArea 와 가장 유사한 것을 선택하고, 그 중에서도 preferredWHRatio 가 유사한 것을 선택)
@@ -835,10 +830,10 @@ class CameraObj private constructor(
                 }
 
                 // 미디어 리코더 서페이스 주입
-                if (null != mediaRecorderSurfaceMbr) {
+                if (null != mediaRecorderMbr) {
                     outputConfigurationList.add(
                         OutputConfiguration(
-                            mediaRecorderSurfaceMbr!!
+                            mediaRecorderMbr!!.surface
                         )
                     )
                 }
@@ -877,8 +872,8 @@ class CameraObj private constructor(
                 }
 
                 // 비디오 리코더 서페이스 주입
-                if (null != mediaRecorderSurfaceMbr) {
-                    val surface = mediaRecorderSurfaceMbr!!
+                if (null != mediaRecorderMbr) {
+                    val surface = mediaRecorderMbr!!.surface
                     surfaces.add(surface)
                 }
 
@@ -954,11 +949,10 @@ class CameraObj private constructor(
         val imageReaderCallback: ImageReader.OnImageAvailableListener
     )
 
-    data class VideoRecorderConfigVo(
-        // 원하는 이미지 넓이
-        // width * height
-        // 0L 이하면 최소, Long.MAX_VALUE 이면 최대
-        val preferredImageReaderArea: Long
+    data class MediaRecorderConfigVo(
+        val cameraOrientSurfaceSize: Size,
+        val mediaFileAbsolutePath: String,
+        val isAudioRecording : Boolean
     )
 
     data class VideoRecorderInfoVO(
