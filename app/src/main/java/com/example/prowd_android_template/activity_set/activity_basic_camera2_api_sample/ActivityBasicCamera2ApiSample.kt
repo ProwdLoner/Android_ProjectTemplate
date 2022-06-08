@@ -14,6 +14,7 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import android.util.Size
+import android.view.TextureView
 import android.view.WindowManager
 import android.webkit.MimeTypeMap
 import androidx.activity.result.ActivityResult
@@ -397,19 +398,37 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     backCameraObjMbr?.startCameraSession(
                         arrayListOf(
                             CameraObj.PreviewConfigVo(
-                                Size(4000, 3000),
+                                CameraUtil.getCameraSize(
+                                    this,
+                                    backCameraObjMbr!!.cameraIdMbr,
+                                    Long.MAX_VALUE,
+                                    -1.0,
+                                    SurfaceTexture::class.java
+                                )!!,
                                 bindingMbr.cameraPreviewAutoFitTexture
                             )
                         ),
                         CameraObj.ImageReaderConfigVo(
-                            Size(4000, 3000),
+                            CameraUtil.getCameraSize(
+                                this,
+                                backCameraObjMbr!!.cameraIdMbr,
+                                Long.MAX_VALUE,
+                                -1.0,
+                                ImageFormat.YUV_420_888
+                            )!!,
                             viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
                             imageReaderCallback = { reader ->
                                 processImage(reader)
                             }
                         ),
                         CameraObj.MediaRecorderConfigVo(
-                            Size(4000, 3000),
+                            CameraUtil.getCameraSize(
+                                this,
+                                backCameraObjMbr!!.cameraIdMbr,
+                                Long.MAX_VALUE,
+                                -1.0,
+                                MediaRecorder::class.java
+                            )!!,
                             videoFileMbr!!.absolutePath,
                             false
                         ),
@@ -428,12 +447,24 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     backCameraObjMbr?.startCameraSession(
                         arrayListOf(
                             CameraObj.PreviewConfigVo(
-                                Size(4000, 3000),
+                                CameraUtil.getCameraSize(
+                                    this,
+                                    backCameraObjMbr!!.cameraIdMbr,
+                                    Long.MAX_VALUE,
+                                    -1.0,
+                                    SurfaceTexture::class.java
+                                )!!,
                                 bindingMbr.cameraPreviewAutoFitTexture
                             )
                         ),
                         CameraObj.ImageReaderConfigVo(
-                            Size(4000, 3000),
+                            CameraUtil.getCameraSize(
+                                this,
+                                backCameraObjMbr!!.cameraIdMbr,
+                                Long.MAX_VALUE,
+                                -1.0,
+                                ImageFormat.YUV_420_888
+                            )!!,
                             viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
                             imageReaderCallback = { reader ->
                                 processImage(reader)
@@ -523,12 +554,24 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         backCameraObjMbr?.startCameraSession(
             arrayListOf(
                 CameraObj.PreviewConfigVo(
-                    Size(4000, 3000),
+                    CameraUtil.getCameraSize(
+                        this,
+                        backCameraObjMbr!!.cameraIdMbr,
+                        Long.MAX_VALUE,
+                        -1.0,
+                        SurfaceTexture::class.java
+                    )!!,
                     bindingMbr.cameraPreviewAutoFitTexture
                 )
             ),
             CameraObj.ImageReaderConfigVo(
-                Size(4000, 3000),
+                CameraUtil.getCameraSize(
+                    this,
+                    backCameraObjMbr!!.cameraIdMbr,
+                    Long.MAX_VALUE,
+                    -1.0,
+                    ImageFormat.YUV_420_888
+                )!!,
                 viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
                 imageReaderCallback = { reader ->
                     processImage(reader)
