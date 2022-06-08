@@ -1,11 +1,13 @@
 package com.example.prowd_android_template.activity_set.activity_media_player_api_simple_video_sample
 
+import android.graphics.SurfaceTexture
 import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.SurfaceHolder
+import android.view.Surface
+import android.view.TextureView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.R
@@ -172,22 +174,20 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
         viewModelMbr.simpleVideoMediaPlayerMbr!!.isLooping = true
 
         // MediaPlayer 출력 뷰 설정
-        bindingMbr.simpleVideo.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
-                viewModelMbr.simpleVideoMediaPlayerMbr!!.setDisplay(holder)
+        bindingMbr.simpleVideo.surfaceTextureListener =
+            object : TextureView.SurfaceTextureListener {
+                override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
+                    viewModelMbr.simpleVideoMediaPlayerMbr!!.setSurface(Surface(p0))
+                }
+
+                override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) =
+                    Unit
+
+                override fun onSurfaceTextureDestroyed(p0: SurfaceTexture): Boolean = true
+                override fun onSurfaceTextureUpdated(p0: SurfaceTexture) = Unit
             }
 
-            override fun surfaceChanged(
-                holder: SurfaceHolder,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-            }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-            }
-        })
+//        bindingMbr.simpleVideo.alpha = 0.2f
     }
 
     // 라이브 데이터 설정
