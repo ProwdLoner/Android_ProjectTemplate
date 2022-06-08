@@ -13,11 +13,11 @@ import android.hardware.camera2.*
 import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
+import android.media.CamcorderProfile
 import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
@@ -26,11 +26,12 @@ import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
+import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
-import kotlin.collections.ArrayList
 import kotlin.math.abs
+
 
 // <Camera 디바이스 하나에 대한 obj>
 // 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체
@@ -50,9 +51,6 @@ class CameraObj private constructor(
     var sensorOrientationMbr: Int = 0
 ) {
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
-    // (스레드 풀)
-    private var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
-
     // (카메라 부산 데이터)
     private val cameraSessionSemaphoreMbr = Semaphore(1)
     private var cameraDeviceMbr: CameraDevice? = null
@@ -221,7 +219,11 @@ class CameraObj private constructor(
                         }
 
                     // 카메라 방향 정보
-                    val rotation: Int = parentActivityMbr.windowManager.defaultDisplay.rotation
+                    val rotation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        parentActivityMbr.display!!.rotation
+                    } else {
+                        parentActivityMbr.windowManager.defaultDisplay.rotation
+                    }
 
                     val defaultOrientation = SparseIntArray()
                     defaultOrientation.append(Surface.ROTATION_90, 0)
@@ -234,13 +236,6 @@ class CameraObj private constructor(
                     inverseOrientation.append(Surface.ROTATION_180, 90)
                     inverseOrientation.append(Surface.ROTATION_90, 180)
                     inverseOrientation.append(Surface.ROTATION_0, 270)
-
-                    // 비디오 FPS
-                    val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
-                        MediaRecorder::class.java,
-                        mediaRecorderConfigVo.cameraOrientSurfaceSize
-                    ) / 1_000_000_000.0)
-                    val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
 
                     // 오디오 여부
                     val isRecordAudio = mediaRecorderConfigVo.isAudioRecording &&
@@ -266,13 +261,20 @@ class CameraObj private constructor(
                     }
                     mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
                     mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                    mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaFileAbsolutePath)
+
+                    val videoFile = File(mediaRecorderConfigVo.mediaFileAbsolutePath)
+                    if (videoFile.exists()) {
+                        videoFile.delete()
+                    }
+
+                    mediaRecorderMbr!!.setOutputFile(videoFile.absolutePath)
+
+                    val cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH)
                     mediaRecorderMbr!!.setVideoEncodingBitRate(
-                        mediaRecorderConfigVo.cameraOrientSurfaceSize.width *
-                                mediaRecorderConfigVo.cameraOrientSurfaceSize.height *
-                                mediaRecorderFps * 3
+                        cpHigh.videoBitRate
                     )
-                    mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
+                    mediaRecorderMbr!!.setVideoFrameRate(cpHigh.videoFrameRate)
+
                     mediaRecorderMbr!!.setVideoSize(
                         mediaRecorderConfigVo.cameraOrientSurfaceSize.width,
                         mediaRecorderConfigVo.cameraOrientSurfaceSize.height
@@ -342,54 +344,10 @@ class CameraObj private constructor(
             onCameraDisconnected = {
                 // (카메라 상태 초기화)
 
-                isRecordingMbr = false
-                mediaRecorderMbr?.stop()
-                mediaRecorderMbr?.reset()
-                mediaRecorderMbr?.release()
-                mediaRecorderMbr = null
-
-                imageReaderMbr?.setOnImageAvailableListener(null, null)
-                imageReaderMbr?.close()
-                imageReaderMbr = null
-
-                previewSurfaceListMbr.clear()
-
-                cameraCaptureSessionMbr?.stopRepeating()
-                cameraCaptureSessionMbr?.close()
-                cameraCaptureSessionMbr = null
-
-                captureRequestBuilderMbr = null
-
-                it.close()
-                cameraDeviceMbr = null
-
                 cameraSessionSemaphoreMbr.release()
                 onCameraDisconnected()
             },
-            onError = { errorCode, camera ->
-                // (카메라 상태 초기화)
-
-                isRecordingMbr = false
-                mediaRecorderMbr?.stop()
-                mediaRecorderMbr?.reset()
-                mediaRecorderMbr?.release()
-                mediaRecorderMbr = null
-
-                imageReaderMbr?.setOnImageAvailableListener(null, null)
-                imageReaderMbr?.close()
-                imageReaderMbr = null
-
-                previewSurfaceListMbr.clear()
-
-                cameraCaptureSessionMbr?.stopRepeating()
-                cameraCaptureSessionMbr?.close()
-                cameraCaptureSessionMbr = null
-
-                captureRequestBuilderMbr = null
-
-                camera.close()
-                cameraDeviceMbr = null
-
+            onError = { errorCode ->
                 cameraSessionSemaphoreMbr.release()
                 onError(errorCode)
             }
@@ -790,8 +748,8 @@ class CameraObj private constructor(
     @RequiresPermission(Manifest.permission.CAMERA)
     private fun openCameraDevice(
         onCameraDeviceReady: () -> Unit,
-        onCameraDisconnected: (CameraDevice) -> Unit,
-        onError: (Int, CameraDevice) -> Unit
+        onCameraDisconnected: () -> Unit,
+        onError: (Int) -> Unit
     ) {
         if (cameraDeviceMbr != null) {
             onCameraDeviceReady()
@@ -810,25 +768,68 @@ class CameraObj private constructor(
 
                     // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
                     override fun onDisconnected(camera: CameraDevice) {
-                        onCameraDisconnected(camera)
+                        isRecordingMbr = false
+                        mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
+                        mediaRecorderMbr?.release()
+                        mediaRecorderMbr = null
+
+                        imageReaderMbr?.setOnImageAvailableListener(null, null)
+                        imageReaderMbr?.close()
+                        imageReaderMbr = null
+
+                        previewSurfaceListMbr.clear()
+
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        cameraCaptureSessionMbr?.close()
+                        cameraCaptureSessionMbr = null
+
+                        captureRequestBuilderMbr = null
+
+                        camera.close()
+                        cameraDeviceMbr = null
+
+                        onCameraDisconnected()
                     }
 
                     override fun onError(camera: CameraDevice, error: Int) {
+                        // (카메라 상태 초기화)
+                        isRecordingMbr = false
+                        mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
+                        mediaRecorderMbr?.release()
+                        mediaRecorderMbr = null
+
+                        imageReaderMbr?.setOnImageAvailableListener(null, null)
+                        imageReaderMbr?.close()
+                        imageReaderMbr = null
+
+                        previewSurfaceListMbr.clear()
+
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        cameraCaptureSessionMbr?.close()
+                        cameraCaptureSessionMbr = null
+
+                        captureRequestBuilderMbr = null
+
+                        camera.close()
+                        cameraDeviceMbr = null
+
                         when (error) {
                             ERROR_CAMERA_DISABLED -> {
-                                onError(3, camera)
+                                onError(3)
                             }
                             ERROR_CAMERA_IN_USE -> {
-                                onError(4, camera)
+                                onError(4)
                             }
                             ERROR_MAX_CAMERAS_IN_USE -> {
-                                onError(5, camera)
+                                onError(5)
                             }
                             ERROR_CAMERA_DEVICE -> {
-                                onError(6, camera)
+                                onError(6)
                             }
                             ERROR_CAMERA_SERVICE -> {
-                                onError(7, camera)
+                                onError(7)
                             }
                         }
                     }
@@ -841,89 +842,87 @@ class CameraObj private constructor(
         onCaptureSessionCreated: () -> Unit,
         onError: (Int, CameraCaptureSession) -> Unit
     ) {
-        executorServiceMbr?.execute {
-            // api 28 이상 / 미만의 요청 방식이 다름
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
-                // 출력 설정 객체 리스트
-                val outputConfigurationList = ArrayList<OutputConfiguration>()
+        // api 28 이상 / 미만의 요청 방식이 다름
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
+            // 출력 설정 객체 리스트
+            val outputConfigurationList = ArrayList<OutputConfiguration>()
 
-                // 프리뷰 서페이스 주입
-                for (previewSurface in previewSurfaceListMbr) {
-                    outputConfigurationList.add(OutputConfiguration(previewSurface))
-                }
+            // 프리뷰 서페이스 주입
+            for (previewSurface in previewSurfaceListMbr) {
+                outputConfigurationList.add(OutputConfiguration(previewSurface))
+            }
 
-                // 이미지 리더 서페이스 주입
-                if (null != imageReaderMbr) {
-                    outputConfigurationList.add(
-                        OutputConfiguration(
-                            imageReaderMbr!!.surface
-                        )
+            // 이미지 리더 서페이스 주입
+            if (null != imageReaderMbr) {
+                outputConfigurationList.add(
+                    OutputConfiguration(
+                        imageReaderMbr!!.surface
                     )
-                }
-
-                // 미디어 리코더 서페이스 주입
-                if (null != mediaRecorderMbr) {
-                    outputConfigurationList.add(
-                        OutputConfiguration(
-                            mediaRecorderMbr!!.surface
-                        )
-                    )
-                }
-
-                cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
-                    SessionConfiguration.SESSION_REGULAR,
-                    outputConfigurationList,
-                    HandlerExecutor(cameraHandlerMbr.looper),
-                    object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr = session
-
-                            onCaptureSessionCreated()
-                        }
-
-                        // 세션 생성 실패
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            onError(9, session)
-                        }
-                    }
-                ))
-            } else {
-                // api 28 미만
-                // 출력 서페이스 리스트
-                val surfaces = ArrayList<Surface>()
-
-                // 프리뷰 서페이스 주입
-                for (previewSurface in previewSurfaceListMbr) {
-                    surfaces.add(previewSurface)
-                }
-
-                // 이미지 리더 서페이스 주입
-                if (null != imageReaderMbr) {
-                    val surface = imageReaderMbr!!.surface
-                    surfaces.add(surface)
-                }
-
-                // 비디오 리코더 서페이스 주입
-                if (null != mediaRecorderMbr) {
-                    val surface = mediaRecorderMbr!!.surface
-                    surfaces.add(surface)
-                }
-
-                cameraDeviceMbr?.createCaptureSession(
-                    surfaces,
-                    object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            cameraCaptureSessionMbr = session
-
-                            onCaptureSessionCreated()
-                        }
-
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            onError(9, session)
-                        }
-                    }, cameraHandlerMbr
                 )
             }
+
+            // 미디어 리코더 서페이스 주입
+            if (null != mediaRecorderMbr) {
+                outputConfigurationList.add(
+                    OutputConfiguration(
+                        mediaRecorderMbr!!.surface
+                    )
+                )
+            }
+
+            cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR,
+                outputConfigurationList,
+                HandlerExecutor(cameraHandlerMbr.looper),
+                object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        cameraCaptureSessionMbr = session
+
+                        onCaptureSessionCreated()
+                    }
+
+                    // 세션 생성 실패
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        onError(9, session)
+                    }
+                }
+            ))
+        } else {
+            // api 28 미만
+            // 출력 서페이스 리스트
+            val surfaces = ArrayList<Surface>()
+
+            // 프리뷰 서페이스 주입
+            for (previewSurface in previewSurfaceListMbr) {
+                surfaces.add(previewSurface)
+            }
+
+            // 이미지 리더 서페이스 주입
+            if (null != imageReaderMbr) {
+                val surface = imageReaderMbr!!.surface
+                surfaces.add(surface)
+            }
+
+            // 비디오 리코더 서페이스 주입
+            if (null != mediaRecorderMbr) {
+                val surface = mediaRecorderMbr!!.surface
+                surfaces.add(surface)
+            }
+
+            cameraDeviceMbr?.createCaptureSession(
+                surfaces,
+                object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        cameraCaptureSessionMbr = session
+
+                        onCaptureSessionCreated()
+                    }
+
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        onError(9, session)
+                    }
+                }, cameraHandlerMbr
+            )
         }
     }
 
