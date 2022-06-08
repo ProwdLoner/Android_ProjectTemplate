@@ -12,6 +12,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_class.HandlerThreadObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -36,14 +37,20 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
     var currentUserSessionTokenMbr: String? = null
 
-    // (플래그 데이터)
-    // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
-    var isChangingConfigurationsMbr = false
+    // 카메라 실행 객체
+    var backCameraObjMbr: CameraObj? = null
 
-    // 데이터 수집 등, 첫번째에만 발동
-    var isDataFirstLoadingMbr = true
+    // Camera2 api 핸들러 스레드
+    val cameraHandlerThreadMbr = HandlerThreadObj("back_camera").apply {
+        this.startHandlerThread()
+    }
 
-    // (랜더 스크립트)
+    // 이미지 리더 핸들러 스레드
+    val imageReaderHandlerThreadMbr = HandlerThreadObj("back_camera_image_reader").apply {
+        this.startHandlerThread()
+    }
+
+    // 랜더 스크립트
     var renderScriptMbr: RenderScript = RenderScript.create(application)
 
     // intrinsic yuv to rgb
@@ -54,18 +61,14 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
 
     var scriptCRotatorMbr: ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
 
+    // (플래그 데이터)
+    // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
+    var isChangingConfigurationsMbr = false
+
+    // 데이터 수집 등, 첫번째에만 발동
+    var isDataFirstLoadingMbr = true
     // 액티비티 진입 필수 권한 요청 여부
     var isActivityPermissionClearMbr = false
-
-    // Camera2 api 핸들러 스레드
-    val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
-        this.startHandlerThread()
-    }
-
-    // 이미지 리더 핸들러 스레드
-    val imageReaderHandlerThreadMbr = HandlerThreadObj("imageReader").apply {
-        this.startHandlerThread()
-    }
 
 
     // ---------------------------------------------------------------------------------------------
@@ -98,6 +101,9 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         // 카메라 스레드 해소
         cameraHandlerThreadMbr.stopHandlerThread()
         imageReaderHandlerThreadMbr.stopHandlerThread()
+
+        backCameraObjMbr?.clearCameraObject()
+        backCameraObjMbr = null
 
         super.onCleared()
     }

@@ -3,30 +3,26 @@ package com.example.prowd_android_template.activity_set.activity_basic_camera2_a
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.*
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
 import android.media.ImageReader
-import android.media.MediaRecorder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
-import android.util.Log
-import android.util.Size
-import android.view.TextureView
+import android.view.Surface
 import android.view.WindowManager
-import android.webkit.MimeTypeMap
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.FitCenter
-import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -36,8 +32,6 @@ import com.example.prowd_android_template.util_object.CameraUtil
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
 
 
 // todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
@@ -60,9 +54,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
-
-    // 카메라 실행 객체
-    var backCameraObjMbr: CameraObj? = null
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
@@ -113,7 +104,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onPause() {
         isImageProcessingPause = true
-        backCameraObjMbr?.clearCameraObject()
+        viewModelMbr.backCameraObjMbr?.stopCameraSession()
 
         super.onPause()
     }
@@ -332,18 +323,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ActivityBasicCamera2ApiSampleViewModel::class.java]
 
-        // 사용 카메라 객체 생성
-        // 후방 카메라
-        val backCameraId = CameraUtil.chooseCameraId(this, CameraCharacteristics.LENS_FACING_BACK)
-        if (null != backCameraId) {
-            backCameraObjMbr =
-                CameraObj.getInstance(
-                    this,
-                    backCameraId,
-                    viewModelMbr.cameraHandlerThreadMbr.handler!!
-                )
-        }
-
         // 권한 요청 객체 생성
         permissionRequestMbr = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -368,17 +347,41 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 현 액티비티 진입 유저 저장
             viewModelMbr.currentUserSessionTokenMbr =
                 viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+
+            // 사용 카메라 객체 생성
+            // 후방 카메라
+            val backCameraId =
+                CameraUtil.chooseCameraId(this, CameraCharacteristics.LENS_FACING_BACK)
+            if (null != backCameraId) {
+                viewModelMbr.backCameraObjMbr =
+                    CameraObj.getInstance(
+                        this,
+                        backCameraId,
+                        viewModelMbr.cameraHandlerThreadMbr.handler!!
+                    )
+            }
         }
     }
 
     // 초기 뷰 설정
-    private var videoFileMbr : File? = null
+    private var videoFileMbr: File? = null
     private fun viewSetting() {
         bindingMbr.logContainer.y =
             bindingMbr.logContainer.y - CustomUtil.getNavigationBarHeightPixel(this)
 
-        bindingMbr.recordBtn.y =
-            bindingMbr.recordBtn.y - CustomUtil.getNavigationBarHeightPixel(this)
+        val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display!!.rotation
+        } else {
+            windowManager.defaultDisplay.rotation
+        }
+
+        if (deviceOrientation == Surface.ROTATION_0) {
+            bindingMbr.recordBtn.y =
+                bindingMbr.recordBtn.y - CustomUtil.getNavigationBarHeightPixel(this)
+        } else if (deviceOrientation == Surface.ROTATION_90) {
+            bindingMbr.recordBtn.x =
+                bindingMbr.recordBtn.x - CustomUtil.getNavigationBarHeightPixel(this)
+        }
 
 //        bindingMbr.recordBtn.setOnClickListener {
 //            // todo
@@ -552,12 +555,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // (카메라 실행)
         // 카메라 세션 실행
-        backCameraObjMbr?.startCameraSession(
+        viewModelMbr.backCameraObjMbr?.startCameraSession(
             arrayListOf(
                 CameraObj.PreviewConfigVo(
                     CameraUtil.getCameraSize(
                         this,
-                        backCameraObjMbr!!.cameraIdMbr,
+                        viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
                         Long.MAX_VALUE,
                         -1.0,
                         SurfaceTexture::class.java
@@ -565,19 +568,20 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     bindingMbr.cameraPreviewAutoFitTexture
                 )
             ),
-            CameraObj.ImageReaderConfigVo(
-                CameraUtil.getCameraSize(
-                    this,
-                    backCameraObjMbr!!.cameraIdMbr,
-                    Long.MAX_VALUE,
-                    -1.0,
-                    ImageFormat.YUV_420_888
-                )!!,
-                viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
-                imageReaderCallback = { reader ->
-                    processImage(reader)
-                }
-            ),
+//            CameraObj.ImageReaderConfigVo(
+//                CameraUtil.getCameraSize(
+//                    this,
+//                    viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
+//                    Long.MAX_VALUE,
+//                    -1.0,
+//                    ImageFormat.YUV_420_888
+//                )!!,
+//                viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
+//                imageReaderCallback = { reader ->
+//                    processImage(reader)
+//                }
+//            ),
+            null,
             null,
             onCameraSessionStarted = {
 
