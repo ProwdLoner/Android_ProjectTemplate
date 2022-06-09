@@ -97,7 +97,22 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         super.onResume()
 
         if (viewModelMbr.isActivityPermissionClearMbr) {
-            startCamera()
+            startCameraAtFirst()
+        }
+
+        // (데이터 갱신 시점 적용)
+        if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+
+            if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
+                sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
+            ) {
+                // 진입 플래그 변경
+                viewModelMbr.isDataFirstLoadingMbr = false
+                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+
+                //  데이터 로딩
+            }
         }
     }
 
@@ -174,7 +189,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 if (isGranted) { // 권한 승인
                     viewModelMbr.isActivityPermissionClearMbr = true
-                    startCamera()
+                    startCameraAtFirst()
                 } else { // 권한 거부
                     if (!neverAskAgain) {
                         // 단순 거부
@@ -223,7 +238,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         ) { // 권한이 승인 상태
                                             // 카메라 실행
                                             viewModelMbr.isActivityPermissionClearMbr = true
-                                            startCamera()
+                                            startCameraAtFirst()
                                         } else { // 권한 비승인 상태
                                             viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                                 DialogConfirm.DialogInfoVO(
@@ -545,7 +560,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
     }
 
-    private fun startCamera() {
+    private fun startCameraAtFirst() {
         // (카메라 실행)
         // 카메라 세션 실행
         val chosenPreviewSurfaceSize = CameraUtil.getCameraSize(
@@ -591,21 +606,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             }
         )
-
-        // (데이터 갱신 시점 적용)
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-
-            if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-                sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
-            ) {
-                // 진입 플래그 변경
-                viewModelMbr.isDataFirstLoadingMbr = false
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
-
-                //  데이터 로딩
-            }
-        }
     }
 
     // (카메라 이미지 실시간 처리 콜백)
