@@ -148,8 +148,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
 
-        viewModelMbr.backCameraObjMbr?.clearCameraObject()
-
         super.onDestroy()
     }
 

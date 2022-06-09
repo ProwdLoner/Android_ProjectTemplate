@@ -209,7 +209,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                                 parentViewMbr.viewModelMbr.deleteRecyclerViewItemData(
                                     copyEntity.serverItemUid,
-                                    onComplete = {
+                                    executorOnComplete = {
                                         parentViewMbr.runOnUiThread runOnUiThread2@{
                                             val itemListCopy = currentItemListCloneMbr
 
@@ -235,7 +235,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                                                 false
                                         }
                                     },
-                                    onError = {
+                                    executorOnError = {
                                         parentViewMbr.runOnUiThread {
                                             // 처리 다이얼로그 제거
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
@@ -283,7 +283,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                                         copyEntity.serverItemUid,
                                         data
                                     ),
-                                    onComplete = {
+                                    executorOnComplete = {
                                         parentViewMbr.runOnUiThread runOnUiThread2@{
                                             val itemListCopy = currentItemListCloneMbr
 
@@ -309,7 +309,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                                             parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                                         }
                                     },
-                                    onError = {
+                                    executorOnError = {
                                         parentViewMbr.runOnUiThread {
                                             // 처리 다이얼로그 제거
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =

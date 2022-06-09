@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
-import com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.*
 import java.net.SocketTimeoutException
@@ -177,7 +176,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                                 parentViewMbr.viewModelMbr.deleteRecyclerViewItemData(
                                     copyEntity.serverItemUid,
-                                    onComplete = {
+                                    executorOnComplete = {
                                         parentViewMbr.runOnUiThread runOnUiThread2@{
                                             val itemListCopy = currentItemListCloneMbr
 
@@ -203,7 +202,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                                 false
                                         }
                                     },
-                                    onError = {
+                                    executorOnError = {
                                         parentViewMbr.runOnUiThread {
                                             // 처리 다이얼로그 제거
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
@@ -251,7 +250,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                         copyEntity.serverItemUid,
                                         data
                                     ),
-                                    onComplete = {
+                                    executorOnComplete = {
                                         parentViewMbr.runOnUiThread runOnUiThread2@{
                                             val itemListCopy = currentItemListCloneMbr
 
@@ -277,7 +276,7 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                                             parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
                                         }
                                     },
-                                    onError = {
+                                    executorOnError = {
                                         parentViewMbr.runOnUiThread {
                                             // 처리 다이얼로그 제거
                                             parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =

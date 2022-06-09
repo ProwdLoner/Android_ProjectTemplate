@@ -183,7 +183,7 @@ class ActivityInit : AppCompatActivity() {
             // 메소드 실행중이 아닐 때,
 
             viewModelMbr.checkAppVersionAsync(
-                onComplete = { needUpdate ->
+                executorOnComplete = { needUpdate ->
                     runOnUiThread checkAppVersionAsyncComplete@{
                         if (needUpdate) { // 업데이트 필요
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
@@ -247,7 +247,7 @@ class ActivityInit : AppCompatActivity() {
                                         serverId,
                                         serverPw
                                     ),
-                                    onComplete = { checkLoginSessionResult ->
+                                    executorOnComplete = { checkLoginSessionResult ->
                                         runOnUiThread checkLoginSessionAsyncComplete@{
                                             // 검증 후 결과를 sharedPreferences 에 대입
                                             viewModelMbr.currentLoginSessionInfoSpwMbr.isAutoLogin =
@@ -267,7 +267,7 @@ class ActivityInit : AppCompatActivity() {
                                             checkAppPermissions()
                                         }
                                     },
-                                    onError = { checkLoginSessionAsyncError ->
+                                    executorOnError = { checkLoginSessionAsyncError ->
                                         runOnUiThread checkLoginSessionAsyncError@{
                                             if (checkLoginSessionAsyncError is SocketTimeoutException) { // 타임아웃 에러
                                                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
@@ -333,7 +333,7 @@ class ActivityInit : AppCompatActivity() {
                         }
                     }
                 },
-                onError = { checkAppVersionAsyncError ->
+                executorOnError = { checkAppVersionAsyncError ->
                     runOnUiThread checkAppVersionAsyncError@{
                         if (checkAppVersionAsyncError is SocketTimeoutException) { // 타임아웃 에러
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =

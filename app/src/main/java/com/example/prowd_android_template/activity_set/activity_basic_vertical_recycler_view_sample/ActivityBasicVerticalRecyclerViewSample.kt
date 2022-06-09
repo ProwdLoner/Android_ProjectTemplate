@@ -92,7 +92,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
                             viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
                             viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
-                            onComplete = {
+                            executorOnComplete = {
                                 runOnUiThread runOnUiThread2@{
                                     // 로더 제거
                                     viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -128,7 +128,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                     viewModelMbr.isRecyclerViewItemLoadingMbr = false
                                 }
                             },
-                            onError = {
+                            executorOnError = {
                                 runOnUiThread {
                                     // 로더 제거
                                     viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -224,7 +224,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
                                 viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
                                 viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
-                                onComplete = {
+                                executorOnComplete = {
                                     runOnUiThread runOnUiThread2@{
                                         // 로더 제거
                                         cloneItemList.removeLast()
@@ -261,7 +261,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                         viewModelMbr.isRecyclerViewItemLoadingMbr = false
                                     }
                                 },
-                                onError = {
+                                executorOnError = {
                                     runOnUiThread {
                                         // 로더 제거
                                         viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -325,7 +325,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                         viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
                         viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
                         viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
-                        onComplete = {
+                        executorOnComplete = {
                             runOnUiThread runOnUiThread2@{
                                 // 로더 제거
                                 viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -363,7 +363,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.isRecyclerViewItemLoadingMbr = false
                             }
                         },
-                        onError = {
+                        executorOnError = {
                             runOnUiThread {
                                 // 로더 제거
                                 viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -432,7 +432,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                         ActivityBasicVerticalRecyclerViewSampleViewModel.PostRecyclerViewItemDataInputVo(
                             data
                         ),
-                        onComplete = {
+                        executorOnComplete = {
                             runOnUiThread {
                                 // 처리 다이얼로그 제거
                                 viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
@@ -457,7 +457,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.isRecyclerViewItemLoadingMbr = false
                             }
                         },
-                        onError = {
+                        executorOnError = {
                             runOnUiThread {
                                 // 처리 다이얼로그 제거
                                 viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null

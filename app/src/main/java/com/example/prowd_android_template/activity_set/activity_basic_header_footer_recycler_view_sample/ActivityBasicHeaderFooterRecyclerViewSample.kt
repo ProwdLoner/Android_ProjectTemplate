@@ -101,7 +101,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         // (리포지토리 데이터 요청)
                         // 헤더 요청
                         viewModelMbr.getRecyclerViewHeaderData(
-                            onComplete = {
+                            executorOnComplete = {
                                 runOnUiThread {
                                     val headerData =
                                         ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
@@ -115,7 +115,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                         headerData
                                 }
                             },
-                            onError = {
+                            executorOnError = {
                                 runOnUiThread {
                                     // 로더 제거
                                     viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value =
@@ -135,7 +135,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                         // 푸터 요청
                         viewModelMbr.getRecyclerViewFooterData(
-                            onComplete = {
+                            executorOnComplete = {
                                 runOnUiThread {
                                     val footerData =
                                         ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
@@ -149,7 +149,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                         footerData
                                 }
                             },
-                            onError = {
+                            executorOnError = {
                                 runOnUiThread {
                                     // 로더 제거
                                     viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value =
@@ -172,7 +172,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                             viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
                             viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
                             viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
-                            onComplete = {
+                            executorOnComplete = {
                                 runOnUiThread runOnUiThread2@{
                                     // 로더 제거
                                     viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -208,7 +208,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     viewModelMbr.isRecyclerViewItemLoadingMbr = false
                                 }
                             },
-                            onError = {
+                            executorOnError = {
                                 runOnUiThread {
                                     // 로더 제거
                                     viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -304,7 +304,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
                                 viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
                                 viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
-                                onComplete = {
+                                executorOnComplete = {
                                     runOnUiThread runOnUiThread2@{
                                         // 로더 제거
                                         cloneItemList.removeLast()
@@ -341,7 +341,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                         viewModelMbr.isRecyclerViewItemLoadingMbr = false
                                     }
                                 },
-                                onError = {
+                                executorOnError = {
                                     runOnUiThread {
                                         // 로더 제거
                                         viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -416,7 +416,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                     // (리포지토리 데이터 요청)
                     // 헤더 요청
                     viewModelMbr.getRecyclerViewHeaderData(
-                        onComplete = {
+                        executorOnComplete = {
                             runOnUiThread {
                                 val headerData =
                                     ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
@@ -430,7 +430,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     headerData
                             }
                         },
-                        onError = {
+                        executorOnError = {
                             runOnUiThread {
                                 // 로더 제거
                                 viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value =
@@ -450,7 +450,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                     // 푸터 요청
                     viewModelMbr.getRecyclerViewFooterData(
-                        onComplete = {
+                        executorOnComplete = {
                             runOnUiThread {
                                 val footerData =
                                     ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
@@ -464,7 +464,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     footerData
                             }
                         },
-                        onError = {
+                        executorOnError = {
                             runOnUiThread {
                                 // 로더 제거
                                 viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value =
@@ -486,7 +486,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         viewModelMbr.getRecyclerViewItemDataListLastServerItemUidMbr,
                         viewModelMbr.getRecyclerViewItemDataListPageSizeMbr,
                         viewModelMbr.getRecyclerViewItemDataListSortCodeMbr,
-                        onComplete = {
+                        executorOnComplete = {
                             runOnUiThread runOnUiThread2@{
                                 // 로더 제거
                                 viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -525,7 +525,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.isRecyclerViewItemLoadingMbr = false
                             }
                         },
-                        onError = {
+                        executorOnError = {
                             runOnUiThread {
                                 // 로더 제거
                                 viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
@@ -594,7 +594,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         ActivityBasicHeaderFooterRecyclerViewSampleViewModel.PostRecyclerViewItemDataInputVo(
                             data
                         ),
-                        onComplete = {
+                        executorOnComplete = {
                             runOnUiThread {
                                 // 처리 다이얼로그 제거
                                 viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
@@ -619,7 +619,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.isRecyclerViewItemLoadingMbr = false
                             }
                         },
-                        onError = {
+                        executorOnError = {
                             runOnUiThread {
                                 // 처리 다이얼로그 제거
                                 viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null

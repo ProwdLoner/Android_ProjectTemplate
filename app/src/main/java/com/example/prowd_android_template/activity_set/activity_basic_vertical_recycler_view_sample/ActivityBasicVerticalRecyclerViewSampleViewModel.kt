@@ -100,15 +100,15 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
         lastServerItemUid: Long,
         pageSize: Int,
         sortCode: Int,
-        onComplete: (ArrayList<GetRecyclerViewItemDataListOutputVO>) -> Unit,
-        onError: (Throwable) -> Unit
+        executorOnComplete: (ArrayList<GetRecyclerViewItemDataListOutputVO>) -> Unit,
+        executorOnError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
             if (lastServerItemUid != -1L) {
                 // 네트워크 요청 대기 시간을 상정
                 Thread.sleep(2000)
 
-                onComplete(ArrayList())
+                executorOnComplete(ArrayList())
                 return@execute
             }
 
@@ -126,7 +126,7 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
             // 네트워크 요청 대기 시간을 상정
             Thread.sleep(1500)
 
-            onComplete(resultData)
+            executorOnComplete(resultData)
         }
     }
 
@@ -134,41 +134,41 @@ class ActivityBasicVerticalRecyclerViewSampleViewModel(application: Application)
     // 성공시 서버 Uid 가 반환
     fun postRecyclerViewItemData(
         postRecyclerViewItemDataInputVo: PostRecyclerViewItemDataInputVo,
-        onComplete: (Long) -> Unit,
-        onError: (Throwable) -> Unit
+        executorOnComplete: (Long) -> Unit,
+        executorOnError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
             Thread.sleep(150)
 
             val serverItemUid = postRecyclerViewItemDataInputVo.title.split("_").last().toLong()
 
-            onComplete(serverItemUid)
+            executorOnComplete(serverItemUid)
         }
     }
 
     // 아이템 데이터 제거 요청
     fun deleteRecyclerViewItemData(
         serverItemUid: Long,
-        onComplete: () -> Unit,
-        onError: (Throwable) -> Unit
+        executorOnComplete: () -> Unit,
+        executorOnError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
             Thread.sleep(150)
 
-            onComplete()
+            executorOnComplete()
         }
     }
 
     // 아이템 데이터 변경 요청
     fun putRecyclerViewItemData(
         putRecyclerViewItemDataInputVo: PutRecyclerViewItemDataInputVo,
-        onComplete: () -> Unit,
-        onError: (Throwable) -> Unit
+        executorOnComplete: () -> Unit,
+        executorOnError: (Throwable) -> Unit
     ) {
         executorServiceMbr?.execute {
             Thread.sleep(150)
 
-            onComplete()
+            executorOnComplete()
         }
     }
 
