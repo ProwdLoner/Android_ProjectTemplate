@@ -97,7 +97,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         super.onResume()
 
         if (viewModelMbr.isActivityPermissionClearMbr) {
-            startCameraAtFirst()
+            onCameraPermissionGranted()
         }
 
         // (데이터 갱신 시점 적용)
@@ -142,6 +142,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
 
+        viewModelMbr.backCameraObjMbr?.clearCameraObject()
+
         super.onDestroy()
     }
 
@@ -178,158 +180,140 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
+    // 액티비티 초기 진입 필요 권한 확인
     private fun requestActivityPermission() {
-        // 카메라 디바이스 사용 가능 여부 확인
-        if (this.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-            permissionRequestCallbackMbr = { permissions ->
-                // 카메라 권한
-                val isGranted = permissions[Manifest.permission.CAMERA]!!
-                val neverAskAgain =
-                    !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
+        permissionRequestCallbackMbr = { permissions ->
+            // 카메라 권한
+            val isGranted = permissions[Manifest.permission.CAMERA]!!
+            val neverAskAgain =
+                !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
 
-                if (isGranted) { // 권한 승인
-                    viewModelMbr.isActivityPermissionClearMbr = true
-                    startCameraAtFirst()
-                } else { // 권한 거부
-                    if (!neverAskAgain) {
-                        // 단순 거부
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                            DialogConfirm.DialogInfoVO(
-                                true,
-                                "권한 요청",
-                                "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                                    finish()
-                                },
-                                onCanceled = {
-                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                                    finish()
-                                }
-                            )
-                    } else {
-                        // 다시 묻지 않기 선택
-                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                            DialogBinaryChoose.DialogInfoVO(
-                                true,
-                                "권한 요청",
-                                "해당 서비스를 이용하기 위해선\n" +
-                                        "카메라 장치 사용 권한이 필요합니다.\n" +
-                                        "권한 설정 화면으로 이동하시겠습니까?",
-                                null,
-                                null,
-                                onPosBtnClicked = {
-                                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+            if (isGranted) { // 권한 승인
+                viewModelMbr.isActivityPermissionClearMbr = true
+                onCameraPermissionGranted()
+            } else { // 권한 거부
+                if (!neverAskAgain) {
+                    // 단순 거부
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                        DialogConfirm.DialogInfoVO(
+                            true,
+                            "권한 요청",
+                            "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
+                            null,
+                            onCheckBtnClicked = {
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                                finish()
+                            },
+                            onCanceled = {
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                                finish()
+                            }
+                        )
+                } else {
+                    // 다시 묻지 않기 선택
+                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                        DialogBinaryChoose.DialogInfoVO(
+                            true,
+                            "권한 요청",
+                            "해당 서비스를 이용하기 위해선\n" +
+                                    "카메라 장치 사용 권한이 필요합니다.\n" +
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                                    // 권한 설정 화면으로 이동
-                                    val intent =
-                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                    intent.data = Uri.fromParts("package", packageName, null)
+                                // 권한 설정 화면으로 이동
+                                val intent =
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                intent.data = Uri.fromParts("package", packageName, null)
 
-                                    resultLauncherCallbackMbr = {
-                                        // 설정 페이지 복귀시 콜백
+                                resultLauncherCallbackMbr = {
+                                    // 설정 페이지 복귀시 콜백
 
-                                        // 권한을 승인했는지 확인
-                                        if (ActivityCompat.checkSelfPermission(
-                                                this,
-                                                Manifest.permission.CAMERA
-                                            ) == PackageManager.PERMISSION_GRANTED
-                                        ) { // 권한이 승인 상태
-                                            // 카메라 실행
-                                            viewModelMbr.isActivityPermissionClearMbr = true
-                                            startCameraAtFirst()
-                                        } else { // 권한 비승인 상태
-                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                DialogConfirm.DialogInfoVO(
-                                                    true,
-                                                    "권한 요청",
-                                                    "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
-                                                    null,
-                                                    onCheckBtnClicked = {
-                                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                            null
-                                                        finish()
-                                                    },
-                                                    onCanceled = {
-                                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                            null
-                                                        finish()
-                                                    }
-                                                )
-                                        }
+                                    // 권한을 승인했는지 확인
+                                    if (ActivityCompat.checkSelfPermission(
+                                            this,
+                                            Manifest.permission.CAMERA
+                                        ) == PackageManager.PERMISSION_GRANTED
+                                    ) { // 권한이 승인 상태
+                                        // 카메라 실행
+                                        viewModelMbr.isActivityPermissionClearMbr = true
+                                        onCameraPermissionGranted()
+                                    } else { // 권한 비승인 상태
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "권한 요청",
+                                                "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
+                                                null,
+                                                onCheckBtnClicked = {
+                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                        null
+                                                    finish()
+                                                },
+                                                onCanceled = {
+                                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                        null
+                                                    finish()
+                                                }
+                                            )
                                     }
-                                    resultLauncherMbr.launch(intent)
-                                },
-                                onNegBtnClicked = {
-                                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                        DialogConfirm.DialogInfoVO(
-                                            true,
-                                            "권한 요청",
-                                            "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
-                                            null,
-                                            onCheckBtnClicked = {
-                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                    null
-                                                finish()
-                                            },
-                                            onCanceled = {
-                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                    null
-                                                finish()
-                                            }
-                                        )
-                                },
-                                onCanceled = {
-                                    viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                        DialogConfirm.DialogInfoVO(
-                                            true,
-                                            "권한 요청",
-                                            "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
-                                            null,
-                                            onCheckBtnClicked = {
-                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                    null
-                                                finish()
-                                            },
-                                            onCanceled = {
-                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                                    null
-                                                finish()
-                                            }
-                                        )
                                 }
-                            )
-                    }
+                                resultLauncherMbr.launch(intent)
+                            },
+                            onNegBtnClicked = {
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "권한 요청",
+                                        "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                null
+                                            finish()
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                null
+                                            finish()
+                                        }
+                                    )
+                            },
+                            onCanceled = {
+                                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "권한 요청",
+                                        "해당 서비스를 이용하기 위해선\n카메라 장치 사용 권한이 필요합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                null
+                                            finish()
+                                        },
+                                        onCanceled = {
+                                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                null
+                                            finish()
+                                        }
+                                    )
+                            }
+                        )
                 }
             }
-
-            permissionRequestMbr.launch(
-                arrayOf(
-                    Manifest.permission.CAMERA
-                )
-            )
-        } else {
-            // 디바이스 장치에 카메라가 없는 상태
-            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                true,
-                "장치 접근",
-                "카메라를 사용할 수 없습니다.\n장치 상태를 확인해주세요.",
-                null,
-                onCheckBtnClicked = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    finish()
-                },
-                onCanceled = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    finish()
-                }
-            )
         }
+
+        permissionRequestMbr.launch(
+            arrayOf(
+                Manifest.permission.CAMERA
+            )
+        )
     }
 
     // 초기 멤버 객체 생성
@@ -560,7 +544,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
     }
 
-    private fun startCameraAtFirst() {
+    private fun onCameraPermissionGranted() {
         // (카메라 실행)
         // 카메라 세션 실행
         val chosenPreviewSurfaceSize = CameraUtil.getCameraSize(
