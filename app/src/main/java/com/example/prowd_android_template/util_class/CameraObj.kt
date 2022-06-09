@@ -344,6 +344,7 @@ class CameraObj private constructor(
                         if (videoFile.exists()) {
                             videoFile.delete()
                         }
+                        videoFile.createNewFile()
 
                         mediaRecorderMbr!!.setOutputFile(videoFile.absolutePath)
 
