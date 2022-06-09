@@ -49,6 +49,11 @@ class CameraObj private constructor(
     private val streamConfigurationMapMbr: StreamConfigurationMap,
     var sensorOrientationMbr: Int = 0
 ) {
+    // (프리뷰 생성 대기시간 : 밀리초)
+    // 뷰 생성시 불안정(출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
+    // 기기 및 상태별로 필요 시간이 다르기에 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요
+    private var previewStabilizationTimeMsMbr : Long = 300
+
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (스레드 풀)
     var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
@@ -115,6 +120,14 @@ class CameraObj private constructor(
                 )
             }
         }
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <생성자 공간>
+    init {
+        // CameraDevice 미리 열어두기
+        openCameraDeviceAsync(onCameraDeviceReady = {}, onCameraDisconnected = {}, onError = {})
     }
 
 
@@ -254,7 +267,7 @@ class CameraObj private constructor(
             }
 
             // (카메라 디바이스 열기)
-            openCameraDevice(
+            openCameraDeviceAsync(
                 onCameraDeviceReady = {
                     // (서페이스 설정)
                     // 이미지 리더 서페이스
@@ -498,10 +511,9 @@ class CameraObj private constructor(
         var checkedPreviewCount = 0
         val checkedPreviewCountSemaphore = Semaphore(1)
 
-        // todo : 이상 가능성
         // 뷰 생성시 불안정(출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
         // (기기 및 상태별로 효과가 있을수도 없을 수도 있음. 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요)
-        Thread.sleep(300)
+        Thread.sleep(previewStabilizationTimeMsMbr)
 
         for (previewIdx in 0 until previewListSize) {
             val previewObj = previewConfigList[previewIdx].autoFitTextureView
@@ -835,21 +847,26 @@ class CameraObj private constructor(
     }
 
     // 카메라 디바이스 생성
-    private fun openCameraDevice(
+    private val openCameraSemaphoreMbr = Semaphore(1)
+    private fun openCameraDeviceAsync(
         onCameraDeviceReady: () -> Unit,
         onCameraDisconnected: () -> Unit,
         onError: (Int) -> Unit
     ) {
-        if (cameraDeviceMbr != null) {
-            onCameraDeviceReady()
-        } else {
+        executorServiceMbr?.execute {
+            openCameraSemaphoreMbr.acquire()
+            if (cameraDeviceMbr != null) {
+                openCameraSemaphoreMbr.release()
+                onCameraDeviceReady()
+                return@execute
+            }
             // 카메라 디바이스가 존재하지 않는다면 생성
 
             // (카메라 장치 검사)
             if (!parentActivityMbr.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-                cameraSessionSemaphoreMbr.release()
+                openCameraSemaphoreMbr.release()
                 onError(1)
-                return
+                return@execute
             }
 
             // (카메라 권한 검사)
@@ -858,9 +875,9 @@ class CameraObj private constructor(
                     Manifest.permission.CAMERA
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                cameraSessionSemaphoreMbr.release()
+                openCameraSemaphoreMbr.release()
                 onError(2)
-                return
+                return@execute
             }
 
             cameraManagerMbr.openCamera(
@@ -871,6 +888,7 @@ class CameraObj private constructor(
                         // cameraDevice 가 열리면,
                         // 객체 저장
                         cameraDeviceMbr = camera
+                        openCameraSemaphoreMbr.release()
                         onCameraDeviceReady()
                     }
 
@@ -897,6 +915,7 @@ class CameraObj private constructor(
                         camera.close()
                         cameraDeviceMbr = null
 
+                        openCameraSemaphoreMbr.release()
                         onCameraDisconnected()
                     }
 
@@ -923,6 +942,7 @@ class CameraObj private constructor(
                         camera.close()
                         cameraDeviceMbr = null
 
+                        openCameraSemaphoreMbr.release()
                         when (error) {
                             ERROR_CAMERA_DISABLED -> {
                                 onError(3)
