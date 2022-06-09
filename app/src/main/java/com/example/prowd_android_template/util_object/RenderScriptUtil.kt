@@ -10,15 +10,14 @@ import com.xxx.yyy.ScriptC_crop
 
 object RenderScriptUtil {
     // (YUV420888 Image 객체를 ByteArray 로 변환해서 반환하는 함수)
-    fun yuv420888ImageToByteArray(image: Image): ByteArray? {
+    fun getYuv420888ImageByteArray(image: Image): ByteArray? {
         assert(image.format == ImageFormat.YUV_420_888)
         try {
             val pixelCount = image.width * image.height
-            val pixelSizeBits = ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888)
-            val resultYuvByteArray = ByteArray(pixelCount * pixelSizeBits / 8)
+            val resultYuvByteArray =
+                ByteArray(pixelCount * ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888) / 8)
 
-            val imagePlanes = image.planes
-            imagePlanes.forEachIndexed { planeIndex, plane ->
+            image.planes.forEachIndexed { planeIndex, plane ->
                 val outputStride: Int
 
                 var outputOffset: Int
@@ -42,7 +41,6 @@ object RenderScriptUtil {
                 }
 
                 val planeBuffer = plane.buffer
-                val rowStride = plane.rowStride
                 val pixelStride = plane.pixelStride
 
                 val imageCrop = Rect(0, 0, image.width, image.height)
@@ -58,7 +56,6 @@ object RenderScriptUtil {
                 }
 
                 val planeWidth = planeCrop.width()
-                val planeHeight = planeCrop.height()
 
                 val rowBuffer = ByteArray(plane.rowStride)
 
@@ -68,9 +65,9 @@ object RenderScriptUtil {
                     (planeWidth - 1) * pixelStride + 1
                 }
 
-                for (row in 0 until planeHeight) {
+                for (row in 0 until planeCrop.height()) {
                     planeBuffer.position(
-                        (row + planeCrop.top) * rowStride + planeCrop.left * pixelStride
+                        (row + planeCrop.top) * plane.rowStride + planeCrop.left * pixelStride
                     )
 
                     if (pixelStride == 1 && outputStride == 1) {

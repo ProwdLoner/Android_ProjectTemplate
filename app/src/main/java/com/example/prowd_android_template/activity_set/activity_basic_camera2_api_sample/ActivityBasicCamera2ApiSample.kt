@@ -12,7 +12,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.Surface
 import android.view.WindowManager
 import androidx.activity.result.ActivityResult
@@ -34,10 +33,9 @@ import com.example.prowd_android_template.util_object.RenderScriptUtil
 import java.io.File
 
 
-// todo : 카메라는 screen 회전을 막아둠 (= 카메라 정지를 막기 위하여.) 보다 세련된 방식을 찾기
-// todo : onpause - onresume 빠르게 변환시 튕김 (세마포어를 전역으로 놓아서 실행해보기)
-// todo : 바로 위 문제는, 전역변수로 두고, 이미지 리더 스레드 완전 종료 후 해제까지 확인하도록 할 것
+// todo : 프리뷰 간헐절 에러 해결
 // todo : 이미지 리더 불안정 해결 (대기 시간, 혹은 데이터 처리 방식 변경)
+// todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -64,10 +62,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 액티비티 이동 복귀 객체
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
-
-    // todo
-    // 안정화를 위한 이미지 프로세싱 대기시간 설정
-    // 타겟 최소 성능 디바이스 및 해상도에 따른 연산량을 기준으로 설정
 
 
     // ---------------------------------------------------------------------------------------------
@@ -563,6 +557,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             SurfaceTexture::class.java
         )!!
 
+        val chosenImageReaderSurfaceSize = CameraUtil.getCameraSize(
+            this,
+            viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
+            500 * 500,
+            2.0 / 3.0,
+            ImageFormat.YUV_420_888
+        )!!
+
         viewModelMbr.backCameraObjMbr?.startCameraSessionAsync(
             arrayListOf(
                 CameraObj.PreviewConfigVo(
@@ -571,21 +573,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 )
             ),
             CameraObj.ImageReaderConfigVo(
-                CameraUtil.getCameraSize(
-                    this,
-                    viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
-                    500 * 500,
-                    2.0 / 3.0,
-                    ImageFormat.YUV_420_888
-                )!!,
+                chosenImageReaderSurfaceSize,
                 viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
                 imageReaderCallback = { reader ->
                     processImage(reader)
                 }
             ),
-//            null,
             null,
             onCameraSessionStarted = {
+                // 이미지 프로세싱 실행
                 doImageProcessing = true
             },
             onCameraDisconnected = {
@@ -637,7 +633,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val imgWidth: Int = imageObj.width
             val imgHeight: Int = imageObj.height
 
-            val yuvByteArray = RenderScriptUtil.yuv420888ImageToByteArray(imageObj)
+            val yuvByteArray = RenderScriptUtil.getYuv420888ImageByteArray(imageObj)
 
             // 이미지 데이터가 복사되어 image 객체 해제
             imageObj.close()

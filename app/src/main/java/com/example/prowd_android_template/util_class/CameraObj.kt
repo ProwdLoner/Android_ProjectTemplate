@@ -511,10 +511,6 @@ class CameraObj private constructor(
         var checkedPreviewCount = 0
         val checkedPreviewCountSemaphore = Semaphore(1)
 
-        // 뷰 생성시 불안정(출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
-        // (기기 및 상태별로 효과가 있을수도 없을 수도 있음. 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요)
-        Thread.sleep(previewStabilizationTimeMsMbr)
-
         for (previewIdx in 0 until previewListSize) {
             val previewObj = previewConfigList[previewIdx].autoFitTextureView
             val previewSurfaceSize = previewConfigList[previewIdx].cameraOrientSurfaceSize
@@ -597,6 +593,10 @@ class CameraObj private constructor(
                             height: Int
                         ) {
                             executorServiceMbr?.execute {
+                                // 뷰 생성시 불안정(출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
+                                // (기기 및 상태별로 효과가 있을수도 없을 수도 있음. 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요)
+                                Thread.sleep(previewStabilizationTimeMsMbr)
+
                                 // (텍스쳐 뷰 비율 변경)
                                 if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
                                     && (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) ||
