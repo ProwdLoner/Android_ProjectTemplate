@@ -12,6 +12,7 @@ import android.media.ImageReader
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
@@ -66,6 +67,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 액티비티 이동 복귀 객체
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+
+    // 안정화를 위한 이미지 프로세싱 대기시간 설정
+    // 타겟 최소 성능 디바이스 및 해상도에 따른 연산량을 기준으로 설정
+    val imageProcessingStabilizationTimeMsMbr: Long = 300
 
 
     // ---------------------------------------------------------------------------------------------
@@ -553,9 +558,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        // 카메라 실행
-        isImageProcessingPause = false
-
         // (카메라 실행)
         // 카메라 세션 실행
         viewModelMbr.backCameraObjMbr?.startCameraSessionAsync(
@@ -582,6 +584,20 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 )!!,
                 viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
                 imageReaderCallback = { reader ->
+
+                    // 안정화를 위한 이미지 프로세싱 대기시간 설정
+                    object :
+                        CountDownTimer(
+                            imageProcessingStabilizationTimeMsMbr,
+                            imageProcessingStabilizationTimeMsMbr
+                        ) {
+                        override fun onTick(millisUntilFinished: Long) = Unit
+
+                        override fun onFinish() {
+                            isImageProcessingPause = false
+                        }
+                    }.start()
+
                     processImage(reader)
                 }
             ),
@@ -615,7 +631,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // (카메라 이미지 실시간 처리 콜백)
-    private var isImageProcessingPause = false
+    private var isImageProcessingPause = true
     private fun processImage(reader: ImageReader) {
         try {
             val imageObj: Image = reader.acquireLatestImage() ?: return

@@ -52,7 +52,7 @@ class CameraObj private constructor(
     // (프리뷰 생성 대기시간 : 밀리초)
     // 뷰 생성시 불안정(출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
     // 기기 및 상태별로 필요 시간이 다르기에 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요
-    private var previewStabilizationTimeMsMbr : Long = 300
+    private var previewStabilizationTimeMsMbr : Long = 500
 
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (스레드 풀)
