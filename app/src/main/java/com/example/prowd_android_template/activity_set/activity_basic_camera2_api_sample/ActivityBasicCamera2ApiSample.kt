@@ -42,6 +42,9 @@ import java.util.*
 // todo : 프리뷰 간헐절 에러 해결
 // todo : 이미지 리더 불안정 해결 (대기 시간, 혹은 데이터 처리 방식 변경)
 // todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
+// todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
+// todo : 되도록 인위적 대기시간 없앨것
+// todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -68,6 +71,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 액티비티 이동 복귀 객체
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+
+    // (카메라 종료 및 재시작의 안정화를 위한 onPause 의 카메라 종료 대기시간 : 밀리초)
+    // 타겟 디바이스 최소 사양에 맞춰서 가장 적은 시간을 설정
+    private val cameraCloseDelayTimeMsMbr: Long = 500
 
 
     // ---------------------------------------------------------------------------------------------
@@ -101,6 +108,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        onPauseMbr = false
 
         if (viewModelMbr.isActivityPermissionClearMbr) {
             onCameraPermissionGranted()
@@ -123,8 +131,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        doImageProcessing = false
+        onPauseMbr = true
         viewModelMbr.backCameraObjMbr?.stopCameraSession()
+
+        // stopCamera 후 다시 onResume 에 도달했을 시의 안정성을 위한 대기시간 busy waiting
+        val curMilliSec = System.currentTimeMillis()
+        while (System.currentTimeMillis() - curMilliSec < cameraCloseDelayTimeMsMbr) {
+        }
 
         super.onPause()
     }
@@ -152,7 +165,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        doImageProcessing = false
+        viewModelMbr.doImageProcessing = false
         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
             true,
             "카메라 종료",
@@ -167,12 +180,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             onNegBtnClicked = {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                doImageProcessing = true
+                viewModelMbr.doImageProcessing = true
             },
             onCanceled = {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                doImageProcessing = true
+                viewModelMbr.doImageProcessing = true
             }
         )
     }
@@ -446,8 +459,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             false
                         ),
                         onCameraSessionStarted = {
-                            // 이미지 프로세싱 실행
-                            doImageProcessing = true
+
                         },
                         onCameraDisconnected = {
 
@@ -513,7 +525,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                        null,
 //                        onCameraSessionStarted = {
 //                            // 이미지 프로세싱 실행
-//                            doImageProcessing = true
+//                            viewModelMbr.doImageProcessing = true
 //                        },
 //                        onCameraDisconnected = {
 //
@@ -614,8 +626,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             ),
             null,
             onCameraSessionStarted = {
-                // 이미지 프로세싱 실행
-                doImageProcessing = true
+
             },
             onCameraDisconnected = {
 
@@ -627,8 +638,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // (카메라 이미지 실시간 처리 콜백)
-    private var doImageProcessing = false
     private var yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
+    private var onPauseMbr = false
     private fun processImage(reader: ImageReader) {
         try {
             val imageObj: Image = reader.acquireLatestImage() ?: return
@@ -637,9 +648,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 반환되는 비트맵 이미지는 카메라 센서 방향에 따라 정방향이 아닐 수 있음.
 
             // 병렬처리 플래그
-            if (yuvByteArrayToArgbBitmapAsyncOnProgressMbr || // 작업중
-                !doImageProcessing || // 이미지 프로세싱 중지 상태
-                isDestroyed // 액티비티 자체가 종료
+            if (onPauseMbr || // onPause 상태
+                !viewModelMbr.doImageProcessing || // 이미지 프로세싱 중지 상태
+                isDestroyed || // 액티비티 자체가 종료
+                yuvByteArrayToArgbBitmapAsyncOnProgressMbr// 작업중
             ) {
                 // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
                 imageObj.close()

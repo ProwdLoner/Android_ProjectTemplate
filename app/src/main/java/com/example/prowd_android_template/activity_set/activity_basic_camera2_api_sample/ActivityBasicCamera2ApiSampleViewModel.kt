@@ -70,6 +70,9 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     // 액티비티 진입 필수 권한 요청 여부
     var isActivityPermissionClearMbr = false
 
+    // 카메라 이미지 프로세싱 여부
+    var doImageProcessing = true
+
 
     // ---------------------------------------------------------------------------------------------
     // <뷰모델 라이브데이터 공간>
