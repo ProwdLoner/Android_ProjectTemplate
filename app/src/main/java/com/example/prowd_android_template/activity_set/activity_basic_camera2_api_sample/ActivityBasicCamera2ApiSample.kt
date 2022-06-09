@@ -3,7 +3,6 @@ package com.example.prowd_android_template.activity_set.activity_basic_camera2_a
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
@@ -12,8 +11,6 @@ import android.media.ImageReader
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.CountDownTimer
-import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import android.view.Surface
@@ -68,9 +65,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
+    // todo
     // 안정화를 위한 이미지 프로세싱 대기시간 설정
     // 타겟 최소 성능 디바이스 및 해상도에 따른 연산량을 기준으로 설정
-    val imageProcessingStabilizationTimeMsMbr: Long = 300
 
 
     // ---------------------------------------------------------------------------------------------
@@ -111,7 +108,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        isImageProcessingPause = true
+        doImageProcessing = false
         viewModelMbr.backCameraObjMbr?.stopCameraSession()
 
         super.onPause()
@@ -140,7 +137,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        isImageProcessingPause = true
+        doImageProcessing = false
         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
             true,
             "카메라 종료",
@@ -155,12 +152,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             onNegBtnClicked = {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                isImageProcessingPause = false
+                doImageProcessing = true
             },
             onCanceled = {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                isImageProcessingPause = false
+                doImageProcessing = true
             }
         )
     }
@@ -374,9 +371,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 초기 뷰 설정
     private var videoFileMbr: File? = null
     private fun viewSetting() {
-        bindingMbr.logContainer.y =
-            bindingMbr.logContainer.y - CustomUtil.getNavigationBarHeightPixel(this)
-
         val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             display!!.rotation
         } else {
@@ -560,17 +554,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     private fun startCamera() {
         // (카메라 실행)
         // 카메라 세션 실행
+        val chosenPreviewSurfaceSize = CameraUtil.getCameraSize(
+            this,
+            viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
+            resources.displayMetrics.widthPixels.toLong() *
+                    resources.displayMetrics.heightPixels.toLong(),
+            2.0 / 3.0,
+            SurfaceTexture::class.java
+        )!!
+
         viewModelMbr.backCameraObjMbr?.startCameraSessionAsync(
             arrayListOf(
                 CameraObj.PreviewConfigVo(
-                    CameraUtil.getCameraSize(
-                        this,
-                        viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
-                        resources.displayMetrics.widthPixels.toLong() *
-                                resources.displayMetrics.heightPixels.toLong(),
-                        2.0 / 3.0,
-                        SurfaceTexture::class.java
-                    )!!,
+                    chosenPreviewSurfaceSize,
                     bindingMbr.cameraPreviewAutoFitTexture
                 )
             ),
@@ -578,39 +574,25 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 CameraUtil.getCameraSize(
                     this,
                     viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
-                    400 * 400,
+                    500 * 500,
                     2.0 / 3.0,
                     ImageFormat.YUV_420_888
                 )!!,
                 viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
                 imageReaderCallback = { reader ->
-
-                    // 안정화를 위한 이미지 프로세싱 대기시간 설정
-                    object :
-                        CountDownTimer(
-                            imageProcessingStabilizationTimeMsMbr,
-                            imageProcessingStabilizationTimeMsMbr
-                        ) {
-                        override fun onTick(millisUntilFinished: Long) = Unit
-
-                        override fun onFinish() {
-                            isImageProcessingPause = false
-                        }
-                    }.start()
-
                     processImage(reader)
                 }
             ),
 //            null,
             null,
             onCameraSessionStarted = {
-
+                doImageProcessing = true
             },
             onCameraDisconnected = {
 
             },
             onError = {
-                Log.e("err", it.toString())
+
             }
         )
 
@@ -631,94 +613,72 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // (카메라 이미지 실시간 처리 콜백)
-    private var isImageProcessingPause = true
+    private var doImageProcessing = false
+    private var yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
     private fun processImage(reader: ImageReader) {
         try {
             val imageObj: Image = reader.acquireLatestImage() ?: return
 
             // yuv ByteArray 를 rgb Bitmap 으로 변환 (병렬처리)
             // 반환되는 비트맵 이미지는 카메라 센서 방향에 따라 정방향이 아닐 수 있음.
-            yuvByteArrayToArgbBitmapAsync(
-                imageObj,
-                onConvertingComplete = { yuvByteArrayToArgbBitmapAsyncBitmap ->
 
-                    runOnUiThread {
-                        if (!isDestroyed) {
-                            Glide.with(this)
-                                .load(yuvByteArrayToArgbBitmapAsyncBitmap)
-                                .transform(FitCenter())
-                                .into(bindingMbr.testImg)
-                        }
+            // 병렬처리 플래그
+            if (yuvByteArrayToArgbBitmapAsyncOnProgressMbr || // 작업중
+                !doImageProcessing || // 이미지 프로세싱 중지 상태
+                isDestroyed // 액티비티 자체가 종료
+            ) {
+                // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
+                imageObj.close()
+                return
+            }
+
+            // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
+            // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 정보를 ByteArray 로 복사하여 사용
+            val imgWidth: Int = imageObj.width
+            val imgHeight: Int = imageObj.height
+
+            val yuvByteArray = RenderScriptUtil.yuv420888ImageToByteArray(imageObj)
+
+            // 이미지 데이터가 복사되어 image 객체 해제
+            imageObj.close()
+
+            if (yuvByteArray == null) {
+                return
+            }
+
+            yuvByteArrayToArgbBitmapAsyncOnProgressMbr = true
+
+            viewModelMbr.executorServiceMbr?.execute {
+
+                // (YUV420 Image to ARGB8888 Bitmap)
+                // RenderScript 사용
+                val bitmap =
+                    RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
+                        viewModelMbr.renderScriptMbr,
+                        viewModelMbr.scriptIntrinsicYuvToRGBMbr,
+                        imgWidth,
+                        imgHeight,
+                        yuvByteArray
+                    )
+
+                yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
+
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(bitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.testImg)
                     }
-
                     // todo
-                })
+                }
+            }
         } catch (e: Exception) {
             // 발생 가능한 에러 :
             // 1. 이미지 객체를 사용하려 할 때, 액티비티가 종료되어 이미지 객체가 종료된 상황
             // 2. Camera2 api 내부 에러 등
             e.printStackTrace()
             finish()
-        }
-    }
-
-    // (yuv 카메라 raw 데이터를 rgb bitmap 객체로 변환)
-    // onConvertingComplete 콜백 반환값 : 변환 완료 Bitmap
-    private var yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
-    private fun yuvByteArrayToArgbBitmapAsync(
-        imageObj: Image,
-        onConvertingComplete: (Bitmap) -> Unit
-    ) {
-        // 병렬처리 플래그
-        if (yuvByteArrayToArgbBitmapAsyncOnProgressMbr || // 작업중
-            isImageProcessingPause || // 이미지 프로세싱 중지 상태
-            isDestroyed // 액티비티 자체가 종료
-        ) {
-            // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
-            imageObj.close()
-            return
-        }
-
-        // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
-        // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 정보를 ByteArray 로 복사하여 사용
-        val imgWidth: Int = imageObj.width
-        val imgHeight: Int = imageObj.height
-
-        val yuvByteArray = RenderScriptUtil.yuv420888ImageToByteArray(imageObj)
-
-        // 이미지 데이터가 복사되어 image 객체 해제
-        imageObj.close()
-
-        if (yuvByteArray == null) {
-            return
-        }
-
-        yuvByteArrayToArgbBitmapAsyncOnProgressMbr = true
-
-        viewModelMbr.executorServiceMbr?.execute {
-            // 이미지 변환 타이머 스타트
-            val logicStartTime = SystemClock.elapsedRealtime()
-
-            // (YUV420 Image to ARGB8888 Bitmap)
-            // RenderScript 사용
-            val bitmap =
-                RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
-                    viewModelMbr.renderScriptMbr,
-                    viewModelMbr.scriptIntrinsicYuvToRGBMbr,
-                    imgWidth,
-                    imgHeight,
-                    yuvByteArray
-                )
-
-            // 이미지 변환 작업 소요 시간 표시
-            runOnUiThread {
-                bindingMbr.yuvToRgbMs.text =
-                    (SystemClock.elapsedRealtime() - logicStartTime).toString()
-            }
-
-            yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
-
-            onConvertingComplete(bitmap)
         }
     }
 
