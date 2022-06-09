@@ -2,7 +2,9 @@ package com.example.prowd_android_template.activity_set.activity_basic_camera2_a
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
@@ -108,7 +110,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        onPauseMbr = false
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+
+        cameraPauseMbr = false
 
         if (viewModelMbr.isActivityPermissionClearMbr) {
             onCameraPermissionGranted()
@@ -131,10 +135,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        onPauseMbr = true
+        cameraPauseMbr = true
         viewModelMbr.backCameraObjMbr?.stopCameraSession()
 
-        // stopCamera 후 다시 onResume 에 도달했을 시의 안정성을 위한 대기시간 busy waiting
+        // 안정성을 위한 대기시간 busy waiting
         val curMilliSec = System.currentTimeMillis()
         while (System.currentTimeMillis() - curMilliSec < cameraCloseDelayTimeMsMbr) {
         }
@@ -395,12 +399,24 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 bindingMbr.recordBtn.x - CustomUtil.getNavigationBarHeightPixel(this)
         }
 
+        // todo recording pause 시에는 녹화를 멈추고 기존 파일을 제거하도록
+        // todo 중복 클릭 방지
+        // todo 화면 회전 상태에서 녹화 에러
+        // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
         bindingMbr.recordBtn.setOnClickListener {
-            // todo pause 및 화면회전 처리
             if (viewModelMbr.backCameraObjMbr != null) {
                 if (!(viewModelMbr.backCameraObjMbr!!.isRecordingMbr)) {
-                    // 프리뷰 세션 종료
+                    // 화면 회전 고정
+                    requestedOrientation =ActivityInfo.SCREEN_ORIENTATION_NOSENSOR
+
+                    // 기존 세션 종료
+                    cameraPauseMbr = true
                     viewModelMbr.backCameraObjMbr?.stopCameraSession()
+
+                    // 안정성을 위한 대기시간 busy waiting
+                    val curMilliSec = System.currentTimeMillis()
+                    while (System.currentTimeMillis() - curMilliSec < cameraCloseDelayTimeMsMbr) {
+                    }
 
                     // 저장 파일 경로 생성
                     videoFilePathMbr = filesDir.path + File.separator + "VID_${
@@ -469,8 +485,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         }
                     )
                 } else {
-                    // 녹화 모드 종료
+                    // 화면 고정 풀기
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+
+                    // 기존 세션 종료
+                    cameraPauseMbr = true
                     viewModelMbr.backCameraObjMbr?.stopCameraSession()
+
+                    // 안정성을 위한 대기시간 busy waiting
+                    val curMilliSec = System.currentTimeMillis()
+                    while (System.currentTimeMillis() - curMilliSec < cameraCloseDelayTimeMsMbr) {
+                    }
 
                     val videoFile = File(videoFilePathMbr!!)
 
@@ -639,7 +664,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (카메라 이미지 실시간 처리 콜백)
     private var yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
-    private var onPauseMbr = false
+    private var cameraPauseMbr = false
     private fun processImage(reader: ImageReader) {
         try {
             val imageObj: Image = reader.acquireLatestImage() ?: return
@@ -648,7 +673,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 반환되는 비트맵 이미지는 카메라 센서 방향에 따라 정방향이 아닐 수 있음.
 
             // 병렬처리 플래그
-            if (onPauseMbr || // onPause 상태
+            if (cameraPauseMbr || // onPause 상태
                 !viewModelMbr.doImageProcessing || // 이미지 프로세싱 중지 상태
                 isDestroyed || // 액티비티 자체가 종료
                 yuvByteArrayToArgbBitmapAsyncOnProgressMbr// 작업중
