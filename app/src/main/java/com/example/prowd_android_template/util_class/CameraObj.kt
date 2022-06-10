@@ -41,6 +41,7 @@ import kotlin.math.abs
 // Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
 
 // todo : 캡쳐, 설정 변경 함수, 세션 일시정지, 재개, 프리뷰 비율, 미디어 레코더 실행 프로세스, 설정 사이즈 검증, 녹음 검증
+// todo : 설정 변경시 한꺼번에 변경을 지원하고, 개별 기능별 함수를 제공
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -517,6 +518,46 @@ class CameraObj private constructor(
         cameraSessionSemaphoreMbr.release()
     }
 
+    // 손떨림 방지
+    private fun chooseStabilizationMode(builder: CaptureRequest.Builder?) {
+        val availableOpticalStabilization =
+            cameraCharacteristicsMbr.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
+        if (availableOpticalStabilization != null) {
+            for (mode in availableOpticalStabilization) {
+                if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
+                    builder?.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                    )
+                    builder?.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                    return
+                }
+            }
+        }
+
+        // If no optical mode is available, try software.
+        val availableVideoStabilization =
+            cameraCharacteristicsMbr.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+        if (availableVideoStabilization != null) {
+            for (mode in availableVideoStabilization) {
+                if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
+                    builder?.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                    builder?.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    return
+                }
+            }
+        }
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
@@ -981,46 +1022,6 @@ class CameraObj private constructor(
                     }
                 }, cameraHandlerMbr
             )
-        }
-    }
-
-    // 손떨림 방지
-    private fun chooseStabilizationMode(builder: CaptureRequest.Builder?) {
-        val availableOpticalStabilization =
-            cameraCharacteristicsMbr.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
-        if (availableOpticalStabilization != null) {
-            for (mode in availableOpticalStabilization) {
-                if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
-                    builder?.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-                    )
-                    builder?.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                    )
-                    return
-                }
-            }
-        }
-
-        // If no optical mode is available, try software.
-        val availableVideoStabilization =
-            cameraCharacteristicsMbr.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
-        if (availableVideoStabilization != null) {
-            for (mode in availableVideoStabilization) {
-                if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
-                    builder?.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                    )
-                    builder?.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                    )
-                    return
-                }
-            }
         }
     }
 
