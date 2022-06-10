@@ -83,6 +83,14 @@ class CameraObj private constructor(
 
 
     // ---------------------------------------------------------------------------------------------
+    // <생성자 공간>
+    init {
+        // CameraDevice 미리 열어두기
+        openCameraDeviceAsync(onCameraDeviceReady = {}, onCameraDisconnected = {}, onError = {})
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
     // <스태틱 메소드 공간>
     companion object {
         // (객체 생성 함수 = 조건에 맞지 않으면 null 반환)
@@ -122,14 +130,6 @@ class CameraObj private constructor(
                 )
             }
         }
-    }
-
-
-    // ---------------------------------------------------------------------------------------------
-    // <생성자 공간>
-    init {
-        // CameraDevice 미리 열어두기
-        openCameraDeviceAsync(onCameraDeviceReady = {}, onCameraDisconnected = {}, onError = {})
     }
 
 
@@ -520,6 +520,130 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
+    // 카메라 디바이스 생성
+    private val openCameraSemaphoreMbr = Semaphore(1)
+    private fun openCameraDeviceAsync(
+        onCameraDeviceReady: () -> Unit,
+        onCameraDisconnected: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        executorServiceMbr?.execute {
+            openCameraSemaphoreMbr.acquire()
+            if (cameraDeviceMbr != null) {
+                openCameraSemaphoreMbr.release()
+                onCameraDeviceReady()
+                return@execute
+            }
+            // 카메라 디바이스가 존재하지 않는다면 생성
+
+            // (카메라 장치 검사)
+            if (!parentActivityMbr.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+                openCameraSemaphoreMbr.release()
+                onError(1)
+                return@execute
+            }
+
+            // (카메라 권한 검사)
+            if (ActivityCompat.checkSelfPermission(
+                    parentActivityMbr,
+                    Manifest.permission.CAMERA
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                openCameraSemaphoreMbr.release()
+                onError(2)
+                return@execute
+            }
+
+            cameraManagerMbr.openCamera(
+                cameraIdMbr,
+                object : CameraDevice.StateCallback() {
+                    // 카메라 디바이스 연결
+                    override fun onOpened(camera: CameraDevice) {
+                        // cameraDevice 가 열리면,
+                        // 객체 저장
+                        cameraDeviceMbr = camera
+                        openCameraSemaphoreMbr.release()
+                        onCameraDeviceReady()
+                    }
+
+                    // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
+                    override fun onDisconnected(camera: CameraDevice) {
+                        isRecordingMbr = false
+                        mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
+                        mediaRecorderMbr?.release()
+                        mediaRecorderMbr = null
+                        mediaCodecSurfaceMbr?.release()
+                        mediaCodecSurfaceMbr = null
+
+                        imageReaderMbr?.setOnImageAvailableListener(null, null)
+                        imageReaderMbr?.close()
+                        imageReaderMbr = null
+
+                        previewSurfaceListMbr.clear()
+
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        cameraCaptureSessionMbr?.close()
+                        cameraCaptureSessionMbr = null
+
+                        captureRequestBuilderMbr = null
+
+                        camera.close()
+                        cameraDeviceMbr = null
+
+                        openCameraSemaphoreMbr.release()
+                        onCameraDisconnected()
+                    }
+
+                    override fun onError(camera: CameraDevice, error: Int) {
+                        // (카메라 상태 초기화)
+                        isRecordingMbr = false
+                        mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
+                        mediaRecorderMbr?.release()
+                        mediaRecorderMbr = null
+                        mediaCodecSurfaceMbr?.release()
+                        mediaCodecSurfaceMbr = null
+
+                        imageReaderMbr?.setOnImageAvailableListener(null, null)
+                        imageReaderMbr?.close()
+                        imageReaderMbr = null
+
+                        previewSurfaceListMbr.clear()
+
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        cameraCaptureSessionMbr?.close()
+                        cameraCaptureSessionMbr = null
+
+                        captureRequestBuilderMbr = null
+
+                        camera.close()
+                        cameraDeviceMbr = null
+
+                        openCameraSemaphoreMbr.release()
+                        when (error) {
+                            ERROR_CAMERA_DISABLED -> {
+                                onError(3)
+                            }
+                            ERROR_CAMERA_IN_USE -> {
+                                onError(4)
+                            }
+                            ERROR_MAX_CAMERAS_IN_USE -> {
+                                onError(5)
+                            }
+                            ERROR_CAMERA_DEVICE -> {
+                                onError(6)
+                            }
+                            ERROR_CAMERA_SERVICE -> {
+                                onError(7)
+                            }
+                        }
+                    }
+                }, cameraHandlerMbr
+            )
+        }
+    }
+
     private fun setPreviewSurfaces(
         previewConfigList: ArrayList<PreviewConfigVo>?,
         onPreviewSurfaceAllReady: () -> Unit
@@ -729,11 +853,6 @@ class CameraObj private constructor(
             CameraMetadata.CONTROL_MODE_AUTO
         )
 
-//            captureRequestBuilderMbr!!.set(
-//                CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-//                Range(mediaRecorderFpsMbr!!, mediaRecorderFpsMbr!!)
-//            )
-
         // (카메라 실행)
         cameraCaptureSessionMbr!!.setRepeatingRequest(
             captureRequestBuilderMbr!!.build(),
@@ -745,97 +864,6 @@ class CameraObj private constructor(
         mediaRecorderMbr!!.start()
 
         onSessionStarted()
-    }
-
-    // (cameraSizes 들 중에 preferredArea 와 가장 유사한 것을 선택하고, 그 중에서도 preferredWHRatio 가 유사한 것을 선택)
-    // preferredArea 0 은 최소, Long.MAX_VALUE 는 최대
-    // preferredWHRatio 0 이하면 비율을 신경쓰지 않고 넓이만으로 비교
-    // 반환 사이즈의 방향은 카메라 방향
-    private fun chooseCameraSize(
-        offeredCameraSizes: Array<Size>,
-        preferredArea: Long,
-        preferredWHRatio: Double
-    ): Size {
-        if (0 >= preferredWHRatio) { // whRatio 를 0 이하로 선택하면 넓이만으로 비교
-            // 넓이 비슷한 것을 선정
-            var smallestAreaDiff: Long = Long.MAX_VALUE
-            var resultIndex = 0
-
-            for ((index, value) in offeredCameraSizes.withIndex()) {
-                val area = value.width.toLong() * value.height.toLong()
-                val areaDiff = abs(area - preferredArea)
-                if (areaDiff < smallestAreaDiff) {
-                    smallestAreaDiff = areaDiff
-                    resultIndex = index
-                }
-            }
-
-            return offeredCameraSizes[resultIndex]
-        } else { // 비율을 먼저 보고, 이후 넓이로 비교
-            // 카메라 디바이스와 휴대폰 rotation 이 서로 다른지를 확인
-            var isCameraDeviceAndMobileRotationDifferent = false
-
-            val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                parentActivityMbr.display!!.rotation
-            } else {
-                parentActivityMbr.windowManager.defaultDisplay.rotation
-            }
-
-            // width, height 가 서로 달라지는지를 확인하는 것이므로 90도 단위 변경만을 캐치
-            when (deviceOrientation) {
-                Surface.ROTATION_0, Surface.ROTATION_180 -> {
-                    if (sensorOrientationMbr == 90 || sensorOrientationMbr == 270) {
-                        isCameraDeviceAndMobileRotationDifferent = true
-                    }
-                }
-
-                Surface.ROTATION_90, Surface.ROTATION_270 -> {
-                    if (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) {
-                        isCameraDeviceAndMobileRotationDifferent = true
-                    }
-                }
-            }
-
-            // 비율 비슷한 것을 선정
-            var mostSameWhRatio = 0.0
-            var smallestWhRatioDiff: Double = Double.MAX_VALUE
-
-            for (value in offeredCameraSizes) {
-                val whRatio: Double = if (isCameraDeviceAndMobileRotationDifferent) {
-                    value.height.toDouble() / value.width.toDouble()
-                } else {
-                    value.width.toDouble() / value.height.toDouble()
-                }
-
-                val whRatioDiff = abs(whRatio - preferredWHRatio)
-                if (whRatioDiff < smallestWhRatioDiff) {
-                    smallestWhRatioDiff = whRatioDiff
-                    mostSameWhRatio = whRatio
-                }
-            }
-
-            // 넓이 비슷한 것을 선정
-            var resultSizeIndex = 0
-            var smallestAreaDiff: Long = Long.MAX_VALUE
-            // 비슷한 비율중 가장 비슷한 넓이를 선정
-            for ((index, value) in offeredCameraSizes.withIndex()) {
-                val whRatio: Double = if (isCameraDeviceAndMobileRotationDifferent) {
-                    value.height.toDouble() / value.width.toDouble()
-                } else {
-                    value.width.toDouble() / value.height.toDouble()
-                }
-
-                if (mostSameWhRatio == whRatio) {
-                    val area = value.width.toLong() * value.height.toLong()
-                    val areaDiff = abs(area - preferredArea)
-                    if (areaDiff < smallestAreaDiff) {
-                        smallestAreaDiff = areaDiff
-                        resultSizeIndex = index
-                    }
-                }
-            }
-            return offeredCameraSizes[resultSizeIndex]
-        }
     }
 
     // todo sensororientation 에 따라 다른 변환
@@ -866,130 +894,6 @@ class CameraObj private constructor(
         }
 
         cameraPreview.setTransform(matrix)
-    }
-
-    // 카메라 디바이스 생성
-    private val openCameraSemaphoreMbr = Semaphore(1)
-    private fun openCameraDeviceAsync(
-        onCameraDeviceReady: () -> Unit,
-        onCameraDisconnected: () -> Unit,
-        onError: (Int) -> Unit
-    ) {
-        executorServiceMbr?.execute {
-            openCameraSemaphoreMbr.acquire()
-            if (cameraDeviceMbr != null) {
-                openCameraSemaphoreMbr.release()
-                onCameraDeviceReady()
-                return@execute
-            }
-            // 카메라 디바이스가 존재하지 않는다면 생성
-
-            // (카메라 장치 검사)
-            if (!parentActivityMbr.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-                openCameraSemaphoreMbr.release()
-                onError(1)
-                return@execute
-            }
-
-            // (카메라 권한 검사)
-            if (ActivityCompat.checkSelfPermission(
-                    parentActivityMbr,
-                    Manifest.permission.CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                openCameraSemaphoreMbr.release()
-                onError(2)
-                return@execute
-            }
-
-            cameraManagerMbr.openCamera(
-                cameraIdMbr,
-                object : CameraDevice.StateCallback() {
-                    // 카메라 디바이스 연결
-                    override fun onOpened(camera: CameraDevice) {
-                        // cameraDevice 가 열리면,
-                        // 객체 저장
-                        cameraDeviceMbr = camera
-                        openCameraSemaphoreMbr.release()
-                        onCameraDeviceReady()
-                    }
-
-                    // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
-                    override fun onDisconnected(camera: CameraDevice) {
-                        isRecordingMbr = false
-                        mediaRecorderMbr?.stop()
-                        mediaRecorderMbr?.reset()
-                        mediaRecorderMbr?.release()
-                        mediaRecorderMbr = null
-                        mediaCodecSurfaceMbr?.release()
-                        mediaCodecSurfaceMbr = null
-
-                        imageReaderMbr?.setOnImageAvailableListener(null, null)
-                        imageReaderMbr?.close()
-                        imageReaderMbr = null
-
-                        previewSurfaceListMbr.clear()
-
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        cameraCaptureSessionMbr?.close()
-                        cameraCaptureSessionMbr = null
-
-                        captureRequestBuilderMbr = null
-
-                        camera.close()
-                        cameraDeviceMbr = null
-
-                        openCameraSemaphoreMbr.release()
-                        onCameraDisconnected()
-                    }
-
-                    override fun onError(camera: CameraDevice, error: Int) {
-                        // (카메라 상태 초기화)
-                        isRecordingMbr = false
-                        mediaRecorderMbr?.stop()
-                        mediaRecorderMbr?.reset()
-                        mediaRecorderMbr?.release()
-                        mediaRecorderMbr = null
-                        mediaCodecSurfaceMbr?.release()
-                        mediaCodecSurfaceMbr = null
-
-                        imageReaderMbr?.setOnImageAvailableListener(null, null)
-                        imageReaderMbr?.close()
-                        imageReaderMbr = null
-
-                        previewSurfaceListMbr.clear()
-
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        cameraCaptureSessionMbr?.close()
-                        cameraCaptureSessionMbr = null
-
-                        captureRequestBuilderMbr = null
-
-                        camera.close()
-                        cameraDeviceMbr = null
-
-                        openCameraSemaphoreMbr.release()
-                        when (error) {
-                            ERROR_CAMERA_DISABLED -> {
-                                onError(3)
-                            }
-                            ERROR_CAMERA_IN_USE -> {
-                                onError(4)
-                            }
-                            ERROR_MAX_CAMERAS_IN_USE -> {
-                                onError(5)
-                            }
-                            ERROR_CAMERA_DEVICE -> {
-                                onError(6)
-                            }
-                            ERROR_CAMERA_SERVICE -> {
-                                onError(7)
-                            }
-                        }
-                    }
-                }, cameraHandlerMbr
-            )
-        }
     }
 
     private fun createCameraSessionAsync(
@@ -1139,30 +1043,4 @@ class CameraObj private constructor(
         val mediaFileAbsolutePath: String,
         val isAudioRecording: Boolean
     )
-
-    data class VideoRecorderInfoVO(
-        val mediaRecorderFps: Int,
-        val chosenVideoSize: Size,
-        val sensorOrientation: Int,
-        val inputSurface: Surface
-    )
-
-    // image reader format : YUV 420 888 을 사용
-    data class CameraInfo(
-        val cameraId: String,
-        // facing
-        // 전면 카메라. value : 0
-        // 후면 카메라. value : 1
-        // 기타 카메라. value : 2
-        val facing: Int,
-        val previewInfoList: ArrayList<DeviceInfo>,
-        val imageReaderInfoList: ArrayList<DeviceInfo>,
-        val mediaRecorderInfoList: ArrayList<DeviceInfo>,
-        val highSpeedInfoList: ArrayList<DeviceInfo>
-    ) {
-        data class DeviceInfo(
-            val size: Size,
-            val fps: Int
-        )
-    }
 }

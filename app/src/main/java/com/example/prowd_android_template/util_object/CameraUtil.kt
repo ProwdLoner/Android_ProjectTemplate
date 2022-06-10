@@ -260,8 +260,8 @@ object CameraUtil {
     }
 
     // (가용 카메라 리스트 반환)
-    fun getCameraInfoList(parentActivity: Activity): ArrayList<CameraObj.CameraInfo> {
-        val cameraInfoList: ArrayList<CameraObj.CameraInfo> = ArrayList()
+    fun getCameraInfoList(parentActivity: Activity): ArrayList<CameraInfo> {
+        val cameraInfoList: ArrayList<CameraInfo> = ArrayList()
 
         val cameraManager: CameraManager =
             parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -279,7 +279,7 @@ object CameraUtil {
 
             val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
 
-            val previewInfoList = ArrayList<CameraObj.CameraInfo.DeviceInfo>()
+            val previewInfoList = ArrayList<CameraInfo.DeviceInfo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -293,14 +293,14 @@ object CameraUtil {
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     previewInfoList.add(
-                        CameraObj.CameraInfo.DeviceInfo(
+                        CameraInfo.DeviceInfo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val imageReaderInfoList = ArrayList<CameraObj.CameraInfo.DeviceInfo>()
+            val imageReaderInfoList = ArrayList<CameraInfo.DeviceInfo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -314,14 +314,14 @@ object CameraUtil {
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     imageReaderInfoList.add(
-                        CameraObj.CameraInfo.DeviceInfo(
+                        CameraInfo.DeviceInfo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val mediaRecorderInfoList = ArrayList<CameraObj.CameraInfo.DeviceInfo>()
+            val mediaRecorderInfoList = ArrayList<CameraInfo.DeviceInfo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -335,14 +335,14 @@ object CameraUtil {
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     mediaRecorderInfoList.add(
-                        CameraObj.CameraInfo.DeviceInfo(
+                        CameraInfo.DeviceInfo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val highSpeedInfoList = ArrayList<CameraObj.CameraInfo.DeviceInfo>()
+            val highSpeedInfoList = ArrayList<CameraInfo.DeviceInfo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
@@ -352,7 +352,7 @@ object CameraUtil {
                     cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
                         val fps = fpsRange.upper
                         highSpeedInfoList.add(
-                            CameraObj.CameraInfo.DeviceInfo(
+                            CameraInfo.DeviceInfo(
                                 size, fps
                             )
                         )
@@ -361,7 +361,7 @@ object CameraUtil {
             }
 
             cameraInfoList.add(
-                CameraObj.CameraInfo(
+                CameraInfo(
                     id,
                     facing,
                     previewInfoList,
@@ -373,5 +373,24 @@ object CameraUtil {
         }
 
         return cameraInfoList
+    }
+
+    // image reader format : YUV 420 888 을 사용
+    data class CameraInfo(
+        val cameraId: String,
+        // facing
+        // 전면 카메라. value : 0
+        // 후면 카메라. value : 1
+        // 기타 카메라. value : 2
+        val facing: Int,
+        val previewInfoList: ArrayList<DeviceInfo>,
+        val imageReaderInfoList: ArrayList<DeviceInfo>,
+        val mediaRecorderInfoList: ArrayList<DeviceInfo>,
+        val highSpeedInfoList: ArrayList<DeviceInfo>
+    ) {
+        data class DeviceInfo(
+            val size: Size,
+            val fps: Int
+        )
     }
 }
