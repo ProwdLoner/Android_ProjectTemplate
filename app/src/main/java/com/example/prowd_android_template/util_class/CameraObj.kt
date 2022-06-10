@@ -53,7 +53,7 @@ class CameraObj private constructor(
     // (프리뷰 생성 대기시간 : 밀리초)
     // 뷰 생성시 불안정(출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
     // 기기 및 상태별로 필요 시간이 다르기에 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요
-    private var previewStabilizationTimeMsMbr : Long = 500
+    private var previewStabilizationTimeMsMbr: Long = 500
 
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (스레드 풀)
@@ -67,7 +67,7 @@ class CameraObj private constructor(
     private var imageReaderMbr: ImageReader? = null
 
     // 미디어 리코더 세팅 부산물
-    private var mediaCodecSurfaceMbr : Surface? = null
+    private var mediaCodecSurfaceMbr: Surface? = null
     private var mediaRecorderMbr: MediaRecorder? = null
     var isRecordingMbr: Boolean = false
         private set
@@ -353,11 +353,18 @@ class CameraObj private constructor(
 
                         mediaRecorderMbr!!.setOutputFile(videoFile.absolutePath)
 
+                        // 비디오 FPS
+                        val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
+                            MediaRecorder::class.java,
+                            mediaRecorderConfigVo.cameraOrientSurfaceSize
+                        ) / 1_000_000_000.0)
+                        val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
+
                         val cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH)
                         mediaRecorderMbr!!.setVideoEncodingBitRate(
                             cpHigh.videoBitRate
                         )
-                        mediaRecorderMbr!!.setVideoFrameRate(cpHigh.videoFrameRate)
+                        mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
 
                         mediaRecorderMbr!!.setVideoSize(
                             mediaRecorderConfigVo.cameraOrientSurfaceSize.width,
