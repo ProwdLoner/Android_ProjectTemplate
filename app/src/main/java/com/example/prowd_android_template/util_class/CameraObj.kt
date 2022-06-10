@@ -30,7 +30,6 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
-import kotlin.math.abs
 
 
 // <Camera 디바이스 하나에 대한 obj>
@@ -41,7 +40,7 @@ import kotlin.math.abs
 // Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
 
 // todo : 프리뷰 불안정 해결
-// todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제
+// todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 이미지 리더 불안정 해결
 // todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
@@ -64,7 +63,7 @@ class CameraObj private constructor(
 
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (스레드 풀)
-    var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
+    private var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
 
     // (카메라 부산 데이터)
     private val cameraSessionSemaphoreMbr = Semaphore(1)
@@ -157,7 +156,7 @@ class CameraObj private constructor(
     // 10 : 해당 사이즈 이미지 리더를 지원하지 않음
     // 11 : 해당 사이즈 미디어 리코더를 지원하지 않음
     // 12 : 해당 사이즈 프리뷰를 지원하지 않음
-    fun startCameraSessionAsync(
+    fun startCameraSession(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
         mediaRecorderConfigVo: MediaRecorderConfigVo?,
@@ -167,26 +166,6 @@ class CameraObj private constructor(
     ) {
         executorServiceMbr?.execute {
             cameraSessionSemaphoreMbr.acquire()
-
-            // (카메라 상태 초기화)
-            isRecordingMbr = false
-            mediaRecorderMbr?.stop()
-            mediaRecorderMbr?.reset()
-            mediaRecorderMbr?.release()
-            mediaRecorderMbr = null
-            mediaCodecSurfaceMbr?.release()
-
-            imageReaderMbr?.setOnImageAvailableListener(null, null)
-            imageReaderMbr?.close()
-            imageReaderMbr = null
-
-            previewSurfaceListMbr.clear()
-
-            cameraCaptureSessionMbr?.stopRepeating()
-            cameraCaptureSessionMbr?.close()
-            cameraCaptureSessionMbr = null
-
-            captureRequestBuilderMbr = null
 
             // (파라미터 검사)
             var surfaceConfigNullCount = 0
@@ -275,6 +254,27 @@ class CameraObj private constructor(
                 }
                 return@execute
             }
+
+            // (카메라 상태 초기화)
+            isRecordingMbr = false
+            mediaRecorderMbr?.stop()
+            mediaRecorderMbr?.reset()
+            mediaRecorderMbr?.release()
+            mediaRecorderMbr = null
+            mediaCodecSurfaceMbr?.release()
+            mediaCodecSurfaceMbr = null
+
+            imageReaderMbr?.setOnImageAvailableListener(null, null)
+            imageReaderMbr?.close()
+            imageReaderMbr = null
+
+            previewSurfaceListMbr.clear()
+
+            cameraCaptureSessionMbr?.stopRepeating()
+            cameraCaptureSessionMbr?.close()
+            cameraCaptureSessionMbr = null
+
+            captureRequestBuilderMbr = null
 
             // (카메라 디바이스 열기)
             openCameraDeviceAsync(
@@ -483,13 +483,13 @@ class CameraObj private constructor(
         imageReaderMbr?.close()
         imageReaderMbr = null
 
+        previewSurfaceListMbr.clear()
+
         cameraCaptureSessionMbr?.stopRepeating()
         cameraCaptureSessionMbr?.close()
         cameraCaptureSessionMbr = null
 
         captureRequestBuilderMbr = null
-
-        previewSurfaceListMbr.clear()
 
         cameraSessionSemaphoreMbr.release()
     }
@@ -510,13 +510,13 @@ class CameraObj private constructor(
         imageReaderMbr?.close()
         imageReaderMbr = null
 
+        previewSurfaceListMbr.clear()
+
         cameraCaptureSessionMbr?.stopRepeating()
         cameraCaptureSessionMbr?.close()
         cameraCaptureSessionMbr = null
 
         captureRequestBuilderMbr = null
-
-        previewSurfaceListMbr.clear()
 
         cameraDeviceMbr?.close()
         cameraDeviceMbr = null
@@ -524,7 +524,8 @@ class CameraObj private constructor(
         cameraSessionSemaphoreMbr.release()
     }
 
-    private fun setCaptureRequest() {
+    private fun <T> setCaptureRequest(configMap: HashMap<CaptureRequest.Key<T>, T>) {
+
 
     }
 
@@ -925,25 +926,22 @@ class CameraObj private constructor(
     ) {
         val rotation = parentActivityMbr.windowManager.defaultDisplay.rotation
         val matrix = Matrix()
-
+        val viewRect = RectF(0f, 0f, cameraPreview.width.toFloat(), cameraPreview.height.toFloat())
+        val bufferRect = RectF(0f, 0f, chosenHeight.toFloat(), chosenWidth.toFloat())
+        val centerX = viewRect.centerX()
+        val centerY = viewRect.centerY()
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
-            val viewRect =
-                RectF(0f, 0f, cameraPreview.width.toFloat(), cameraPreview.height.toFloat())
-            val bufferRect = RectF(0f, 0f, chosenHeight.toFloat(), chosenWidth.toFloat())
-            val centerX = viewRect.centerX()
-            val centerY = viewRect.centerY()
             bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY())
             matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL)
-            val scale = Math.max(
-                cameraPreview.height.toFloat() / chosenHeight,
-                cameraPreview.width.toFloat() / chosenWidth
+            val scale: Float = Math.max(
+                cameraPreview.height.toFloat() / chosenHeight.toFloat(),
+                cameraPreview.width.toFloat() / chosenWidth.toFloat()
             )
-            with(matrix) {
-                postScale(scale, scale, centerX, centerY)
-                postRotate((90 * (rotation - 2)).toFloat(), centerX, centerY)
-            }
+            matrix.postScale(scale, scale, centerX, centerY)
+            matrix.postRotate((90 * (rotation - 2)).toFloat(), centerX, centerY)
+        } else if (Surface.ROTATION_180 == rotation) {
+            matrix.postRotate(180f, centerX, centerY)
         }
-
         cameraPreview.setTransform(matrix)
     }
 

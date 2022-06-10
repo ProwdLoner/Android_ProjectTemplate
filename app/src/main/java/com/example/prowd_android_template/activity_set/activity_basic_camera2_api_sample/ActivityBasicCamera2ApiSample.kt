@@ -196,6 +196,24 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <비공개 메소드 공간>
     // 액티비티 초기 진입 필요 권한 확인
     private fun requestActivityPermission() {
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                true,
+                "카메라 장치가 없습니다.",
+                "카메라 장치가 발견되지 않습니다.\n화면을 종료합니다.",
+                null,
+                onCheckBtnClicked = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    finish()
+                },
+                onCanceled = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    finish()
+                }
+            )
+            return
+        }
+
         permissionRequestCallbackMbr = { permissions ->
             // 카메라 권한
             val isGranted = permissions[Manifest.permission.CAMERA]!!
@@ -447,7 +465,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         MediaRecorder::class.java
                     )!!
 
-                    viewModelMbr.backCameraObjMbr?.startCameraSessionAsync(
+                    viewModelMbr.backCameraObjMbr?.startCameraSession(
                         arrayListOf(
                             CameraObj.PreviewConfigVo(
                                 chosenPreviewSurfaceSize,
@@ -628,7 +646,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             ImageFormat.YUV_420_888
         )!!
 
-        viewModelMbr.backCameraObjMbr?.startCameraSessionAsync(
+        viewModelMbr.backCameraObjMbr?.startCameraSession(
             arrayListOf(
                 CameraObj.PreviewConfigVo(
                     chosenPreviewSurfaceSize,
