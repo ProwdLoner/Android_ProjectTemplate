@@ -30,6 +30,7 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import kotlin.math.abs
 
 
 // <Camera 디바이스 하나에 대한 obj>
@@ -54,12 +55,16 @@ class CameraObj private constructor(
     private val cameraManagerMbr: CameraManager,
     private val cameraCharacteristicsMbr: CameraCharacteristics,
     private val streamConfigurationMapMbr: StreamConfigurationMap,
+    val previewSurfaceSupportedSizeListMbr: Array<Size>?,
+    val imageReaderSurfaceSupportedSizeListMbr: Array<Size>?,
+    val mediaRecorderSurfaceSupportedSizeListMbr: Array<Size>?,
     var sensorOrientationMbr: Int = 0
 ) {
-    // (프리뷰 생성 대기시간 : 밀리초)
-    // 뷰 생성시 불안정(출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
+    // <멤버 변수 공간>
+    // (openCameraDevice 대기시간 : 밀리초)
+    // CameraDevice 객체 첫 생성시 불안정(대표 : 출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
     // 기기 및 상태별로 필요 시간이 다르기에 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요
-    private var previewStabilizationTimeMsMbr: Long = 500
+    private var cameraFirstStartingStabilizationTimeMsMbr: Long = 300
 
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (스레드 풀)
@@ -89,16 +94,250 @@ class CameraObj private constructor(
 
 
     // ---------------------------------------------------------------------------------------------
-    // <생성자 공간>
-    init {
-        // CameraDevice 미리 열어두기
-        openCameraDeviceAsync(onCameraDeviceReady = {}, onCameraDisconnected = {}, onError = {})
-    }
-
-
-    // ---------------------------------------------------------------------------------------------
-    // <스태틱 메소드 공간>
+    // <스태틱 공간>
     companion object {
+        // (카메라 아이디를 반환하는 스태틱 함수)
+        // CameraCharacteristics.LENS_FACING_FRONT: 전면 카메라. value : 0
+        // CameraCharacteristics.LENS_FACING_BACK: 후면 카메라. value : 1
+        // CameraCharacteristics.LENS_FACING_EXTERNAL: 기타 카메라. value : 2
+        fun getCameraIdFromFacing(parentActivity: Activity, lensFacing: Int): String? {
+            var result: String? = null
+
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            for (cameraId in cameraManager.cameraIdList) { // 존재하는 cameraId 를 순회
+                // 카메라 정보 반환
+                val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId)
+
+                // 카메라 Facing 반환
+                val deviceLensFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
+
+                if (null != deviceLensFacing) { // 카메라 Facing null 체크
+                    if (lensFacing == deviceLensFacing) { // 해당 카메라 facing 이 원하는 facing 일 경우
+                        val map =
+                            cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                        if (null != map) { // 현 id 에서 제공해주는 map 이 존재할 때에 제대로된 카메라 센서로 반환
+                            result = cameraId
+                            break
+                        }
+                    }
+                }
+            }
+
+            return result
+        }
+
+        // todo : minmax 값 적용
+        // (supportedSizeArray 중에 preferredArea 와 가장 유사한 것을 선택하고, 그 중에서도 preferredWHRatio 가 유사한 것을 선택)
+        // preferredArea 0 은 최소, Long.MAX_VALUE 는 최대
+        // preferredWHRatio 0 이하면 비율을 신경쓰지 않고 넓이만으로 비교
+        // 반환 사이즈의 방향은 카메라 방향 (입력값은 디바이스 방향 기준으로 넣어주기)
+        fun getNearestSupportedCameraOutputSize(
+            parentActivity: Activity,
+            supportedSizeArray: Array<Size>,
+            cameraOrientation: Int,
+            preferredArea: Long,
+            preferredWHRatio: Double
+        ): Size {
+            if (0 >= preferredWHRatio) { // whRatio 를 0 이하로 선택하면 넓이만으로 비교
+                // 넓이 비슷한 것을 선정
+                var smallestAreaDiff: Long = Long.MAX_VALUE
+                var resultIndex = 0
+
+                for ((index, value) in supportedSizeArray.withIndex()) {
+                    val area = value.width.toLong() * value.height.toLong()
+                    val areaDiff = abs(area - preferredArea)
+                    if (areaDiff < smallestAreaDiff) {
+                        smallestAreaDiff = areaDiff
+                        resultIndex = index
+                    }
+                }
+
+                return supportedSizeArray[resultIndex]
+            } else { // 비율을 먼저 보고, 이후 넓이로 비교
+                // 카메라 디바이스와 휴대폰 rotation 이 서로 다른지를 확인
+                var isCameraDeviceAndMobileRotationDifferent = false
+
+                val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    parentActivity.display!!.rotation
+                } else {
+                    parentActivity.windowManager.defaultDisplay.rotation
+                }
+
+                // width, height 가 서로 달라지는지를 확인하는 것이므로 90도 단위 변경만을 캐치
+                when (deviceOrientation) {
+                    Surface.ROTATION_0, Surface.ROTATION_180 -> {
+                        if (cameraOrientation == 90 || cameraOrientation == 270) {
+                            isCameraDeviceAndMobileRotationDifferent = true
+                        }
+                    }
+
+                    Surface.ROTATION_90, Surface.ROTATION_270 -> {
+                        if (cameraOrientation == 0 || cameraOrientation == 180) {
+                            isCameraDeviceAndMobileRotationDifferent = true
+                        }
+                    }
+                }
+
+                // 비율 비슷한 것을 선정
+                var mostSameWhRatio = 0.0
+                var smallestWhRatioDiff: Double = Double.MAX_VALUE
+
+                for (value in supportedSizeArray) {
+                    val whRatio: Double = if (isCameraDeviceAndMobileRotationDifferent) {
+                        value.height.toDouble() / value.width.toDouble()
+                    } else {
+                        value.width.toDouble() / value.height.toDouble()
+                    }
+
+                    val whRatioDiff = abs(whRatio - preferredWHRatio)
+                    if (whRatioDiff < smallestWhRatioDiff) {
+                        smallestWhRatioDiff = whRatioDiff
+                        mostSameWhRatio = whRatio
+                    }
+                }
+
+                // 넓이 비슷한 것을 선정
+                var resultSizeIndex = 0
+                var smallestAreaDiff: Long = Long.MAX_VALUE
+                // 비슷한 비율중 가장 비슷한 넓이를 선정
+                for ((index, value) in supportedSizeArray.withIndex()) {
+                    val whRatio: Double = if (isCameraDeviceAndMobileRotationDifferent) {
+                        value.height.toDouble() / value.width.toDouble()
+                    } else {
+                        value.width.toDouble() / value.height.toDouble()
+                    }
+
+                    if (mostSameWhRatio == whRatio) {
+                        val area = value.width.toLong() * value.height.toLong()
+                        val areaDiff = abs(area - preferredArea)
+                        if (areaDiff < smallestAreaDiff) {
+                            smallestAreaDiff = areaDiff
+                            resultSizeIndex = index
+                        }
+                    }
+                }
+                return supportedSizeArray[resultSizeIndex]
+            }
+        }
+
+        // (가용 카메라 리스트 반환)
+        fun getCameraInfoList(parentActivity: Activity): ArrayList<CameraInfo> {
+            val cameraInfoList: ArrayList<CameraInfo> = ArrayList()
+
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            cameraManager.cameraIdList.forEach { id ->
+                val characteristics = cameraManager.getCameraCharacteristics(id)
+
+                val cameraConfig = characteristics.get(
+                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
+                )!!
+
+                val capabilities = characteristics.get(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
+                )!!
+
+                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
+
+                val previewInfoList = ArrayList<CameraInfo.DeviceInfo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    cameraConfig.getOutputSizes(SurfaceTexture::class.java).forEach { size ->
+                        val secondsPerFrame =
+                            cameraConfig.getOutputMinFrameDuration(
+                                SurfaceTexture::class.java,
+                                size
+                            ) / 1_000_000_000.0
+                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                        previewInfoList.add(
+                            CameraInfo.DeviceInfo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+
+                val imageReaderInfoList = ArrayList<CameraInfo.DeviceInfo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    cameraConfig.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+                        val secondsPerFrame =
+                            cameraConfig.getOutputMinFrameDuration(
+                                ImageFormat.YUV_420_888,
+                                size
+                            ) / 1_000_000_000.0
+                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                        imageReaderInfoList.add(
+                            CameraInfo.DeviceInfo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+
+                val mediaRecorderInfoList = ArrayList<CameraInfo.DeviceInfo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    cameraConfig.getOutputSizes(MediaRecorder::class.java).forEach { size ->
+                        val secondsPerFrame =
+                            cameraConfig.getOutputMinFrameDuration(
+                                MediaRecorder::class.java,
+                                size
+                            ) / 1_000_000_000.0
+                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                        mediaRecorderInfoList.add(
+                            CameraInfo.DeviceInfo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+
+                val highSpeedInfoList = ArrayList<CameraInfo.DeviceInfo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
+                    )
+                ) {
+                    cameraConfig.highSpeedVideoSizes.forEach { size ->
+                        cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
+                            val fps = fpsRange.upper
+                            highSpeedInfoList.add(
+                                CameraInfo.DeviceInfo(
+                                    size, fps
+                                )
+                            )
+                        }
+                    }
+                }
+
+                cameraInfoList.add(
+                    CameraInfo(
+                        id,
+                        facing,
+                        previewInfoList,
+                        imageReaderInfoList,
+                        mediaRecorderInfoList,
+                        highSpeedInfoList
+                    )
+                )
+            }
+
+            return cameraInfoList
+        }
+
         // (객체 생성 함수 = 조건에 맞지 않으면 null 반환)
         // 조작하길 원하는 카메라 ID 를 설정하여 해당 카메라 정보를 생성
         fun getInstance(
@@ -106,6 +345,11 @@ class CameraObj private constructor(
             cameraId: String,
             cameraHandler: Handler,
         ): CameraObj? {
+            if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+                // 카메라 장치가 없다면 null 반환
+                return null
+            }
+
             // 카메라 총괄 빌더
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -121,20 +365,39 @@ class CameraObj private constructor(
             val sensorOrientationMbr: Int? =
                 cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
 
-            return if (null == streamConfigurationMap || null == sensorOrientationMbr) {
+            if (null == streamConfigurationMap || null == sensorOrientationMbr) {
                 // 필수 정보가 하나라도 없으면 null 반환
-                null
-            } else {
-                return CameraObj(
-                    parentActivity,
-                    cameraId,
-                    cameraHandler,
-                    cameraManager,
-                    cameraCharacteristics,
-                    streamConfigurationMap,
-                    sensorOrientationMbr
-                )
+                return null
             }
+
+            // 서페이스 출력 지원 사이즈 리스트
+            val previewSurfaceSupportedSizeList =
+                streamConfigurationMap.getOutputSizes(SurfaceTexture::class.java)
+            val imageReaderSurfaceSupportedSizeList =
+                streamConfigurationMap.getOutputSizes(ImageFormat.YUV_420_888)
+            val mediaRecorderSurfaceSupportedSizeList =
+                streamConfigurationMap.getOutputSizes(MediaRecorder::class.java)
+
+            // 출력 지원 사이즈가 하나도 없다면 null 반환
+            if (previewSurfaceSupportedSizeList == null &&
+                imageReaderSurfaceSupportedSizeList == null &&
+                mediaRecorderSurfaceSupportedSizeList == null
+            ) {
+                return null
+            }
+
+            return CameraObj(
+                parentActivity,
+                cameraId,
+                cameraHandler,
+                cameraManager,
+                cameraCharacteristics,
+                streamConfigurationMap,
+                previewSurfaceSupportedSizeList,
+                imageReaderSurfaceSupportedSizeList,
+                mediaRecorderSurfaceSupportedSizeList,
+                sensorOrientationMbr
+            )
         }
     }
 
@@ -144,18 +407,17 @@ class CameraObj private constructor(
 
     // API 에러 코드 :
     // 0 : 함수 파라미터 출력 서페이스가 하나도 입력되어 있지 않음
-    // 1 : 카메라 장치가 탐지되지 않음
-    // 2 : 카메라 권한이 없음
-    // 3 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
-    // 4 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
-    // 5 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
-    // 6 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
-    // 7 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
-    // 8 : 생성된 서페이스가 존재하지 않음
-    // 9 : 카메라 세션 생성 실패
-    // 10 : 해당 사이즈 이미지 리더를 지원하지 않음
-    // 11 : 해당 사이즈 미디어 리코더를 지원하지 않음
-    // 12 : 해당 사이즈 프리뷰를 지원하지 않음
+    // 1 : 카메라 권한이 없음
+    // 2 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
+    // 3 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
+    // 4 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
+    // 5 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
+    // 6 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
+    // 7 : 생성된 서페이스가 존재하지 않음
+    // 8 : 카메라 세션 생성 실패
+    // 9 : 해당 사이즈 이미지 리더를 지원하지 않음
+    // 10 : 해당 사이즈 미디어 리코더를 지원하지 않음
+    // 11 : 해당 사이즈 프리뷰를 지원하지 않음
     fun startCameraSession(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
@@ -175,7 +437,7 @@ class CameraObj private constructor(
                 val cameraSizes =
                     streamConfigurationMapMbr.getOutputSizes(ImageFormat.YUV_420_888)
 
-                // 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
+                // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes == null ||
                     cameraSizes.isEmpty() ||
                     cameraSizes.indexOfFirst {
@@ -185,7 +447,7 @@ class CameraObj private constructor(
                 ) {
                     cameraSessionSemaphoreMbr.release()
                     parentActivityMbr.runOnUiThread {
-                        onError(10)
+                        onError(9)
                     }
                     return@execute
                 }
@@ -193,6 +455,7 @@ class CameraObj private constructor(
                 surfaceConfigNullCount++
             }
 
+            // 미디어 레코더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
             if (mediaRecorderConfigVo != null) {
                 val cameraSizes =
                     streamConfigurationMapMbr.getOutputSizes(MediaRecorder::class.java)
@@ -207,7 +470,7 @@ class CameraObj private constructor(
                 ) {
                     cameraSessionSemaphoreMbr.release()
                     parentActivityMbr.runOnUiThread {
-                        onError(11)
+                        onError(10)
                     }
                     return@execute
                 }
@@ -215,6 +478,7 @@ class CameraObj private constructor(
                 surfaceConfigNullCount++
             }
 
+            // 프리뷰 리스트 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
             if (previewConfigVoList != null && previewConfigVoList.isNotEmpty()) {
                 val cameraSizes =
                     streamConfigurationMapMbr.getOutputSizes(SurfaceTexture::class.java)
@@ -225,7 +489,7 @@ class CameraObj private constructor(
                 ) {
                     cameraSessionSemaphoreMbr.release()
                     parentActivityMbr.runOnUiThread {
-                        onError(12)
+                        onError(11)
                     }
                     return@execute
                 } else {
@@ -236,7 +500,7 @@ class CameraObj private constructor(
                             } == -1) {
                             cameraSessionSemaphoreMbr.release()
                             parentActivityMbr.runOnUiThread {
-                                onError(12)
+                                onError(11)
                             }
                             return@execute
                         }
@@ -277,7 +541,7 @@ class CameraObj private constructor(
             captureRequestBuilderMbr = null
 
             // (카메라 디바이스 열기)
-            openCameraDeviceAsync(
+            openCameraDevice(
                 onCameraDeviceReady = {
                     // (서페이스 설정)
                     // 이미지 리더 서페이스
@@ -396,7 +660,7 @@ class CameraObj private constructor(
                             ) { // 생성 서페이스가 하나도 존재하지 않으면,
                                 cameraSessionSemaphoreMbr.release()
                                 parentActivityMbr.runOnUiThread {
-                                    onError(8)
+                                    onError(7)
                                 }
                                 return@setPreviewSurfaces
                             }
@@ -573,127 +837,115 @@ class CameraObj private constructor(
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
     // 카메라 디바이스 생성
-    private val openCameraSemaphoreMbr = Semaphore(1)
-    private fun openCameraDeviceAsync(
+    private fun openCameraDevice(
         onCameraDeviceReady: () -> Unit,
         onCameraDisconnected: () -> Unit,
         onError: (Int) -> Unit
     ) {
-        executorServiceMbr?.execute {
-            openCameraSemaphoreMbr.acquire()
-            if (cameraDeviceMbr != null) {
-                openCameraSemaphoreMbr.release()
-                onCameraDeviceReady()
-                return@execute
-            }
-            // 카메라 디바이스가 존재하지 않는다면 생성
+        if (cameraDeviceMbr != null) {
+            onCameraDeviceReady()
+            return
+        }
+        // 카메라 디바이스가 존재하지 않는다면 생성
 
-            // (카메라 장치 검사)
-            if (!parentActivityMbr.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-                openCameraSemaphoreMbr.release()
-                onError(1)
-                return@execute
-            }
+        // 첫 생성 불안정(대표 : 출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
+        // (기기 및 상태별로 효과가 있을수도 없을 수도 있음. 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요)
+        Thread.sleep(cameraFirstStartingStabilizationTimeMsMbr)
 
-            // (카메라 권한 검사)
-            if (ActivityCompat.checkSelfPermission(
-                    parentActivityMbr,
-                    Manifest.permission.CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                openCameraSemaphoreMbr.release()
-                onError(2)
-                return@execute
-            }
+        // (카메라 권한 검사)
+        if (ActivityCompat.checkSelfPermission(
+                parentActivityMbr,
+                Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            onError(1)
+            return
+        }
 
-            cameraManagerMbr.openCamera(
-                cameraIdMbr,
-                object : CameraDevice.StateCallback() {
-                    // 카메라 디바이스 연결
-                    override fun onOpened(camera: CameraDevice) {
-                        // cameraDevice 가 열리면,
-                        // 객체 저장
-                        cameraDeviceMbr = camera
-                        openCameraSemaphoreMbr.release()
-                        onCameraDeviceReady()
-                    }
+        cameraManagerMbr.openCamera(
+            cameraIdMbr,
+            object : CameraDevice.StateCallback() {
+                // 카메라 디바이스 연결
+                override fun onOpened(camera: CameraDevice) {
+                    // cameraDevice 가 열리면,
+                    // 객체 저장
+                    cameraDeviceMbr = camera
+                    onCameraDeviceReady()
+                }
 
-                    // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
-                    override fun onDisconnected(camera: CameraDevice) {
-                        isRecordingMbr = false
-                        mediaRecorderMbr?.stop()
-                        mediaRecorderMbr?.reset()
-                        mediaRecorderMbr?.release()
-                        mediaRecorderMbr = null
-                        mediaCodecSurfaceMbr?.release()
-                        mediaCodecSurfaceMbr = null
+                // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
+                override fun onDisconnected(camera: CameraDevice) {
+                    isRecordingMbr = false
+                    mediaRecorderMbr?.stop()
+                    mediaRecorderMbr?.reset()
+                    mediaRecorderMbr?.release()
+                    mediaRecorderMbr = null
+                    mediaCodecSurfaceMbr?.release()
+                    mediaCodecSurfaceMbr = null
 
-                        imageReaderMbr?.setOnImageAvailableListener(null, null)
-                        imageReaderMbr?.close()
-                        imageReaderMbr = null
+                    imageReaderMbr?.setOnImageAvailableListener(null, null)
+                    imageReaderMbr?.close()
+                    imageReaderMbr = null
 
-                        previewSurfaceListMbr.clear()
+                    previewSurfaceListMbr.clear()
 
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        cameraCaptureSessionMbr?.close()
-                        cameraCaptureSessionMbr = null
+                    cameraCaptureSessionMbr?.stopRepeating()
+                    cameraCaptureSessionMbr?.close()
+                    cameraCaptureSessionMbr = null
 
-                        captureRequestBuilderMbr = null
+                    captureRequestBuilderMbr = null
 
-                        camera.close()
-                        cameraDeviceMbr = null
+                    camera.close()
+                    cameraDeviceMbr = null
 
-                        openCameraSemaphoreMbr.release()
-                        onCameraDisconnected()
-                    }
+                    onCameraDisconnected()
+                }
 
-                    override fun onError(camera: CameraDevice, error: Int) {
-                        // (카메라 상태 초기화)
-                        isRecordingMbr = false
-                        mediaRecorderMbr?.stop()
-                        mediaRecorderMbr?.reset()
-                        mediaRecorderMbr?.release()
-                        mediaRecorderMbr = null
-                        mediaCodecSurfaceMbr?.release()
-                        mediaCodecSurfaceMbr = null
+                override fun onError(camera: CameraDevice, error: Int) {
+                    // (카메라 상태 초기화)
+                    isRecordingMbr = false
+                    mediaRecorderMbr?.stop()
+                    mediaRecorderMbr?.reset()
+                    mediaRecorderMbr?.release()
+                    mediaRecorderMbr = null
+                    mediaCodecSurfaceMbr?.release()
+                    mediaCodecSurfaceMbr = null
 
-                        imageReaderMbr?.setOnImageAvailableListener(null, null)
-                        imageReaderMbr?.close()
-                        imageReaderMbr = null
+                    imageReaderMbr?.setOnImageAvailableListener(null, null)
+                    imageReaderMbr?.close()
+                    imageReaderMbr = null
 
-                        previewSurfaceListMbr.clear()
+                    previewSurfaceListMbr.clear()
 
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        cameraCaptureSessionMbr?.close()
-                        cameraCaptureSessionMbr = null
+                    cameraCaptureSessionMbr?.stopRepeating()
+                    cameraCaptureSessionMbr?.close()
+                    cameraCaptureSessionMbr = null
 
-                        captureRequestBuilderMbr = null
+                    captureRequestBuilderMbr = null
 
-                        camera.close()
-                        cameraDeviceMbr = null
+                    camera.close()
+                    cameraDeviceMbr = null
 
-                        openCameraSemaphoreMbr.release()
-                        when (error) {
-                            ERROR_CAMERA_DISABLED -> {
-                                onError(3)
-                            }
-                            ERROR_CAMERA_IN_USE -> {
-                                onError(4)
-                            }
-                            ERROR_MAX_CAMERAS_IN_USE -> {
-                                onError(5)
-                            }
-                            ERROR_CAMERA_DEVICE -> {
-                                onError(6)
-                            }
-                            ERROR_CAMERA_SERVICE -> {
-                                onError(7)
-                            }
+                    when (error) {
+                        ERROR_CAMERA_DISABLED -> {
+                            onError(2)
+                        }
+                        ERROR_CAMERA_IN_USE -> {
+                            onError(3)
+                        }
+                        ERROR_MAX_CAMERAS_IN_USE -> {
+                            onError(4)
+                        }
+                        ERROR_CAMERA_DEVICE -> {
+                            onError(5)
+                        }
+                        ERROR_CAMERA_SERVICE -> {
+                            onError(6)
                         }
                     }
-                }, cameraHandlerMbr
-            )
-        }
+                }
+            }, cameraHandlerMbr
+        )
     }
 
     private fun setPreviewSurfaces(
@@ -791,9 +1043,6 @@ class CameraObj private constructor(
                             height: Int
                         ) {
                             executorServiceMbr?.execute {
-                                // 뷰 생성시 불안정(출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
-                                // (기기 및 상태별로 효과가 있을수도 없을 수도 있음. 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요)
-                                Thread.sleep(previewStabilizationTimeMsMbr)
 
                                 // (텍스쳐 뷰 비율 변경)
                                 if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -990,7 +1239,7 @@ class CameraObj private constructor(
 
                     // 세션 생성 실패
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        onError(9, session)
+                        onError(8, session)
                     }
                 }
             ))
@@ -1052,4 +1301,23 @@ class CameraObj private constructor(
         val mediaFileAbsolutePath: String,
         val isAudioRecording: Boolean
     )
+
+    // image reader format : YUV 420 888 을 사용
+    data class CameraInfo(
+        val cameraId: String,
+        // facing
+        // 전면 카메라. value : 0
+        // 후면 카메라. value : 1
+        // 기타 카메라. value : 2
+        val facing: Int,
+        val previewInfoList: ArrayList<DeviceInfo>,
+        val imageReaderInfoList: ArrayList<DeviceInfo>,
+        val mediaRecorderInfoList: ArrayList<DeviceInfo>,
+        val highSpeedInfoList: ArrayList<DeviceInfo>
+    ) {
+        data class DeviceInfo(
+            val size: Size,
+            val fps: Int
+        )
+    }
 }
