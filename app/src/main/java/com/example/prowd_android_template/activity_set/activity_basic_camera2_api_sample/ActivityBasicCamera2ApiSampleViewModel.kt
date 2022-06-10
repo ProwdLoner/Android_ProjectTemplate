@@ -38,7 +38,7 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     var currentUserSessionTokenMbr: String? = null
 
     // 카메라 실행 객체
-    var backCameraObjMbr: CameraObj? = null
+    lateinit var backCameraObjMbr: CameraObj
 
     // Camera2 api 핸들러 스레드
     val cameraHandlerThreadMbr = HandlerThreadObj("back_camera").apply {
@@ -105,8 +105,7 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         cameraHandlerThreadMbr.stopHandlerThread()
         imageReaderHandlerThreadMbr.stopHandlerThread()
 
-        backCameraObjMbr?.clearCameraObject()
-        backCameraObjMbr = null
+        backCameraObjMbr.clearCameraObject()
 
         super.onCleared()
     }
