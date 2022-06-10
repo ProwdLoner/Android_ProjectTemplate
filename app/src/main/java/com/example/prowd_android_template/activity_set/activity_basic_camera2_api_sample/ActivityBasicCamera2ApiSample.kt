@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
@@ -112,7 +111,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         super.onResume()
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
 
-        cameraPauseMbr = false
+        imageProcessingPauseMbr = false
 
         if (viewModelMbr.isActivityPermissionClearMbr) {
             onCameraPermissionGranted()
@@ -135,7 +134,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        cameraPauseMbr = true
+        imageProcessingPauseMbr = true
         viewModelMbr.backCameraObjMbr?.stopCameraSession()
 
         // 안정성을 위한 대기시간 busy waiting
@@ -410,7 +409,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     requestedOrientation =ActivityInfo.SCREEN_ORIENTATION_NOSENSOR
 
                     // 기존 세션 종료
-                    cameraPauseMbr = true
+                    imageProcessingPauseMbr = true
                     viewModelMbr.backCameraObjMbr?.stopCameraSession()
 
                     // 안정성을 위한 대기시간 busy waiting
@@ -489,7 +488,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
 
                     // 기존 세션 종료
-                    cameraPauseMbr = true
+                    imageProcessingPauseMbr = true
                     viewModelMbr.backCameraObjMbr?.stopCameraSession()
 
                     // 안정성을 위한 대기시간 busy waiting
@@ -664,7 +663,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (카메라 이미지 실시간 처리 콜백)
     private var yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
-    private var cameraPauseMbr = false
+    private var imageProcessingPauseMbr = false
     private fun processImage(reader: ImageReader) {
         try {
             val imageObj: Image = reader.acquireLatestImage() ?: return
@@ -673,7 +672,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 반환되는 비트맵 이미지는 카메라 센서 방향에 따라 정방향이 아닐 수 있음.
 
             // 병렬처리 플래그
-            if (cameraPauseMbr || // onPause 상태
+            if (imageProcessingPauseMbr || // onPause 상태
                 !viewModelMbr.doImageProcessing || // 이미지 프로세싱 중지 상태
                 isDestroyed || // 액티비티 자체가 종료
                 yuvByteArrayToArgbBitmapAsyncOnProgressMbr// 작업중
