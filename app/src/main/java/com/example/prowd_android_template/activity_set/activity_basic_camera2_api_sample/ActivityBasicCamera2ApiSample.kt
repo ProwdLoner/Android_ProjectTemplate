@@ -39,7 +39,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-// todo : 화면 녹화 후 결과에서 화면을 회전후 복귀하면 에러
+// todo : 화면 녹화 후 결과에서 화면을 회전후 복귀하면 에러(빠른 전환 문제?)
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -103,7 +103,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
         imageProcessingPauseMbr = false
 
@@ -479,7 +479,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     )
                 } else {
                     // 화면 고정 풀기
-                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
                     // 기존 세션 종료
                     imageProcessingPauseMbr = true
