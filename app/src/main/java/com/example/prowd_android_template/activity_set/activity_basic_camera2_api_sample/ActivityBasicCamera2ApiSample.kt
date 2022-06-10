@@ -39,13 +39,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-
-// todo : 프리뷰 간헐절 에러 해결
-// todo : 이미지 리더 불안정 해결 (대기 시간, 혹은 데이터 처리 방식 변경)
-// todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
-// todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
-// todo : 되도록 인위적 대기시간 없앨것
-// todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제
+// todo : 화면 녹화 후 결과에서 화면을 회전후 복귀하면 에러
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -398,15 +392,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 bindingMbr.recordBtn.x - CustomUtil.getNavigationBarHeightPixel(this)
         }
 
-        // todo recording pause 시에는 녹화를 멈추고 기존 파일을 제거하도록
+        // recording pause 시에는 녹화를 멈추고 기존 파일을 제거하도록 처리
         // todo 중복 클릭 방지
-        // todo 화면 회전 상태에서 녹화 에러
         // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
         bindingMbr.recordBtn.setOnClickListener {
             if (viewModelMbr.backCameraObjMbr != null) {
                 if (!(viewModelMbr.backCameraObjMbr!!.isRecordingMbr)) {
                     // 화면 회전 고정
-                    requestedOrientation =ActivityInfo.SCREEN_ORIENTATION_NOSENSOR
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
                     // 기존 세션 종료
                     imageProcessingPauseMbr = true
