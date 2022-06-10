@@ -474,6 +474,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             false
                         ),
                         onCameraSessionStarted = {
+                            imageProcessingPauseMbr = false
 
                         },
                         onCameraDisconnected = {

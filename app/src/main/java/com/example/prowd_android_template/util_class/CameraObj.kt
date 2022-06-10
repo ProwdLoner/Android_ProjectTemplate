@@ -15,6 +15,7 @@ import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.CamcorderProfile
 import android.media.ImageReader
+import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
@@ -66,6 +67,7 @@ class CameraObj private constructor(
     private var imageReaderMbr: ImageReader? = null
 
     // 미디어 리코더 세팅 부산물
+    private var mediaCodecSurfaceMbr : Surface? = null
     private var mediaRecorderMbr: MediaRecorder? = null
     var isRecordingMbr: Boolean = false
         private set
@@ -165,6 +167,7 @@ class CameraObj private constructor(
             mediaRecorderMbr?.reset()
             mediaRecorderMbr?.release()
             mediaRecorderMbr = null
+            mediaCodecSurfaceMbr?.release()
 
             imageReaderMbr?.setOnImageAvailableListener(null, null)
             imageReaderMbr?.close()
@@ -289,6 +292,8 @@ class CameraObj private constructor(
 
                     // (미디어 리코더 서페이스 설정)
                     if (mediaRecorderConfigVo != null) {
+                        mediaCodecSurfaceMbr = MediaCodec.createPersistentInputSurface()
+
                         mediaRecorderMbr =
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                 MediaRecorder(parentActivityMbr)
@@ -362,6 +367,9 @@ class CameraObj private constructor(
                         if (isRecordAudio) {
                             mediaRecorderMbr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                         }
+
+                        mediaRecorderMbr!!.setInputSurface(mediaCodecSurfaceMbr!!)
+
                         mediaRecorderMbr!!.prepare()
                     }
 
@@ -370,7 +378,7 @@ class CameraObj private constructor(
                         onPreviewSurfaceAllReady = {
                             if (previewSurfaceListMbr.isEmpty() &&
                                 imageReaderMbr == null &&
-                                mediaRecorderMbr == null
+                                mediaCodecSurfaceMbr == null
                             ) { // 생성 서페이스가 하나도 존재하지 않으면,
                                 cameraSessionSemaphoreMbr.release()
                                 parentActivityMbr.runOnUiThread {
@@ -382,7 +390,7 @@ class CameraObj private constructor(
                             // (카메라 세션 생성)
                             createCameraSessionAsync(
                                 onCaptureSessionCreated = {
-                                    if (mediaRecorderMbr == null) {
+                                    if (mediaCodecSurfaceMbr == null) {
                                         startPreviewSessionAsync(onSessionStarted = {
                                             cameraSessionSemaphoreMbr.release()
                                             parentActivityMbr.runOnUiThread {
@@ -405,6 +413,8 @@ class CameraObj private constructor(
                                     mediaRecorderMbr?.reset()
                                     mediaRecorderMbr?.release()
                                     mediaRecorderMbr = null
+                                    mediaCodecSurfaceMbr?.release()
+                                    mediaCodecSurfaceMbr = null
 
                                     imageReaderMbr?.setOnImageAvailableListener(null, null)
                                     imageReaderMbr?.close()
@@ -452,6 +462,8 @@ class CameraObj private constructor(
         mediaRecorderMbr?.reset()
         mediaRecorderMbr?.release()
         mediaRecorderMbr = null
+        mediaCodecSurfaceMbr?.release()
+        mediaCodecSurfaceMbr = null
 
         imageReaderMbr?.setOnImageAvailableListener(null, null)
         imageReaderMbr?.close()
@@ -477,6 +489,8 @@ class CameraObj private constructor(
         mediaRecorderMbr?.reset()
         mediaRecorderMbr?.release()
         mediaRecorderMbr = null
+        mediaCodecSurfaceMbr?.release()
+        mediaCodecSurfaceMbr = null
 
         imageReaderMbr?.setOnImageAvailableListener(null, null)
         imageReaderMbr?.close()
@@ -700,7 +714,7 @@ class CameraObj private constructor(
         for (previewSurface in previewSurfaceListMbr) {
             captureRequestBuilderMbr!!.addTarget(previewSurface)
         }
-        captureRequestBuilderMbr!!.addTarget(mediaRecorderMbr!!.surface)
+        captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
 
         // 리퀘스트 빌더 설정
         captureRequestBuilderMbr!!.set(
@@ -900,6 +914,8 @@ class CameraObj private constructor(
                         mediaRecorderMbr?.reset()
                         mediaRecorderMbr?.release()
                         mediaRecorderMbr = null
+                        mediaCodecSurfaceMbr?.release()
+                        mediaCodecSurfaceMbr = null
 
                         imageReaderMbr?.setOnImageAvailableListener(null, null)
                         imageReaderMbr?.close()
@@ -927,6 +943,8 @@ class CameraObj private constructor(
                         mediaRecorderMbr?.reset()
                         mediaRecorderMbr?.release()
                         mediaRecorderMbr = null
+                        mediaCodecSurfaceMbr?.release()
+                        mediaCodecSurfaceMbr = null
 
                         imageReaderMbr?.setOnImageAvailableListener(null, null)
                         imageReaderMbr?.close()
@@ -991,10 +1009,10 @@ class CameraObj private constructor(
             }
 
             // 미디어 리코더 서페이스 주입
-            if (null != mediaRecorderMbr) {
+            if (null != mediaCodecSurfaceMbr) {
                 outputConfigurationList.add(
                     OutputConfiguration(
-                        mediaRecorderMbr!!.surface
+                        mediaCodecSurfaceMbr!!
                     )
                 )
             }
@@ -1033,8 +1051,8 @@ class CameraObj private constructor(
             }
 
             // 비디오 리코더 서페이스 주입
-            if (null != mediaRecorderMbr) {
-                val surface = mediaRecorderMbr!!.surface
+            if (null != mediaCodecSurfaceMbr) {
+                val surface = mediaCodecSurfaceMbr!!
                 surfaces.add(surface)
             }
 
