@@ -43,7 +43,6 @@ import kotlin.math.abs
 
 // todo : 프리뷰 불안정 해결
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
-// todo : 가로모드에서 녹화시 media recorder prepare 문제
 // todo : 이미지 리더 불안정 해결
 // todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
@@ -610,6 +609,33 @@ class CameraObj private constructor(
                 videoFile.createNewFile()
 
                 // (미디어 레코더 설정)
+                // 서페이스 소스 설정
+                if (isRecordAudio) {
+                    mediaRecorderMbr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
+                }
+                mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+
+                // 파일 포멧 설정
+                mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+
+                // 파일 경로 설정
+                mediaRecorderMbr!!.setOutputFile(videoFile.absolutePath)
+
+                // 데이터 저장 퀄리티 설정
+                mediaRecorderMbr!!.setVideoEncodingBitRate(
+                    cpHigh.videoBitRate
+                )
+
+                // 데이터 저장 프레임 설정
+                mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
+
+                // 서페이스 사이즈 설정
+                mediaRecorderMbr!!.setVideoSize(
+                    mediaRecorderConfigVo.cameraOrientSurfaceSize.width,
+                    mediaRecorderConfigVo.cameraOrientSurfaceSize.height
+                )
+
+                // 서페이스 방향 설정
                 when (sensorOrientationMbr) {
                     90 ->
                         mediaRecorderMbr!!.setOrientationHint(
@@ -621,23 +647,7 @@ class CameraObj private constructor(
                         )
                 }
 
-                if (isRecordAudio) {
-                    mediaRecorderMbr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
-                }
-                mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
-                mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-
-                mediaRecorderMbr!!.setOutputFile(videoFile.absolutePath)
-
-                mediaRecorderMbr!!.setVideoEncodingBitRate(
-                    cpHigh.videoBitRate
-                )
-                mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
-
-                mediaRecorderMbr!!.setVideoSize(
-                    mediaRecorderConfigVo.cameraOrientSurfaceSize.width,
-                    mediaRecorderConfigVo.cameraOrientSurfaceSize.height
-                )
+                // 인코딩 타입 설정
                 mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
                 if (isRecordAudio) {
                     mediaRecorderMbr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
