@@ -43,6 +43,7 @@ import kotlin.math.abs
 
 // todo : 프리뷰 불안정 해결
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
+// todo : 가로모드에서 녹화시 media recorder prepare 문제
 // todo : 이미지 리더 불안정 해결
 // todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
@@ -416,8 +417,7 @@ class CameraObj private constructor(
     // 9 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
     // 10 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
     // 11 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
-
-    // 8 : 카메라 세션 생성 실패
+    // 12 : 카메라 세션 생성 실패
     fun startCameraSession(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
