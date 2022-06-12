@@ -19,6 +19,7 @@ import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
+import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
@@ -556,6 +557,7 @@ class CameraObj private constructor(
 
             // (미디어 리코더 서페이스 설정)
             if (mediaRecorderConfigVo != null) {
+                // (레코더 객체 생성)
                 mediaCodecSurfaceMbr = MediaCodec.createPersistentInputSurface()
 
                 mediaRecorderMbr =
@@ -565,6 +567,7 @@ class CameraObj private constructor(
                         MediaRecorder()
                     }
 
+                // (레코더 정보 생성)
                 // 카메라 방향 정보
                 val rotation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     parentActivityMbr.display!!.rotation
@@ -591,7 +594,22 @@ class CameraObj private constructor(
                             Manifest.permission.RECORD_AUDIO
                         ) == PackageManager.PERMISSION_GRANTED
 
-                // (레코더 설정)
+                // 비디오 FPS
+                val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
+                    MediaRecorder::class.java,
+                    mediaRecorderConfigVo.cameraOrientSurfaceSize
+                ) / 1_000_000_000.0)
+                val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
+
+                val cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH)
+
+                val videoFile = File(mediaRecorderConfigVo.mediaFileAbsolutePath)
+                if (videoFile.exists()) {
+                    videoFile.delete()
+                }
+                videoFile.createNewFile()
+
+                // (미디어 레코더 설정)
                 when (sensorOrientationMbr) {
                     90 ->
                         mediaRecorderMbr!!.setOrientationHint(
@@ -609,22 +627,8 @@ class CameraObj private constructor(
                 mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
                 mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
 
-                val videoFile = File(mediaRecorderConfigVo.mediaFileAbsolutePath)
-                if (videoFile.exists()) {
-                    videoFile.delete()
-                }
-                videoFile.createNewFile()
-
                 mediaRecorderMbr!!.setOutputFile(videoFile.absolutePath)
 
-                // 비디오 FPS
-                val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
-                    MediaRecorder::class.java,
-                    mediaRecorderConfigVo.cameraOrientSurfaceSize
-                ) / 1_000_000_000.0)
-                val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
-
-                val cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH)
                 mediaRecorderMbr!!.setVideoEncodingBitRate(
                     cpHigh.videoBitRate
                 )
