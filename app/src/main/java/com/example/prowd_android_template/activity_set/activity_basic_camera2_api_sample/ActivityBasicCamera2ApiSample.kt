@@ -64,10 +64,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
-    // (카메라 종료 및 재시작의 안정화를 위한 onPause 의 카메라 종료 대기시간 : 밀리초)
-    // 타겟 디바이스 최소 사양에 맞춰서 가장 적은 시간을 설정
-    private val cameraCloseDelayTimeMsMbr: Long = 500
-
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -126,12 +122,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onPause() {
         imageProcessingPauseMbr = true
-        viewModelMbr.backCameraObjMbr?.stopCameraSession()
-
-        // 안정성을 위한 대기시간 busy waiting
-        val curMilliSec = System.currentTimeMillis()
-        while (System.currentTimeMillis() - curMilliSec < cameraCloseDelayTimeMsMbr) {
-        }
+        viewModelMbr.backCameraObjMbr.stopCameraSession()
 
         super.onPause()
     }
@@ -459,11 +450,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     imageProcessingPauseMbr = true
                     viewModelMbr.backCameraObjMbr.stopCameraSession()
 
-                    // 안정성을 위한 대기시간 busy waiting
-                    val curMilliSec = System.currentTimeMillis()
-                    while (System.currentTimeMillis() - curMilliSec < cameraCloseDelayTimeMsMbr) {
-                    }
-
                     // 저장 파일 경로 생성
                     videoFilePathMbr = filesDir.path + File.separator + "VID_${
                         SimpleDateFormat(
@@ -556,11 +542,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 기존 세션 종료
                     imageProcessingPauseMbr = true
                     viewModelMbr.backCameraObjMbr.stopCameraSession()
-
-                    // 안정성을 위한 대기시간 busy waiting
-                    val curMilliSec = System.currentTimeMillis()
-                    while (System.currentTimeMillis() - curMilliSec < cameraCloseDelayTimeMsMbr) {
-                    }
 
                     val videoFile = File(videoFilePathMbr!!)
 
