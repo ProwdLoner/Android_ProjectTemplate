@@ -58,14 +58,10 @@ class CameraObj private constructor(
     val previewSurfaceSupportedSizeListMbr: Array<Size>?,
     val imageReaderSurfaceSupportedSizeListMbr: Array<Size>?,
     val mediaRecorderSurfaceSupportedSizeListMbr: Array<Size>?,
-    var sensorOrientationMbr: Int = 0
+    var sensorOrientationMbr: Int = 0,
+    private val onCameraDisconnectedMbr: (() -> Unit)?
 ) {
     // <멤버 변수 공간>
-    // (openCameraDevice 대기시간 : 밀리초)
-    // CameraDevice 객체 첫 생성시 불안정(대표 : 출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
-    // 기기 및 상태별로 필요 시간이 다르기에 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요
-    private var cameraFirstStartingStabilizationTimeMsMbr: Long = 300
-
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (스레드 풀)
     private var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
@@ -344,6 +340,7 @@ class CameraObj private constructor(
             parentActivity: Activity,
             cameraId: String,
             cameraHandler: Handler,
+            onCameraDisconnected: (() -> Unit)?
         ): CameraObj? {
             if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
                 // 카메라 장치가 없다면 null 반환
@@ -396,7 +393,8 @@ class CameraObj private constructor(
                 previewSurfaceSupportedSizeList,
                 imageReaderSurfaceSupportedSizeList,
                 mediaRecorderSurfaceSupportedSizeList,
-                sensorOrientationMbr
+                sensorOrientationMbr,
+                onCameraDisconnected
             )
         }
     }
@@ -423,7 +421,6 @@ class CameraObj private constructor(
         imageReaderConfigVo: ImageReaderConfigVo?,
         mediaRecorderConfigVo: MediaRecorderConfigVo?,
         onCameraSessionStarted: () -> Unit,
-        onCameraDisconnected: () -> Unit,
         onError: (Int) -> Unit
     ) {
         executorServiceMbr?.execute {
@@ -718,7 +715,7 @@ class CameraObj private constructor(
                     // (카메라 상태 초기화)
                     cameraSessionSemaphoreMbr.release()
                     parentActivityMbr.runOnUiThread {
-                        onCameraDisconnected()
+                        onCameraDisconnectedMbr?.let { it() }
                     }
                 },
                 onError = { errorCode ->
@@ -846,11 +843,6 @@ class CameraObj private constructor(
             onCameraDeviceReady()
             return
         }
-        // 카메라 디바이스가 존재하지 않는다면 생성
-
-        // 첫 생성 불안정(대표 : 출력 비율 일그러짐 에러)을 해소하기 위한 인위적인 대기시간
-        // (기기 및 상태별로 효과가 있을수도 없을 수도 있음. 목표 최소 디바이스를 기준으로 에러가 없는 최소 대기 시간으로 조정 필요)
-        Thread.sleep(cameraFirstStartingStabilizationTimeMsMbr)
 
         // (카메라 권한 검사)
         if (ActivityCompat.checkSelfPermission(

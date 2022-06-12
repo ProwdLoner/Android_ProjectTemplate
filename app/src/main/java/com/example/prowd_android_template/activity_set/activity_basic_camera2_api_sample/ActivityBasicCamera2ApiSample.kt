@@ -399,7 +399,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val backCameraObj = CameraObj.getInstance(
                 this,
                 backCameraId!!,
-                viewModelMbr.cameraHandlerThreadMbr.handler!!
+                viewModelMbr.cameraHandlerThreadMbr.handler!!,
+                onCameraDisconnected = {}
             )
 
             if (backCameraObj == null) {
@@ -542,9 +543,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         mediaRecorderConfigVo,
                         onCameraSessionStarted = {
                             imageProcessingPauseMbr = false
-
-                        },
-                        onCameraDisconnected = {
 
                         },
                         onError = {
@@ -730,9 +728,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             imageReaderConfigVo,
             null,
             onCameraSessionStarted = {
-
-            },
-            onCameraDisconnected = {
 
             },
             onError = {
