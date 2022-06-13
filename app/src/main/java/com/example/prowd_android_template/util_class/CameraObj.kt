@@ -601,8 +601,6 @@ class CameraObj private constructor(
                 ) / 1_000_000_000.0)
                 val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
 
-                val cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH)
-
                 val videoFile = File(mediaRecorderConfigVo.mediaFileAbsolutePath)
                 if (videoFile.exists()) {
                     videoFile.delete()
@@ -623,8 +621,9 @@ class CameraObj private constructor(
                 mediaRecorderMbr!!.setOutputFile(videoFile.absolutePath)
 
                 // 데이터 저장 퀄리티 설정
+                // todo : 최적값 찾기
                 mediaRecorderMbr!!.setVideoEncodingBitRate(
-                    cpHigh.videoBitRate
+                    Int.MAX_VALUE
                 )
 
                 // 데이터 저장 프레임 설정
