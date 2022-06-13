@@ -48,6 +48,7 @@ import kotlin.math.abs
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
 // todo : 캡쳐, 세션 일시정지, 재개, 녹음 검증
 // todo : 리퀘스트 변경 : 한꺼번에 변경을 지원하고, 개별 기능별 함수를 제공
+// todo : s7 에러 java.lang.IllegalArgumentException: CaptureRequest contains unconfigured Input/Output Surface!
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -1031,12 +1032,13 @@ class CameraObj private constructor(
                     }
                 }
 
-                configureTransform(
-                    previewSurfaceSize.width,
-                    previewSurfaceSize.height,
-                    previewObj
-                )
-
+                parentActivityMbr.runOnUiThread {
+                    configureTransform(
+                        previewSurfaceSize.width,
+                        previewSurfaceSize.height,
+                        previewObj
+                    )
+                }
 
                 val surfaceTexture =
                     previewObj.surfaceTexture
@@ -1084,11 +1086,13 @@ class CameraObj private constructor(
                                     }
                                 }
 
-                                configureTransform(
-                                    previewSurfaceSize.width,
-                                    previewSurfaceSize.height,
-                                    previewObj
-                                )
+                                parentActivityMbr.runOnUiThread {
+                                    configureTransform(
+                                        previewSurfaceSize.width,
+                                        previewSurfaceSize.height,
+                                        previewObj
+                                    )
+                                }
 
                                 previewSurfaceListMbr.add(surface)
 
