@@ -629,9 +629,9 @@ class CameraObj private constructor(
 
                 // 데이터 저장 퀄리티 설정
                 if (mediaRecorderConfigVo.videoEncodingBitrate == null) {
-                    // todo : 최적값 찾기
+                    // todo : 최적값 찾기 videoEncodingBitrate calc
                     mediaRecorderMbr!!.setVideoEncodingBitRate(
-                        3000000
+                        720000000
                     )
                 } else {
                     mediaRecorderMbr!!.setVideoEncodingBitRate(
