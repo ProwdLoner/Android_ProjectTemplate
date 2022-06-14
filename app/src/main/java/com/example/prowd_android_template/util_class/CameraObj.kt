@@ -13,13 +13,11 @@ import android.hardware.camera2.*
 import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
-import android.media.CamcorderProfile
 import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
@@ -81,7 +79,7 @@ class CameraObj private constructor(
         private set
 
     // 프리뷰 세팅 부산물
-    private val previewSurfaceListMbr: ArrayList<SurfaceTexture> = ArrayList()
+    private val previewConfigVoListMbr: ArrayList<PreviewConfigVo> = ArrayList()
 
     // 카메라 리퀘스트 빌더
     private var captureRequestBuilderMbr: CaptureRequest.Builder? = null
@@ -530,7 +528,7 @@ class CameraObj private constructor(
             imageReaderMbr?.close()
             imageReaderMbr = null
 
-            previewSurfaceListMbr.clear()
+            previewConfigVoListMbr.clear()
 
             cameraCaptureSessionMbr?.stopRepeating()
             cameraCaptureSessionMbr?.close()
@@ -683,6 +681,29 @@ class CameraObj private constructor(
                         previewConfigVoList.isNotEmpty()
                     ) {
                         for (previewConfig in previewConfigVoList) {
+                            // (텍스쳐 뷰 비율 변경)
+                            if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                                && (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) ||
+                                parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                                && (sensorOrientationMbr == 90 || sensorOrientationMbr == 270)
+                            ) {
+                                previewConfig.autoFitTextureView.setAspectRatio(
+                                    previewConfig.cameraOrientSurfaceSize.height,
+                                    previewConfig.cameraOrientSurfaceSize.width
+                                )
+                            } else {
+                                previewConfig.autoFitTextureView.setAspectRatio(
+                                    previewConfig.cameraOrientSurfaceSize.width,
+                                    previewConfig.cameraOrientSurfaceSize.height
+                                )
+                            }
+
+                            configureTransform(
+                                previewConfig.cameraOrientSurfaceSize.width,
+                                previewConfig.cameraOrientSurfaceSize.height,
+                                previewConfig.autoFitTextureView
+                            )
+
                             previewConfig.autoFitTextureView.surfaceTextureListener =
                                 object : TextureView.SurfaceTextureListener {
                                     override fun onSurfaceTextureAvailable(
@@ -710,45 +731,11 @@ class CameraObj private constructor(
                                         Unit
                                 }
 
-                            // (텍스쳐 뷰 비율 변경)
-                            if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-                                && (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) ||
-                                parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                                && (sensorOrientationMbr == 90 || sensorOrientationMbr == 270)
-                            ) {
-                                parentActivityMbr.runOnUiThread {
-                                    previewConfig.autoFitTextureView.setAspectRatio(
-                                        previewConfig.cameraOrientSurfaceSize.height,
-                                        previewConfig.cameraOrientSurfaceSize.width
-                                    )
-                                }
-                            } else {
-                                parentActivityMbr.runOnUiThread {
-                                    previewConfig.autoFitTextureView.setAspectRatio(
-                                        previewConfig.cameraOrientSurfaceSize.width,
-                                        previewConfig.cameraOrientSurfaceSize.height
-                                    )
-                                }
-                            }
-
-                            parentActivityMbr.runOnUiThread {
-                                configureTransform(
-                                    previewConfig.cameraOrientSurfaceSize.width,
-                                    previewConfig.cameraOrientSurfaceSize.height,
-                                    previewConfig.autoFitTextureView
-                                )
-                            }
-
-                            val surfaceTexture =
-                                previewConfig.autoFitTextureView.surfaceTexture
-
-                            if (surfaceTexture != null) {
-                                previewSurfaceListMbr.add(surfaceTexture)
-                            }
+                            previewConfigVoListMbr.add(previewConfig)
                         }
                     }
 
-                    if (previewSurfaceListMbr.isEmpty() &&
+                    if (previewConfigVoListMbr.isEmpty() &&
                         imageReaderMbr == null &&
                         mediaCodecSurfaceMbr == null
                     ) { // 생성 서페이스가 하나도 존재하지 않으면,
@@ -762,18 +749,6 @@ class CameraObj private constructor(
                     // (카메라 디바이스 열기)
                     openCameraDevice(
                         onCameraDeviceReady = {
-                            if (previewConfigVoList != null && previewConfigVoList.isNotEmpty()) {
-                                for (idx in 0 until previewConfigVoList.size) {
-                                    val surfaceTexture = previewSurfaceListMbr[idx]
-                                    val previewConfigVo = previewConfigVoList[idx]
-
-                                    surfaceTexture.setDefaultBufferSize(
-                                        previewConfigVo.cameraOrientSurfaceSize.width,
-                                        previewConfigVo.cameraOrientSurfaceSize.height
-                                    )
-                                }
-                            }
-
                             // (카메라 세션 생성)
                             createCameraSessionAsync(
                                 onCaptureSessionCreated = {
@@ -807,7 +782,7 @@ class CameraObj private constructor(
                                     imageReaderMbr?.close()
                                     imageReaderMbr = null
 
-                                    previewSurfaceListMbr.clear()
+                                    previewConfigVoListMbr.clear()
 
                                     cameraCaptureSession.stopRepeating()
                                     cameraCaptureSession.close()
@@ -856,7 +831,7 @@ class CameraObj private constructor(
         imageReaderMbr?.close()
         imageReaderMbr = null
 
-        previewSurfaceListMbr.clear()
+        previewConfigVoListMbr.clear()
 
         cameraCaptureSessionMbr?.stopRepeating()
         cameraCaptureSessionMbr?.close()
@@ -883,7 +858,7 @@ class CameraObj private constructor(
         imageReaderMbr?.close()
         imageReaderMbr = null
 
-        previewSurfaceListMbr.clear()
+        previewConfigVoListMbr.clear()
 
         cameraCaptureSessionMbr?.stopRepeating()
         cameraCaptureSessionMbr?.close()
@@ -991,7 +966,7 @@ class CameraObj private constructor(
                     imageReaderMbr?.close()
                     imageReaderMbr = null
 
-                    previewSurfaceListMbr.clear()
+                    previewConfigVoListMbr.clear()
 
                     cameraCaptureSessionMbr?.stopRepeating()
                     cameraCaptureSessionMbr?.close()
@@ -1019,7 +994,7 @@ class CameraObj private constructor(
                     imageReaderMbr?.close()
                     imageReaderMbr = null
 
-                    previewSurfaceListMbr.clear()
+                    previewConfigVoListMbr.clear()
 
                     cameraCaptureSessionMbr?.stopRepeating()
                     cameraCaptureSessionMbr?.close()
@@ -1120,8 +1095,8 @@ class CameraObj private constructor(
 
         // 서페이스 주입
         imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-        for (previewSurface in previewSurfaceListMbr) {
-            captureRequestBuilderMbr!!.addTarget(Surface(previewSurface))
+        for (previewConfigVo in previewConfigVoListMbr) {
+            captureRequestBuilderMbr!!.addTarget(Surface(previewConfigVo.autoFitTextureView.surfaceTexture))
         }
 
         // 리퀘스트 빌더 설정
@@ -1150,8 +1125,8 @@ class CameraObj private constructor(
 
         // 서페이스 주입
         imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-        for (previewSurface in previewSurfaceListMbr) {
-            captureRequestBuilderMbr!!.addTarget(Surface(previewSurface))
+        for (previewConfigVo in previewConfigVoListMbr) {
+            captureRequestBuilderMbr!!.addTarget(Surface(previewConfigVo.autoFitTextureView.surfaceTexture))
         }
         captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
 
@@ -1211,8 +1186,13 @@ class CameraObj private constructor(
             val outputConfigurationList = ArrayList<OutputConfiguration>()
 
             // 프리뷰 서페이스 주입
-            for (previewSurface in previewSurfaceListMbr) {
-                outputConfigurationList.add(OutputConfiguration(Surface(previewSurface)))
+            for (previewConfigVo in previewConfigVoListMbr) {
+                val surfaceTexture = previewConfigVo.autoFitTextureView.surfaceTexture!!
+                surfaceTexture.setDefaultBufferSize(
+                    previewConfigVo.cameraOrientSurfaceSize.width,
+                    previewConfigVo.cameraOrientSurfaceSize.height
+                )
+                outputConfigurationList.add(OutputConfiguration(Surface(surfaceTexture)))
             }
 
             // 이미지 리더 서페이스 주입
@@ -1256,8 +1236,13 @@ class CameraObj private constructor(
             val surfaces = ArrayList<Surface>()
 
             // 프리뷰 서페이스 주입
-            for (previewSurface in previewSurfaceListMbr) {
-                surfaces.add(Surface(previewSurface))
+            for (previewConfigVo in previewConfigVoListMbr) {
+                val surfaceTexture = previewConfigVo.autoFitTextureView.surfaceTexture!!
+                surfaceTexture.setDefaultBufferSize(
+                    previewConfigVo.cameraOrientSurfaceSize.width,
+                    previewConfigVo.cameraOrientSurfaceSize.height
+                )
+                surfaces.add(Surface(surfaceTexture))
             }
 
             // 이미지 리더 서페이스 주입
