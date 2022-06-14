@@ -683,10 +683,7 @@ class CameraObj private constructor(
                         previewConfigVoList.isNotEmpty()
                     ) {
                         for (previewConfig in previewConfigVoList) {
-                            val previewObj = previewConfig.autoFitTextureView
-                            val previewSurfaceSize = previewConfig.cameraOrientSurfaceSize
-
-                            previewObj.surfaceTextureListener =
+                            previewConfig.autoFitTextureView.surfaceTextureListener =
                                 object : TextureView.SurfaceTextureListener {
                                     override fun onSurfaceTextureAvailable(
                                         surface: SurfaceTexture,
@@ -700,9 +697,9 @@ class CameraObj private constructor(
                                         height: Int
                                     ) {
                                         configureTransform(
-                                            previewSurfaceSize.width,
-                                            previewSurfaceSize.height,
-                                            previewObj
+                                            previewConfig.cameraOrientSurfaceSize.width,
+                                            previewConfig.cameraOrientSurfaceSize.height,
+                                            previewConfig.autoFitTextureView
                                         )
                                     }
 
@@ -720,30 +717,30 @@ class CameraObj private constructor(
                                 && (sensorOrientationMbr == 90 || sensorOrientationMbr == 270)
                             ) {
                                 parentActivityMbr.runOnUiThread {
-                                    previewObj.setAspectRatio(
-                                        previewSurfaceSize.height,
-                                        previewSurfaceSize.width
+                                    previewConfig.autoFitTextureView.setAspectRatio(
+                                        previewConfig.cameraOrientSurfaceSize.height,
+                                        previewConfig.cameraOrientSurfaceSize.width
                                     )
                                 }
                             } else {
                                 parentActivityMbr.runOnUiThread {
-                                    previewObj.setAspectRatio(
-                                        previewSurfaceSize.width,
-                                        previewSurfaceSize.height
+                                    previewConfig.autoFitTextureView.setAspectRatio(
+                                        previewConfig.cameraOrientSurfaceSize.width,
+                                        previewConfig.cameraOrientSurfaceSize.height
                                     )
                                 }
                             }
 
                             parentActivityMbr.runOnUiThread {
                                 configureTransform(
-                                    previewSurfaceSize.width,
-                                    previewSurfaceSize.height,
-                                    previewObj
+                                    previewConfig.cameraOrientSurfaceSize.width,
+                                    previewConfig.cameraOrientSurfaceSize.height,
+                                    previewConfig.autoFitTextureView
                                 )
                             }
 
                             val surfaceTexture =
-                                previewObj.surfaceTexture
+                                previewConfig.autoFitTextureView.surfaceTexture
 
                             if (surfaceTexture != null) {
                                 previewSurfaceListMbr.add(surfaceTexture)
