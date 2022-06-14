@@ -517,6 +517,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             CameraObj.MediaRecorderConfigVo(
                                 chosenMediaRecorderSurfaceSize,
                                 videoFilePathMbr!!,
+                                null,
+                                null,
                                 false
                             )
                         } else {

@@ -419,6 +419,7 @@ class CameraObj private constructor(
     // 10 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
     // 11 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
     // 12 : 카메라 세션 생성 실패
+    // 13 : 미디어 레코더 오디오 녹음 설정 권한 비충족
     fun startCameraSession(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
@@ -558,6 +559,22 @@ class CameraObj private constructor(
 
             // (미디어 리코더 서페이스 설정)
             if (mediaRecorderConfigVo != null) {
+                // 오디오 권한 확인
+                // 녹음 설정을 했는데 권한이 없을 때, 에러
+                if (mediaRecorderConfigVo.isAudioRecording &&
+                    ActivityCompat.checkSelfPermission(
+                        parentActivityMbr,
+                        Manifest.permission.RECORD_AUDIO
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    imageReaderMbr = null
+                    cameraSessionSemaphoreMbr.release()
+                    parentActivityMbr.runOnUiThread {
+                        onError(13)
+                    }
+                    return@execute
+                }
+
                 // (레코더 객체 생성)
                 mediaCodecSurfaceMbr = MediaCodec.createPersistentInputSurface()
 
@@ -588,13 +605,6 @@ class CameraObj private constructor(
                 inverseOrientation.append(Surface.ROTATION_90, 180)
                 inverseOrientation.append(Surface.ROTATION_0, 270)
 
-                // 오디오 여부
-                val isRecordAudio = mediaRecorderConfigVo.isAudioRecording &&
-                        ActivityCompat.checkSelfPermission(
-                            parentActivityMbr,
-                            Manifest.permission.RECORD_AUDIO
-                        ) == PackageManager.PERMISSION_GRANTED
-
                 // 비디오 FPS
                 val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
                     MediaRecorder::class.java,
@@ -610,7 +620,7 @@ class CameraObj private constructor(
 
                 // (미디어 레코더 설정)
                 // 서페이스 소스 설정
-                if (isRecordAudio) {
+                if (mediaRecorderConfigVo.isAudioRecording) {
                     mediaRecorderMbr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
                 }
                 mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
@@ -622,13 +632,23 @@ class CameraObj private constructor(
                 mediaRecorderMbr!!.setOutputFile(videoFile.absolutePath)
 
                 // 데이터 저장 퀄리티 설정
-                // todo : 최적값 찾기
-                mediaRecorderMbr!!.setVideoEncodingBitRate(
-                    Int.MAX_VALUE
-                )
+                if (mediaRecorderConfigVo.videoEncodingBitrate == null) {
+                    // todo : 최적값 찾기
+                    mediaRecorderMbr!!.setVideoEncodingBitRate(
+                        3000000
+                    )
+                } else {
+                    mediaRecorderMbr!!.setVideoEncodingBitRate(
+                        mediaRecorderConfigVo.videoEncodingBitrate
+                    )
+                }
 
                 // 데이터 저장 프레임 설정
-                mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
+                if (mediaRecorderConfigVo.recordingFps == null) {
+                    mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
+                } else {
+                    mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderConfigVo.recordingFps)
+                }
 
                 // 서페이스 사이즈 설정
                 mediaRecorderMbr!!.setVideoSize(
@@ -650,7 +670,7 @@ class CameraObj private constructor(
 
                 // 인코딩 타입 설정
                 mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                if (isRecordAudio) {
+                if (mediaRecorderConfigVo.isAudioRecording) {
                     mediaRecorderMbr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                 }
 
@@ -1322,6 +1342,8 @@ class CameraObj private constructor(
     data class MediaRecorderConfigVo(
         val cameraOrientSurfaceSize: Size,
         val mediaFileAbsolutePath: String,
+        val recordingFps: Int?,
+        val videoEncodingBitrate: Int?,
         val isAudioRecording: Boolean
     )
 
