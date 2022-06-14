@@ -1082,8 +1082,6 @@ class CameraObj private constructor(
                             width: Int,
                             height: Int
                         ) {
-                            executorServiceMbr?.execute {
-
                                 // (텍스쳐 뷰 비율 변경)
                                 if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
                                     && (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) ||
@@ -1123,7 +1121,6 @@ class CameraObj private constructor(
                                 } else {
                                     checkedPreviewCountSemaphore.release()
                                 }
-                            }
                         }
 
                         override fun onSurfaceTextureSizeChanged(
