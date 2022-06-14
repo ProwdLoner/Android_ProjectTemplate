@@ -406,10 +406,10 @@ class CameraObj private constructor(
 
     // API 에러 코드 :
     // 0 : 그 외 에러
-    // 1 : 해당 사이즈 이미지 리더를 지원하지 않음
-    // 2 : 해당 사이즈 미디어 리코더를 지원하지 않음
-    // 3 : 해당 사이즈 프리뷰를 지원하지 않음
-    // 4 : 출력 서페이스가 하나도 입력되어 있지 않음
+    // 1 : 출력 서페이스가 하나도 입력되어 있지 않음
+    // 2 : 해당 사이즈 이미지 리더를 지원하지 않음
+    // 3 : 해당 사이즈 미디어 리코더를 지원하지 않음
+    // 4 : 해당 사이즈 프리뷰를 지원하지 않음
     // 5 : 생성된 서페이스가 존재하지 않음
     // 6 : 카메라 권한이 없음
     // 7 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
@@ -429,8 +429,18 @@ class CameraObj private constructor(
         executorServiceMbr?.execute {
             cameraSessionSemaphoreMbr.acquire()
 
-            // (파라미터 검사)
-            var surfaceConfigNullCount = 0
+            // (서페이스 설정 파라미터 개수 검사)
+            if ((imageReaderConfigVo == null &&
+                        mediaRecorderConfigVo == null &&
+                        (previewConfigVoList == null ||
+                                previewConfigVoList.isEmpty()))
+            ) {
+                cameraSessionSemaphoreMbr.release()
+                parentActivityMbr.runOnUiThread {
+                    onError(1)
+                }
+                return@execute
+            }
 
             // (서페이스 사이즈 검사)
             if (imageReaderConfigVo != null) {
@@ -447,12 +457,10 @@ class CameraObj private constructor(
                 ) {
                     cameraSessionSemaphoreMbr.release()
                     parentActivityMbr.runOnUiThread {
-                        onError(1)
+                        onError(2)
                     }
                     return@execute
                 }
-            } else {
-                surfaceConfigNullCount++
             }
 
             // 미디어 레코더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
@@ -470,12 +478,10 @@ class CameraObj private constructor(
                 ) {
                     cameraSessionSemaphoreMbr.release()
                     parentActivityMbr.runOnUiThread {
-                        onError(2)
+                        onError(3)
                     }
                     return@execute
                 }
-            } else {
-                surfaceConfigNullCount++
             }
 
             // 프리뷰 리스트 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
@@ -489,7 +495,7 @@ class CameraObj private constructor(
                 ) {
                     cameraSessionSemaphoreMbr.release()
                     parentActivityMbr.runOnUiThread {
-                        onError(3)
+                        onError(4)
                     }
                     return@execute
                 } else {
@@ -500,28 +506,12 @@ class CameraObj private constructor(
                             } == -1) {
                             cameraSessionSemaphoreMbr.release()
                             parentActivityMbr.runOnUiThread {
-                                onError(3)
+                                onError(4)
                             }
                             return@execute
                         }
                     }
                 }
-            } else {
-                surfaceConfigNullCount++
-            }
-
-            // (서페이스 설정 개수 검사)
-            if ((imageReaderConfigVo == null &&
-                        mediaRecorderConfigVo == null &&
-                        (previewConfigVoList == null ||
-                                previewConfigVoList.isEmpty())) ||
-                surfaceConfigNullCount == 3
-            ) {
-                cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onError(4)
-                }
-                return@execute
             }
 
             // (카메라 상태 초기화)
