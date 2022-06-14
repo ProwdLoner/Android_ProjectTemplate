@@ -432,7 +432,7 @@ class CameraObj private constructor(
             // (파라미터 검사)
             var surfaceConfigNullCount = 0
 
-            // 서페이스 사이즈 검사
+            // (서페이스 사이즈 검사)
             if (imageReaderConfigVo != null) {
                 val cameraSizes =
                     streamConfigurationMapMbr.getOutputSizes(ImageFormat.YUV_420_888)
@@ -510,8 +510,13 @@ class CameraObj private constructor(
                 surfaceConfigNullCount++
             }
 
-            // 서페이스 설정 개수 검사
-            if (surfaceConfigNullCount == 3) {
+            // (서페이스 설정 개수 검사)
+            if ((imageReaderConfigVo == null &&
+                        mediaRecorderConfigVo == null &&
+                        (previewConfigVoList == null ||
+                                previewConfigVoList.isEmpty())) ||
+                surfaceConfigNullCount == 3
+            ) {
                 cameraSessionSemaphoreMbr.release()
                 parentActivityMbr.runOnUiThread {
                     onError(4)
@@ -1082,45 +1087,45 @@ class CameraObj private constructor(
                             width: Int,
                             height: Int
                         ) {
-                                // (텍스쳐 뷰 비율 변경)
-                                if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-                                    && (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) ||
-                                    parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                                    && (sensorOrientationMbr == 90 || sensorOrientationMbr == 270)
-                                ) {
-                                    parentActivityMbr.runOnUiThread {
-                                        previewObj.setAspectRatio(
-                                            previewSurfaceSize.height,
-                                            previewSurfaceSize.width
-                                        )
-                                    }
-                                } else {
-                                    parentActivityMbr.runOnUiThread {
-                                        previewObj.setAspectRatio(
-                                            previewSurfaceSize.width,
-                                            previewSurfaceSize.height
-                                        )
-                                    }
-                                }
-
+                            // (텍스쳐 뷰 비율 변경)
+                            if (parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                                && (sensorOrientationMbr == 0 || sensorOrientationMbr == 180) ||
+                                parentActivityMbr.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                                && (sensorOrientationMbr == 90 || sensorOrientationMbr == 270)
+                            ) {
                                 parentActivityMbr.runOnUiThread {
-                                    configureTransform(
-                                        previewSurfaceSize.width,
+                                    previewObj.setAspectRatio(
                                         previewSurfaceSize.height,
-                                        previewObj
+                                        previewSurfaceSize.width
                                     )
                                 }
-
-                                previewSurfaceListMbr.add(surface)
-
-                                checkedPreviewCountSemaphore.acquire()
-                                if (++checkedPreviewCount == previewListSize) {
-                                    // 마지막 작업일 때
-                                    checkedPreviewCountSemaphore.release()
-                                    onPreviewSurfaceAllReady()
-                                } else {
-                                    checkedPreviewCountSemaphore.release()
+                            } else {
+                                parentActivityMbr.runOnUiThread {
+                                    previewObj.setAspectRatio(
+                                        previewSurfaceSize.width,
+                                        previewSurfaceSize.height
+                                    )
                                 }
+                            }
+
+                            parentActivityMbr.runOnUiThread {
+                                configureTransform(
+                                    previewSurfaceSize.width,
+                                    previewSurfaceSize.height,
+                                    previewObj
+                                )
+                            }
+
+                            previewSurfaceListMbr.add(surface)
+
+                            checkedPreviewCountSemaphore.acquire()
+                            if (++checkedPreviewCount == previewListSize) {
+                                // 마지막 작업일 때
+                                checkedPreviewCountSemaphore.release()
+                                onPreviewSurfaceAllReady()
+                            } else {
+                                checkedPreviewCountSemaphore.release()
+                            }
                         }
 
                         override fun onSurfaceTextureSizeChanged(
