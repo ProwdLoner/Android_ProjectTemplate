@@ -46,6 +46,9 @@ import kotlin.math.abs
 // todo : 세션 일시정지, 재개
 // todo : 리퀘스트 변경 : 한꺼번에 변경을 지원하고, 개별 기능별 함수를 제공
 // todo : 서페이스 설정과 분리(녹화 서페이스 설정 곧바로 적용)
+// todo : api 재개편 : (opencamera & setsurface) - (createCaptureSession & capturerequest) - (run)
+// todo : setsurface 에서 시작. 캡쳐 세션, 캡쳐 리퀘스트 제거. cameraDevice 가 없다면 만들기 후 세션 만들기, setCaptureRequest 에서 리퀘스트 검증,
+// 그후 runpreview || startrecording || capture
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -88,6 +91,9 @@ class CameraObj private constructor(
 
     // 카메라 세션 객체
     private var cameraCaptureSessionMbr: CameraCaptureSession? = null
+
+    var isRepeatingMbr: Boolean = false
+        private set
 
 
     // ---------------------------------------------------------------------------------------------
@@ -514,6 +520,7 @@ class CameraObj private constructor(
             }
 
             // (카메라 상태 초기화)
+            isRepeatingMbr = false
             isRecordingMbr = false
             mediaRecorderMbr?.stop()
             mediaRecorderMbr?.reset()
@@ -870,6 +877,7 @@ class CameraObj private constructor(
     fun stopCameraSession() {
         cameraSessionSemaphoreMbr.acquire()
 
+        isRepeatingMbr = false
         isRecordingMbr = false
         mediaRecorderMbr?.stop()
         mediaRecorderMbr?.reset()
@@ -921,6 +929,7 @@ class CameraObj private constructor(
     fun clearCameraObject() {
         cameraSessionSemaphoreMbr.acquire()
 
+        isRepeatingMbr = false
         isRecordingMbr = false
         mediaRecorderMbr?.stop()
         mediaRecorderMbr?.reset()
@@ -979,9 +988,15 @@ class CameraObj private constructor(
 
     }
 
-    private fun <T> setCaptureRequest(configMap: HashMap<CaptureRequest.Key<T>, T>) {
-
-
+    // (카메라 세션을 원하는 옵션으로 시작하는 함수)
+    // onError 에러 코드 :
+    // 1 : 현재 카메라 세션이 생성되지 않음
+    private fun <T> setCaptureRequest(
+        configMap: HashMap<CaptureRequest.Key<T>, T>,
+        onError: (Int) -> Unit
+    ) {
+        captureRequestBuilderMbr
+        sdf
     }
 
     // 손떨림 방지
@@ -1077,6 +1092,7 @@ class CameraObj private constructor(
                     },
                     onError = { errorCode, cameraCaptureSession ->
                         // (카메라 상태 초기화)
+                        isRepeatingMbr = false
                         isRecordingMbr = false
                         mediaRecorderMbr?.stop()
                         mediaRecorderMbr?.reset()
@@ -1174,6 +1190,7 @@ class CameraObj private constructor(
 
                 // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
                 override fun onDisconnected(camera: CameraDevice) {
+                    isRepeatingMbr = false
                     isRecordingMbr = false
                     mediaRecorderMbr?.stop()
                     mediaRecorderMbr?.reset()
@@ -1226,6 +1243,7 @@ class CameraObj private constructor(
 
                 override fun onError(camera: CameraDevice, error: Int) {
                     // (카메라 상태 초기화)
+                    isRepeatingMbr = false
                     isRecordingMbr = false
                     mediaRecorderMbr?.stop()
                     mediaRecorderMbr?.reset()
@@ -1322,6 +1340,8 @@ class CameraObj private constructor(
             cameraHandlerMbr
         )
 
+        isRepeatingMbr = true
+
         onSessionStarted()
     }
 
@@ -1352,6 +1372,8 @@ class CameraObj private constructor(
             null,
             cameraHandlerMbr
         )
+
+        isRepeatingMbr = true
 
         isRecordingMbr = true
         mediaRecorderMbr!!.start()
