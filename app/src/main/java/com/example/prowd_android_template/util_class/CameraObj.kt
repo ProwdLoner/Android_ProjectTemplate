@@ -5,10 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.ImageFormat
-import android.graphics.Matrix
-import android.graphics.RectF
-import android.graphics.SurfaceTexture
+import android.graphics.*
 import android.hardware.camera2.*
 import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
@@ -40,16 +37,14 @@ import kotlin.math.abs
 // 카메라를 종료할 때에는 stopCamera 를 사용
 // Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
 
-// todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 이미지 리더 불안정 해결
 // todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
+// todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
+// todo : 사진 찍기 함수
 // todo : 세션 일시정지, 재개
-// todo : 리퀘스트 변경 : 한꺼번에 변경을 지원하고, 개별 기능별 함수를 제공
-// todo : 서페이스 설정과 분리(녹화 서페이스 설정 곧바로 적용)
-// todo : api 재개편 : (opencamera & setsurface) - (createCaptureSession & capturerequest) - (run)
-// todo : setCaptureRequest 에서 리퀘스트 검증,
-// 그후 runpreview || startrecording || capture
+// todo : 녹화 관련 api 재개편
+// todo : setConfig 와 run 을 분리
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -1087,7 +1082,74 @@ class CameraObj private constructor(
         return 0
     }
 
-    // todo (미디어 레코딩 사이클)
+    // todo
+//    // (손떨림 방지 세팅)
+//    // onError 에러 코드 :
+//    // 1 : 현재 카메라 세션이 생성되지 않음
+//    // 2 : 현재 카메라 디바이스 객체가 생성되지 않음
+//    // 3 : 현재 미디어 레코딩 서페이스가 설정되어 있지 않음
+//    private fun setCameraStabilization(
+//        onSettingCompleted : ()->Unit,
+//        onError: (Int) -> Unit
+//    ) {
+//        executorServiceMbr.execute {
+//            cameraSessionSemaphoreMbr.acquire()
+//            if (captureRequestBuilderMbr == null){
+//                cameraSessionSemaphoreMbr.release()
+//                onError(1)
+//                return@execute
+//            }
+//
+//
+//            val availableOpticalStabilization =
+//                cameraCharacteristicsMbr.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
+//            if (availableOpticalStabilization != null) {
+//                for (mode in availableOpticalStabilization) {
+//                    if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
+//                        captureRequestBuilderMbr?.set(
+//                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+//                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+//                        )
+//                        captureRequestBuilderMbr?.set(
+//                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+//                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+//                        )
+//                        return
+//                    }
+//                }
+//            }
+//
+//            // If no optical mode is available, try software.
+//            val availableVideoStabilization =
+//                cameraCharacteristicsMbr.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+//            if (availableVideoStabilization != null) {
+//                for (mode in availableVideoStabilization) {
+//                    if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
+//                        captureRequestBuilderMbr?.set(
+//                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+//                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+//                        )
+//                        captureRequestBuilderMbr?.set(
+//                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+//                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+//                        )
+//                        return
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    // todo
+//    fun setUpZoom(zoom: Rect) {
+//        captureRequestBuilderMbr?.set(CaptureRequest.SCALER_CROP_REGION, zoom)
+//
+//        cameraCaptureSessionMbr?.setRepeatingRequest(
+//            captureRequestBuilderMbr!!.build(),
+//            object : CameraCaptureSession.CaptureCallback() {},
+//            runCameraCaptureSessionHandlerThreadMbr.handler
+//        )
+//    }
 
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화
@@ -1204,54 +1266,6 @@ class CameraObj private constructor(
         isRepeatingMbr = false
 
         cameraSessionSemaphoreMbr.release()
-    }
-
-    // todo
-    // (사진을 찍는 함수)
-    // 세션 도중이라면 곧바로 전환해서 사진을 찍은 후 원위치
-    // 세션 도중이 아니라면 사진을 찍은 후 중지
-    fun capturePicture() {
-
-    }
-
-    // 손떨림 방지
-    private fun chooseStabilizationMode(builder: CaptureRequest.Builder?) {
-        val availableOpticalStabilization =
-            cameraCharacteristicsMbr.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
-        if (availableOpticalStabilization != null) {
-            for (mode in availableOpticalStabilization) {
-                if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
-                    builder?.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-                    )
-                    builder?.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                    )
-                    return
-                }
-            }
-        }
-
-        // If no optical mode is available, try software.
-        val availableVideoStabilization =
-            cameraCharacteristicsMbr.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
-        if (availableVideoStabilization != null) {
-            for (mode in availableVideoStabilization) {
-                if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
-                    builder?.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                    )
-                    builder?.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                    )
-                    return
-                }
-            }
-        }
     }
 
 
