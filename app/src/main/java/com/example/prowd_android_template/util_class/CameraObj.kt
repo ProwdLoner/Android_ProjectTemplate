@@ -18,6 +18,7 @@ import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
+import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
@@ -46,14 +47,13 @@ import kotlin.math.abs
 // todo : 세션 일시정지, 재개
 // todo : 리퀘스트 변경 : 한꺼번에 변경을 지원하고, 개별 기능별 함수를 제공
 // todo : 서페이스 설정과 분리(녹화 서페이스 설정 곧바로 적용)
-
-// todo : api 재개편 :
-// todo : setSurface 에서 서페이스 설정, openCamera, createSession 까지 진행
-// todo : runPreview, runMediaRecord, capturePicture 에서 각 템플릿을 기본으로 하여 리퀘스트 설정 및 세션 실행
+// todo : api 재개편 : (opencamera & setsurface) - (createCaptureSession & capturerequest) - (run)
+// todo : setCaptureRequest 에서 리퀘스트 검증,
+// 그후 runpreview || startrecording || capture
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
-    private val cameraHandlerMbr: Handler,
+    private val cameraApiHandlerMbr: Handler,
     private val cameraManagerMbr: CameraManager,
     private val cameraCharacteristicsMbr: CameraCharacteristics,
     private val streamConfigurationMapMbr: StreamConfigurationMap,
@@ -61,13 +61,13 @@ class CameraObj private constructor(
     val imageReaderSurfaceSupportedSizeListMbr: Array<Size>?,
     val mediaRecorderSurfaceSupportedSizeListMbr: Array<Size>?,
     var sensorOrientationMbr: Int = 0,
-    private val onCameraDisconnectedMbr: (() -> Unit)?
+    private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
-    // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (스레드 풀)
-    private var executorServiceMbr: ExecutorService? = Executors.newCachedThreadPool()
+    var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
+    // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (카메라 부산 데이터)
     private val cameraSessionSemaphoreMbr = Semaphore(1)
     private var cameraDeviceMbr: CameraDevice? = null
@@ -347,8 +347,8 @@ class CameraObj private constructor(
         fun getInstance(
             parentActivity: Activity,
             cameraId: String,
-            cameraHandler: Handler,
-            onCameraDisconnected: (() -> Unit)?
+            cameraApiHandler: Handler,
+            onCameraDisconnected: (() -> Unit)
         ): CameraObj? {
             if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
                 // 카메라 장치가 없다면 null 반환
@@ -394,7 +394,7 @@ class CameraObj private constructor(
             return CameraObj(
                 parentActivity,
                 cameraId,
-                cameraHandler,
+                cameraApiHandler,
                 cameraManager,
                 cameraCharacteristics,
                 streamConfigurationMap,
@@ -410,29 +410,31 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    // (카메라 세션을 원하는 옵션으로 시작하는 함수)
+    // (출력 서페이스 설정 함수)
     // onError 에러 코드 :
     // 1 : 출력 서페이스가 하나도 입력되어 있지 않음
     // 2 : 해당 사이즈 이미지 리더를 지원하지 않음
     // 3 : 해당 사이즈 미디어 리코더를 지원하지 않음
     // 4 : 해당 사이즈 프리뷰를 지원하지 않음
-    // 5 : 생성된 서페이스가 존재하지 않음
-    // 6 : 카메라 권한이 없음
-    // 7 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
-    // 8 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
-    // 9 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
-    // 10 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
-    // 11 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
-    // 12 : 카메라 세션 생성 실패
-    // 13 : 미디어 레코더 오디오 녹음 설정 권한 비충족
-    fun startCameraSession(
+    // 5 : 미디어 레코더 오디오 녹음 설정 권한 비충족
+    // 6 : 생성된 서페이스가 존재하지 않음
+    // 7 : 카메라 권한이 없음
+    // 8 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
+    // 9 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
+    // 10 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
+    // 11 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
+    // 12 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
+    // 13 : 카메라 세션 생성 실패
+    // 서페이스 준비 및 서페이스에 따른 세션을 생성
+    // 기존 세션은 중단되고 사라짐, 기존 세션 설정 역시 사라짐
+    fun setCameraOutputSurfaces(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
         mediaRecorderConfigVo: MediaRecorderConfigVo?,
-        onCameraSessionStarted: () -> Unit,
+        onSurfaceAllReady: () -> Unit,
         onError: (Int) -> Unit
     ) {
-        executorServiceMbr?.execute {
+        executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
 
             // (서페이스 설정 파라미터 개수 검사)
@@ -521,10 +523,10 @@ class CameraObj private constructor(
             }
 
             // (카메라 상태 초기화)
-            isRepeatingMbr = false
-            isRecordingMbr = false
-            mediaRecorderMbr?.stop()
-            mediaRecorderMbr?.reset()
+            if (isRecordingMbr) {
+                mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
+            }
             mediaRecorderMbr?.release()
             mediaRecorderMbr = null
             mediaCodecSurfaceMbr?.release()
@@ -566,6 +568,9 @@ class CameraObj private constructor(
 
             captureRequestBuilderMbr = null
 
+            isRepeatingMbr = false
+            isRecordingMbr = false
+
             // (이미지 리더 서페이스 준비)
             if (imageReaderConfigVo != null) {
                 imageReaderConfigVoMbr = imageReaderConfigVo
@@ -599,7 +604,7 @@ class CameraObj private constructor(
                     imageReaderConfigVoMbr = null
                     cameraSessionSemaphoreMbr.release()
                     parentActivityMbr.runOnUiThread {
-                        onError(13)
+                        onError(5)
                     }
                     return@execute
                 }
@@ -779,14 +784,14 @@ class CameraObj private constructor(
                                 previewObj.height
                             )
 
-                            executorServiceMbr?.execute {
+                            executorServiceMbr.execute {
                                 checkedPreviewCountSemaphore.acquire()
                                 if (++checkedPreviewCount == previewListSize) {
                                     // 마지막 작업일 때
                                     checkedPreviewCountSemaphore.release()
 
                                     onSurfaceAllChecked(
-                                        onCameraSessionStarted,
+                                        onSurfaceAllReady,
                                         onError
                                     )
                                 } else {
@@ -826,14 +831,14 @@ class CameraObj private constructor(
                                             height
                                         )
 
-                                        executorServiceMbr?.execute {
+                                        executorServiceMbr.execute {
                                             checkedPreviewCountSemaphore.acquire()
                                             if (++checkedPreviewCount == previewListSize) {
                                                 // 마지막 작업일 때
                                                 checkedPreviewCountSemaphore.release()
 
                                                 onSurfaceAllChecked(
-                                                    onCameraSessionStarted,
+                                                    onSurfaceAllReady,
                                                     onError
                                                 )
                                             } else {
@@ -867,21 +872,96 @@ class CameraObj private constructor(
                 }
             } else {
                 onSurfaceAllChecked(
-                    onCameraSessionStarted,
+                    onSurfaceAllReady,
                     onError
                 )
             }
         }
     }
 
-    // 카메라 세션을 멈추는 함수 (카메라 디바이스를 제외한 나머지 초기화)
+    // (카메라 실행 함수)
+    // config 설정이 null 이라면 기본 설정 적용 (템플릿 + 3 Auto)
+    // todo : 해당 모드에서 할 수 있는 커스텀 적합성 검사
+    // onError 에러 코드 :
+    // 1 : 현재 카메라 세션이 생성되지 않음
+    // 2 : 현재 카메라 디바이스 객체가 생성되지 않음
+    // 3 : 현재 출력 서페이스가 하나도 설정 되어있지 않음
+    fun <T> runPreviewMode(
+        configMap: HashMap<CaptureRequest.Key<T>, T>?,
+        onSessionStarted: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            if (cameraCaptureSessionMbr == null) {
+                cameraSessionSemaphoreMbr.release()
+                onError(1)
+                return@execute
+            }
+
+            if (cameraDeviceMbr == null) {
+                cameraSessionSemaphoreMbr.release()
+                onError(2)
+                return@execute
+            }
+
+            if (previewConfigVoListMbr.isEmpty() &&
+                imageReaderMbr == null &&
+                mediaCodecSurfaceMbr == null
+            ) { // 생성 서페이스가 하나도 존재하지 않으면,
+                cameraSessionSemaphoreMbr.release()
+                onError(3)
+                return@execute
+            }
+
+            // (리퀘스트 빌더 생성)
+            captureRequestBuilderMbr =
+                cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+
+            // 서페이스 주입
+            imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
+            for (previewSurface in previewSurfaceListMbr) {
+                captureRequestBuilderMbr!!.addTarget(previewSurface)
+            }
+
+            // 리퀘스트 빌더 설정
+            if (configMap == null) {
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.CONTROL_MODE,
+                    CameraMetadata.CONTROL_MODE_AUTO
+                )
+            } else {
+                for (config in configMap) {
+                    captureRequestBuilderMbr!!.set(
+                        config.key,
+                        config.value
+                    )
+                }
+            }
+
+            // (카메라 실행)
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                captureRequestBuilderMbr!!.build(),
+                null,
+                cameraApiHandlerMbr
+            )
+
+            isRepeatingMbr = true
+
+            cameraSessionSemaphoreMbr.release()
+            onSessionStarted()
+        }
+    }
+
+    // (카메라 세션을 멈추는 함수)
+    // 카메라 디바이스를 제외한 나머지 초기화
     fun stopCameraSession() {
         cameraSessionSemaphoreMbr.acquire()
 
-        isRepeatingMbr = false
-        isRecordingMbr = false
-        mediaRecorderMbr?.stop()
-        mediaRecorderMbr?.reset()
+        if (isRecordingMbr) {
+            mediaRecorderMbr?.stop()
+            mediaRecorderMbr?.reset()
+        }
         mediaRecorderMbr?.release()
         mediaRecorderMbr = null
         mediaCodecSurfaceMbr?.release()
@@ -923,17 +1003,21 @@ class CameraObj private constructor(
 
         captureRequestBuilderMbr = null
 
+        isRepeatingMbr = false
+        isRecordingMbr = false
+
         cameraSessionSemaphoreMbr.release()
     }
 
-    // 카메라 객체를 초기화하는 함수 (카메라 디바이스 까지 닫기)
+    // (카메라 객체를 초기화하는 함수)
+    // 카메라 디바이스 까지 닫기
     fun clearCameraObject() {
         cameraSessionSemaphoreMbr.acquire()
 
-        isRepeatingMbr = false
-        isRecordingMbr = false
-        mediaRecorderMbr?.stop()
-        mediaRecorderMbr?.reset()
+        if (isRecordingMbr) {
+            mediaRecorderMbr?.stop()
+            mediaRecorderMbr?.reset()
+        }
         mediaRecorderMbr?.release()
         mediaRecorderMbr = null
         mediaCodecSurfaceMbr?.release()
@@ -978,6 +1062,9 @@ class CameraObj private constructor(
         cameraDeviceMbr?.close()
         cameraDeviceMbr = null
 
+        isRepeatingMbr = false
+        isRecordingMbr = false
+
         cameraSessionSemaphoreMbr.release()
     }
 
@@ -987,16 +1074,6 @@ class CameraObj private constructor(
     // 세션 도중이 아니라면 사진을 찍은 후 중지
     fun capturePicture() {
 
-    }
-
-    // (카메라 세션을 원하는 옵션으로 시작하는 함수)
-    // onError 에러 코드 :
-    // 1 : 현재 카메라 세션이 생성되지 않음
-    private fun <T> setCaptureRequest(
-        configMap: HashMap<CaptureRequest.Key<T>, T>,
-        onError: (Int) -> Unit
-    ) {
-        captureRequestBuilderMbr
     }
 
     // 손떨림 방지
@@ -1044,7 +1121,7 @@ class CameraObj private constructor(
     // <비공개 메소드 공간>
     // (startCamera 함수 서페이스 준비가 끝난 시점의 처리 함수)
     private fun onSurfaceAllChecked(
-        onCameraSessionStarted: () -> Unit,
+        onSurfaceAllReady: () -> Unit,
         onError: (Int) -> Unit
     ) {
         if (previewConfigVoListMbr.isEmpty() &&
@@ -1052,7 +1129,7 @@ class CameraObj private constructor(
             mediaCodecSurfaceMbr == null
         ) { // 생성 서페이스가 하나도 존재하지 않으면,
             cameraSessionSemaphoreMbr.release()
-            onError(5)
+            onError(6)
             return
         }
 
@@ -1072,30 +1149,17 @@ class CameraObj private constructor(
                 // (카메라 세션 생성)
                 createCameraSessionAsync(
                     onCaptureSessionCreated = {
-                        if (mediaCodecSurfaceMbr == null) {
-                            startPreviewSessionAsync(
-                                onSessionStarted = {
-                                    cameraSessionSemaphoreMbr.release()
-                                    parentActivityMbr.runOnUiThread {
-                                        onCameraSessionStarted()
-                                    }
-                                })
-                        } else {
-                            startMediaRecorderSessionAsync(
-                                onSessionStarted = {
-                                    cameraSessionSemaphoreMbr.release()
-                                    parentActivityMbr.runOnUiThread {
-                                        onCameraSessionStarted()
-                                    }
-                                })
+                        parentActivityMbr.runOnUiThread {
+                            cameraSessionSemaphoreMbr.release()
+                            onSurfaceAllReady()
                         }
                     },
                     onError = { errorCode, cameraCaptureSession ->
                         // (카메라 상태 초기화)
-                        isRepeatingMbr = false
-                        isRecordingMbr = false
-                        mediaRecorderMbr?.stop()
-                        mediaRecorderMbr?.reset()
+                        if (isRecordingMbr) {
+                            mediaRecorderMbr?.stop()
+                            mediaRecorderMbr?.reset()
+                        }
                         mediaRecorderMbr?.release()
                         mediaRecorderMbr = null
                         mediaCodecSurfaceMbr?.release()
@@ -1137,6 +1201,9 @@ class CameraObj private constructor(
 
                         captureRequestBuilderMbr = null
 
+                        isRepeatingMbr = false
+                        isRecordingMbr = false
+
                         cameraSessionSemaphoreMbr.release()
                         parentActivityMbr.runOnUiThread {
                             onError(errorCode)
@@ -1147,11 +1214,15 @@ class CameraObj private constructor(
             onCameraDisconnected = {
                 // (카메라 상태 초기화)
                 cameraSessionSemaphoreMbr.release()
-                onCameraDisconnectedMbr?.let { it() }
+                parentActivityMbr.runOnUiThread {
+                    onCameraDisconnectedMbr()
+                }
             },
             onError = { errorCode ->
                 cameraSessionSemaphoreMbr.release()
-                onError(errorCode)
+                parentActivityMbr.runOnUiThread {
+                    onError(errorCode)
+                }
             }
         )
     }
@@ -1173,7 +1244,7 @@ class CameraObj private constructor(
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            onError(6)
+            onError(7)
             return
         }
 
@@ -1190,10 +1261,10 @@ class CameraObj private constructor(
 
                 // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
                 override fun onDisconnected(camera: CameraDevice) {
-                    isRepeatingMbr = false
-                    isRecordingMbr = false
-                    mediaRecorderMbr?.stop()
-                    mediaRecorderMbr?.reset()
+                    if (isRecordingMbr) {
+                        mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
+                    }
                     mediaRecorderMbr?.release()
                     mediaRecorderMbr = null
                     mediaCodecSurfaceMbr?.release()
@@ -1237,16 +1308,19 @@ class CameraObj private constructor(
 
                     camera.close()
                     cameraDeviceMbr = null
+
+                    isRepeatingMbr = false
+                    isRecordingMbr = false
 
                     onCameraDisconnected()
                 }
 
                 override fun onError(camera: CameraDevice, error: Int) {
                     // (카메라 상태 초기화)
-                    isRepeatingMbr = false
-                    isRecordingMbr = false
-                    mediaRecorderMbr?.stop()
-                    mediaRecorderMbr?.reset()
+                    if (isRecordingMbr) {
+                        mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
+                    }
                     mediaRecorderMbr?.release()
                     mediaRecorderMbr = null
                     mediaCodecSurfaceMbr?.release()
@@ -1291,25 +1365,28 @@ class CameraObj private constructor(
                     camera.close()
                     cameraDeviceMbr = null
 
+                    isRepeatingMbr = false
+                    isRecordingMbr = false
+
                     when (error) {
                         ERROR_CAMERA_DISABLED -> {
-                            onError(7)
-                        }
-                        ERROR_CAMERA_IN_USE -> {
                             onError(8)
                         }
-                        ERROR_MAX_CAMERAS_IN_USE -> {
+                        ERROR_CAMERA_IN_USE -> {
                             onError(9)
                         }
-                        ERROR_CAMERA_DEVICE -> {
+                        ERROR_MAX_CAMERAS_IN_USE -> {
                             onError(10)
                         }
-                        ERROR_CAMERA_SERVICE -> {
+                        ERROR_CAMERA_DEVICE -> {
                             onError(11)
+                        }
+                        ERROR_CAMERA_SERVICE -> {
+                            onError(12)
                         }
                     }
                 }
-            }, cameraHandlerMbr
+            }, cameraApiHandlerMbr
         )
     }
 
@@ -1337,7 +1414,7 @@ class CameraObj private constructor(
         cameraCaptureSessionMbr!!.setRepeatingRequest(
             captureRequestBuilderMbr!!.build(),
             null,
-            cameraHandlerMbr
+            cameraApiHandlerMbr
         )
 
         isRepeatingMbr = true
@@ -1370,7 +1447,7 @@ class CameraObj private constructor(
         cameraCaptureSessionMbr!!.setRepeatingRequest(
             captureRequestBuilderMbr!!.build(),
             null,
-            cameraHandlerMbr
+            cameraApiHandlerMbr
         )
 
         isRepeatingMbr = true
@@ -1452,7 +1529,7 @@ class CameraObj private constructor(
             cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
                 SessionConfiguration.SESSION_REGULAR,
                 outputConfigurationList,
-                HandlerExecutor(cameraHandlerMbr.looper),
+                HandlerExecutor(cameraApiHandlerMbr.looper),
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         cameraCaptureSessionMbr = session
@@ -1462,7 +1539,7 @@ class CameraObj private constructor(
 
                     // 세션 생성 실패
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        onError(12, session)
+                        onError(13, session)
                     }
                 }
             ))
@@ -1496,9 +1573,9 @@ class CameraObj private constructor(
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        onError(12, session)
+                        onError(13, session)
                     }
-                }, cameraHandlerMbr
+                }, cameraApiHandlerMbr
             )
         }
     }
