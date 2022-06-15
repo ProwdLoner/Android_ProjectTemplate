@@ -11,7 +11,11 @@ class HandlerThreadObj(val threadName: String) {
     var handler: Handler? = null
         private set
 
-    var isThreadObjAlive = (null != handler && null != handlerThread && handlerThread!!.isAlive)
+    var isThreadObjAlive = false
+        get() {
+            return (null != handler && null != handlerThread && handlerThread!!.isAlive)
+        }
+        private set
 
 
     // ---------------------------------------------------------------------------------------------

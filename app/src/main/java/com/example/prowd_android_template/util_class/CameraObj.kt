@@ -996,7 +996,6 @@ class CameraObj private constructor(
         onError: (Int) -> Unit
     ) {
         captureRequestBuilderMbr
-        sdf
     }
 
     // 손떨림 방지
