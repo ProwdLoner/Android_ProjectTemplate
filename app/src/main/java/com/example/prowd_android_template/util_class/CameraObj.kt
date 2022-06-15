@@ -879,13 +879,13 @@ class CameraObj private constructor(
         }
     }
 
-    // (카메라 실행 함수)
+    // (카메라 프리뷰 모드 실행 함수)
     // onCameraRequestSettingTime 콜백을 제공함으로써 camera2 api 리퀘스트 세팅을 직접 할 코딩 스페이스를 제공
     // onError 에러 코드 :
     // 1 : 현재 카메라 세션이 생성되지 않음
     // 2 : 현재 카메라 디바이스 객체가 생성되지 않음
-    // 3 : 현재 출력 서페이스가 하나도 설정 되어있지 않음
-    fun runPreviewMode(
+    // 3 : 현재 프리뷰 모드용 출력 서페이스가 하나도 설정 되어있지 않음
+    fun runCameraPreviewMode(
         onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit)?,
         onSessionStarted: () -> Unit,
         onError: (Int) -> Unit
@@ -905,8 +905,7 @@ class CameraObj private constructor(
             }
 
             if (previewConfigVoListMbr.isEmpty() &&
-                imageReaderMbr == null &&
-                mediaCodecSurfaceMbr == null
+                imageReaderMbr == null
             ) { // 생성 서페이스가 하나도 존재하지 않으면,
                 cameraSessionSemaphoreMbr.release()
                 onError(3)
@@ -946,6 +945,133 @@ class CameraObj private constructor(
             onSessionStarted()
         }
     }
+
+    // (카메라 미디어 레코딩 모드 실행 함수)
+    // onCameraRequestSettingTime 콜백을 제공함으로써 camera2 api 리퀘스트 세팅을 직접 할 코딩 스페이스를 제공
+    // onError 에러 코드 :
+    // 1 : 현재 카메라 세션이 생성되지 않음
+    // 2 : 현재 카메라 디바이스 객체가 생성되지 않음
+    // 3 : 현재 미디어 레코딩 서페이스가 설정되어 있지 않음
+    fun runCameraMediaRecordingMode(
+        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit)?,
+        onSessionStarted: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            if (cameraCaptureSessionMbr == null) {
+                cameraSessionSemaphoreMbr.release()
+                onError(1)
+                return@execute
+            }
+
+            if (cameraDeviceMbr == null) {
+                cameraSessionSemaphoreMbr.release()
+                onError(2)
+                return@execute
+            }
+
+            if (mediaCodecSurfaceMbr == null) { // 미디어 레코딩 서페이스가 설정되어 있지 않음
+                cameraSessionSemaphoreMbr.release()
+                onError(3)
+                return@execute
+            }
+
+            // (리퀘스트 빌더 생성)
+            captureRequestBuilderMbr =
+                cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
+
+            // 서페이스 주입
+            imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
+            for (previewSurface in previewSurfaceListMbr) {
+                captureRequestBuilderMbr!!.addTarget(previewSurface)
+            }
+            captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
+
+            // 리퀘스트 빌더 설정
+            if (onCameraRequestSettingTime == null) {
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.CONTROL_MODE,
+                    CameraMetadata.CONTROL_MODE_AUTO
+                )
+            } else {
+                onCameraRequestSettingTime(captureRequestBuilderMbr!!)
+            }
+
+            // (카메라 실행)
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                captureRequestBuilderMbr!!.build(),
+                null,
+                cameraApiHandlerMbr
+            )
+
+            isRepeatingMbr = true
+
+            cameraSessionSemaphoreMbr.release()
+            onSessionStarted()
+        }
+    }
+
+    // (미디어 레코더 레코딩 함수)
+    // 결과 코드 :
+    // 1 : 현재 미디어 레코더 서페이스 설정이 되어 있지 않음
+    // 2 : 현재 미디어 레코더 서페이스 설정은 되어 있지만 세션이 실행되고 있지 않음
+    // 3 : 이미 미디어 레코더 레코딩 중
+    fun startMediaRecorder(): Int {
+        cameraSessionSemaphoreMbr.acquire()
+        if (mediaRecorderMbr == null) {
+            cameraSessionSemaphoreMbr.release()
+            return 1
+        }
+
+        if (!isRepeatingMbr) {
+            cameraSessionSemaphoreMbr.release()
+            return 2
+        }
+
+        if (isRecordingMbr) {
+            cameraSessionSemaphoreMbr.release()
+            return 3
+        }
+
+        mediaRecorderMbr!!.start()
+        isRecordingMbr = true
+
+        cameraSessionSemaphoreMbr.release()
+        return 0
+    }
+
+    // (미디어 레코더 일시 중지 함수)
+    // 결과 코드 :
+    // 0 : 정상 실행
+    // 1 : 현재 미디어 레코더 서페이스 설정이 되어 있지 않음
+    // 2 : 현재 미디어 레코더 서페이스 설정은 되어 있지만 세션이 실행되고 있지 않음
+    // 3 : 현재 미디어 레코더 레코딩 중이 아님
+    fun pauseMediaRecorder(): Int {
+        cameraSessionSemaphoreMbr.acquire()
+        if (mediaRecorderMbr == null) {
+            cameraSessionSemaphoreMbr.release()
+            return 1
+        }
+
+        if (!isRepeatingMbr) {
+            cameraSessionSemaphoreMbr.release()
+            return 2
+        }
+
+        if (!isRecordingMbr) {
+            cameraSessionSemaphoreMbr.release()
+            return 3
+        }
+
+        mediaRecorderMbr!!.pause()
+        isRecordingMbr = false
+
+        cameraSessionSemaphoreMbr.release()
+        return 0
+    }
+
+    // todo (미디어 레코딩 사이클)
 
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화
@@ -1382,38 +1508,6 @@ class CameraObj private constructor(
                 }
             }, cameraApiHandlerMbr
         )
-    }
-
-    // (프리뷰 세션을 실행하는 함수)
-    private fun startPreviewSessionAsync(
-        onSessionStarted: () -> Unit
-    ) {
-        // (리퀘스트 빌더 생성)
-        captureRequestBuilderMbr =
-            cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-
-        // 서페이스 주입
-        imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-        for (previewSurface in previewSurfaceListMbr) {
-            captureRequestBuilderMbr!!.addTarget(previewSurface)
-        }
-
-        // 리퀘스트 빌더 설정
-        captureRequestBuilderMbr!!.set(
-            CaptureRequest.CONTROL_MODE,
-            CameraMetadata.CONTROL_MODE_AUTO
-        )
-
-        // (카메라 실행)
-        cameraCaptureSessionMbr!!.setRepeatingRequest(
-            captureRequestBuilderMbr!!.build(),
-            null,
-            cameraApiHandlerMbr
-        )
-
-        isRepeatingMbr = true
-
-        onSessionStarted()
     }
 
     // (녹화 세션을 실행하는 함수)

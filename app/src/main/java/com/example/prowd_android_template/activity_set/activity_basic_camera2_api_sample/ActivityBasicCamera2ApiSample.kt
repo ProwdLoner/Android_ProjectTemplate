@@ -443,101 +443,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
             bindingMbr.recordBtn.setOnClickListener {
                 if (!(viewModelMbr.backCameraObjMbr.isRecordingMbr)) {
-                    // todo
-//                    // 화면 회전 고정
-//                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
-//
-//                    // 기존 세션 종료
-//                    imageProcessingPauseMbr = true
-//                    viewModelMbr.backCameraObjMbr.stopCameraSession()
-//
-//                    // 저장 파일 경로 생성
-//                    videoFilePathMbr = filesDir.path + File.separator + "VID_${
-//                        SimpleDateFormat(
-//                            "yyyy_MM_dd_HH_mm_ss_SSS",
-//                            Locale.US
-//                        ).format(Date())
-//                    }.mp4"
-//
-//                    // 녹화 모드 실행
-//
-//                    // (카메라 실행)
-//                    // 카메라 세션 실행
-//                    val previewConfigVoList =
-//                        if (null != viewModelMbr.backCameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-//                            val chosenPreviewSurfaceSize =
-//                                CameraObj.getNearestSupportedCameraOutputSize(
-//                                    this,
-//                                    viewModelMbr.backCameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-//                                    viewModelMbr.backCameraObjMbr.sensorOrientationMbr,
-//                                    resources.displayMetrics.widthPixels.toLong() *
-//                                            resources.displayMetrics.heightPixels.toLong(),
-//                                    2.0 / 3.0
-//                                )
-//                            arrayListOf(
-//                                CameraObj.PreviewConfigVo(
-//                                    chosenPreviewSurfaceSize,
-//                                    bindingMbr.cameraPreviewAutoFitTexture
-//                                )
-//                            )
-//                        } else {
-//                            null
-//                        }
-//
-//                    val imageReaderConfigVo =
-//                        if (null != viewModelMbr.backCameraObjMbr.imageReaderSurfaceSupportedSizeListMbr) {
-//                            val chosenImageReaderSurfaceSize =
-//                                CameraObj.getNearestSupportedCameraOutputSize(
-//                                    this,
-//                                    viewModelMbr.backCameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-//                                    viewModelMbr.backCameraObjMbr.sensorOrientationMbr,
-//                                    500 * 500,
-//                                    2.0 / 3.0
-//                                )
-//                            CameraObj.ImageReaderConfigVo(
-//                                chosenImageReaderSurfaceSize,
-//                                viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
-//                                imageReaderCallback = { reader ->
-//                                    processImage(reader)
-//                                }
-//                            )
-//                        } else {
-//                            null
-//                        }
-//
-//                    val mediaRecorderConfigVo =
-//                        if (null != viewModelMbr.backCameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
-//                            val chosenMediaRecorderSurfaceSize =
-//                                CameraObj.getNearestSupportedCameraOutputSize(
-//                                    this,
-//                                    viewModelMbr.backCameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
-//                                    viewModelMbr.backCameraObjMbr.sensorOrientationMbr,
-//                                    Long.MAX_VALUE,
-//                                    2.0 / 3.0
-//                                )
-//                            CameraObj.MediaRecorderConfigVo(
-//                                chosenMediaRecorderSurfaceSize,
-//                                videoFilePathMbr!!,
-//                                null,
-//                                null,
-//                                false
-//                            )
-//                        } else {
-//                            null
-//                        }
-//
-//                    viewModelMbr.backCameraObjMbr.startCameraSession(
-//                        previewConfigVoList,
-//                        imageReaderConfigVo,
-//                        mediaRecorderConfigVo,
-//                        onCameraSessionStarted = {
-//                            imageProcessingPauseMbr = false
-//
-//                        },
-//                        onError = {
-//
-//                        }
-//                    )
+                    viewModelMbr.backCameraObjMbr.runCameraMediaRecordingMode(
+                        null,
+                        onSessionStarted = {
+                            viewModelMbr.backCameraObjMbr.startMediaRecorder()
+                        },
+                        onError = {
+
+                        }
+                    )
                 } else {
                     // 화면 고정 풀기
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -741,7 +655,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             imageReaderConfigVo,
             mediaRecorderConfigVo,
             onSurfaceAllReady = {
-                viewModelMbr.backCameraObjMbr.runPreviewMode(
+                viewModelMbr.backCameraObjMbr.runCameraPreviewMode(
                     null,
                     onSessionStarted = {
 
