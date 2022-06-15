@@ -43,8 +43,9 @@ import kotlin.math.abs
 // todo : 이미지 리더 불안정 해결
 // todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
-// todo : 캡쳐, 세션 일시정지, 재개, 녹음 검증
+// todo : 세션 일시정지, 재개
 // todo : 리퀘스트 변경 : 한꺼번에 변경을 지원하고, 개별 기능별 함수를 제공
+// todo : 서페이스 설정과 분리(녹화 서페이스 설정 곧바로 적용)
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -402,9 +403,8 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-
-    // API 에러 코드 :
-    // 0 : 그 외 에러
+    // (카메라 세션을 원하는 옵션으로 시작하는 함수)
+    // onError 에러 코드 :
     // 1 : 출력 서페이스가 하나도 입력되어 있지 않음
     // 2 : 해당 사이즈 이미지 리더를 지원하지 않음
     // 3 : 해당 사이즈 미디어 리코더를 지원하지 않음
@@ -418,8 +418,6 @@ class CameraObj private constructor(
     // 11 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
     // 12 : 카메라 세션 생성 실패
     // 13 : 미디어 레코더 오디오 녹음 설정 권한 비충족
-
-    // (카메라 세션을 원하는 옵션으로 시작하는 함수)
     fun startCameraSession(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
@@ -656,6 +654,7 @@ class CameraObj private constructor(
 
                 // 데이터 저장 퀄리티 설정
                 if (mediaRecorderConfigVo.videoEncodingBitrate == null) {
+                    // todo : setAudioEncoding 도 적용
                     // todo : 최적값 찾기 videoEncodingBitrate calc
                     mediaRecorderMbr!!.setVideoEncodingBitRate(
                         720000000
@@ -970,6 +969,14 @@ class CameraObj private constructor(
         cameraDeviceMbr = null
 
         cameraSessionSemaphoreMbr.release()
+    }
+
+    // todo
+    // (사진을 찍는 함수)
+    // 세션 도중이라면 곧바로 전환해서 사진을 찍은 후 원위치
+    // 세션 도중이 아니라면 사진을 찍은 후 중지
+    fun capturePicture() {
+
     }
 
     private fun <T> setCaptureRequest(configMap: HashMap<CaptureRequest.Key<T>, T>) {
