@@ -46,9 +46,10 @@ import kotlin.math.abs
 // todo : 세션 일시정지, 재개
 // todo : 리퀘스트 변경 : 한꺼번에 변경을 지원하고, 개별 기능별 함수를 제공
 // todo : 서페이스 설정과 분리(녹화 서페이스 설정 곧바로 적용)
-// todo : api 재개편 : (opencamera & setsurface) - (createCaptureSession & capturerequest) - (run)
-// todo : setsurface 에서 시작. 캡쳐 세션, 캡쳐 리퀘스트 제거. cameraDevice 가 없다면 만들기 후 세션 만들기, setCaptureRequest 에서 리퀘스트 검증,
-// 그후 runpreview || startrecording || capture
+
+// todo : api 재개편 :
+// todo : setSurface 에서 서페이스 설정, openCamera, createSession 까지 진행
+// todo : runPreview, runMediaRecord, capturePicture 에서 각 템플릿을 기본으로 하여 리퀘스트 설정 및 세션 실행
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
