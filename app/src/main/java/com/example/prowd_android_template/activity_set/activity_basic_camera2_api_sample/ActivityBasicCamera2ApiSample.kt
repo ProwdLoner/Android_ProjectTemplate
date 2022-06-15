@@ -439,7 +439,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             bindingMbr.recordBtn.visibility = View.VISIBLE
 
             // recording pause 시에는 녹화를 멈추고 기존 파일을 제거하도록 처리
-            // todo 중복 클릭 방지
+            // todo 중복 클릭 방지, 녹화중 화면 효과
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
             bindingMbr.recordBtn.setOnClickListener {
                 if (!(viewModelMbr.backCameraObjMbr.isRecordingMbr)) {

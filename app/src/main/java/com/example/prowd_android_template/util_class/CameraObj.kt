@@ -526,6 +526,8 @@ class CameraObj private constructor(
             if (isRecordingMbr) {
                 mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
+
+                isRecordingMbr = false
             }
             mediaRecorderMbr?.release()
             mediaRecorderMbr = null
@@ -569,7 +571,6 @@ class CameraObj private constructor(
             captureRequestBuilderMbr = null
 
             isRepeatingMbr = false
-            isRecordingMbr = false
 
             // (이미지 리더 서페이스 준비)
             if (imageReaderConfigVo != null) {
@@ -912,6 +913,13 @@ class CameraObj private constructor(
                 return@execute
             }
 
+            if (isRecordingMbr) {
+                mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
+
+                isRecordingMbr = false
+            }
+
             // (리퀘스트 빌더 생성)
             captureRequestBuilderMbr =
                 cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
@@ -975,6 +983,14 @@ class CameraObj private constructor(
                 cameraSessionSemaphoreMbr.release()
                 onError(3)
                 return@execute
+            }
+
+            // 기존 레코더 정리
+            if (isRecordingMbr) {
+                mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
+
+                isRecordingMbr = false
             }
 
             // (리퀘스트 빌더 생성)
@@ -1081,6 +1097,8 @@ class CameraObj private constructor(
         if (isRecordingMbr) {
             mediaRecorderMbr?.stop()
             mediaRecorderMbr?.reset()
+
+            isRecordingMbr = false
         }
         mediaRecorderMbr?.release()
         mediaRecorderMbr = null
@@ -1124,7 +1142,6 @@ class CameraObj private constructor(
         captureRequestBuilderMbr = null
 
         isRepeatingMbr = false
-        isRecordingMbr = false
 
         cameraSessionSemaphoreMbr.release()
     }
@@ -1137,6 +1154,8 @@ class CameraObj private constructor(
         if (isRecordingMbr) {
             mediaRecorderMbr?.stop()
             mediaRecorderMbr?.reset()
+
+            isRecordingMbr = false
         }
         mediaRecorderMbr?.release()
         mediaRecorderMbr = null
@@ -1183,7 +1202,6 @@ class CameraObj private constructor(
         cameraDeviceMbr = null
 
         isRepeatingMbr = false
-        isRecordingMbr = false
 
         cameraSessionSemaphoreMbr.release()
     }
@@ -1279,6 +1297,8 @@ class CameraObj private constructor(
                         if (isRecordingMbr) {
                             mediaRecorderMbr?.stop()
                             mediaRecorderMbr?.reset()
+
+                            isRecordingMbr = false
                         }
                         mediaRecorderMbr?.release()
                         mediaRecorderMbr = null
@@ -1322,7 +1342,6 @@ class CameraObj private constructor(
                         captureRequestBuilderMbr = null
 
                         isRepeatingMbr = false
-                        isRecordingMbr = false
 
                         cameraSessionSemaphoreMbr.release()
                         parentActivityMbr.runOnUiThread {
@@ -1384,6 +1403,8 @@ class CameraObj private constructor(
                     if (isRecordingMbr) {
                         mediaRecorderMbr?.stop()
                         mediaRecorderMbr?.reset()
+
+                        isRecordingMbr = false
                     }
                     mediaRecorderMbr?.release()
                     mediaRecorderMbr = null
@@ -1430,7 +1451,6 @@ class CameraObj private constructor(
                     cameraDeviceMbr = null
 
                     isRepeatingMbr = false
-                    isRecordingMbr = false
 
                     onCameraDisconnected()
                 }
@@ -1440,6 +1460,8 @@ class CameraObj private constructor(
                     if (isRecordingMbr) {
                         mediaRecorderMbr?.stop()
                         mediaRecorderMbr?.reset()
+
+                        isRecordingMbr = false
                     }
                     mediaRecorderMbr?.release()
                     mediaRecorderMbr = null
@@ -1486,7 +1508,6 @@ class CameraObj private constructor(
                     cameraDeviceMbr = null
 
                     isRepeatingMbr = false
-                    isRecordingMbr = false
 
                     when (error) {
                         ERROR_CAMERA_DISABLED -> {
