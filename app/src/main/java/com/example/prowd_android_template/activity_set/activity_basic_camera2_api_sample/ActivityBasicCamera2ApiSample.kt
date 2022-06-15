@@ -741,7 +741,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             imageReaderConfigVo,
             mediaRecorderConfigVo,
             onSurfaceAllReady = {
-                viewModelMbr.backCameraObjMbr.runPreviewMode<Int>(null,
+                viewModelMbr.backCameraObjMbr.runPreviewMode(
+                    null,
                     onSessionStarted = {
 
                     },

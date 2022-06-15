@@ -880,14 +880,13 @@ class CameraObj private constructor(
     }
 
     // (카메라 실행 함수)
-    // config 설정이 null 이라면 기본 설정 적용 (템플릿 + 3 Auto)
-    // todo : 해당 모드에서 할 수 있는 커스텀 적합성 검사
+    // onCameraRequestSettingTime 콜백을 제공함으로써 camera2 api 리퀘스트 세팅을 직접 할 코딩 스페이스를 제공
     // onError 에러 코드 :
     // 1 : 현재 카메라 세션이 생성되지 않음
     // 2 : 현재 카메라 디바이스 객체가 생성되지 않음
     // 3 : 현재 출력 서페이스가 하나도 설정 되어있지 않음
-    fun <T> runPreviewMode(
-        configMap: HashMap<CaptureRequest.Key<T>, T>?,
+    fun runPreviewMode(
+        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit)?,
         onSessionStarted: () -> Unit,
         onError: (Int) -> Unit
     ) {
@@ -925,18 +924,13 @@ class CameraObj private constructor(
             }
 
             // 리퀘스트 빌더 설정
-            if (configMap == null) {
+            if (onCameraRequestSettingTime == null) {
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_MODE,
                     CameraMetadata.CONTROL_MODE_AUTO
                 )
             } else {
-                for (config in configMap) {
-                    captureRequestBuilderMbr!!.set(
-                        config.key,
-                        config.value
-                    )
-                }
+                onCameraRequestSettingTime(captureRequestBuilderMbr!!)
             }
 
             // (카메라 실행)
