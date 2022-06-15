@@ -39,13 +39,13 @@ import kotlin.math.abs
 // 카메라를 종료할 때에는 stopCamera 를 사용
 // Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
 
-// todo : 프리뷰 불안정 해결
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 이미지 리더 불안정 해결
 // todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
 // todo : 캡쳐, 세션 일시정지, 재개, 녹음 검증
 // todo : 리퀘스트 변경 : 한꺼번에 변경을 지원하고, 개별 기능별 함수를 제공
+// todo : 화면회전 에러
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -555,8 +555,8 @@ class CameraObj private constructor(
                     }
             }
             previewConfigVoListMbr.clear()
+            previewSurfaceListMbr.clear()
 
-            cameraCaptureSessionMbr?.stopRepeating()
             cameraCaptureSessionMbr?.close()
             cameraCaptureSessionMbr = null
 
@@ -885,7 +885,6 @@ class CameraObj private constructor(
         // (카메라 디바이스 열기)
         openCameraDevice(
             onCameraDeviceReady = {
-                val textureSurfaceList = ArrayList<Surface>()
                 for (previewConfigVo in previewConfigVoListMbr) {
                     val surfaceTexture = previewConfigVo.autoFitTextureView.surfaceTexture!!
                     surfaceTexture.setDefaultBufferSize(
@@ -893,16 +892,14 @@ class CameraObj private constructor(
                         previewConfigVo.cameraOrientSurfaceSize.height
                     )
 
-                    textureSurfaceList.add(Surface(surfaceTexture))
+                    previewSurfaceListMbr.add(Surface(surfaceTexture))
                 }
 
                 // (카메라 세션 생성)
                 createCameraSessionAsync(
-                    textureSurfaceList,
                     onCaptureSessionCreated = {
                         if (mediaCodecSurfaceMbr == null) {
                             startPreviewSessionAsync(
-                                textureSurfaceList,
                                 onSessionStarted = {
                                     cameraSessionSemaphoreMbr.release()
                                     parentActivityMbr.runOnUiThread {
@@ -911,7 +908,6 @@ class CameraObj private constructor(
                                 })
                         } else {
                             startMediaRecorderSessionAsync(
-                                textureSurfaceList,
                                 onSessionStarted = {
                                     cameraSessionSemaphoreMbr.release()
                                     parentActivityMbr.runOnUiThread {
@@ -959,8 +955,8 @@ class CameraObj private constructor(
                                 }
                         }
                         previewConfigVoListMbr.clear()
+                        previewSurfaceListMbr.clear()
 
-                        cameraCaptureSession.stopRepeating()
                         cameraCaptureSession.close()
                         cameraCaptureSessionMbr = null
 
@@ -1026,8 +1022,8 @@ class CameraObj private constructor(
                 }
         }
         previewConfigVoListMbr.clear()
+        previewSurfaceListMbr.clear()
 
-        cameraCaptureSessionMbr?.stopRepeating()
         cameraCaptureSessionMbr?.close()
         cameraCaptureSessionMbr = null
 
@@ -1077,8 +1073,8 @@ class CameraObj private constructor(
                 }
         }
         previewConfigVoListMbr.clear()
+        previewSurfaceListMbr.clear()
 
-        cameraCaptureSessionMbr?.stopRepeating()
         cameraCaptureSessionMbr?.close()
         cameraCaptureSessionMbr = null
 
@@ -1209,8 +1205,8 @@ class CameraObj private constructor(
                             }
                     }
                     previewConfigVoListMbr.clear()
+                    previewSurfaceListMbr.clear()
 
-                    cameraCaptureSessionMbr?.stopRepeating()
                     cameraCaptureSessionMbr?.close()
                     cameraCaptureSessionMbr = null
 
@@ -1261,8 +1257,8 @@ class CameraObj private constructor(
                             }
                     }
                     previewConfigVoListMbr.clear()
+                    previewSurfaceListMbr.clear()
 
-                    cameraCaptureSessionMbr?.stopRepeating()
                     cameraCaptureSessionMbr?.close()
                     cameraCaptureSessionMbr = null
 
@@ -1355,7 +1351,6 @@ class CameraObj private constructor(
 
     // (프리뷰 세션을 실행하는 함수)
     private fun startPreviewSessionAsync(
-        textureSurfaceList: ArrayList<Surface>,
         onSessionStarted: () -> Unit
     ) {
         // (리퀘스트 빌더 생성)
@@ -1364,7 +1359,7 @@ class CameraObj private constructor(
 
         // 서페이스 주입
         imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-        for (previewSurface in textureSurfaceList) {
+        for (previewSurface in previewSurfaceListMbr) {
             captureRequestBuilderMbr!!.addTarget(previewSurface)
         }
 
@@ -1386,7 +1381,6 @@ class CameraObj private constructor(
 
     // (녹화 세션을 실행하는 함수)
     private fun startMediaRecorderSessionAsync(
-        textureSurfaceList: ArrayList<Surface>,
         onSessionStarted: () -> Unit
     ) {
         // (리퀘스트 빌더 생성)
@@ -1395,7 +1389,7 @@ class CameraObj private constructor(
 
         // 서페이스 주입
         imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-        for (previewSurface in textureSurfaceList) {
+        for (previewSurface in previewSurfaceListMbr) {
             captureRequestBuilderMbr!!.addTarget(previewSurface)
         }
         captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
@@ -1455,7 +1449,6 @@ class CameraObj private constructor(
     }
 
     private fun createCameraSessionAsync(
-        textureSurfaceList: ArrayList<Surface>,
         onCaptureSessionCreated: () -> Unit,
         onError: (Int, CameraCaptureSession) -> Unit
     ) {
@@ -1465,7 +1458,7 @@ class CameraObj private constructor(
             val outputConfigurationList = ArrayList<OutputConfiguration>()
 
             // 프리뷰 서페이스 주입
-            for (previewSurface in textureSurfaceList) {
+            for (previewSurface in previewSurfaceListMbr) {
                 outputConfigurationList.add(OutputConfiguration(previewSurface))
             }
 
@@ -1510,7 +1503,7 @@ class CameraObj private constructor(
             val surfaces = ArrayList<Surface>()
 
             // 프리뷰 서페이스 주입
-            surfaces.addAll(textureSurfaceList)
+            surfaces.addAll(previewSurfaceListMbr)
 
             // 이미지 리더 서페이스 주입
             if (null != imageReaderMbr) {
