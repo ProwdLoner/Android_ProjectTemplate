@@ -41,7 +41,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.sqrt
 
-// todo : 화면 녹화 후 결과에서 화면을 회전후 복귀하면 에러(빠른 전환 문제?)
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -499,19 +498,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     val videoFile = File(videoFilePathMbr!!)
 
                     // 결과물 감상
-                    startActivity(Intent().apply {
-                        action = Intent.ACTION_VIEW
-                        type = MimeTypeMap.getSingleton()
-                            .getMimeTypeFromExtension(videoFile.extension)
-                        val authority = "${BuildConfig.APPLICATION_ID}.provider"
-                        data = FileProvider.getUriForFile(
+                    val mediaPlayerIntent = Intent()
+                    mediaPlayerIntent.action = Intent.ACTION_VIEW
+                    mediaPlayerIntent.setDataAndType(
+                        FileProvider.getUriForFile(
                             this@ActivityBasicCamera2ApiSample,
-                            authority,
+                            "${BuildConfig.APPLICATION_ID}.provider",
                             videoFile
-                        )
-                        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    })
+                        ), MimeTypeMap.getSingleton()
+                            .getMimeTypeFromExtension(videoFile.extension)
+                    )
+                    mediaPlayerIntent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    startActivity(mediaPlayerIntent)
                 }
             }
         }

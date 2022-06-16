@@ -40,10 +40,9 @@ import kotlin.math.abs
 // todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
-// todo : 사진 찍기 함수
-// todo : 세션 일시정지, 재개
+// todo : 사진 찍기 기능 검증
 // todo : 녹화 관련 api 재개편
-// todo : setConfig 와 run 을 분리
+// todo : 프리뷰 핀치줌 설정 기능 추가(뷰를 제공해주면 해당 뷰에 핀치줌을 설정 = 줌 배율 변경에 따른 리스너 제공)
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -1103,6 +1102,16 @@ class CameraObj private constructor(
         }
     }
 
+    // todo
+    fun pauseCameraSession() {
+
+    }
+
+    // todo
+    fun resumeCameraSession() {
+
+    }
+
     // todo : 미디어 레코더 개편
     // (미디어 레코더 레코딩 함수)
     // 결과 코드 :
@@ -1280,7 +1289,7 @@ class CameraObj private constructor(
         cameraSessionSemaphoreMbr.release()
     }
 
-    // (리퀘스트 헬퍼 함수)
+    // [리퀘스트 헬퍼 함수]
     // (손떨림 방지 설정)
     // 결과 값
     // 0 : 촬영 안정화 기능이 제공되지 않음
@@ -1621,42 +1630,6 @@ class CameraObj private constructor(
                 }
             }, cameraApiHandlerMbr
         )
-    }
-
-    // (녹화 세션을 실행하는 함수)
-    private fun startMediaRecorderSessionAsync(
-        onSessionStarted: () -> Unit
-    ) {
-        // (리퀘스트 빌더 생성)
-        captureRequestBuilderMbr =
-            cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-
-        // 서페이스 주입
-        imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-        for (previewSurface in previewSurfaceListMbr) {
-            captureRequestBuilderMbr!!.addTarget(previewSurface)
-        }
-        captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
-
-        // 리퀘스트 빌더 설정
-        captureRequestBuilderMbr!!.set(
-            CaptureRequest.CONTROL_MODE,
-            CameraMetadata.CONTROL_MODE_AUTO
-        )
-
-        // (카메라 실행)
-        cameraCaptureSessionMbr!!.setRepeatingRequest(
-            captureRequestBuilderMbr!!.build(),
-            null,
-            cameraApiHandlerMbr
-        )
-
-        isRepeatingMbr = true
-
-        isRecordingMbr = true
-        mediaRecorderMbr!!.start()
-
-        onSessionStarted()
     }
 
     private fun configureTransform(
