@@ -455,10 +455,33 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         onCameraRequestBuilderCreated = {
                             viewModelMbr.backCameraObjMbr.setCameraRequest(
                                 onCameraRequestSettingTime = {
+                                    // Auto WhiteBalance, Auto Focus, Auto Exposure
                                     it.set(
                                         CaptureRequest.CONTROL_MODE,
                                         CameraMetadata.CONTROL_MODE_AUTO
                                     )
+
+                                    // 손떨림 방지
+                                    if (viewModelMbr.backCameraObjMbr.isOpticalStabilizationAvailableMbr) {
+                                        it.set(
+                                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                                        )
+                                        it.set(
+                                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                                        )
+                                    } else if (viewModelMbr.backCameraObjMbr.isVideoStabilizationAvailableMbr) {
+                                        it.set(
+                                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                                        )
+                                        it.set(
+                                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                                        )
+                                    }
+
                                 },
                                 onCameraRequestSetComplete = {
                                     viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,
@@ -689,10 +712,32 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     onCameraRequestBuilderCreated = {
                         viewModelMbr.backCameraObjMbr.setCameraRequest(
                             onCameraRequestSettingTime = {
+                                // Auto WhiteBalance, Auto Focus, Auto Exposure
                                 it.set(
                                     CaptureRequest.CONTROL_MODE,
                                     CameraMetadata.CONTROL_MODE_AUTO
                                 )
+
+                                // 손떨림 방지
+                                if (viewModelMbr.backCameraObjMbr.isOpticalStabilizationAvailableMbr) {
+                                    it.set(
+                                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                                    )
+                                    it.set(
+                                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                                    )
+                                } else if (viewModelMbr.backCameraObjMbr.isVideoStabilizationAvailableMbr) {
+                                    it.set(
+                                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                                    )
+                                    it.set(
+                                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                                    )
+                                }
                             },
                             onCameraRequestSetComplete = {
                                 viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,

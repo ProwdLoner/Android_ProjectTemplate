@@ -58,8 +58,43 @@ class CameraObj private constructor(
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
+    // (카메라 정보)
+    // 떨림 보정 방지 기능 가능 여부 (기계적)
+    var isOpticalStabilizationAvailableMbr: Boolean = false
+        private set
+        get() {
+            val availableOpticalStabilization =
+                cameraCharacteristicsMbr.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
+                    ?: return false
+
+            for (mode in availableOpticalStabilization) {
+                if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
+                    return true
+                }
+            }
+
+            return false
+        }
+
+    // 떨림 보정 방지 기능 가능 여부 (소프트웨어적)
+    var isVideoStabilizationAvailableMbr: Boolean = false
+        private set
+        get() {
+            val availableVideoStabilization =
+                cameraCharacteristicsMbr.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+                    ?: return false
+
+            for (mode in availableVideoStabilization) {
+                if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
+                    return true
+                }
+            }
+
+            return false
+        }
+
     // (스레드 풀)
-    var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+    private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
     // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
     // (카메라 부산 데이터)
