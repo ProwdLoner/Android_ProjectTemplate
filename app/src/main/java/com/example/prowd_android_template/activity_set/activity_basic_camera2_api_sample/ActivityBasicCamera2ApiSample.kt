@@ -462,25 +462,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     )
 
                                     // 손떨림 방지
-                                    if (viewModelMbr.backCameraObjMbr.isOpticalStabilizationAvailableMbr) {
-                                        it.set(
-                                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-                                        )
-                                        it.set(
-                                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                                        )
-                                    } else if (viewModelMbr.backCameraObjMbr.isVideoStabilizationAvailableMbr) {
-                                        it.set(
-                                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                                        )
-                                        it.set(
-                                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                                        )
-                                    }
+                                    viewModelMbr.backCameraObjMbr.setStabilizationRequest(it)
+
+                                    // 줌
+                                    viewModelMbr.backCameraObjMbr.setZoomRequest(it, 5f)
 
                                 },
                                 onCameraRequestSetComplete = {
@@ -719,25 +704,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 )
 
                                 // 손떨림 방지
-                                if (viewModelMbr.backCameraObjMbr.isOpticalStabilizationAvailableMbr) {
-                                    it.set(
-                                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-                                    )
-                                    it.set(
-                                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                                    )
-                                } else if (viewModelMbr.backCameraObjMbr.isVideoStabilizationAvailableMbr) {
-                                    it.set(
-                                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                                    )
-                                    it.set(
-                                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                                    )
-                                }
+                                viewModelMbr.backCameraObjMbr.setStabilizationRequest(it)
                             },
                             onCameraRequestSetComplete = {
                                 viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,

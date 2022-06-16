@@ -93,6 +93,31 @@ class CameraObj private constructor(
             return false
         }
 
+    // todo
+    val sensorSize =
+        cameraCharacteristicsMbr.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+
+    // 카메라 최대 줌 배수
+    // maxZoom 이 1.0 이라는 것은 줌이 불가능하다는 의미
+    var maxZoomMbr = 1.0f
+        private set
+        get() {
+            if (sensorSize == null) {
+                return 1.0f
+            }
+
+            val maxZoom =
+                cameraCharacteristicsMbr.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
+                    ?: return 1.0f
+
+            if (maxZoom < 1.0f) {
+                return 1.0f
+            }
+
+            return maxZoom
+        }
+
+
     // (스레드 풀)
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
@@ -1138,75 +1163,6 @@ class CameraObj private constructor(
         return 0
     }
 
-    // todo
-//    // (손떨림 방지 세팅)
-//    // onError 에러 코드 :
-//    // 1 : 현재 카메라 세션이 생성되지 않음
-//    // 2 : 현재 카메라 디바이스 객체가 생성되지 않음
-//    // 3 : 현재 미디어 레코딩 서페이스가 설정되어 있지 않음
-//    private fun setCameraStabilization(
-//        onSettingCompleted : ()->Unit,
-//        onError: (Int) -> Unit
-//    ) {
-//        executorServiceMbr.execute {
-//            cameraSessionSemaphoreMbr.acquire()
-//            if (captureRequestBuilderMbr == null){
-//                cameraSessionSemaphoreMbr.release()
-//                onError(1)
-//                return@execute
-//            }
-//
-//
-//            val availableOpticalStabilization =
-//                cameraCharacteristicsMbr.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
-//            if (availableOpticalStabilization != null) {
-//                for (mode in availableOpticalStabilization) {
-//                    if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
-//                        captureRequestBuilderMbr?.set(
-//                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-//                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-//                        )
-//                        captureRequestBuilderMbr?.set(
-//                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-//                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-//                        )
-//                        return
-//                    }
-//                }
-//            }
-//
-//            // If no optical mode is available, try software.
-//            val availableVideoStabilization =
-//                cameraCharacteristicsMbr.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
-//            if (availableVideoStabilization != null) {
-//                for (mode in availableVideoStabilization) {
-//                    if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
-//                        captureRequestBuilderMbr?.set(
-//                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-//                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-//                        )
-//                        captureRequestBuilderMbr?.set(
-//                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-//                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-//                        )
-//                        return
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    // todo
-//    fun setUpZoom(zoom: Rect) {
-//        captureRequestBuilderMbr?.set(CaptureRequest.SCALER_CROP_REGION, zoom)
-//
-//        cameraCaptureSessionMbr?.setRepeatingRequest(
-//            captureRequestBuilderMbr!!.build(),
-//            object : CameraCaptureSession.CaptureCallback() {},
-//            runCameraCaptureSessionHandlerThreadMbr.handler
-//        )
-//    }
-
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화
     fun stopCameraSession() {
@@ -1322,6 +1278,72 @@ class CameraObj private constructor(
         isRepeatingMbr = false
 
         cameraSessionSemaphoreMbr.release()
+    }
+
+    // (리퀘스트 헬퍼 함수)
+    // (손떨림 방지 설정)
+    // 결과 값
+    // 0 : 촬영 안정화 기능이 제공되지 않음
+    // 1 : 기계적 안정화 설정
+    // 2 : 소프트웨어적 안정화 설정
+    fun setStabilizationRequest(captureRequestBuilder: CaptureRequest.Builder): Int {
+        if (isOpticalStabilizationAvailableMbr) {
+            captureRequestBuilder.set(
+                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+            )
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+            )
+            return 1
+        } else if (isVideoStabilizationAvailableMbr) {
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+            )
+            captureRequestBuilder.set(
+                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+            )
+            return 2
+        }
+
+        return 0
+    }
+
+    // (줌 설정)
+    // 결과 값 : 세팅된 줌 비율
+    fun setZoomRequest(captureRequestBuilder: CaptureRequest.Builder, zoomFactor: Float): Float {
+        var zoom = zoomFactor
+
+        if (maxZoomMbr < zoomFactor) {
+            // 가용 줌 최대치에 설정을 맞추기
+            zoom = maxZoomMbr
+        }
+
+        if (zoom != 1.0f) {
+            val centerX =
+                sensorSize!!.width() / 2
+            val centerY =
+                sensorSize.height() / 2
+            val deltaX =
+                ((0.5f * sensorSize.width()) / zoom).toInt()
+            val deltaY =
+                ((0.5f * sensorSize.height()) / zoom).toInt()
+
+            val mCropRegion = Rect()
+            mCropRegion.set(
+                centerX - deltaX,
+                centerY - deltaY,
+                centerX + deltaX,
+                centerY + deltaY
+            )
+
+            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+            return zoom
+        }
+        return 1.0f
     }
 
 
