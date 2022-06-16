@@ -405,6 +405,10 @@ class CameraObj private constructor(
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
     // (출력 서페이스 설정 함수)
+    // 서페이스 설정 검증 및 생성, 이후 CameraDevice, CameraCaptureSession 생성까지를 수행
+    // 사용할 서페이스 사이즈 및 종류를 결정하는 것이 주요 기능
+    // 실행시 카메라 초기화를 먼저 실행 (이미 생성된 CameraDevice 만 놔두고 모든것을 초기화)
+
     // onError 에러 코드 :
     // 1 : 출력 서페이스가 하나도 입력되어 있지 않음
     // 2 : 해당 사이즈 이미지 리더를 지원하지 않음
@@ -419,8 +423,6 @@ class CameraObj private constructor(
     // 11 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
     // 12 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
     // 13 : 카메라 세션 생성 실패
-    // 서페이스 준비 및 서페이스에 따른 세션을 생성
-    // 기존 세션은 중단되고 사라짐, 기존 세션 설정 역시 사라짐
     fun setCameraOutputSurfaces(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
@@ -875,9 +877,11 @@ class CameraObj private constructor(
     }
 
     // (카메라 리퀘스트 빌더 생성)
-    // 리퀘스트 모드 (ex : CameraDevice.TEMPLATE_PREVIEW) 및 출력할 서페이스 결정
+    // 리퀘스트 모드 (ex : CameraDevice.TEMPLATE_PREVIEW) 및 리퀘스트로 사용할 서페이스 결정
     // onPreview, onImageReader, onMediaRecorder -> 어느 서페이스를 사용할지를 결정
-    // 카메라가 다른 리퀘스트로 이미 동작중이어도 별개로 세팅이 가능 (현 세션에 영향을 주지 않고 다음 run 의 리퀘스트로 준비됨)
+    // 카메라가 다른 리퀘스트로 이미 동작중이어도 별개로 세팅이 가능
+    // = 현 세션에 영향을 주지 않고 다음 runCameraRequest 함수 실행시 적용할 리퀘스트로 준비됨
+
     // onError 에러 코드 :
     // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
     // 2 : 서페이스가 하나도 생성되지 않은 경우
@@ -952,9 +956,10 @@ class CameraObj private constructor(
     }
 
     // (카메라 리퀘스트 설정)
-    // 카메라 리퀘스트 빌더가 생성된 후의 옵션 함수(실행하지 않으면 기본 리퀘스트로 실행)
+    // 카메라 리퀘스트 빌더가 생성된 후의 옵션 함수 (실행하지 않으면 초기 리퀘스트로 실행)
     // onCameraRequestSettingTime 콜백으로 빌더를 빌려와 원하는 리퀘스트를 세팅 가능
     // 카메라가 다른 리퀘스트로 이미 동작중이어도 별개로 세팅이 가능 (현 세션에 영향을 주지 않고 다음 run 의 리퀘스트로 준비됨)
+
     // onError 에러 코드 :
     // 1 : CaptureRequest.Builder 객체가 아직 생성되지 않은 경우
     fun setCameraRequest(
@@ -980,7 +985,8 @@ class CameraObj private constructor(
     }
 
     // (준비된 카메라 리퀘스트 실행 함수)
-    // isRepeating 가 true 라면 프리뷰와 같은 지속적 요청, false 라면 capture
+    // isRepeating 인자가 true 라면 프리뷰와 같은 지속적 요청, false 라면 capture
+
     // onError 에러 코드 :
     // 1 : 카메라 세션이 생성되지 않음
     // 2 : 카메라 리퀘스트 빌더가 생성되지 않음
@@ -1037,6 +1043,7 @@ class CameraObj private constructor(
         }
     }
 
+    // todo : 미디어 레코더 개편
     // (미디어 레코더 레코딩 함수)
     // 결과 코드 :
     // 1 : 현재 미디어 레코더 서페이스 설정이 되어 있지 않음
