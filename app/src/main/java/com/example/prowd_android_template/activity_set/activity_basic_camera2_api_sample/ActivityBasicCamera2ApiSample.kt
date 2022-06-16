@@ -447,6 +447,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
             bindingMbr.recordBtn.setOnClickListener {
                 if (!(viewModelMbr.backCameraObjMbr.isRecordingMbr)) {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
                     viewModelMbr.backCameraObjMbr.createCameraRequestBuilder(
                         onPreview = true,
@@ -515,6 +516,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
         }
 
+        // todo : 기존 zoomFactor 를 반영하도록 할 것
         bindingMbr.cameraPreviewAutoFitTexture.setOnTouchListener(object : View.OnTouchListener {
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
 
