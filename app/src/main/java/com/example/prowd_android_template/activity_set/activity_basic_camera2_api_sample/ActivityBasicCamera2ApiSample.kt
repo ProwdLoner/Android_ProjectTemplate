@@ -41,8 +41,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.sqrt
 
-
-// todo : 기존 줌 유지
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -424,6 +422,68 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 초기 뷰 설정
     private var videoFilePathMbr: String? = null
     private fun viewSetting() {
+        // 카메라 핀치 줌
+        bindingMbr.cameraPreviewAutoFitTexture.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event!!.action) {
+                    MotionEvent.ACTION_DOWN -> {}
+                    MotionEvent.ACTION_UP -> v!!.performClick()
+                    else -> {}
+                }
+
+                if (event.pointerCount == 2) { // 핀치를 위한 더블 터치일 경우
+                    val currentFingerSpacing: Float
+
+                    val x = event.getX(0) - event.getX(1)
+                    val y = event.getY(0) - event.getY(1)
+
+                    currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+                    var delta = 0.05f
+                    if (viewModelMbr.beforeFingerSpacingMbr != 0f) {
+                        if (currentFingerSpacing > viewModelMbr.beforeFingerSpacingMbr) { // 손가락을 벌린 경우
+                            if (viewModelMbr.backCameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr <= delta) {
+                                delta =
+                                    viewModelMbr.backCameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr
+                            }
+                            viewModelMbr.zoomLevelMbr += delta
+                        } else if (currentFingerSpacing < viewModelMbr.beforeFingerSpacingMbr) { // 손가락을 좁힌 경오
+                            if (viewModelMbr.zoomLevelMbr - delta < 1f) {
+                                delta = viewModelMbr.zoomLevelMbr - 1f
+                            }
+                            viewModelMbr.zoomLevelMbr -= delta
+                        }
+
+                        viewModelMbr.backCameraObjMbr.setCameraRequest(
+                            onCameraRequestSettingTime = {
+                                viewModelMbr.backCameraObjMbr.setZoomRequest(
+                                    it,
+                                    viewModelMbr.zoomLevelMbr
+                                )
+                            },
+                            onCameraRequestSetComplete = {
+                                viewModelMbr.backCameraObjMbr.runCameraRequest(
+                                    true,
+                                    null,
+                                    onRequestComplete = {
+
+                                    },
+                                    onError = {
+
+                                    })
+                            },
+                            onError = {
+
+                            })
+                    }
+                    viewModelMbr.beforeFingerSpacingMbr = currentFingerSpacing
+
+                    return true
+                } else {
+                    return true
+                }
+            }
+        })
+
         val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             display!!.rotation
         } else {
@@ -469,7 +529,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     viewModelMbr.backCameraObjMbr.setStabilizationRequest(it)
 
                                     // 줌
-                                    viewModelMbr.backCameraObjMbr.setZoomRequest(it, 5f)
+                                    viewModelMbr.backCameraObjMbr.setZoomRequest(
+                                        it,
+                                        viewModelMbr.zoomLevelMbr
+                                    )
 
                                 },
                                 onCameraRequestSetComplete = {
@@ -517,72 +580,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
             }
         }
-
-        // todo : 기존 zoomFactor 를 반영하도록 할 것
-        bindingMbr.cameraPreviewAutoFitTexture.setOnTouchListener(object : View.OnTouchListener {
-            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-
-                when (event!!.action) {
-                    MotionEvent.ACTION_DOWN -> {}
-                    MotionEvent.ACTION_UP -> v!!.performClick()
-                    else -> {}
-                }
-
-                return try {
-                    val currentFingerSpacing: Float
-                    if (event.pointerCount == 2) { // 핀치를 위한 더블 터치일 경우
-                        val x = event.getX(0) - event.getX(1)
-                        val y = event.getY(0) - event.getY(1)
-
-                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
-                        var delta = 0.05f
-                        if (beforeFingerSpacing != 0f) {
-                            if (currentFingerSpacing > beforeFingerSpacing) {
-                                if (viewModelMbr.backCameraObjMbr.maxZoomMbr - zoomLevel <= delta) {
-                                    delta = viewModelMbr.backCameraObjMbr.maxZoomMbr - zoomLevel
-                                }
-                                zoomLevel += delta
-                            } else if (currentFingerSpacing < beforeFingerSpacing) {
-                                if (zoomLevel - delta < 1f) {
-                                    delta = zoomLevel - 1f
-                                }
-                                zoomLevel -= delta
-                            }
-
-                            viewModelMbr.backCameraObjMbr.setCameraRequest(
-                                onCameraRequestSettingTime = {
-                                    viewModelMbr.backCameraObjMbr.setZoomRequest(it, zoomLevel)
-                                },
-                                onCameraRequestSetComplete = {
-                                    viewModelMbr.backCameraObjMbr.runCameraRequest(
-                                        true,
-                                        null,
-                                        onRequestComplete = {
-
-                                        },
-                                        onError = {
-
-                                        })
-                                },
-                                onError = {
-
-                                })
-                        }
-                        beforeFingerSpacing = currentFingerSpacing
-
-                        return true
-                    } else {
-                        return true
-                    }
-                } catch (e: Exception) {
-                    true
-                }
-            }
-        })
     }
-
-    var beforeFingerSpacing = 0f
-    var zoomLevel = 1f
 
     // 라이브 데이터 설정
     private fun setLiveData() {
@@ -727,6 +725,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                                 // 손떨림 방지
                                 viewModelMbr.backCameraObjMbr.setStabilizationRequest(it)
+
+                                // 줌
+                                viewModelMbr.backCameraObjMbr.setZoomRequest(
+                                    it,
+                                    viewModelMbr.zoomLevelMbr
+                                )
                             },
                             onCameraRequestSetComplete = {
                                 viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,

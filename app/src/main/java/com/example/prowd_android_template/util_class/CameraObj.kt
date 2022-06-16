@@ -42,7 +42,7 @@ import kotlin.math.abs
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 사진 찍기 기능 검증
 // todo : 녹화 관련 api 재개편
-// todo : 프리뷰 핀치줌 설정 기능 추가(뷰를 제공해주면 해당 뷰에 핀치줌을 설정 = 줌 배율 변경에 따른 리스너 제공)
+// todo : onResume 연속 2번시 에러
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
