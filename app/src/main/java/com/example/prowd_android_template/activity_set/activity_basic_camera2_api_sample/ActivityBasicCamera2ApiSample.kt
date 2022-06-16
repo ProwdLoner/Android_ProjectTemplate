@@ -787,28 +787,25 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             yuvByteArrayToArgbBitmapAsyncOnProgressMbr = true
 
-            viewModelMbr.executorServiceMbr?.execute {
+            // (YUV420 Image to ARGB8888 Bitmap)
+            // RenderScript 사용
+            val bitmap =
+                RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
+                    viewModelMbr.renderScriptMbr,
+                    viewModelMbr.scriptIntrinsicYuvToRGBMbr,
+                    imgWidth,
+                    imgHeight,
+                    yuvByteArray
+                )
 
-                // (YUV420 Image to ARGB8888 Bitmap)
-                // RenderScript 사용
-                val bitmap =
-                    RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
-                        viewModelMbr.renderScriptMbr,
-                        viewModelMbr.scriptIntrinsicYuvToRGBMbr,
-                        imgWidth,
-                        imgHeight,
-                        yuvByteArray
-                    )
+            yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
 
-                yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
-
-                runOnUiThread {
-                    if (!isDestroyed) {
-                        Glide.with(this)
-                            .load(bitmap)
-                            .transform(FitCenter())
-                            .into(bindingMbr.testImg)
-                    }
+            runOnUiThread {
+                if (!isDestroyed) {
+                    Glide.with(this)
+                        .load(bitmap)
+                        .transform(FitCenter())
+                        .into(bindingMbr.testImg)
                 }
             }
         } catch (e: Exception) {
