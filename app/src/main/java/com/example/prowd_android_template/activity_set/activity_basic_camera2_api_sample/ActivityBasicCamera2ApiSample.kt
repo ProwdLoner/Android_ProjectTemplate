@@ -14,6 +14,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.MotionEvent
 import android.view.Surface
 import android.view.View
 import android.view.WindowManager
@@ -38,6 +39,7 @@ import com.example.prowd_android_template.util_object.RenderScriptUtil
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.sqrt
 
 // todo : 화면 녹화 후 결과에서 화면을 회전후 복귀하면 에러(빠른 전환 문제?)
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
@@ -510,56 +512,74 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                                 Intent.FLAG_ACTIVITY_CLEAR_TOP
                     })
-
-//                    // (카메라 실행)
-//                    // 카메라 세션 실행
-//                    val chosenPreviewSurfaceSize = CameraUtil.getCameraSize(
-//                        this,
-//                        viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
-//                        resources.displayMetrics.widthPixels.toLong() *
-//                                resources.displayMetrics.heightPixels.toLong(),
-//                        2.0 / 3.0,
-//                        SurfaceTexture::class.java
-//                    )!!
-//
-//                    val chosenImageReaderSurfaceSize = CameraUtil.getCameraSize(
-//                        this,
-//                        viewModelMbr.backCameraObjMbr!!.cameraIdMbr,
-//                        500 * 500,
-//                        2.0 / 3.0,
-//                        ImageFormat.YUV_420_888
-//                    )!!
-//
-//                    viewModelMbr.backCameraObjMbr?.startCameraSessionAsync(
-//                        arrayListOf(
-//                            CameraObj.PreviewConfigVo(
-//                                chosenPreviewSurfaceSize,
-//                                bindingMbr.cameraPreviewAutoFitTexture
-//                            )
-//                        ),
-//                        CameraObj.ImageReaderConfigVo(
-//                            chosenImageReaderSurfaceSize,
-//                            viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
-//                            imageReaderCallback = { reader ->
-//                                processImage(reader)
-//                            }
-//                        ),
-//                        null,
-//                        onCameraSessionStarted = {
-//                            // 이미지 프로세싱 실행
-//                            viewModelMbr.doImageProcessing = true
-//                        },
-//                        onCameraDisconnected = {
-//
-//                        },
-//                        onError = {
-//
-//                        }
-//                    )
                 }
             }
         }
+
+        bindingMbr.cameraPreviewAutoFitTexture.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+
+                when (event!!.action) {
+                    MotionEvent.ACTION_DOWN -> {}
+                    MotionEvent.ACTION_UP -> v!!.performClick()
+                    else -> {}
+                }
+
+                return try {
+                    val currentFingerSpacing: Float
+                    if (event.pointerCount == 2) { // 핀치를 위한 더블 터치일 경우
+                        val x = event.getX(0) - event.getX(1)
+                        val y = event.getY(0) - event.getY(1)
+
+                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+                        var delta = 0.05f
+                        if (beforeFingerSpacing != 0f) {
+                            if (currentFingerSpacing > beforeFingerSpacing) {
+                                if (viewModelMbr.backCameraObjMbr.maxZoomMbr - zoomLevel <= delta) {
+                                    delta = viewModelMbr.backCameraObjMbr.maxZoomMbr - zoomLevel
+                                }
+                                zoomLevel += delta
+                            } else if (currentFingerSpacing < beforeFingerSpacing) {
+                                if (zoomLevel - delta < 1f) {
+                                    delta = zoomLevel - 1f
+                                }
+                                zoomLevel -= delta
+                            }
+
+                            viewModelMbr.backCameraObjMbr.setCameraRequest(
+                                onCameraRequestSettingTime = {
+                                    viewModelMbr.backCameraObjMbr.setZoomRequest(it, zoomLevel)
+                                },
+                                onCameraRequestSetComplete = {
+                                    viewModelMbr.backCameraObjMbr.runCameraRequest(
+                                        true,
+                                        null,
+                                        onRequestComplete = {
+
+                                        },
+                                        onError = {
+
+                                        })
+                                },
+                                onError = {
+
+                                })
+                        }
+                        beforeFingerSpacing = currentFingerSpacing
+
+                        return true
+                    } else {
+                        return true
+                    }
+                } catch (e: Exception) {
+                    true
+                }
+            }
+        })
     }
+
+    var beforeFingerSpacing = 0f
+    var zoomLevel = 1f
 
     // 라이브 데이터 설정
     private fun setLiveData() {

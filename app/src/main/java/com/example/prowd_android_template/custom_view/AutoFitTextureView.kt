@@ -3,7 +3,6 @@ package com.example.prowd_android_template.custom_view
 import android.content.Context
 import android.util.AttributeSet
 import android.view.TextureView
-import android.view.View
 
 // <카메라 프리뷰로 사용할 텍스쳐 뷰>
 // setAspectRatio 으로 설정한 width / height 와 화면 전체 크기에 따라 재조정 되는 텍스쳐 뷰
@@ -38,6 +37,11 @@ class AutoFitTextureView @JvmOverloads constructor(
                 setMeasuredDimension((height * ratioWidth) / ratioHeight, height)
             }
         }
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
     }
 
 }
