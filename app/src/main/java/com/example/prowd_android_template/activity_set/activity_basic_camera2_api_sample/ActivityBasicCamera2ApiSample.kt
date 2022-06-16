@@ -126,7 +126,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onPause() {
         imageProcessingPauseMbr = true
-        viewModelMbr.backCameraObjMbr.stopCameraSession()
+        viewModelMbr.backCameraObjMbr.stopCameraSession(
+            onCameraStop = {
+
+            }
+        )
 
         super.onPause()
     }
@@ -538,7 +542,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 onCameraRequestSetComplete = {
                                     viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,
                                         onRequestComplete = {
-                                            viewModelMbr.backCameraObjMbr.startMediaRecorder()
+                                            viewModelMbr.backCameraObjMbr.startMediaRecorder(
+                                                onRecordingStart = {
+
+                                                },
+                                                onError = {
+
+                                                })
                                         },
                                         onError = {
 
@@ -559,7 +569,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                     // 기존 세션 종료
                     imageProcessingPauseMbr = true
-                    viewModelMbr.backCameraObjMbr.stopCameraSession()
+                    viewModelMbr.backCameraObjMbr.stopCameraSession(
+                        onCameraStop = {
+
+                        }
+                    )
 
                     val videoFile = File(videoFilePathMbr!!)
 

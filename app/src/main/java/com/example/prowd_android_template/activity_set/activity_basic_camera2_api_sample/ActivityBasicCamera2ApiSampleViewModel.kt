@@ -71,6 +71,7 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
 
     // 데이터 수집 등, 첫번째에만 발동
     var isDataFirstLoadingMbr = true
+
     // 액티비티 진입 필수 권한 요청 여부
     var isActivityPermissionClearMbr = false
 
@@ -109,7 +110,11 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         cameraHandlerThreadMbr.stopHandlerThread()
         imageReaderHandlerThreadMbr.stopHandlerThread()
 
-        backCameraObjMbr.clearCameraObject()
+        backCameraObjMbr.clearCameraObject(
+            onCameraClear = {
+
+            }
+        )
 
         super.onCleared()
     }

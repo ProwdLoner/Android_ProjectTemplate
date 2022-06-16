@@ -42,7 +42,6 @@ import kotlin.math.abs
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 사진 찍기 기능 검증
 // todo : 녹화 관련 api 재개편
-// todo : onResume 연속 2번시 에러
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -1118,28 +1117,36 @@ class CameraObj private constructor(
     // 1 : 현재 미디어 레코더 서페이스 설정이 되어 있지 않음
     // 2 : 현재 미디어 레코더 서페이스 설정은 되어 있지만 세션이 실행되고 있지 않음
     // 3 : 이미 미디어 레코더 레코딩 중
-    fun startMediaRecorder(): Int {
-        cameraSessionSemaphoreMbr.acquire()
-        if (mediaRecorderMbr == null) {
+    fun startMediaRecorder(
+        onRecordingStart: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            if (mediaRecorderMbr == null) {
+                cameraSessionSemaphoreMbr.release()
+                onError(1)
+                return@execute
+            }
+
+            if (!isRepeatingMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onError(2)
+                return@execute
+            }
+
+            if (isRecordingMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onError(3)
+                return@execute
+            }
+
+            mediaRecorderMbr!!.start()
+            isRecordingMbr = true
+
             cameraSessionSemaphoreMbr.release()
-            return 1
+            onRecordingStart()
         }
-
-        if (!isRepeatingMbr) {
-            cameraSessionSemaphoreMbr.release()
-            return 2
-        }
-
-        if (isRecordingMbr) {
-            cameraSessionSemaphoreMbr.release()
-            return 3
-        }
-
-        mediaRecorderMbr!!.start()
-        isRecordingMbr = true
-
-        cameraSessionSemaphoreMbr.release()
-        return 0
     }
 
     // (미디어 레코더 일시 중지 함수)
@@ -1148,145 +1155,160 @@ class CameraObj private constructor(
     // 1 : 현재 미디어 레코더 서페이스 설정이 되어 있지 않음
     // 2 : 현재 미디어 레코더 서페이스 설정은 되어 있지만 세션이 실행되고 있지 않음
     // 3 : 현재 미디어 레코더 레코딩 중이 아님
-    fun pauseMediaRecorder(): Int {
-        cameraSessionSemaphoreMbr.acquire()
-        if (mediaRecorderMbr == null) {
+    fun pauseMediaRecorder(
+        onRecordingPause: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            if (mediaRecorderMbr == null) {
+                cameraSessionSemaphoreMbr.release()
+                onError(1)
+                return@execute
+            }
+
+            if (!isRepeatingMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onError(2)
+                return@execute
+            }
+
+            if (!isRecordingMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onError(3)
+                return@execute
+            }
+
+            mediaRecorderMbr!!.pause()
+            isRecordingMbr = false
+
             cameraSessionSemaphoreMbr.release()
-            return 1
+            onRecordingPause()
         }
-
-        if (!isRepeatingMbr) {
-            cameraSessionSemaphoreMbr.release()
-            return 2
-        }
-
-        if (!isRecordingMbr) {
-            cameraSessionSemaphoreMbr.release()
-            return 3
-        }
-
-        mediaRecorderMbr!!.pause()
-        isRecordingMbr = false
-
-        cameraSessionSemaphoreMbr.release()
-        return 0
     }
 
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화
-    fun stopCameraSession() {
-        cameraSessionSemaphoreMbr.acquire()
+    fun stopCameraSession(onCameraStop: () -> Unit) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
 
-        if (isRecordingMbr) {
-            mediaRecorderMbr?.stop()
-            mediaRecorderMbr?.reset()
+            if (isRecordingMbr) {
+                mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
 
-            isRecordingMbr = false
+                isRecordingMbr = false
+            }
+            mediaRecorderMbr?.release()
+            mediaRecorderMbr = null
+            mediaCodecSurfaceMbr?.release()
+            mediaCodecSurfaceMbr = null
+            mediaRecorderConfigVoMbr = null
+
+            imageReaderMbr?.setOnImageAvailableListener(null, null)
+            imageReaderMbr?.close()
+            imageReaderMbr = null
+            imageReaderConfigVoMbr = null
+
+            for (previewConfigVo in previewConfigVoListMbr) {
+                previewConfigVo.autoFitTextureView.surfaceTextureListener =
+                    object : TextureView.SurfaceTextureListener {
+                        override fun onSurfaceTextureAvailable(
+                            surface: SurfaceTexture,
+                            width: Int,
+                            height: Int
+                        ) = Unit
+
+                        override fun onSurfaceTextureSizeChanged(
+                            surface: SurfaceTexture,
+                            width: Int,
+                            height: Int
+                        ) = Unit
+
+                        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                            true
+
+                        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                            Unit
+                    }
+            }
+            previewConfigVoListMbr.clear()
+            previewSurfaceListMbr.clear()
+
+            cameraCaptureSessionMbr?.close()
+            cameraCaptureSessionMbr = null
+
+            captureRequestBuilderMbr = null
+
+            isRepeatingMbr = false
+
+            cameraSessionSemaphoreMbr.release()
+            onCameraStop()
         }
-        mediaRecorderMbr?.release()
-        mediaRecorderMbr = null
-        mediaCodecSurfaceMbr?.release()
-        mediaCodecSurfaceMbr = null
-        mediaRecorderConfigVoMbr = null
-
-        imageReaderMbr?.setOnImageAvailableListener(null, null)
-        imageReaderMbr?.close()
-        imageReaderMbr = null
-        imageReaderConfigVoMbr = null
-
-        for (previewConfigVo in previewConfigVoListMbr) {
-            previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                object : TextureView.SurfaceTextureListener {
-                    override fun onSurfaceTextureAvailable(
-                        surface: SurfaceTexture,
-                        width: Int,
-                        height: Int
-                    ) = Unit
-
-                    override fun onSurfaceTextureSizeChanged(
-                        surface: SurfaceTexture,
-                        width: Int,
-                        height: Int
-                    ) = Unit
-
-                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                        true
-
-                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                        Unit
-                }
-        }
-        previewConfigVoListMbr.clear()
-        previewSurfaceListMbr.clear()
-
-        cameraCaptureSessionMbr?.close()
-        cameraCaptureSessionMbr = null
-
-        captureRequestBuilderMbr = null
-
-        isRepeatingMbr = false
-
-        cameraSessionSemaphoreMbr.release()
     }
 
     // (카메라 객체를 초기화하는 함수)
     // 카메라 디바이스 까지 닫기
-    fun clearCameraObject() {
-        cameraSessionSemaphoreMbr.acquire()
+    fun clearCameraObject(onCameraClear: () -> Unit) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
 
-        if (isRecordingMbr) {
-            mediaRecorderMbr?.stop()
-            mediaRecorderMbr?.reset()
+            if (isRecordingMbr) {
+                mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
 
-            isRecordingMbr = false
+                isRecordingMbr = false
+            }
+            mediaRecorderMbr?.release()
+            mediaRecorderMbr = null
+            mediaCodecSurfaceMbr?.release()
+            mediaCodecSurfaceMbr = null
+            mediaRecorderConfigVoMbr = null
+
+            imageReaderMbr?.setOnImageAvailableListener(null, null)
+            imageReaderMbr?.close()
+            imageReaderMbr = null
+            imageReaderConfigVoMbr = null
+
+            for (previewConfigVo in previewConfigVoListMbr) {
+                previewConfigVo.autoFitTextureView.surfaceTextureListener =
+                    object : TextureView.SurfaceTextureListener {
+                        override fun onSurfaceTextureAvailable(
+                            surface: SurfaceTexture,
+                            width: Int,
+                            height: Int
+                        ) = Unit
+
+                        override fun onSurfaceTextureSizeChanged(
+                            surface: SurfaceTexture,
+                            width: Int,
+                            height: Int
+                        ) = Unit
+
+                        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                            true
+
+                        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                            Unit
+                    }
+            }
+            previewConfigVoListMbr.clear()
+            previewSurfaceListMbr.clear()
+
+            cameraCaptureSessionMbr?.close()
+            cameraCaptureSessionMbr = null
+
+            captureRequestBuilderMbr = null
+
+            cameraDeviceMbr?.close()
+            cameraDeviceMbr = null
+
+            isRepeatingMbr = false
+
+            cameraSessionSemaphoreMbr.release()
+
+            onCameraClear()
         }
-        mediaRecorderMbr?.release()
-        mediaRecorderMbr = null
-        mediaCodecSurfaceMbr?.release()
-        mediaCodecSurfaceMbr = null
-        mediaRecorderConfigVoMbr = null
-
-        imageReaderMbr?.setOnImageAvailableListener(null, null)
-        imageReaderMbr?.close()
-        imageReaderMbr = null
-        imageReaderConfigVoMbr = null
-
-        for (previewConfigVo in previewConfigVoListMbr) {
-            previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                object : TextureView.SurfaceTextureListener {
-                    override fun onSurfaceTextureAvailable(
-                        surface: SurfaceTexture,
-                        width: Int,
-                        height: Int
-                    ) = Unit
-
-                    override fun onSurfaceTextureSizeChanged(
-                        surface: SurfaceTexture,
-                        width: Int,
-                        height: Int
-                    ) = Unit
-
-                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                        true
-
-                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                        Unit
-                }
-        }
-        previewConfigVoListMbr.clear()
-        previewSurfaceListMbr.clear()
-
-        cameraCaptureSessionMbr?.close()
-        cameraCaptureSessionMbr = null
-
-        captureRequestBuilderMbr = null
-
-        cameraDeviceMbr?.close()
-        cameraDeviceMbr = null
-
-        isRepeatingMbr = false
-
-        cameraSessionSemaphoreMbr.release()
     }
 
     // [리퀘스트 헬퍼 함수]
