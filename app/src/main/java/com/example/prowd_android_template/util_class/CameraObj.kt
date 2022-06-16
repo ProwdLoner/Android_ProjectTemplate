@@ -15,7 +15,6 @@ import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
@@ -875,151 +874,166 @@ class CameraObj private constructor(
         }
     }
 
-    // (카메라 프리뷰 모드 실행 함수)
-    // onCameraRequestSettingTime 콜백을 제공함으로써 camera2 api 리퀘스트 세팅을 직접 할 코딩 스페이스를 제공
+    // (카메라 리퀘스트 빌더 생성)
+    // 리퀘스트 모드 (ex : CameraDevice.TEMPLATE_PREVIEW) 및 출력할 서페이스 결정
+    // onPreview, onImageReader, onMediaRecorder -> 어느 서페이스를 사용할지를 결정
+    // 카메라가 다른 리퀘스트로 이미 동작중이어도 별개로 세팅이 가능 (현 세션에 영향을 주지 않고 다음 run 의 리퀘스트로 준비됨)
     // onError 에러 코드 :
-    // 1 : 현재 카메라 세션이 생성되지 않음
-    // 2 : 현재 카메라 디바이스 객체가 생성되지 않음
-    // 3 : 현재 프리뷰 모드용 출력 서페이스가 하나도 설정 되어있지 않음
-    fun runCameraPreviewMode(
-        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit)?,
-        onSessionStarted: () -> Unit,
+    // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
+    // 2 : 서페이스가 하나도 생성되지 않은 경우
+    // 3 : preview 설정이지만 preview 서페이스가 없을 때
+    // 4 : imageReader 설정이지만 imageReader 서페이스가 없을 때
+    // 5 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
+    fun createCameraRequestBuilder(
+        onPreview: Boolean,
+        onImageReader: Boolean,
+        onMediaRecorder: Boolean,
+        requestMode: Int,
+        onCameraRequestBuilderCreated: () -> Unit,
         onError: (Int) -> Unit
     ) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
-            if (cameraCaptureSessionMbr == null) {
-                cameraSessionSemaphoreMbr.release()
-                onError(1)
-                return@execute
-            }
 
             if (cameraDeviceMbr == null) {
                 cameraSessionSemaphoreMbr.release()
-                onError(2)
+                onError(1)
                 return@execute
             }
 
             if (previewConfigVoListMbr.isEmpty() &&
-                imageReaderMbr == null
+                imageReaderMbr == null &&
+                mediaCodecSurfaceMbr == null
             ) { // 생성 서페이스가 하나도 존재하지 않으면,
                 cameraSessionSemaphoreMbr.release()
-                onError(3)
+                onError(2)
                 return@execute
-            }
-
-            if (isRecordingMbr) {
-                mediaRecorderMbr?.stop()
-                mediaRecorderMbr?.reset()
-
-                isRecordingMbr = false
             }
 
             // (리퀘스트 빌더 생성)
             captureRequestBuilderMbr =
-                cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                cameraDeviceMbr!!.createCaptureRequest(requestMode)
 
-            // 서페이스 주입
-            imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-            for (previewSurface in previewSurfaceListMbr) {
-                captureRequestBuilderMbr!!.addTarget(previewSurface)
+            if (onPreview) {
+                if (previewConfigVoListMbr.isEmpty()) {
+                    cameraSessionSemaphoreMbr.release()
+                    onError(3)
+                    return@execute
+                } else {
+                    for (previewSurface in previewSurfaceListMbr) {
+                        captureRequestBuilderMbr!!.addTarget(previewSurface)
+                    }
+                }
             }
 
-            // 리퀘스트 빌더 설정
-            if (onCameraRequestSettingTime == null) {
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_MODE,
-                    CameraMetadata.CONTROL_MODE_AUTO
-                )
-            } else {
-                onCameraRequestSettingTime(captureRequestBuilderMbr!!)
+            if (onImageReader) {
+                if (imageReaderMbr == null) {
+                    cameraSessionSemaphoreMbr.release()
+                    onError(4)
+                    return@execute
+                } else {
+                    captureRequestBuilderMbr!!.addTarget(imageReaderMbr!!.surface)
+                }
             }
 
-            // (카메라 실행)
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                null,
-                cameraApiHandlerMbr
-            )
-
-            isRepeatingMbr = true
+            if (onMediaRecorder) {
+                if (mediaCodecSurfaceMbr == null) {
+                    cameraSessionSemaphoreMbr.release()
+                    onError(5)
+                    return@execute
+                } else {
+                    captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
+                }
+            }
 
             cameraSessionSemaphoreMbr.release()
-            onSessionStarted()
+            onCameraRequestBuilderCreated()
         }
     }
 
-    // (카메라 미디어 레코딩 모드 실행 함수)
-    // onCameraRequestSettingTime 콜백을 제공함으로써 camera2 api 리퀘스트 세팅을 직접 할 코딩 스페이스를 제공
+    // (카메라 리퀘스트 설정)
+    // 카메라 리퀘스트 빌더가 생성된 후의 옵션 함수(실행하지 않으면 기본 리퀘스트로 실행)
+    // onCameraRequestSettingTime 콜백으로 빌더를 빌려와 원하는 리퀘스트를 세팅 가능
+    // 카메라가 다른 리퀘스트로 이미 동작중이어도 별개로 세팅이 가능 (현 세션에 영향을 주지 않고 다음 run 의 리퀘스트로 준비됨)
     // onError 에러 코드 :
-    // 1 : 현재 카메라 세션이 생성되지 않음
-    // 2 : 현재 카메라 디바이스 객체가 생성되지 않음
-    // 3 : 현재 미디어 레코딩 서페이스가 설정되어 있지 않음
-    fun runCameraMediaRecordingMode(
-        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit)?,
-        onSessionStarted: () -> Unit,
+    // 1 : CaptureRequest.Builder 객체가 아직 생성되지 않은 경우
+    fun setCameraRequest(
+        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit),
+        onCameraRequestSetComplete: () -> Unit,
         onError: (Int) -> Unit
     ) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
+
+            if (captureRequestBuilderMbr == null) {
+                cameraSessionSemaphoreMbr.release()
+                onError(1)
+                return@execute
+            }
+
+            onCameraRequestSettingTime(captureRequestBuilderMbr!!)
+
+            onCameraRequestSetComplete()
+
+            cameraSessionSemaphoreMbr.release()
+        }
+    }
+
+    // (준비된 카메라 리퀘스트 실행 함수)
+    // isRepeating 가 true 라면 프리뷰와 같은 지속적 요청, false 라면 capture
+    // onError 에러 코드 :
+    // 1 : 카메라 세션이 생성되지 않음
+    // 2 : 카메라 리퀘스트 빌더가 생성되지 않음
+    // 3 : capture 설정으로 했으면서 imageReader 서페이스가 없는 경우
+    fun runCameraRequest(
+        isRepeating: Boolean,
+        captureCallback: CameraCaptureSession.CaptureCallback?,
+        onRequestComplete: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+
             if (cameraCaptureSessionMbr == null) {
                 cameraSessionSemaphoreMbr.release()
                 onError(1)
                 return@execute
             }
 
-            if (cameraDeviceMbr == null) {
+            if (captureRequestBuilderMbr == null) {
                 cameraSessionSemaphoreMbr.release()
                 onError(2)
                 return@execute
             }
 
-            if (mediaCodecSurfaceMbr == null) { // 미디어 레코딩 서페이스가 설정되어 있지 않음
-                cameraSessionSemaphoreMbr.release()
-                onError(3)
-                return@execute
-            }
-
-            // 기존 레코더 정리
-            if (isRecordingMbr) {
-                mediaRecorderMbr?.stop()
-                mediaRecorderMbr?.reset()
-
-                isRecordingMbr = false
-            }
-
-            // (리퀘스트 빌더 생성)
-            captureRequestBuilderMbr =
-                cameraDeviceMbr!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-
-            // 서페이스 주입
-            imageReaderMbr?.let { captureRequestBuilderMbr!!.addTarget(it.surface) }
-            for (previewSurface in previewSurfaceListMbr) {
-                captureRequestBuilderMbr!!.addTarget(previewSurface)
-            }
-            captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
-
-            // 리퀘스트 빌더 설정
-            if (onCameraRequestSettingTime == null) {
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_MODE,
-                    CameraMetadata.CONTROL_MODE_AUTO
+            if (isRepeating) {
+                cameraCaptureSessionMbr!!.setRepeatingRequest(
+                    captureRequestBuilderMbr!!.build(),
+                    null,
+                    cameraApiHandlerMbr
                 )
+                isRepeatingMbr = true
+
+                cameraSessionSemaphoreMbr.release()
+                onRequestComplete()
             } else {
-                onCameraRequestSettingTime(captureRequestBuilderMbr!!)
+                if (null == imageReaderMbr) {
+                    cameraSessionSemaphoreMbr.release()
+                    onError(3)
+                    return@execute
+                }
+
+                cameraCaptureSessionMbr!!.capture(
+                    captureRequestBuilderMbr!!.build(),
+                    captureCallback,
+                    cameraApiHandlerMbr
+                )
+
+                isRepeatingMbr = false
+
+                cameraSessionSemaphoreMbr.release()
+                onRequestComplete()
             }
-
-            // (카메라 실행)
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                null,
-                cameraApiHandlerMbr
-            )
-
-            isRepeatingMbr = true
-
-            cameraSessionSemaphoreMbr.release()
-            onSessionStarted()
         }
     }
 

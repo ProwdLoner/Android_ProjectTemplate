@@ -5,6 +5,9 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraMetadata
+import android.hardware.camera2.CaptureRequest
 import android.media.Image
 import android.media.ImageReader
 import android.net.Uri
@@ -443,10 +446,33 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
             bindingMbr.recordBtn.setOnClickListener {
                 if (!(viewModelMbr.backCameraObjMbr.isRecordingMbr)) {
-                    viewModelMbr.backCameraObjMbr.runCameraMediaRecordingMode(
-                        null,
-                        onSessionStarted = {
-                            viewModelMbr.backCameraObjMbr.startMediaRecorder()
+
+                    viewModelMbr.backCameraObjMbr.createCameraRequestBuilder(
+                        onPreview = true,
+                        onImageReader = true,
+                        onMediaRecorder = true,
+                        CameraDevice.TEMPLATE_RECORD,
+                        onCameraRequestBuilderCreated = {
+                            viewModelMbr.backCameraObjMbr.setCameraRequest(
+                                onCameraRequestSettingTime = {
+                                    it.set(
+                                        CaptureRequest.CONTROL_MODE,
+                                        CameraMetadata.CONTROL_MODE_AUTO
+                                    )
+                                },
+                                onCameraRequestSetComplete = {
+                                    viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,
+                                        onRequestComplete = {
+                                            viewModelMbr.backCameraObjMbr.startMediaRecorder()
+                                        },
+                                        onError = {
+
+                                        })
+                                },
+                                onError = {
+
+                                }
+                            )
                         },
                         onError = {
 
@@ -655,14 +681,37 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             imageReaderConfigVo,
             mediaRecorderConfigVo,
             onSurfaceAllReady = {
-                viewModelMbr.backCameraObjMbr.runCameraPreviewMode(
-                    null,
-                    onSessionStarted = {
+                viewModelMbr.backCameraObjMbr.createCameraRequestBuilder(
+                    onPreview = true,
+                    onImageReader = true,
+                    onMediaRecorder = false,
+                    CameraDevice.TEMPLATE_PREVIEW,
+                    onCameraRequestBuilderCreated = {
+                        viewModelMbr.backCameraObjMbr.setCameraRequest(
+                            onCameraRequestSettingTime = {
+                                it.set(
+                                    CaptureRequest.CONTROL_MODE,
+                                    CameraMetadata.CONTROL_MODE_AUTO
+                                )
+                            },
+                            onCameraRequestSetComplete = {
+                                viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,
+                                    onRequestComplete = {
 
+                                    },
+                                    onError = {
+
+                                    })
+                            },
+                            onError = {
+
+                            }
+                        )
                     },
                     onError = {
 
-                    })
+                    }
+                )
             },
             onError = {
 
