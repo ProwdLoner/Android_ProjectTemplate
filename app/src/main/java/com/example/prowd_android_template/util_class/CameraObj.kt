@@ -94,7 +94,7 @@ class CameraObj private constructor(
 
     // todo
     val sensorSize =
-        cameraCharacteristicsMbr.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        cameraCharacteristicsMbr.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
 
     // 카메라 최대 줌 배수
     // maxZoom 이 1.0 이라는 것은 줌이 불가능하다는 의미
