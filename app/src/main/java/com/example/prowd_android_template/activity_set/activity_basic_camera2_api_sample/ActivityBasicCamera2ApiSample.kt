@@ -41,6 +41,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.sqrt
 
+
+// todo : 기존 줌 유지
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -650,8 +652,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     this,
                     viewModelMbr.backCameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
                     viewModelMbr.backCameraObjMbr.sensorOrientationMbr,
-                    resources.displayMetrics.widthPixels.toLong() *
-                            resources.displayMetrics.heightPixels.toLong(),
+                    Long.MAX_VALUE,
                     2.0 / 3.0
                 )
                 arrayListOf(
