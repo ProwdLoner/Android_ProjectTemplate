@@ -121,7 +121,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         imageProcessingPauseMbr = false
 
         if (viewModelMbr.isActivityPermissionClearMbr) {
-            onCameraPermissionChecked()
+            onCameraPermissionChecked(false)
         }
 
         // (데이터 갱신 시점 적용)
@@ -166,16 +166,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
 
-        // 카메라 스레드 해소
-        cameraHandlerThreadMbr.stopHandlerThread()
-        imageReaderHandlerThreadMbr.stopHandlerThread()
-
         // 카메라 종료
         cameraObjMbr.clearCameraObject(
             onCameraClear = {
 
             }
         )
+
+        // 카메라 스레드 해소
+        cameraHandlerThreadMbr.stopHandlerThread()
+        imageReaderHandlerThreadMbr.stopHandlerThread()
 
         super.onDestroy()
     }
@@ -241,7 +241,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             if (isGranted) { // 권한 승인
                 viewModelMbr.isActivityPermissionClearMbr = true
-                onCameraPermissionChecked()
+                onCameraPermissionChecked(true)
             } else { // 권한 거부
                 if (!neverAskAgain) {
                     // 단순 거부
@@ -290,7 +290,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     ) { // 권한이 승인 상태
                                         // 카메라 실행
                                         viewModelMbr.isActivityPermissionClearMbr = true
-                                        onCameraPermissionChecked()
+                                        onCameraPermissionChecked(true)
                                     } else { // 권한 비승인 상태
                                         viewModelMbr.confirmDialogInfoLiveDataMbr.value =
                                             DialogConfirm.DialogInfoVO(
@@ -670,128 +670,137 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
     }
 
-    private fun onCameraPermissionChecked() {
-        // (카메라 실행)
-        // 저장 파일 경로 생성
-        videoFilePathMbr = filesDir.path + File.separator + "VID_${
-            SimpleDateFormat(
-                "yyyy_MM_dd_HH_mm_ss_SSS",
-                Locale.US
-            ).format(Date())
-        }.mp4"
+    private fun onCameraPermissionChecked(isOnCreate: Boolean) {
+        if (isOnCreate) {
+            // (카메라 실행)
+            // 저장 파일 경로 생성
+            videoFilePathMbr = filesDir.path + File.separator + "VID_${
+                SimpleDateFormat(
+                    "yyyy_MM_dd_HH_mm_ss_SSS",
+                    Locale.US
+                ).format(Date())
+            }.mp4"
 
-        // 카메라 세션 실행
-        val previewConfigVoList =
-            if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
-                    this,
-                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                    cameraObjMbr.sensorOrientationMbr,
-                    Long.MAX_VALUE,
-                    2.0 / 3.0
-                )
-                arrayListOf(
-                    CameraObj.PreviewConfigVo(
-                        chosenPreviewSurfaceSize,
-                        bindingMbr.cameraPreviewAutoFitTexture
-                    )
-                )
-            } else {
-                null
-            }
-
-        val imageReaderConfigVo =
-            if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                val chosenImageReaderSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
-                    this,
-                    cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                    cameraObjMbr.sensorOrientationMbr,
-                    500 * 500,
-                    2.0 / 3.0
-                )
-                CameraObj.ImageReaderConfigVo(
-                    chosenImageReaderSurfaceSize,
-                    imageReaderHandlerThreadMbr.handler!!,
-                    imageReaderCallback = { reader ->
-                        processImage(reader)
-                    }
-                )
-            } else {
-                null
-            }
-
-        val mediaRecorderConfigVo =
-            if (null != cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
-                val chosenMediaRecorderSurfaceSize =
-                    CameraObj.getNearestSupportedCameraOutputSize(
+            // 카메라 세션 실행
+            val previewConfigVoList =
+                if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                    val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
                         this,
-                        cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
+                        cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
                         cameraObjMbr.sensorOrientationMbr,
                         Long.MAX_VALUE,
                         2.0 / 3.0
                     )
-                CameraObj.MediaRecorderConfigVo(
-                    chosenMediaRecorderSurfaceSize,
-                    videoFilePathMbr!!,
-                    null,
-                    null,
-                    false
-                )
-            } else {
-                null
-            }
-
-        cameraObjMbr.setCameraOutputSurfaces(
-            previewConfigVoList,
-            imageReaderConfigVo,
-            mediaRecorderConfigVo,
-            onSurfaceAllReady = {
-                cameraObjMbr.createCameraRequestBuilder(
-                    onPreview = true,
-                    onImageReader = true,
-                    onMediaRecorder = false,
-                    CameraDevice.TEMPLATE_PREVIEW,
-                    onCameraRequestBuilderCreated = {
-                        cameraObjMbr.setCameraRequest(
-                            onCameraRequestSettingTime = {
-                                // Auto WhiteBalance, Auto Focus, Auto Exposure
-                                it.set(
-                                    CaptureRequest.CONTROL_MODE,
-                                    CameraMetadata.CONTROL_MODE_AUTO
-                                )
-
-                                // 손떨림 방지
-                                cameraObjMbr.setStabilizationRequest(it)
-
-                                // 줌
-                                cameraObjMbr.setZoomRequest(
-                                    it,
-                                    viewModelMbr.zoomLevelMbr
-                                )
-                            },
-                            onCameraRequestSetComplete = {
-                                cameraObjMbr.runCameraRequest(true, null,
-                                    onRequestComplete = {
-
-                                    },
-                                    onError = {
-
-                                    })
-                            },
-                            onError = {
-
-                            }
+                    arrayListOf(
+                        CameraObj.PreviewConfigVo(
+                            chosenPreviewSurfaceSize,
+                            bindingMbr.cameraPreviewAutoFitTexture
                         )
-                    },
-                    onError = {
+                    )
+                } else {
+                    null
+                }
 
-                    }
-                )
-            },
-            onError = {
+            val imageReaderConfigVo =
+                if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                    val chosenImageReaderSurfaceSize =
+                        CameraObj.getNearestSupportedCameraOutputSize(
+                            this,
+                            cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
+                            cameraObjMbr.sensorOrientationMbr,
+                            500 * 500,
+                            2.0 / 3.0
+                        )
+                    CameraObj.ImageReaderConfigVo(
+                        chosenImageReaderSurfaceSize,
+                        imageReaderHandlerThreadMbr.handler!!,
+                        imageReaderCallback = { reader ->
+                            processImage(reader)
+                        }
+                    )
+                } else {
+                    null
+                }
 
-            }
-        )
+            val mediaRecorderConfigVo =
+                if (null != cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
+                    val chosenMediaRecorderSurfaceSize =
+                        CameraObj.getNearestSupportedCameraOutputSize(
+                            this,
+                            cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
+                            cameraObjMbr.sensorOrientationMbr,
+                            Long.MAX_VALUE,
+                            2.0 / 3.0
+                        )
+                    CameraObj.MediaRecorderConfigVo(
+                        chosenMediaRecorderSurfaceSize,
+                        videoFilePathMbr!!,
+                        null,
+                        null,
+                        false
+                    )
+                } else {
+                    null
+                }
+
+            cameraObjMbr.setCameraOutputSurfaces(
+                previewConfigVoList,
+                imageReaderConfigVo,
+                mediaRecorderConfigVo,
+                onSurfaceAllReady = {
+                    cameraObjMbr.createCameraRequestBuilder(
+                        onPreview = true,
+                        onImageReader = true,
+                        onMediaRecorder = false,
+                        CameraDevice.TEMPLATE_PREVIEW,
+                        onCameraRequestBuilderCreated = {
+                            cameraObjMbr.setCameraRequest(
+                                onCameraRequestSettingTime = {
+                                    // Auto WhiteBalance, Auto Focus, Auto Exposure
+                                    it.set(
+                                        CaptureRequest.CONTROL_MODE,
+                                        CameraMetadata.CONTROL_MODE_AUTO
+                                    )
+
+                                    // 손떨림 방지
+                                    cameraObjMbr.setStabilizationRequest(it)
+
+                                    // 줌
+                                    cameraObjMbr.setZoomRequest(
+                                        it,
+                                        viewModelMbr.zoomLevelMbr
+                                    )
+                                },
+                                onCameraRequestSetComplete = {
+                                    cameraObjMbr.runCameraRequest(true, null,
+                                        onRequestComplete = {
+
+                                        },
+                                        onError = {
+
+                                        })
+                                },
+                                onError = {
+
+                                }
+                            )
+                        },
+                        onError = {
+
+                        }
+                    )
+                },
+                onError = {
+
+                }
+            )
+        } else {
+            cameraObjMbr.runCameraRequest(
+                true,
+                null,
+                onRequestComplete = {},
+                onError = {})
+        }
     }
 
     // (카메라 이미지 실시간 처리 콜백)
