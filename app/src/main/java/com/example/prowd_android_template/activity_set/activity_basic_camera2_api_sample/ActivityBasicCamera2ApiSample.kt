@@ -14,6 +14,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.MotionEvent
 import android.view.Surface
 import android.view.View
@@ -444,6 +445,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+        bindingMbr.root.setOnClickListener {
+            cameraObjMbr.setZoomFactor(5f, onZoomSettingComplete = {
+                Log.e("f", it.toString())
+            })
+        }
+
+
         // 카메라 핀치 줌
 //        bindingMbr.cameraPreviewAutoFitTexture.setOnTouchListener(object : View.OnTouchListener {
 //            override fun onTouch(v: View?, event: MotionEvent?): Boolean {

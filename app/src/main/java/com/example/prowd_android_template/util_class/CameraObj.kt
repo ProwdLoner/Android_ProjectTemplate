@@ -58,6 +58,9 @@ class CameraObj private constructor(
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
     // (카메라 정보)
+    var currentCameraZoomFactorMbr = 1f
+        private set
+
     // 떨림 보정 방지 기능 가능 여부 (기계적)
     var isOpticalStabilizationAvailableMbr: Boolean = false
         private set
@@ -896,7 +899,39 @@ class CameraObj private constructor(
                 return@execute
             }
 
+            // (사용자에게 설정 정보를 받아오는 공간 제공)
             onCameraRequestSettingTime(captureRequestBuilderMbr!!)
+
+            // (카메라 오브젝트 내부 정보를 최종적으로 채택)
+            // 오브젝트 내부 줌 정보를 설정
+            val zoom = if (maxZoomMbr < currentCameraZoomFactorMbr) {
+                // 가용 줌 최대치에 설정을 맞추기
+                maxZoomMbr
+            } else {
+                currentCameraZoomFactorMbr
+            }
+
+            if (zoom != 1.0f) {
+                val centerX =
+                    sensorSize!!.width() / 2
+                val centerY =
+                    sensorSize.height() / 2
+                val deltaX =
+                    ((0.5f * sensorSize.width()) / zoom).toInt()
+                val deltaY =
+                    ((0.5f * sensorSize.height()) / zoom).toInt()
+
+                val mCropRegion = Rect().apply {
+                    set(
+                        centerX - deltaX,
+                        centerY - deltaY,
+                        centerX + deltaX,
+                        centerY + deltaY
+                    )
+                }
+
+                captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+            }
 
             cameraSessionSemaphoreMbr.release()
 
@@ -968,6 +1003,72 @@ class CameraObj private constructor(
                 cameraSessionSemaphoreMbr.release()
                 parentActivityMbr.runOnUiThread {
                     onRequestComplete()
+                }
+            }
+        }
+    }
+
+    // (카메라 줌 비율을 변경하는 함수)
+    // 카메라가 실행중 상태라면 즉시 반영
+    // onZoomSettingComplete : 반환값 = 적용된 줌 펙터 값
+    fun setZoomFactor(
+        zoomFactor: Float,
+        onZoomSettingComplete: (Float) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            val zoom = if (maxZoomMbr < zoomFactor) {
+                // 가용 줌 최대치에 설정을 맞추기
+                maxZoomMbr
+            } else {
+                zoomFactor
+            }
+
+            currentCameraZoomFactorMbr = zoom
+
+            if (captureRequestBuilderMbr != null && zoom != 1.0f) {
+                val centerX =
+                    sensorSize!!.width() / 2
+                val centerY =
+                    sensorSize.height() / 2
+                val deltaX =
+                    ((0.5f * sensorSize.width()) / zoom).toInt()
+                val deltaY =
+                    ((0.5f * sensorSize.height()) / zoom).toInt()
+
+                val mCropRegion = Rect().apply {
+                    set(
+                        centerX - deltaX,
+                        centerY - deltaY,
+                        centerX + deltaX,
+                        centerY + deltaY
+                    )
+                }
+
+                captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+
+                if (isRepeatingMbr) {
+                    cameraCaptureSessionMbr!!.setRepeatingRequest(
+                        captureRequestBuilderMbr!!.build(),
+                        null,
+                        cameraApiHandlerMbr
+                    )
+                    isRepeatingMbr = true
+
+                    cameraSessionSemaphoreMbr.release()
+                    parentActivityMbr.runOnUiThread {
+                        onZoomSettingComplete(zoom)
+                    }
+                } else {
+                    cameraSessionSemaphoreMbr.release()
+                    parentActivityMbr.runOnUiThread {
+                        onZoomSettingComplete(zoom)
+                    }
+                }
+            } else {
+                cameraSessionSemaphoreMbr.release()
+                parentActivityMbr.runOnUiThread {
+                    onZoomSettingComplete(zoom)
                 }
             }
         }
@@ -1138,40 +1239,6 @@ class CameraObj private constructor(
         }
 
         return 0
-    }
-
-    // (줌 설정)
-    // 결과 값 : 세팅된 줌 비율
-    fun setZoomRequest(captureRequestBuilder: CaptureRequest.Builder, zoomFactor: Float): Float {
-        var zoom = zoomFactor
-
-        if (maxZoomMbr < zoomFactor) {
-            // 가용 줌 최대치에 설정을 맞추기
-            zoom = maxZoomMbr
-        }
-
-        if (zoom != 1.0f) {
-            val centerX =
-                sensorSize!!.width() / 2
-            val centerY =
-                sensorSize.height() / 2
-            val deltaX =
-                ((0.5f * sensorSize.width()) / zoom).toInt()
-            val deltaY =
-                ((0.5f * sensorSize.height()) / zoom).toInt()
-
-            val mCropRegion = Rect()
-            mCropRegion.set(
-                centerX - deltaX,
-                centerY - deltaY,
-                centerX + deltaX,
-                centerY + deltaY
-            )
-
-            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
-            return zoom
-        }
-        return 1.0f
     }
 
 
