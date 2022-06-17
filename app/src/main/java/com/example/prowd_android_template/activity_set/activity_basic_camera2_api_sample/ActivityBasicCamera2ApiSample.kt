@@ -34,6 +34,7 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
+import com.example.prowd_android_template.util_class.HandlerThreadObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 import java.io.File
@@ -41,6 +42,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.sqrt
 
+// 실제 카메라처럼 기능 개편
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -67,6 +69,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 액티비티 이동 복귀 객체
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+
+    // 카메라 실행 객체
+    lateinit var cameraObjMbr: CameraObj
+
+    // Camera2 api 핸들러 스레드
+    val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
+        this.startHandlerThread()
+    }
+
+    // 이미지 리더 핸들러 스레드
+    val imageReaderHandlerThreadMbr = HandlerThreadObj("camera_image_reader").apply {
+        this.startHandlerThread()
+    }
 
 
     // ---------------------------------------------------------------------------------------------
@@ -100,6 +115,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // todo : 디버그 끝난 후 리스타트 회전 멈추기
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
         imageProcessingPauseMbr = false
@@ -126,11 +142,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onPause() {
         imageProcessingPauseMbr = true
-        viewModelMbr.backCameraObjMbr.stopCameraSession(
-            onCameraStop = {
-
-            }
-        )
+        cameraObjMbr.pauseCameraSession(onCameraPause = {})
 
         super.onPause()
     }
@@ -154,11 +166,22 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
 
+        // 카메라 스레드 해소
+        cameraHandlerThreadMbr.stopHandlerThread()
+        imageReaderHandlerThreadMbr.stopHandlerThread()
+
+        // 카메라 종료
+        cameraObjMbr.clearCameraObject(
+            onCameraClear = {
+
+            }
+        )
+
         super.onDestroy()
     }
 
     override fun onBackPressed() {
-        viewModelMbr.doImageProcessing = false
+        imageProcessingPauseMbr = true
         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
             true,
             "카메라 종료",
@@ -173,12 +196,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             onNegBtnClicked = {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                viewModelMbr.doImageProcessing = true
+                imageProcessingPauseMbr = false
             },
             onCanceled = {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                viewModelMbr.doImageProcessing = true
+                imageProcessingPauseMbr = false
             }
         )
     }
@@ -364,6 +387,53 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
             resultLauncherCallbackMbr = null
         }
+
+        // 사용 카메라 객체 생성
+        // 후방 카메라
+        val cameraId =
+            CameraObj.getCameraIdFromFacing(this, CameraCharacteristics.LENS_FACING_BACK)
+        if (null == cameraId) {
+            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                true,
+                "카메라 에러",
+                "카메라를 열 수 없습니다.\n액티비티를 종료합니다.",
+                null,
+                onCheckBtnClicked = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    finish()
+                },
+                onCanceled = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    finish()
+                }
+            )
+        }
+
+        val cameraObj = CameraObj.getInstance(
+            this,
+            cameraId!!,
+            cameraHandlerThreadMbr.handler!!,
+            onCameraDisconnected = {}
+        )
+
+        if (cameraObj == null) {
+            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                true,
+                "카메라 에러",
+                "카메라를 열 수 없습니다.\n액티비티를 종료합니다.",
+                null,
+                onCheckBtnClicked = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    finish()
+                },
+                onCanceled = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    finish()
+                }
+            )
+        }
+
+        cameraObjMbr = cameraObj!!
     }
 
     // viewModel 저장용 데이터 초기화
@@ -373,53 +443,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 현 액티비티 진입 유저 저장
             viewModelMbr.currentUserSessionTokenMbr =
                 viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-
-            // 사용 카메라 객체 생성
-            // 후방 카메라
-            val backCameraId =
-                CameraObj.getCameraIdFromFacing(this, CameraCharacteristics.LENS_FACING_BACK)
-            if (null == backCameraId) {
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "카메라 에러",
-                    "카메라를 열 수 없습니다.\n액티비티를 종료합니다.",
-                    null,
-                    onCheckBtnClicked = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                        finish()
-                    },
-                    onCanceled = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                        finish()
-                    }
-                )
-            }
-
-            val backCameraObj = CameraObj.getInstance(
-                this,
-                backCameraId!!,
-                viewModelMbr.cameraHandlerThreadMbr.handler!!,
-                onCameraDisconnected = {}
-            )
-
-            if (backCameraObj == null) {
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "카메라 에러",
-                    "카메라를 열 수 없습니다.\n액티비티를 종료합니다.",
-                    null,
-                    onCheckBtnClicked = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                        finish()
-                    },
-                    onCanceled = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                        finish()
-                    }
-                )
-            }
-
-            viewModelMbr.backCameraObjMbr = backCameraObj!!
         }
     }
 
@@ -445,9 +468,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     var delta = 0.05f
                     if (viewModelMbr.beforeFingerSpacingMbr != 0f) {
                         if (currentFingerSpacing > viewModelMbr.beforeFingerSpacingMbr) { // 손가락을 벌린 경우
-                            if (viewModelMbr.backCameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr <= delta) {
+                            if (cameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr <= delta) {
                                 delta =
-                                    viewModelMbr.backCameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr
+                                    cameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr
                             }
                             viewModelMbr.zoomLevelMbr += delta
                         } else if (currentFingerSpacing < viewModelMbr.beforeFingerSpacingMbr) { // 손가락을 좁힌 경오
@@ -457,15 +480,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             viewModelMbr.zoomLevelMbr -= delta
                         }
 
-                        viewModelMbr.backCameraObjMbr.setCameraRequest(
+                        cameraObjMbr.setCameraRequest(
                             onCameraRequestSettingTime = {
-                                viewModelMbr.backCameraObjMbr.setZoomRequest(
+                                cameraObjMbr.setZoomRequest(
                                     it,
                                     viewModelMbr.zoomLevelMbr
                                 )
                             },
                             onCameraRequestSetComplete = {
-                                viewModelMbr.backCameraObjMbr.runCameraRequest(
+                                cameraObjMbr.runCameraRequest(
                                     true,
                                     null,
                                     onRequestComplete = {
@@ -503,7 +526,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         // 지원하는 미디어 레코더 사이즈가 없다면 녹화 버튼을 없애기
-        if (null == viewModelMbr.backCameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
+        if (null == cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
             bindingMbr.recordBtn.visibility = View.GONE
         } else {
             bindingMbr.recordBtn.visibility = View.VISIBLE
@@ -512,16 +535,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // todo 중복 클릭 방지, 녹화중 화면 효과
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
             bindingMbr.recordBtn.setOnClickListener {
-                if (!(viewModelMbr.backCameraObjMbr.isRecordingMbr)) {
+                if (!(cameraObjMbr.isRecordingMbr)) {
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
-                    viewModelMbr.backCameraObjMbr.createCameraRequestBuilder(
+                    cameraObjMbr.createCameraRequestBuilder(
                         onPreview = true,
                         onImageReader = true,
                         onMediaRecorder = true,
                         CameraDevice.TEMPLATE_RECORD,
                         onCameraRequestBuilderCreated = {
-                            viewModelMbr.backCameraObjMbr.setCameraRequest(
+                            cameraObjMbr.setCameraRequest(
                                 onCameraRequestSettingTime = {
                                     // Auto WhiteBalance, Auto Focus, Auto Exposure
                                     it.set(
@@ -530,19 +553,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     )
 
                                     // 손떨림 방지
-                                    viewModelMbr.backCameraObjMbr.setStabilizationRequest(it)
+                                    cameraObjMbr.setStabilizationRequest(it)
 
                                     // 줌
-                                    viewModelMbr.backCameraObjMbr.setZoomRequest(
+                                    cameraObjMbr.setZoomRequest(
                                         it,
                                         viewModelMbr.zoomLevelMbr
                                     )
 
                                 },
                                 onCameraRequestSetComplete = {
-                                    viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,
+                                    cameraObjMbr.runCameraRequest(true, null,
                                         onRequestComplete = {
-                                            viewModelMbr.backCameraObjMbr.startMediaRecorder(
+                                            cameraObjMbr.startMediaRecorder(
                                                 onRecordingStart = {
 
                                                 },
@@ -569,7 +592,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                     // 기존 세션 종료
                     imageProcessingPauseMbr = true
-                    viewModelMbr.backCameraObjMbr.stopCameraSession(
+                    cameraObjMbr.stopCameraSession(
                         onCameraStop = {
 
                         }
@@ -659,11 +682,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 카메라 세션 실행
         val previewConfigVoList =
-            if (null != viewModelMbr.backCameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+            if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                 val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
                     this,
-                    viewModelMbr.backCameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                    viewModelMbr.backCameraObjMbr.sensorOrientationMbr,
+                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
+                    cameraObjMbr.sensorOrientationMbr,
                     Long.MAX_VALUE,
                     2.0 / 3.0
                 )
@@ -678,17 +701,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
 
         val imageReaderConfigVo =
-            if (null != viewModelMbr.backCameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+            if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                 val chosenImageReaderSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
                     this,
-                    viewModelMbr.backCameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                    viewModelMbr.backCameraObjMbr.sensorOrientationMbr,
+                    cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
+                    cameraObjMbr.sensorOrientationMbr,
                     500 * 500,
                     2.0 / 3.0
                 )
                 CameraObj.ImageReaderConfigVo(
                     chosenImageReaderSurfaceSize,
-                    viewModelMbr.imageReaderHandlerThreadMbr.handler!!,
+                    imageReaderHandlerThreadMbr.handler!!,
                     imageReaderCallback = { reader ->
                         processImage(reader)
                     }
@@ -698,12 +721,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
 
         val mediaRecorderConfigVo =
-            if (null != viewModelMbr.backCameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
+            if (null != cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
                 val chosenMediaRecorderSurfaceSize =
                     CameraObj.getNearestSupportedCameraOutputSize(
                         this,
-                        viewModelMbr.backCameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
-                        viewModelMbr.backCameraObjMbr.sensorOrientationMbr,
+                        cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
+                        cameraObjMbr.sensorOrientationMbr,
                         Long.MAX_VALUE,
                         2.0 / 3.0
                     )
@@ -718,18 +741,18 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 null
             }
 
-        viewModelMbr.backCameraObjMbr.setCameraOutputSurfaces(
+        cameraObjMbr.setCameraOutputSurfaces(
             previewConfigVoList,
             imageReaderConfigVo,
             mediaRecorderConfigVo,
             onSurfaceAllReady = {
-                viewModelMbr.backCameraObjMbr.createCameraRequestBuilder(
+                cameraObjMbr.createCameraRequestBuilder(
                     onPreview = true,
                     onImageReader = true,
                     onMediaRecorder = false,
                     CameraDevice.TEMPLATE_PREVIEW,
                     onCameraRequestBuilderCreated = {
-                        viewModelMbr.backCameraObjMbr.setCameraRequest(
+                        cameraObjMbr.setCameraRequest(
                             onCameraRequestSettingTime = {
                                 // Auto WhiteBalance, Auto Focus, Auto Exposure
                                 it.set(
@@ -738,16 +761,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 )
 
                                 // 손떨림 방지
-                                viewModelMbr.backCameraObjMbr.setStabilizationRequest(it)
+                                cameraObjMbr.setStabilizationRequest(it)
 
                                 // 줌
-                                viewModelMbr.backCameraObjMbr.setZoomRequest(
+                                cameraObjMbr.setZoomRequest(
                                     it,
                                     viewModelMbr.zoomLevelMbr
                                 )
                             },
                             onCameraRequestSetComplete = {
-                                viewModelMbr.backCameraObjMbr.runCameraRequest(true, null,
+                                cameraObjMbr.runCameraRequest(true, null,
                                     onRequestComplete = {
 
                                     },
@@ -783,7 +806,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // 병렬처리 플래그
             if (imageProcessingPauseMbr || // onPause 상태
-                !viewModelMbr.doImageProcessing || // 이미지 프로세싱 중지 상태
                 isDestroyed || // 액티비티 자체가 종료
                 yuvByteArrayToArgbBitmapAsyncOnProgressMbr// 작업중
             ) {

@@ -37,19 +37,6 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
     var currentUserSessionTokenMbr: String? = null
 
-    // 카메라 실행 객체
-    lateinit var backCameraObjMbr: CameraObj
-
-    // Camera2 api 핸들러 스레드
-    val cameraHandlerThreadMbr = HandlerThreadObj("back_camera").apply {
-        this.startHandlerThread()
-    }
-
-    // 이미지 리더 핸들러 스레드
-    val imageReaderHandlerThreadMbr = HandlerThreadObj("back_camera_image_reader").apply {
-        this.startHandlerThread()
-    }
-
     // 랜더 스크립트
     var renderScriptMbr: RenderScript = RenderScript.create(application)
 
@@ -74,9 +61,6 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
 
     // 액티비티 진입 필수 권한 요청 여부
     var isActivityPermissionClearMbr = false
-
-    // 카메라 이미지 프로세싱 여부
-    var doImageProcessing = true
 
 
     // ---------------------------------------------------------------------------------------------
@@ -105,16 +89,6 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
         scriptCRotatorMbr.destroy()
         renderScriptMbr.finish()
         renderScriptMbr.destroy()
-
-        // 카메라 스레드 해소
-        cameraHandlerThreadMbr.stopHandlerThread()
-        imageReaderHandlerThreadMbr.stopHandlerThread()
-
-        backCameraObjMbr.clearCameraObject(
-            onCameraClear = {
-
-            }
-        )
 
         super.onCleared()
     }
