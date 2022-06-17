@@ -1244,8 +1244,11 @@ class CameraObj private constructor(
         return 0
     }
 
+    // (뷰 핀치 동작에 따른 줌 변경 리스너 주입 함수)
+    // 뷰를 주입하면 해당 뷰를 핀칭할 때에 줌을 변경할수 있도록 리스너를 주입
+    // delta : 단위 핀치 이벤트에 따른 줌 변화량 = 높을수록 민감
     var beforePinchSpacingMbr: Float? = null
-    fun setCameraPinchZoomTouchListener(view: View, delta : Float = 0.05f){
+    fun setCameraPinchZoomTouchListener(view: View, delta: Float = 0.05f) {
         view.setOnTouchListener(object : View.OnTouchListener {
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
                 // 형식 맞추기 코드
