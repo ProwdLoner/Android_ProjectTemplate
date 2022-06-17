@@ -40,7 +40,6 @@ import kotlin.math.abs
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 사진 찍기 기능 검증
 // todo : 녹화 관련 api 재개편
-// todo : 90 도 돌아간 상태에서 프리뷰 잘림 현상
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,

@@ -445,66 +445,66 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         // 카메라 핀치 줌
-        bindingMbr.cameraPreviewAutoFitTexture.setOnTouchListener(object : View.OnTouchListener {
-            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-                when (event!!.action) {
-                    MotionEvent.ACTION_DOWN -> {}
-                    MotionEvent.ACTION_UP -> v!!.performClick()
-                    else -> {}
-                }
-
-                if (event.pointerCount == 2) { // 핀치를 위한 더블 터치일 경우
-                    val currentFingerSpacing: Float
-
-                    val x = event.getX(0) - event.getX(1)
-                    val y = event.getY(0) - event.getY(1)
-
-                    currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
-                    var delta = 0.05f
-                    if (viewModelMbr.beforeFingerSpacingMbr != 0f) {
-                        if (currentFingerSpacing > viewModelMbr.beforeFingerSpacingMbr) { // 손가락을 벌린 경우
-                            if (cameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr <= delta) {
-                                delta =
-                                    cameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr
-                            }
-                            viewModelMbr.zoomLevelMbr += delta
-                        } else if (currentFingerSpacing < viewModelMbr.beforeFingerSpacingMbr) { // 손가락을 좁힌 경오
-                            if (viewModelMbr.zoomLevelMbr - delta < 1f) {
-                                delta = viewModelMbr.zoomLevelMbr - 1f
-                            }
-                            viewModelMbr.zoomLevelMbr -= delta
-                        }
-
-                        cameraObjMbr.setCameraRequest(
-                            onCameraRequestSettingTime = {
-                                cameraObjMbr.setZoomRequest(
-                                    it,
-                                    viewModelMbr.zoomLevelMbr
-                                )
-                            },
-                            onCameraRequestSetComplete = {
-                                cameraObjMbr.runCameraRequest(
-                                    true,
-                                    null,
-                                    onRequestComplete = {
-
-                                    },
-                                    onError = {
-
-                                    })
-                            },
-                            onError = {
-
-                            })
-                    }
-                    viewModelMbr.beforeFingerSpacingMbr = currentFingerSpacing
-
-                    return true
-                } else {
-                    return true
-                }
-            }
-        })
+//        bindingMbr.cameraPreviewAutoFitTexture.setOnTouchListener(object : View.OnTouchListener {
+//            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+//                when (event!!.action) {
+//                    MotionEvent.ACTION_DOWN -> {}
+//                    MotionEvent.ACTION_UP -> v!!.performClick()
+//                    else -> {}
+//                }
+//
+//                if (event.pointerCount == 2) { // 핀치를 위한 더블 터치일 경우
+//                    val currentFingerSpacing: Float
+//
+//                    val x = event.getX(0) - event.getX(1)
+//                    val y = event.getY(0) - event.getY(1)
+//
+//                    currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+//                    var delta = 0.05f
+//                    if (viewModelMbr.beforeFingerSpacingMbr != 0f) {
+//                        if (currentFingerSpacing > viewModelMbr.beforeFingerSpacingMbr) { // 손가락을 벌린 경우
+//                            if (cameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr <= delta) {
+//                                delta =
+//                                    cameraObjMbr.maxZoomMbr - viewModelMbr.zoomLevelMbr
+//                            }
+//                            viewModelMbr.zoomLevelMbr += delta
+//                        } else if (currentFingerSpacing < viewModelMbr.beforeFingerSpacingMbr) { // 손가락을 좁힌 경오
+//                            if (viewModelMbr.zoomLevelMbr - delta < 1f) {
+//                                delta = viewModelMbr.zoomLevelMbr - 1f
+//                            }
+//                            viewModelMbr.zoomLevelMbr -= delta
+//                        }
+//
+//                        cameraObjMbr.setCameraRequest(
+//                            onCameraRequestSettingTime = {
+//                                cameraObjMbr.setZoomRequest(
+//                                    it,
+//                                    viewModelMbr.zoomLevelMbr
+//                                )
+//                            },
+//                            onCameraRequestSetComplete = {
+//                                cameraObjMbr.runCameraRequest(
+//                                    true,
+//                                    null,
+//                                    onRequestComplete = {
+//
+//                                    },
+//                                    onError = {
+//
+//                                    })
+//                            },
+//                            onError = {
+//
+//                            })
+//                    }
+//                    viewModelMbr.beforeFingerSpacingMbr = currentFingerSpacing
+//
+//                    return true
+//                } else {
+//                    return true
+//                }
+//            }
+//        })
 
         val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             display!!.rotation
@@ -671,11 +671,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             cameraObjMbr.setCameraOutputSurfaces(
                 previewConfigVoList =
                 if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                    // todo : area max 로 했을 시 90도 회전시 원하는 비율이 나오지 않음
                     val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
                         this,
                         cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
                         cameraObjMbr.sensorOrientationMbr,
-                        Long.MAX_VALUE,
+                        if ((resources.displayMetrics.widthPixels.toLong() * resources.displayMetrics.heightPixels.toLong()) < 0) {
+                            // 오버플로우 시
+                            Long.MAX_VALUE
+                        } else {
+                            resources.displayMetrics.widthPixels.toLong() * resources.displayMetrics.heightPixels.toLong()
+                        },
                         2.0 / 3.0
                     )
                     arrayListOf(
@@ -725,12 +731,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                                     // 손떨림 방지
                                     cameraObjMbr.setStabilizationRequest(it)
-
-                                    // 줌
-                                    cameraObjMbr.setZoomRequest(
-                                        it,
-                                        viewModelMbr.zoomLevelMbr
-                                    )
                                 },
                                 onCameraRequestSetComplete = {
                                     cameraObjMbr.runCameraRequest(true, null,

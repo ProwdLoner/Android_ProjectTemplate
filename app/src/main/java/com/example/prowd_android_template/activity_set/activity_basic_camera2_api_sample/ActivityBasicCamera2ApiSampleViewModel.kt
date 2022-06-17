@@ -46,10 +46,6 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
 
     var scriptCRotatorMbr: ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
 
-    // 카메라 핀치 줌 변수
-    var beforeFingerSpacingMbr = 0f
-    var zoomLevelMbr = 1f
-
     // (플래그 데이터)
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
