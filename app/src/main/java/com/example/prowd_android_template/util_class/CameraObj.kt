@@ -16,8 +16,10 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
 import android.util.Size
+import android.view.MotionEvent
 import android.view.Surface
 import android.view.TextureView
+import android.view.View
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
@@ -25,6 +27,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.math.abs
+import kotlin.math.sqrt
 
 
 // <Camera 디바이스 하나에 대한 obj>
@@ -1239,6 +1242,64 @@ class CameraObj private constructor(
         }
 
         return 0
+    }
+
+    var beforePinchSpacingMbr: Float? = null
+    fun setCameraPinchZoomTouchListener(view: View, delta : Float = 0.05f){
+        view.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                // 형식 맞추기 코드
+                when (event!!.action) {
+                    MotionEvent.ACTION_DOWN -> {}
+                    MotionEvent.ACTION_UP -> {
+                        v!!.performClick()
+
+                        // 손가락을 떼면 기존 핀치 너비 비우기
+                        beforePinchSpacingMbr = null
+                    }
+                    else -> {}
+                }
+
+                if (event.pointerCount == 2) { // 핀치를 위한 더블 터치일 경우
+                    // 현재 핀치 넓이 구하기
+                    val currentFingerSpacing: Float
+                    val x = event.getX(0) - event.getX(1)
+                    val y = event.getY(0) - event.getY(1)
+                    currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+
+                    if (beforePinchSpacingMbr != null) {
+                        if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
+                            val zoom =
+                                if ((currentCameraZoomFactorMbr + delta) > maxZoomMbr) {
+                                    maxZoomMbr
+                                } else {
+                                    currentCameraZoomFactorMbr + delta
+                                }
+                            setZoomFactor(
+                                zoom,
+                                onZoomSettingComplete = {})
+                        } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
+                            val zoom =
+                                if ((currentCameraZoomFactorMbr - delta) < 1.0f) {
+                                    1.0f
+                                } else {
+                                    currentCameraZoomFactorMbr - delta
+                                }
+                            setZoomFactor(
+                                zoom,
+                                onZoomSettingComplete = {})
+                        }
+                    }
+
+                    // 핀치 너비를 갱신
+                    beforePinchSpacingMbr = currentFingerSpacing
+
+                    return true
+                } else {
+                    return true
+                }
+            }
+        })
     }
 
 
