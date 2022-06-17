@@ -12,8 +12,6 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.repository.RepositorySet
-import com.example.prowd_android_template.util_class.CameraObj
-import com.example.prowd_android_template.util_class.HandlerThreadObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
