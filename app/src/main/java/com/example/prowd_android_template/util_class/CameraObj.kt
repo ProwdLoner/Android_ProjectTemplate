@@ -1212,38 +1212,6 @@ class CameraObj private constructor(
         }
     }
 
-    // [리퀘스트 헬퍼 함수]
-    // (손떨림 방지 설정)
-    // 결과 값
-    // 0 : 촬영 안정화 기능이 제공되지 않음
-    // 1 : 기계적 안정화 설정
-    // 2 : 소프트웨어적 안정화 설정
-    fun setStabilizationRequest(captureRequestBuilder: CaptureRequest.Builder): Int {
-        if (isOpticalStabilizationAvailableMbr) {
-            captureRequestBuilder.set(
-                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-            )
-            captureRequestBuilder.set(
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-            )
-            return 1
-        } else if (isVideoStabilizationAvailableMbr) {
-            captureRequestBuilder.set(
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-            )
-            captureRequestBuilder.set(
-                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-            )
-            return 2
-        }
-
-        return 0
-    }
-
     // (뷰 핀치 동작에 따른 줌 변경 리스너 주입 함수)
     // 뷰를 주입하면 해당 뷰를 핀칭할 때에 줌을 변경할수 있도록 리스너를 주입
     // delta : 단위 핀치 이벤트에 따른 줌 변화량 = 높을수록 민감
@@ -1303,6 +1271,39 @@ class CameraObj private constructor(
                 }
             }
         })
+    }
+
+    // todo : 대부분의 기능을 래핑해서 제공할것
+    // [리퀘스트 헬퍼 함수]
+    // (손떨림 방지 설정)
+    // 결과 값
+    // 0 : 촬영 안정화 기능이 제공되지 않음
+    // 1 : 기계적 안정화 설정
+    // 2 : 소프트웨어적 안정화 설정
+    fun setStabilizationRequest(captureRequestBuilder: CaptureRequest.Builder): Int {
+        if (isOpticalStabilizationAvailableMbr) {
+            captureRequestBuilder.set(
+                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+            )
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+            )
+            return 1
+        } else if (isVideoStabilizationAvailableMbr) {
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+            )
+            captureRequestBuilder.set(
+                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+            )
+            return 2
+        }
+
+        return 0
     }
 
 
