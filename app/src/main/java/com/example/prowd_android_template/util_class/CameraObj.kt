@@ -46,6 +46,8 @@ import kotlin.math.sqrt
 // todo : 사진 찍기 기능 검증
 // todo : 녹화 관련 api 재개편
 // todo : 서페이스 각자 세팅 기능 오버라이딩
+// todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
+// todo : 클릭 exposure, whitebalance 등
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -101,7 +103,7 @@ class CameraObj private constructor(
             return false
         }
 
-    // todo
+    // 센서 사이즈
     val sensorSize =
         cameraCharacteristicsMbr.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
 
@@ -139,7 +141,6 @@ class CameraObj private constructor(
     private var imageReaderMbr: ImageReader? = null
 
     // 미디어 리코더 세팅 부산물
-    // todo 해제
     var mediaRecorderConfigVoMbr: MediaRecorderConfigVo? = null
     private var mediaRecorderMbr: MediaRecorder? = null
     private var mediaCodecSurfaceMbr: Surface? = null
@@ -1320,7 +1321,6 @@ class CameraObj private constructor(
         })
     }
 
-    // todo : 대부분의 기능을 래핑해서 제공할것
     // [리퀘스트 헬퍼 함수]
     // (손떨림 방지 설정)
     // 결과 값
