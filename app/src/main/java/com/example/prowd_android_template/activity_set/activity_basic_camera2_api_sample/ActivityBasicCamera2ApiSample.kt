@@ -26,11 +26,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.FitCenter
-import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.ScriptC_rotator
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -123,7 +121,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // todo : 디버그 끝난 후 리스타트 회전 멈추기
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
         if (viewModelMbr.isActivityPermissionClearMbr) {
@@ -147,7 +144,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        cameraObjMbr.pauseCameraSession(onCameraPause = {})
+        if (cameraObjMbr.isRecordingMbr) {
+            // 레코딩 중이라면 기존 레코딩을 제거
+            // todo
+        } else {
+            cameraObjMbr.pauseCameraSession(onCameraPause = {})
+        }
 
         super.onPause()
     }
@@ -486,7 +488,28 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         } else {
             bindingMbr.recordBtn.visibility = View.VISIBLE
 
+
             // todo
+//            val mediaRecorderConfigVo =
+//                if (null != cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
+//                    val chosenSurfaceSize =
+//                        CameraObj.getNearestSupportedCameraOutputSize(
+//                            this,
+//                            cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
+//                            cameraObjMbr.sensorOrientationMbr,
+//                            Long.MAX_VALUE,
+//                            2.0 / 3.0
+//                        )
+//                    CameraObj.MediaRecorderConfigVo(
+//                        chosenSurfaceSize,
+//                        File("${this.filesDir.absolutePath}/temp.mp4"),
+//                        null,
+//                        null,
+//                        false
+//                    )
+//                } else {
+//                    null
+//                }
             // recording pause 시에는 녹화를 멈추고 기존 파일을 제거하도록 처리
             // todo 중복 클릭 방지, 녹화중 화면 효과
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
@@ -620,28 +643,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 null
             }
 
-            // todo
-            val mediaRecorderConfigVo =
-                if (null != cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
-                    val chosenSurfaceSize =
-                        CameraObj.getNearestSupportedCameraOutputSize(
-                            this,
-                            cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
-                            cameraObjMbr.sensorOrientationMbr,
-                            Long.MAX_VALUE,
-                            2.0 / 3.0
-                        )
-                    CameraObj.MediaRecorderConfigVo(
-                        chosenSurfaceSize,
-                        File("${this.filesDir.absolutePath}/temp.mp4"),
-                        null,
-                        null,
-                        false
-                    )
-                } else {
-                    null
-                }
-
             val imageReaderConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                 val chosenImageReaderSurfaceSize =
                     CameraObj.getNearestSupportedCameraOutputSize(
@@ -665,7 +666,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             cameraObjMbr.setCameraOutputSurfaces(
                 previewConfigVo,
                 imageReaderConfigVo,
-                mediaRecorderConfigVo,
+                null,
                 onSurfaceAllReady = {
                     cameraObjMbr.setCameraRequestBuilder(
                         onPreview = true,
