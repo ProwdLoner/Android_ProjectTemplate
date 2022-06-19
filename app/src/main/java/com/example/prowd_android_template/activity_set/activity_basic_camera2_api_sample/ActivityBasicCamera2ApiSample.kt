@@ -149,6 +149,99 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         if (cameraObjMbr.isRecordingMbr) {
             // 레코딩 중이라면 기존 레코딩을 제거
             // todo
+            // 기존 저장 폴더 백업
+            val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+            // 카메라 초기화
+            cameraObjMbr.stopCameraObject(
+                executorOnCameraStop = {
+                    // 기존 저장 폴더 삭제
+                    videoFile.delete()
+
+                    // 미디어 레코드를 제외한 카메라 세션 준비
+                    val previewConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                        // 지원 사이즈 탐지
+                        val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
+                            this,
+                            cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
+                            cameraObjMbr.sensorOrientationMbr,
+                            Long.MAX_VALUE,
+                            2.0 / 3.0
+                        )
+
+                        // 설정 객체 반환
+                        arrayListOf(
+                            CameraObj.PreviewConfigVo(
+                                chosenPreviewSurfaceSize,
+                                bindingMbr.cameraPreviewAutoFitTexture
+                            )
+                        )
+                    } else {
+                        // 지원 사이즈가 없기에 null 반환
+                        null
+                    }
+
+                    val imageReaderConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                        // 지원 사이즈 탐지
+                        val chosenImageReaderSurfaceSize =
+                            CameraObj.getNearestSupportedCameraOutputSize(
+                                this,
+                                cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
+                                cameraObjMbr.sensorOrientationMbr,
+                                500 * 500,
+                                2.0 / 3.0
+                            )
+
+                        // 설정 객체 반환
+                        CameraObj.ImageReaderConfigVo(
+                            chosenImageReaderSurfaceSize,
+                            imageReaderHandlerThreadMbr.handler!!,
+                            imageReaderCallback = { reader ->
+                                processImage(reader)
+                            }
+                        )
+                    } else {
+                        // 지원 사이즈가 없기에 null 반환
+                        null
+                    }
+
+                    // 카메라 서페이스 설정
+                    cameraObjMbr.setCameraOutputSurfaces(
+                        previewConfigVo,
+                        imageReaderConfigVo,
+                        null,
+                        executorOnSurfaceAllReady = {
+
+                            // 카메라 리퀘스트 설정
+                            cameraObjMbr.setCameraRequestBuilder(
+                                onPreview = true,
+                                onImageReader = true,
+                                onMediaRecorder = false,
+                                CameraDevice.TEMPLATE_PREVIEW,
+                                executorOnCameraRequestSettingTime = {
+                                    // Auto WhiteBalance, Auto Focus, Auto Exposure
+                                    it.set(
+                                        CaptureRequest.CONTROL_MODE,
+                                        CameraMetadata.CONTROL_MODE_AUTO
+                                    )
+
+                                    // 손떨림 방지
+                                    cameraObjMbr.setStabilizationRequest(it)
+                                },
+                                executorOnCameraRequestBuilderSet = {
+
+                                },
+                                executorOnError = {
+
+                                }
+                            )
+                        },
+                        executorOnError = {
+
+                        }
+                    )
+                }
+            )
+
         } else {
             cameraObjMbr.pauseCameraSession(executorOnCameraPause = {})
         }

@@ -704,7 +704,7 @@ class CameraObj private constructor(
 
                 // 파일 경로 설정
                 // 만일 같은 파일을 넣으면 새로써짐
-                if (mediaRecorderConfigVo.mediaRecordingMp4File.exists()){
+                if (mediaRecorderConfigVo.mediaRecordingMp4File.exists()) {
                     mediaRecorderConfigVo.mediaRecordingMp4File.delete()
                 }
                 mediaRecorderConfigVo.mediaRecordingMp4File.createNewFile()
@@ -1105,32 +1105,6 @@ class CameraObj private constructor(
         }
     }
 
-    // todo : pause, resume 처리
-    // (미디어 레코딩 시작)
-    // 결과 코드 :
-    // 0 : 정상 동작
-    // 1 : 미디어 레코딩 서페이스가 없음
-    // 2 : 현재 카메라가 동작중이 아님
-    fun startMediaRecording(): Int {
-        if (null == mediaCodecSurfaceMbr) {
-            return 1
-        }
-
-        if (!isRepeatingMbr) {
-            return 2
-        }
-
-        if (isRecordingMbr) {
-            return 0
-        }
-
-        mediaRecorderMbr!!.start()
-
-        isRecordingMbr = true
-
-        return 0
-    }
-
     // (CameraSession 을 대기 상태로 만드는 함수)
     // 현재 세션이 repeating 이라면 이를 중단함.
     // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
@@ -1158,7 +1132,7 @@ class CameraObj private constructor(
 
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
-    fun stopCameraSession(executorOnCameraStop: () -> Unit) {
+    fun stopCameraObject(executorOnCameraStop: () -> Unit) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
             if (isRecordingMbr) {
@@ -1380,6 +1354,35 @@ class CameraObj private constructor(
     }
 
     // [미디어 레코더 변경 함수 모음]
+    // prepare 는 서페이스 설정시 자동 실행
+    // start 는 원하는 녹화 시점에 한번만 실행, 이후 pause, resume 으로 정지 재개
+    // stop 은 외부 사용 금지. stop 을 하고 싶다면 cameraObject 를 stop 시키면 자동으로 실행됨
+
+    // (미디어 레코딩 시작)
+    // 결과 코드 :
+    // 0 : 정상 동작
+    // 1 : 미디어 레코딩 서페이스가 없음
+    // 2 : 현재 카메라가 동작중이 아님
+    fun startMediaRecording(): Int {
+        if (null == mediaCodecSurfaceMbr) {
+            return 1
+        }
+
+        if (!isRepeatingMbr) {
+            return 2
+        }
+
+        if (isRecordingMbr) {
+            return 0
+        }
+
+        mediaRecorderMbr!!.start()
+
+        isRecordingMbr = true
+
+        return 0
+    }
+
     // (미디어 레코딩 재시작)
     // 결과 코드 :
     // 0 : 정상 동작
@@ -1407,24 +1410,15 @@ class CameraObj private constructor(
 
     // (미디어 레코딩 일시정지)
     fun pauseMediaRecording() {
-        if (!isRecordingMbr) {
-            return
-        }
-
         mediaRecorderMbr!!.pause()
         isRecordingMbr = false
     }
 
-    fun stopMediaRecording() {
-        if (!isRecordingMbr) {
-            return
-        }
-
-        mediaRecorderMbr!!.stop()
-        isRecordingMbr = false
-    }
 
     // [카메라 상태 변경 함수 모음]
+    // CameraObj 객체 안의 상태 멤버변수를 조절하며 실제 세션 설정에 반영하는 함수
+    // todo : request setting callback 을 제거하고 모두 여기에 이식
+
     // (카메라 줌 비율을 변경하는 함수)
     // 카메라가 실행중 상태라면 즉시 반영
     // onZoomSettingComplete : 반환값 = 적용된 줌 펙터 값
