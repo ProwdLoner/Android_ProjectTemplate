@@ -68,15 +68,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (데이터)
     // 카메라 실행 객체
-    lateinit var cameraObjMbr: CameraObj
+    private lateinit var cameraObjMbr: CameraObj
 
     // Camera2 api 핸들러 스레드
-    val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
+    private val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
         this.startHandlerThread()
     }
 
     // 이미지 리더 핸들러 스레드
-    val imageReaderHandlerThreadMbr = HandlerThreadObj("camera_image_reader").apply {
+    private val imageReaderHandlerThreadMbr = HandlerThreadObj("camera_image_reader").apply {
         this.startHandlerThread()
     }
 
