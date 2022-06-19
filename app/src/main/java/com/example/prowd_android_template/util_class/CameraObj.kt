@@ -45,6 +45,7 @@ import kotlin.math.sqrt
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 사진 찍기 기능 검증
 // todo : 녹화 관련 api 재개편
+// todo : 서페이스 각자 세팅 기능 오버라이딩
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -682,7 +683,6 @@ class CameraObj private constructor(
                 ) / 1_000_000_000.0)
                 val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
 
-                // todo : 이어 저장 확인
                 // 파일 확장자 검증
                 if (mediaRecorderConfigVo.mediaRecordingMp4File.extension != "mp4") {
                     imageReaderMbr = null
@@ -703,6 +703,11 @@ class CameraObj private constructor(
                 mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
 
                 // 파일 경로 설정
+                // 만일 같은 파일을 넣으면 새로써짐
+                if (mediaRecorderConfigVo.mediaRecordingMp4File.exists()){
+                    mediaRecorderConfigVo.mediaRecordingMp4File.delete()
+                }
+                mediaRecorderConfigVo.mediaRecordingMp4File.createNewFile()
                 mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaRecordingMp4File.absolutePath)
 
                 // 데이터 저장 퀄리티 설정
@@ -1126,110 +1131,6 @@ class CameraObj private constructor(
         return 0
     }
 
-    // (미디어 레코딩 재시작)
-    // 결과 코드 :
-    // 0 : 정상 동작
-    // 1 : 미디어 레코딩 서페이스가 없음
-    // 2 : 현재 카메라가 동작중이 아님
-    fun resumeMediaRecording(): Int {
-        if (null == mediaCodecSurfaceMbr) {
-            return 1
-        }
-
-        if (!isRepeatingMbr) {
-            return 2
-        }
-
-        if (isRecordingMbr) {
-            return 0
-        }
-
-        mediaRecorderMbr!!.resume()
-
-        isRecordingMbr = true
-
-        return 0
-    }
-
-    // (미디어 레코딩 일시정지)
-    fun pauseMediaRecording() {
-        if (!isRecordingMbr) {
-            return
-        }
-
-        mediaRecorderMbr!!.pause()
-        isRecordingMbr = false
-    }
-
-    fun stopMediaRecording() {
-        if (!isRecordingMbr) {
-            return
-        }
-
-        mediaRecorderMbr!!.stop()
-        isRecordingMbr = false
-    }
-
-    // (카메라 줌 비율을 변경하는 함수)
-    // 카메라가 실행중 상태라면 즉시 반영
-    // onZoomSettingComplete : 반환값 = 적용된 줌 펙터 값
-    fun setZoomFactor(
-        zoomFactor: Float,
-        executorOnZoomSettingComplete: (Float) -> Unit
-    ) {
-        executorServiceMbr.execute {
-            cameraSessionSemaphoreMbr.acquire()
-            val zoom = if (maxZoomMbr < zoomFactor) {
-                // 가용 줌 최대치에 설정을 맞추기
-                maxZoomMbr
-            } else {
-                zoomFactor
-            }
-
-            currentCameraZoomFactorMbr = zoom
-
-            if (captureRequestBuilderMbr != null && zoom != 1.0f) {
-                val centerX =
-                    sensorSize!!.width() / 2
-                val centerY =
-                    sensorSize.height() / 2
-                val deltaX =
-                    ((0.5f * sensorSize.width()) / zoom).toInt()
-                val deltaY =
-                    ((0.5f * sensorSize.height()) / zoom).toInt()
-
-                val mCropRegion = Rect().apply {
-                    set(
-                        centerX - deltaX,
-                        centerY - deltaY,
-                        centerX + deltaX,
-                        centerY + deltaY
-                    )
-                }
-
-                captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
-
-                if (isRepeatingMbr) {
-                    cameraCaptureSessionMbr!!.setRepeatingRequest(
-                        captureRequestBuilderMbr!!.build(),
-                        null,
-                        cameraApiHandlerMbr
-                    )
-                    isRepeatingMbr = true
-
-                    cameraSessionSemaphoreMbr.release()
-                    executorOnZoomSettingComplete(zoom)
-                } else {
-                    cameraSessionSemaphoreMbr.release()
-                    executorOnZoomSettingComplete(zoom)
-                }
-            } else {
-                cameraSessionSemaphoreMbr.release()
-                executorOnZoomSettingComplete(zoom)
-            }
-        }
-    }
-
     // (CameraSession 을 대기 상태로 만드는 함수)
     // 현재 세션이 repeating 이라면 이를 중단함.
     // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
@@ -1478,6 +1379,111 @@ class CameraObj private constructor(
         return 0
     }
 
+    // [미디어 레코더 변경 함수 모음]
+    // (미디어 레코딩 재시작)
+    // 결과 코드 :
+    // 0 : 정상 동작
+    // 1 : 미디어 레코딩 서페이스가 없음
+    // 2 : 현재 카메라가 동작중이 아님
+    fun resumeMediaRecording(): Int {
+        if (null == mediaCodecSurfaceMbr) {
+            return 1
+        }
+
+        if (!isRepeatingMbr) {
+            return 2
+        }
+
+        if (isRecordingMbr) {
+            return 0
+        }
+
+        mediaRecorderMbr!!.resume()
+
+        isRecordingMbr = true
+
+        return 0
+    }
+
+    // (미디어 레코딩 일시정지)
+    fun pauseMediaRecording() {
+        if (!isRecordingMbr) {
+            return
+        }
+
+        mediaRecorderMbr!!.pause()
+        isRecordingMbr = false
+    }
+
+    fun stopMediaRecording() {
+        if (!isRecordingMbr) {
+            return
+        }
+
+        mediaRecorderMbr!!.stop()
+        isRecordingMbr = false
+    }
+
+    // [카메라 상태 변경 함수 모음]
+    // (카메라 줌 비율을 변경하는 함수)
+    // 카메라가 실행중 상태라면 즉시 반영
+    // onZoomSettingComplete : 반환값 = 적용된 줌 펙터 값
+    fun setZoomFactor(
+        zoomFactor: Float,
+        executorOnZoomSettingComplete: (Float) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            val zoom = if (maxZoomMbr < zoomFactor) {
+                // 가용 줌 최대치에 설정을 맞추기
+                maxZoomMbr
+            } else {
+                zoomFactor
+            }
+
+            currentCameraZoomFactorMbr = zoom
+
+            if (captureRequestBuilderMbr != null && zoom != 1.0f) {
+                val centerX =
+                    sensorSize!!.width() / 2
+                val centerY =
+                    sensorSize.height() / 2
+                val deltaX =
+                    ((0.5f * sensorSize.width()) / zoom).toInt()
+                val deltaY =
+                    ((0.5f * sensorSize.height()) / zoom).toInt()
+
+                val mCropRegion = Rect().apply {
+                    set(
+                        centerX - deltaX,
+                        centerY - deltaY,
+                        centerX + deltaX,
+                        centerY + deltaY
+                    )
+                }
+
+                captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+
+                if (isRepeatingMbr) {
+                    cameraCaptureSessionMbr!!.setRepeatingRequest(
+                        captureRequestBuilderMbr!!.build(),
+                        null,
+                        cameraApiHandlerMbr
+                    )
+                    isRepeatingMbr = true
+
+                    cameraSessionSemaphoreMbr.release()
+                    executorOnZoomSettingComplete(zoom)
+                } else {
+                    cameraSessionSemaphoreMbr.release()
+                    executorOnZoomSettingComplete(zoom)
+                }
+            } else {
+                cameraSessionSemaphoreMbr.release()
+                executorOnZoomSettingComplete(zoom)
+            }
+        }
+    }
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
@@ -1895,7 +1901,7 @@ class CameraObj private constructor(
 
     data class MediaRecorderConfigVo(
         val cameraOrientSurfaceSize: Size,
-        val mediaRecordingMp4File: File,
+        var mediaRecordingMp4File: File,
         val recordingFps: Int?,
         val videoEncodingBitrate: Int?,
         val isAudioRecording: Boolean
