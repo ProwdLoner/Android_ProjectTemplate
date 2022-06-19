@@ -146,9 +146,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        if (cameraObjMbr.isRecordingMbr) {
-            // 레코딩 중이라면 기존 레코딩을 제거
-            // todo
+        if (cameraObjMbr.isRecordingMbr) { // 레코딩 중이라면 기존 레코딩을 제거
             // 기존 저장 폴더 백업
             val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
             // 카메라 초기화
@@ -158,51 +156,54 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     videoFile.delete()
 
                     // 미디어 레코드를 제외한 카메라 세션 준비
-                    val previewConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                        // 지원 사이즈 탐지
-                        val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
-                            this,
-                            cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                            cameraObjMbr.sensorOrientationMbr,
-                            Long.MAX_VALUE,
-                            2.0 / 3.0
-                        )
+                    val previewConfigVo =
+                        if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                            // 지원 사이즈 탐지
+                            val chosenPreviewSurfaceSize =
+                                CameraObj.getNearestSupportedCameraOutputSize(
+                                    this,
+                                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
+                                    cameraObjMbr.sensorOrientationMbr,
+                                    Long.MAX_VALUE,
+                                    2.0 / 3.0
+                                )
 
-                        // 설정 객체 반환
-                        arrayListOf(
-                            CameraObj.PreviewConfigVo(
-                                chosenPreviewSurfaceSize,
-                                bindingMbr.cameraPreviewAutoFitTexture
+                            // 설정 객체 반환
+                            arrayListOf(
+                                CameraObj.PreviewConfigVo(
+                                    chosenPreviewSurfaceSize,
+                                    bindingMbr.cameraPreviewAutoFitTexture
+                                )
                             )
-                        )
-                    } else {
-                        // 지원 사이즈가 없기에 null 반환
-                        null
-                    }
+                        } else {
+                            // 지원 사이즈가 없기에 null 반환
+                            null
+                        }
 
-                    val imageReaderConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                        // 지원 사이즈 탐지
-                        val chosenImageReaderSurfaceSize =
-                            CameraObj.getNearestSupportedCameraOutputSize(
-                                this,
-                                cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                                cameraObjMbr.sensorOrientationMbr,
-                                500 * 500,
-                                2.0 / 3.0
+                    val imageReaderConfigVo =
+                        if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                            // 지원 사이즈 탐지
+                            val chosenImageReaderSurfaceSize =
+                                CameraObj.getNearestSupportedCameraOutputSize(
+                                    this,
+                                    cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
+                                    cameraObjMbr.sensorOrientationMbr,
+                                    500 * 500,
+                                    2.0 / 3.0
+                                )
+
+                            // 설정 객체 반환
+                            CameraObj.ImageReaderConfigVo(
+                                chosenImageReaderSurfaceSize,
+                                imageReaderHandlerThreadMbr.handler!!,
+                                imageReaderCallback = { reader ->
+                                    processImage(reader)
+                                }
                             )
-
-                        // 설정 객체 반환
-                        CameraObj.ImageReaderConfigVo(
-                            chosenImageReaderSurfaceSize,
-                            imageReaderHandlerThreadMbr.handler!!,
-                            imageReaderCallback = { reader ->
-                                processImage(reader)
-                            }
-                        )
-                    } else {
-                        // 지원 사이즈가 없기에 null 반환
-                        null
-                    }
+                        } else {
+                            // 지원 사이즈가 없기에 null 반환
+                            null
+                        }
 
                     // 카메라 서페이스 설정
                     cameraObjMbr.setCameraOutputSurfaces(
@@ -241,7 +242,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     )
                 }
             )
-
         } else {
             cameraObjMbr.pauseCameraSession(executorOnCameraPause = {})
         }
@@ -268,8 +268,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
 
+        // 기존 저장 폴더 백업
+        val videoFile = if (cameraObjMbr.isRecordingMbr) {
+            cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+        } else {
+            null
+        }
+
         // 카메라 종료
-        cameraObjMbr.clearCameraObject(executorOnCameraClear = {})
+        cameraObjMbr.clearCameraObject(executorOnCameraClear = {
+            videoFile?.delete()
+        })
 
         // 카메라 스레드 해소
         cameraHandlerThreadMbr.stopHandlerThread()
@@ -583,8 +592,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         } else {
             bindingMbr.recordBtn.visibility = View.VISIBLE
 
-            // todo
-
             // recording pause 시에는 녹화를 멈추고 기존 파일을 제거하도록 처리
             // todo 중복 클릭 방지, 녹화중 화면 효과
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
@@ -656,8 +663,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             // 설정 객체 반환
                             CameraObj.MediaRecorderConfigVo(
                                 chosenSurfaceSize,
-//                                File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.mp4"),
-                                File("${this.filesDir.absolutePath}/temp.mp4"),
+                                File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.mp4"),
                                 null,
                                 null,
                                 false
@@ -712,25 +718,116 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 화면 고정 풀기
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
-                    // 기존 세션 종료
-                    cameraObjMbr.stopMediaRecording()
-
+                    // 기존 저장 폴더 백업
                     val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+                    // 카메라 초기화
+                    cameraObjMbr.stopCameraObject(
+                        executorOnCameraStop = {
+                            // 미디어 레코드를 제외한 카메라 세션 준비
+                            val previewConfigVo =
+                                if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                                    // 지원 사이즈 탐지
+                                    val chosenPreviewSurfaceSize =
+                                        CameraObj.getNearestSupportedCameraOutputSize(
+                                            this,
+                                            cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
+                                            cameraObjMbr.sensorOrientationMbr,
+                                            Long.MAX_VALUE,
+                                            2.0 / 3.0
+                                        )
 
-                    // 결과물 감상
-                    val mediaPlayerIntent = Intent()
-                    mediaPlayerIntent.action = Intent.ACTION_VIEW
-                    mediaPlayerIntent.setDataAndType(
-                        FileProvider.getUriForFile(
-                            this@ActivityBasicCamera2ApiSample,
-                            "${BuildConfig.APPLICATION_ID}.provider",
-                            videoFile
-                        ), MimeTypeMap.getSingleton()
-                            .getMimeTypeFromExtension(videoFile.extension)
+                                    // 설정 객체 반환
+                                    arrayListOf(
+                                        CameraObj.PreviewConfigVo(
+                                            chosenPreviewSurfaceSize,
+                                            bindingMbr.cameraPreviewAutoFitTexture
+                                        )
+                                    )
+                                } else {
+                                    // 지원 사이즈가 없기에 null 반환
+                                    null
+                                }
+
+                            val imageReaderConfigVo =
+                                if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                                    // 지원 사이즈 탐지
+                                    val chosenImageReaderSurfaceSize =
+                                        CameraObj.getNearestSupportedCameraOutputSize(
+                                            this,
+                                            cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
+                                            cameraObjMbr.sensorOrientationMbr,
+                                            500 * 500,
+                                            2.0 / 3.0
+                                        )
+
+                                    // 설정 객체 반환
+                                    CameraObj.ImageReaderConfigVo(
+                                        chosenImageReaderSurfaceSize,
+                                        imageReaderHandlerThreadMbr.handler!!,
+                                        imageReaderCallback = { reader ->
+                                            processImage(reader)
+                                        }
+                                    )
+                                } else {
+                                    // 지원 사이즈가 없기에 null 반환
+                                    null
+                                }
+
+                            // 카메라 서페이스 설정
+                            cameraObjMbr.setCameraOutputSurfaces(
+                                previewConfigVo,
+                                imageReaderConfigVo,
+                                null,
+                                executorOnSurfaceAllReady = {
+
+                                    // 카메라 리퀘스트 설정
+                                    cameraObjMbr.setCameraRequestBuilder(
+                                        onPreview = true,
+                                        onImageReader = true,
+                                        onMediaRecorder = false,
+                                        CameraDevice.TEMPLATE_PREVIEW,
+                                        executorOnCameraRequestSettingTime = {
+                                            // Auto WhiteBalance, Auto Focus, Auto Exposure
+                                            it.set(
+                                                CaptureRequest.CONTROL_MODE,
+                                                CameraMetadata.CONTROL_MODE_AUTO
+                                            )
+
+                                            // 손떨림 방지
+                                            cameraObjMbr.setStabilizationRequest(it)
+                                        },
+                                        executorOnCameraRequestBuilderSet = {
+                                            // 결과물 감상
+                                            val mediaPlayerIntent = Intent()
+                                            mediaPlayerIntent.action = Intent.ACTION_VIEW
+                                            mediaPlayerIntent.setDataAndType(
+                                                FileProvider.getUriForFile(
+                                                    this@ActivityBasicCamera2ApiSample,
+                                                    "${BuildConfig.APPLICATION_ID}.provider",
+                                                    videoFile
+                                                ), MimeTypeMap.getSingleton()
+                                                    .getMimeTypeFromExtension(videoFile.extension)
+                                            )
+                                            mediaPlayerIntent.flags =
+                                                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+
+                                            resultLauncherCallbackMbr = {
+                                                videoFile.delete()
+                                            }
+                                            resultLauncherMbr.launch(mediaPlayerIntent)
+                                        },
+                                        executorOnError = {
+
+                                        }
+                                    )
+                                },
+                                executorOnError = {
+
+                                }
+                            )
+                        }
                     )
-                    mediaPlayerIntent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                            Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    startActivity(mediaPlayerIntent)
                 }
             }
         }
