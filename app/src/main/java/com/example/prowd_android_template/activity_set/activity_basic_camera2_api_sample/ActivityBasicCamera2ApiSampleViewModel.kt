@@ -35,17 +35,6 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
     var currentUserSessionTokenMbr: String? = null
 
-    // 랜더 스크립트
-    var renderScriptMbr: RenderScript = RenderScript.create(application)
-
-    // intrinsic yuv to rgb
-    var scriptIntrinsicYuvToRGBMbr: ScriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(
-        renderScriptMbr,
-        Element.U8_4(renderScriptMbr)
-    )
-
-    var scriptCRotatorMbr: ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
-
     // (플래그 데이터)
     // 설정 변경 여부 : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
@@ -77,12 +66,6 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
     override fun onCleared() {
         executorServiceMbr?.shutdown()
         executorServiceMbr = null
-
-        // 랜더 스크립트 객체 해소
-        scriptIntrinsicYuvToRGBMbr.destroy()
-        scriptCRotatorMbr.destroy()
-        renderScriptMbr.finish()
-        renderScriptMbr.destroy()
 
         super.onCleared()
     }

@@ -15,7 +15,6 @@ import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -695,7 +694,7 @@ class CameraObj private constructor(
 
                 // todo : 이어 저장 확인
                 // 파일 확장자 검증
-                if (mediaRecorderConfigVo.mediaRecordingFile.extension != "mp4"){
+                if (mediaRecorderConfigVo.mediaRecordingMp4File.extension != "mp4"){
                     imageReaderMbr = null
                     imageReaderConfigVoMbr = null
                     cameraSessionSemaphoreMbr.release()
@@ -716,7 +715,7 @@ class CameraObj private constructor(
                 mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
 
                 // 파일 경로 설정
-                mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaRecordingFile.absolutePath)
+                mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaRecordingMp4File.absolutePath)
 
                 // 데이터 저장 퀄리티 설정
                 if (mediaRecorderConfigVo.videoEncodingBitrate == null) {
@@ -932,11 +931,11 @@ class CameraObj private constructor(
         }
     }
 
-    // (카메라 리퀘스트 빌더 생성)
+    // (카메라 리퀘스트 빌더 설정 함수)
     // 리퀘스트 모드 (ex : CameraDevice.TEMPLATE_PREVIEW) 및 리퀘스트로 사용할 서페이스 결정
     // onPreview, onImageReader, onMediaRecorder -> 어느 서페이스를 사용할지를 결정
-    // 카메라가 다른 리퀘스트로 이미 동작중이어도 별개로 세팅이 가능
-    // = 현 세션에 영향을 주지 않고 다음 runCameraRequest 함수 실행시 적용할 리퀘스트로 준비됨
+    // onCameraRequestSettingTime 콜백으로 빌더를 빌려와 원하는 리퀘스트를 세팅 가능
+    // 현 세션이 실행중이라면 이 설정으로 실행됨
 
     // onError 에러 코드 :
     // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
@@ -944,12 +943,13 @@ class CameraObj private constructor(
     // 3 : preview 설정이지만 preview 서페이스가 없을 때
     // 4 : imageReader 설정이지만 imageReader 서페이스가 없을 때
     // 5 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
-    fun createCameraRequestBuilder(
+    fun setCameraRequestBuilder(
         onPreview: Boolean,
         onImageReader: Boolean,
         onMediaRecorder: Boolean,
         cameraRequestMode: Int,
-        onCameraRequestBuilderCreated: () -> Unit,
+        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit),
+        onCameraRequestBuilderSet: () -> Unit,
         onError: (Int) -> Unit
     ) {
         executorServiceMbr.execute {
@@ -1016,32 +1016,6 @@ class CameraObj private constructor(
                 }
             }
 
-            cameraSessionSemaphoreMbr.release()
-            onCameraRequestBuilderCreated()
-        }
-    }
-
-    // (카메라 리퀘스트 설정)
-    // 카메라 리퀘스트 빌더가 생성된 후의 옵션 함수 (실행하지 않으면 초기 리퀘스트로 실행)
-    // onCameraRequestSettingTime 콜백으로 빌더를 빌려와 원하는 리퀘스트를 세팅 가능
-    // 카메라가 다른 리퀘스트로 이미 동작중이라면 곧바로 적용됨
-
-    // onError 에러 코드 :
-    // 1 : CaptureRequest.Builder 객체가 아직 생성되지 않은 경우
-    fun setCameraRequest(
-        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit),
-        onCameraRequestSetComplete: () -> Unit,
-        onError: (Int) -> Unit
-    ) {
-        executorServiceMbr.execute {
-            cameraSessionSemaphoreMbr.acquire()
-
-            if (captureRequestBuilderMbr == null) {
-                cameraSessionSemaphoreMbr.release()
-                onError(1)
-                return@execute
-            }
-
             // (사용자에게 설정 정보를 받아오는 공간 제공)
             onCameraRequestSettingTime(captureRequestBuilderMbr!!)
 
@@ -1076,7 +1050,7 @@ class CameraObj private constructor(
                 captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
             }
 
-            if (isRepeatingMbr) {
+            if (isRepeatingMbr){
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
                     null,
@@ -1085,9 +1059,8 @@ class CameraObj private constructor(
             }
 
             cameraSessionSemaphoreMbr.release()
-
             parentActivityMbr.runOnUiThread {
-                onCameraRequestSetComplete()
+                onCameraRequestBuilderSet()
             }
         }
     }
@@ -1976,7 +1949,7 @@ class CameraObj private constructor(
 
     data class MediaRecorderConfigVo(
         val cameraOrientSurfaceSize: Size,
-        val mediaRecordingFile: File,
+        val mediaRecordingMp4File: File,
         val recordingFps: Int?,
         val videoEncodingBitrate: Int?,
         val isAudioRecording: Boolean
