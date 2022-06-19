@@ -48,6 +48,7 @@ import kotlin.math.sqrt
 // todo : 서페이스 각자 세팅 기능 오버라이딩
 // todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance 등
+// todo : 90 도 환경에서 미디어 레코더 prepare 에러
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
