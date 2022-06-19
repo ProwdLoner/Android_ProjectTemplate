@@ -33,6 +33,7 @@ import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_class.HandlerThreadObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
+import java.io.File
 
 // todo 실제 카메라처럼 기능 개편
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
@@ -466,9 +467,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // recording pause 시에는 녹화를 멈추고 기존 파일을 제거하도록 처리
             // todo 중복 클릭 방지, 녹화중 화면 효과
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
-            bindingMbr.recordBtn.setOnClickListener {
+//            bindingMbr.recordBtn.setOnClickListener {
 //                if (!(cameraObjMbr.isRecordingMbr)) {
 //                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
+//
+//                    safd
 //
 //                    cameraObjMbr.createCameraRequestBuilder(
 //                        onPreview = true,
@@ -547,7 +550,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                            Intent.FLAG_ACTIVITY_CLEAR_TOP
 //                    startActivity(mediaPlayerIntent)
 //                }
-            }
+//            }
         }
     }
 
@@ -605,52 +608,74 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     private fun onCameraPermissionChecked(isOnCreate: Boolean) {
         if (isOnCreate) {
             // (카메라 실행)
-            cameraObjMbr.setCameraOutputSurfaces(
-                previewConfigVoList =
-                if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                    // todo : area max 로 했을 시 90도 회전시 원하는 비율이 나오지 않음
-                    val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
+            val previewConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                // todo : area max 로 했을 시 90도 회전시 원하는 비율이 나오지 않음
+                val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
+                    this,
+                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
+                    cameraObjMbr.sensorOrientationMbr,
+                    if ((resources.displayMetrics.widthPixels.toLong() * resources.displayMetrics.heightPixels.toLong()) < 0) {
+                        // 오버플로우 시
+                        Long.MAX_VALUE
+                    } else {
+                        resources.displayMetrics.widthPixels.toLong() * resources.displayMetrics.heightPixels.toLong()
+                    },
+                    2.0 / 3.0
+                )
+                arrayListOf(
+                    CameraObj.PreviewConfigVo(
+                        chosenPreviewSurfaceSize,
+                        bindingMbr.cameraPreviewAutoFitTexture
+                    )
+                )
+            } else {
+                null
+            }
+
+            val mediaRecorderConfigVo = if (null != cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
+                val chosenSurfaceSize =
+                    CameraObj.getNearestSupportedCameraOutputSize(
                         this,
-                        cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
+                        cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
                         cameraObjMbr.sensorOrientationMbr,
-                        if ((resources.displayMetrics.widthPixels.toLong() * resources.displayMetrics.heightPixels.toLong()) < 0) {
-                            // 오버플로우 시
-                            Long.MAX_VALUE
-                        } else {
-                            resources.displayMetrics.widthPixels.toLong() * resources.displayMetrics.heightPixels.toLong()
-                        },
+                        Long.MAX_VALUE,
                         2.0 / 3.0
                     )
-                    arrayListOf(
-                        CameraObj.PreviewConfigVo(
-                            chosenPreviewSurfaceSize,
-                            bindingMbr.cameraPreviewAutoFitTexture
-                        )
+                CameraObj.MediaRecorderConfigVo(
+                    chosenSurfaceSize,
+                    File("${this.filesDir.absolutePath}/temp.mp4"),
+                    null,
+                    null,
+                    false
+                )
+            } else {
+                null
+            }
+
+            val imageReaderConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                val chosenImageReaderSurfaceSize =
+                    CameraObj.getNearestSupportedCameraOutputSize(
+                        this,
+                        cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
+                        cameraObjMbr.sensorOrientationMbr,
+                        500 * 500,
+                        2.0 / 3.0
                     )
-                } else {
-                    null
-                },
-                imageReaderConfigVo =
-                if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                    val chosenImageReaderSurfaceSize =
-                        CameraObj.getNearestSupportedCameraOutputSize(
-                            this,
-                            cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                            cameraObjMbr.sensorOrientationMbr,
-                            500 * 500,
-                            2.0 / 3.0
-                        )
-                    CameraObj.ImageReaderConfigVo(
-                        chosenImageReaderSurfaceSize,
-                        imageReaderHandlerThreadMbr.handler!!,
-                        imageReaderCallback = { reader ->
-                            processImage(reader)
-                        }
-                    )
-                } else {
-                    null
-                },
-                null,
+                CameraObj.ImageReaderConfigVo(
+                    chosenImageReaderSurfaceSize,
+                    imageReaderHandlerThreadMbr.handler!!,
+                    imageReaderCallback = { reader ->
+                        processImage(reader)
+                    }
+                )
+            } else {
+                null
+            }
+
+            cameraObjMbr.setCameraOutputSurfaces(
+                previewConfigVo,
+                imageReaderConfigVo,
+                mediaRecorderConfigVo,
                 onSurfaceAllReady = {
                     cameraObjMbr.createCameraRequestBuilder(
                         onPreview = true,
