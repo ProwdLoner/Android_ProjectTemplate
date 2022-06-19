@@ -493,8 +493,8 @@ class CameraObj private constructor(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
         mediaRecorderConfigVo: MediaRecorderConfigVo?,
-        onSurfaceAllReady: () -> Unit,
-        onError: (Int) -> Unit
+        executorOnSurfaceAllReady: () -> Unit,
+        executorOnError: (Int) -> Unit
     ) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
@@ -506,9 +506,7 @@ class CameraObj private constructor(
                                 previewConfigVoList.isEmpty()))
             ) {
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onError(1)
-                }
+                executorOnError(1)
                 return@execute
             }
 
@@ -526,9 +524,7 @@ class CameraObj private constructor(
                     } == -1
                 ) {
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onError(2)
-                    }
+                    executorOnError(2)
                     return@execute
                 }
             }
@@ -543,9 +539,7 @@ class CameraObj private constructor(
                     cameraSizes.isEmpty()
                 ) {
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onError(4)
-                    }
+                    executorOnError(4)
                     return@execute
                 } else {
                     for (previewConfig in previewConfigVoList) {
@@ -554,9 +548,7 @@ class CameraObj private constructor(
                                         it.height == previewConfig.cameraOrientSurfaceSize.height
                             } == -1) {
                             cameraSessionSemaphoreMbr.release()
-                            parentActivityMbr.runOnUiThread {
-                                onError(4)
-                            }
+                            executorOnError(4)
                             return@execute
                         }
                     }
@@ -649,9 +641,7 @@ class CameraObj private constructor(
                     imageReaderMbr = null
                     imageReaderConfigVoMbr = null
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onError(5)
-                    }
+                    executorOnError(5)
                     return@execute
                 }
 
@@ -694,13 +684,11 @@ class CameraObj private constructor(
 
                 // todo : 이어 저장 확인
                 // 파일 확장자 검증
-                if (mediaRecorderConfigVo.mediaRecordingMp4File.extension != "mp4"){
+                if (mediaRecorderConfigVo.mediaRecordingMp4File.extension != "mp4") {
                     imageReaderMbr = null
                     imageReaderConfigVoMbr = null
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onError(14)
-                    }
+                    executorOnError(14)
                     return@execute
                 }
 
@@ -843,8 +831,8 @@ class CameraObj private constructor(
                                     checkedPreviewCountSemaphore.release()
 
                                     onSurfacesAllChecked(
-                                        onSurfaceAllReady,
-                                        onError
+                                        executorOnSurfaceAllReady,
+                                        executorOnError
                                     )
                                 } else {
                                     checkedPreviewCountSemaphore.release()
@@ -890,8 +878,8 @@ class CameraObj private constructor(
                                                 checkedPreviewCountSemaphore.release()
 
                                                 onSurfacesAllChecked(
-                                                    onSurfaceAllReady,
-                                                    onError
+                                                    executorOnSurfaceAllReady,
+                                                    executorOnError
                                                 )
                                             } else {
                                                 checkedPreviewCountSemaphore.release()
@@ -924,8 +912,8 @@ class CameraObj private constructor(
                 }
             } else {
                 onSurfacesAllChecked(
-                    onSurfaceAllReady,
-                    onError
+                    executorOnSurfaceAllReady,
+                    executorOnError
                 )
             }
         }
@@ -948,18 +936,16 @@ class CameraObj private constructor(
         onImageReader: Boolean,
         onMediaRecorder: Boolean,
         cameraRequestMode: Int,
-        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit),
-        onCameraRequestBuilderSet: () -> Unit,
-        onError: (Int) -> Unit
+        executorOnCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit),
+        executorOnCameraRequestBuilderSet: () -> Unit,
+        executorOnError: (Int) -> Unit
     ) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
 
             if (cameraDeviceMbr == null) {
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onError(1)
-                }
+                executorOnError(1)
                 return@execute
             }
 
@@ -968,9 +954,7 @@ class CameraObj private constructor(
                 mediaCodecSurfaceMbr == null
             ) { // 생성 서페이스가 하나도 존재하지 않으면,
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onError(2)
-                }
+                executorOnError(2)
                 return@execute
             }
 
@@ -981,9 +965,7 @@ class CameraObj private constructor(
             if (onPreview) {
                 if (previewConfigVoListMbr.isEmpty()) {
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onError(3)
-                    }
+                    executorOnError(3)
                     return@execute
                 } else {
                     for (previewSurface in previewSurfaceListMbr) {
@@ -995,9 +977,7 @@ class CameraObj private constructor(
             if (onImageReader) {
                 if (imageReaderMbr == null) {
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onError(4)
-                    }
+                    executorOnError(4)
                     return@execute
                 } else {
                     captureRequestBuilderMbr!!.addTarget(imageReaderMbr!!.surface)
@@ -1007,9 +987,7 @@ class CameraObj private constructor(
             if (onMediaRecorder) {
                 if (mediaCodecSurfaceMbr == null) {
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onError(5)
-                    }
+                    executorOnError(5)
                     return@execute
                 } else {
                     captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
@@ -1017,7 +995,7 @@ class CameraObj private constructor(
             }
 
             // (사용자에게 설정 정보를 받아오는 공간 제공)
-            onCameraRequestSettingTime(captureRequestBuilderMbr!!)
+            executorOnCameraRequestSettingTime(captureRequestBuilderMbr!!)
 
             // (카메라 오브젝트 내부 정보를 최종적으로 채택)
             // 오브젝트 내부 줌 정보를 설정
@@ -1050,7 +1028,7 @@ class CameraObj private constructor(
                 captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
             }
 
-            if (isRepeatingMbr){
+            if (isRepeatingMbr) {
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
                     null,
@@ -1059,9 +1037,7 @@ class CameraObj private constructor(
             }
 
             cameraSessionSemaphoreMbr.release()
-            parentActivityMbr.runOnUiThread {
-                onCameraRequestBuilderSet()
-            }
+            executorOnCameraRequestBuilderSet()
         }
     }
 
@@ -1075,25 +1051,21 @@ class CameraObj private constructor(
     fun runCameraRequest(
         isRepeating: Boolean,
         captureCallback: CameraCaptureSession.CaptureCallback?,
-        onRequestComplete: () -> Unit,
-        onError: (Int) -> Unit
+        executorOnRequestComplete: () -> Unit,
+        executorOnError: (Int) -> Unit
     ) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
 
             if (cameraCaptureSessionMbr == null) {
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onError(1)
-                }
+                executorOnError(1)
                 return@execute
             }
 
             if (captureRequestBuilderMbr == null) {
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onError(2)
-                }
+                executorOnError(2)
                 return@execute
             }
 
@@ -1106,13 +1078,11 @@ class CameraObj private constructor(
                 isRepeatingMbr = true
 
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onRequestComplete()
-                }
+                executorOnRequestComplete()
             } else {
                 if (null == imageReaderMbr) {
                     cameraSessionSemaphoreMbr.release()
-                    onError(3)
+                    executorOnError(3)
                     return@execute
                 }
 
@@ -1125,9 +1095,7 @@ class CameraObj private constructor(
                 isRepeatingMbr = false
 
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onRequestComplete()
-                }
+                executorOnRequestComplete()
             }
         }
     }
@@ -1207,7 +1175,7 @@ class CameraObj private constructor(
     // onZoomSettingComplete : 반환값 = 적용된 줌 펙터 값
     fun setZoomFactor(
         zoomFactor: Float,
-        onZoomSettingComplete: (Float) -> Unit
+        executorOnZoomSettingComplete: (Float) -> Unit
     ) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
@@ -1250,20 +1218,14 @@ class CameraObj private constructor(
                     isRepeatingMbr = true
 
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onZoomSettingComplete(zoom)
-                    }
+                    executorOnZoomSettingComplete(zoom)
                 } else {
                     cameraSessionSemaphoreMbr.release()
-                    parentActivityMbr.runOnUiThread {
-                        onZoomSettingComplete(zoom)
-                    }
+                    executorOnZoomSettingComplete(zoom)
                 }
             } else {
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onZoomSettingComplete(zoom)
-                }
+                executorOnZoomSettingComplete(zoom)
             }
         }
     }
@@ -1272,12 +1234,12 @@ class CameraObj private constructor(
     // 현재 세션이 repeating 이라면 이를 중단함.
     // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
     fun pauseCameraSession(
-        onCameraPause: () -> Unit
+        executorOnCameraPause: () -> Unit
     ) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
 
-            if (isRecordingMbr){
+            if (isRecordingMbr) {
                 mediaRecorderMbr?.pause()
                 isRecordingMbr = false
             }
@@ -1289,15 +1251,13 @@ class CameraObj private constructor(
 
             cameraSessionSemaphoreMbr.release()
 
-            parentActivityMbr.runOnUiThread {
-                onCameraPause()
-            }
+            executorOnCameraPause()
         }
     }
 
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
-    fun stopCameraSession(onCameraStop: () -> Unit) {
+    fun stopCameraSession(executorOnCameraStop: () -> Unit) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
             if (isRecordingMbr) {
@@ -1354,15 +1314,13 @@ class CameraObj private constructor(
             captureRequestBuilderMbr = null
 
             cameraSessionSemaphoreMbr.release()
-            parentActivityMbr.runOnUiThread {
-                onCameraStop()
-            }
+            executorOnCameraStop()
         }
     }
 
     // (카메라 객체를 초기화하는 함수)
     // 카메라 디바이스 까지 닫기
-    fun clearCameraObject(onCameraClear: () -> Unit) {
+    fun clearCameraObject(executorOnCameraClear: () -> Unit) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
             if (isRecordingMbr) {
@@ -1422,9 +1380,7 @@ class CameraObj private constructor(
 
             cameraSessionSemaphoreMbr.release()
 
-            parentActivityMbr.runOnUiThread {
-                onCameraClear()
-            }
+            executorOnCameraClear()
         }
     }
 
@@ -1464,7 +1420,7 @@ class CameraObj private constructor(
                                 }
                             setZoomFactor(
                                 zoom,
-                                onZoomSettingComplete = {})
+                                executorOnZoomSettingComplete = {})
                         } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
                             val zoom =
                                 if ((currentCameraZoomFactorMbr - delta) < 1.0f) {
@@ -1474,7 +1430,7 @@ class CameraObj private constructor(
                                 }
                             setZoomFactor(
                                 zoom,
-                                onZoomSettingComplete = {})
+                                executorOnZoomSettingComplete = {})
                         }
                     }
 
@@ -1535,9 +1491,7 @@ class CameraObj private constructor(
             mediaCodecSurfaceMbr == null
         ) { // 생성 서페이스가 하나도 존재하지 않으면,
             cameraSessionSemaphoreMbr.release()
-            parentActivityMbr.runOnUiThread {
-                onError(6)
-            }
+            onError(6)
             return
         }
 
@@ -1558,9 +1512,7 @@ class CameraObj private constructor(
                 createCameraSessionAsync(
                     onCaptureSessionCreated = {
                         cameraSessionSemaphoreMbr.release()
-                        parentActivityMbr.runOnUiThread {
-                            onSurfaceAllReady()
-                        }
+                        onSurfaceAllReady()
                     },
                     onError = { errorCode, cameraCaptureSession ->
                         // (카메라 상태 초기화)
@@ -1617,24 +1569,18 @@ class CameraObj private constructor(
                         captureRequestBuilderMbr = null
 
                         cameraSessionSemaphoreMbr.release()
-                        parentActivityMbr.runOnUiThread {
-                            onError(errorCode)
-                        }
+                        onError(errorCode)
                     }
                 )
             },
             onCameraDisconnected = {
                 // (카메라 상태 초기화)
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onCameraDisconnectedMbr()
-                }
+                onCameraDisconnectedMbr()
             },
             onError = { errorCode ->
                 cameraSessionSemaphoreMbr.release()
-                parentActivityMbr.runOnUiThread {
-                    onError(errorCode)
-                }
+                onError(errorCode)
             }
         )
     }

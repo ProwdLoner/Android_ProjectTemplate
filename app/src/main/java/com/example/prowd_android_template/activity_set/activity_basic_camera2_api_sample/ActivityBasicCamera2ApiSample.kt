@@ -20,7 +20,6 @@ import android.renderscript.ScriptIntrinsicYuvToRGB
 import android.view.Surface
 import android.view.View
 import android.view.WindowManager
-import android.webkit.MimeTypeMap
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,7 +37,6 @@ import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_class.HandlerThreadObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
-import java.io.File
 
 // todo 실제 카메라처럼 기능 개편
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
@@ -148,7 +146,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 레코딩 중이라면 기존 레코딩을 제거
             // todo
         } else {
-            cameraObjMbr.pauseCameraSession(onCameraPause = {})
+            cameraObjMbr.pauseCameraSession(executorOnCameraPause = {})
         }
 
         super.onPause()
@@ -174,7 +172,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
 
         // 카메라 종료
-        cameraObjMbr.clearCameraObject(onCameraClear = {})
+        cameraObjMbr.clearCameraObject(executorOnCameraClear = {})
 
         // 카메라 스레드 해소
         cameraHandlerThreadMbr.stopHandlerThread()
@@ -622,14 +620,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         if (isOnCreate) { // 처음 카메라 설정 시점
             // (카메라 실행)
             val previewConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                // 주의 area Long max 로 했을 시 90도 회전시 원하는 비율이 나오지 않음
+                // todo : 90도 회전시 프리뷰가 잘림 현상
 
                 // 지원 사이즈 탐지
                 val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
                     this,
                     cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
                     cameraObjMbr.sensorOrientationMbr,
-                    resources.displayMetrics.widthPixels.toLong() * resources.displayMetrics.heightPixels.toLong(),
+                    Long.MAX_VALUE,
                     2.0 / 3.0
                 )
 
@@ -667,13 +665,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 previewConfigVo,
                 imageReaderConfigVo,
                 null,
-                onSurfaceAllReady = {
+                executorOnSurfaceAllReady = {
                     cameraObjMbr.setCameraRequestBuilder(
                         onPreview = true,
                         onImageReader = true,
                         onMediaRecorder = false,
                         CameraDevice.TEMPLATE_PREVIEW,
-                        onCameraRequestSettingTime = {
+                        executorOnCameraRequestSettingTime = {
                             // Auto WhiteBalance, Auto Focus, Auto Exposure
                             it.set(
                                 CaptureRequest.CONTROL_MODE,
@@ -683,19 +681,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             // 손떨림 방지
                             cameraObjMbr.setStabilizationRequest(it)
                         },
-                        onCameraRequestBuilderSet = {
+                        executorOnCameraRequestBuilderSet = {
                             cameraObjMbr.runCameraRequest(
                                 true,
                                 null,
-                                onRequestComplete = {},
-                                onError = {})
+                                executorOnRequestComplete = {},
+                                executorOnError = {})
                         },
-                        onError = {
+                        executorOnError = {
 
                         }
                     )
                 },
-                onError = {
+                executorOnError = {
 
                 }
             )
@@ -703,8 +701,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             cameraObjMbr.runCameraRequest(
                 true,
                 null,
-                onRequestComplete = {},
-                onError = {})
+                executorOnRequestComplete = {},
+                executorOnError = {})
         }
     }
 
