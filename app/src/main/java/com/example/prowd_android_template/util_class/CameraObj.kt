@@ -50,7 +50,6 @@ import kotlin.math.sqrt
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
-    private val cameraApiHandlerMbr: Handler,
     private val cameraManagerMbr: CameraManager,
     cameraCharacteristicsMbr: CameraCharacteristics,
     private val streamConfigurationMapMbr: StreamConfigurationMap,
@@ -63,6 +62,16 @@ class CameraObj private constructor(
     // <멤버 변수 공간>
     // (스레드 풀)
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
+    // Camera2 api 핸들러 스레드
+    private val cameraApiHandlerThreadObjMbr: HandlerThreadObj = HandlerThreadObj("camera").apply {
+        this.startHandlerThread()
+    }
+
+    // 이미지 리더 핸들러 스레드
+    private val imageReaderHandlerThreadObjMbr = HandlerThreadObj("camera_image_reader").apply {
+        this.startHandlerThread()
+    }
 
     // (카메라 정보)
     // 떨림 보정 기능 가능 여부 (기계적) : stabilization 설정을 할 때 우선 적용
@@ -182,7 +191,6 @@ class CameraObj private constructor(
         fun getInstance(
             parentActivity: Activity,
             cameraId: String,
-            cameraApiHandler: Handler,
             onCameraDisconnected: (() -> Unit)
         ): CameraObj? {
             if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
@@ -229,7 +237,6 @@ class CameraObj private constructor(
             return CameraObj(
                 parentActivity,
                 cameraId,
-                cameraApiHandler,
                 cameraManager,
                 cameraCharacteristics,
                 streamConfigurationMap,
@@ -545,7 +552,7 @@ class CameraObj private constructor(
                 ).apply {
                     setOnImageAvailableListener(
                         imageReaderConfigVo.imageReaderCallback,
-                        imageReaderConfigVo.imageReaderHandler
+                        imageReaderHandlerThreadObjMbr.handler
                     )
                 }
             }
@@ -994,7 +1001,7 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
                     null,
-                    cameraApiHandlerMbr
+                    cameraApiHandlerThreadObjMbr.handler
                 )
             }
 
@@ -1035,7 +1042,7 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
                     null,
-                    cameraApiHandlerMbr
+                    cameraApiHandlerThreadObjMbr.handler
                 )
                 isRepeatingMbr = true
 
@@ -1051,7 +1058,7 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr!!.capture(
                     captureRequestBuilderMbr!!.build(),
                     captureCallback,
-                    cameraApiHandlerMbr
+                    cameraApiHandlerThreadObjMbr.handler
                 )
 
                 isRepeatingMbr = false
@@ -1203,6 +1210,9 @@ class CameraObj private constructor(
 
             cameraDeviceMbr?.close()
             cameraDeviceMbr = null
+
+            cameraApiHandlerThreadObjMbr.stopHandlerThread()
+            imageReaderHandlerThreadObjMbr.stopHandlerThread()
 
             cameraSessionSemaphoreMbr.release()
 
@@ -1390,7 +1400,7 @@ class CameraObj private constructor(
                     cameraCaptureSessionMbr!!.setRepeatingRequest(
                         captureRequestBuilderMbr!!.build(),
                         null,
-                        cameraApiHandlerMbr
+                        cameraApiHandlerThreadObjMbr.handler
                     )
                     isRepeatingMbr = true
 
@@ -1463,7 +1473,7 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
                     null,
-                    cameraApiHandlerMbr
+                    cameraApiHandlerThreadObjMbr.handler
                 )
 
                 cameraSessionSemaphoreMbr.release()
@@ -1495,7 +1505,7 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
                     null,
-                    cameraApiHandlerMbr
+                    cameraApiHandlerThreadObjMbr.handler
                 )
 
                 cameraSessionSemaphoreMbr.release()
@@ -1779,7 +1789,7 @@ class CameraObj private constructor(
                         }
                     }
                 }
-            }, cameraApiHandlerMbr
+            }, cameraApiHandlerThreadObjMbr.handler
         )
     }
 
@@ -1854,7 +1864,7 @@ class CameraObj private constructor(
             cameraDeviceMbr?.createCaptureSession(SessionConfiguration(
                 SessionConfiguration.SESSION_REGULAR,
                 outputConfigurationList,
-                HandlerExecutor(cameraApiHandlerMbr.looper),
+                HandlerExecutor(cameraApiHandlerThreadObjMbr.handler!!.looper),
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         cameraCaptureSessionMbr = session
@@ -1900,7 +1910,7 @@ class CameraObj private constructor(
                     override fun onConfigureFailed(session: CameraCaptureSession) {
                         onError(13, session)
                     }
-                }, cameraApiHandlerMbr
+                }, cameraApiHandlerThreadObjMbr.handler
             )
         }
     }
@@ -1915,7 +1925,6 @@ class CameraObj private constructor(
 
     data class ImageReaderConfigVo(
         val cameraOrientSurfaceSize: Size,
-        val imageReaderHandler: Handler,
         val imageReaderCallback: ImageReader.OnImageAvailableListener
     )
 

@@ -79,16 +79,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 카메라 실행 객체
     private lateinit var cameraObjMbr: CameraObj
 
-    // Camera2 api 핸들러 스레드
-    private val cameraHandlerThreadMbr = HandlerThreadObj("camera").apply {
-        this.startHandlerThread()
-    }
-
-    // 이미지 리더 핸들러 스레드
-    private val imageReaderHandlerThreadMbr = HandlerThreadObj("camera_image_reader").apply {
-        this.startHandlerThread()
-    }
-
     // 랜더 스크립트
     private lateinit var renderScriptMbr: RenderScript
 
@@ -202,7 +192,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             // 설정 객체 반환
                             CameraObj.ImageReaderConfigVo(
                                 chosenImageReaderSurfaceSize,
-                                imageReaderHandlerThreadMbr.handler!!,
                                 imageReaderCallback = { reader ->
                                     processImage(reader)
                                 }
@@ -289,10 +278,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 레코딩 도중 저장중이던 파일 제거
             videoFile?.delete()
         })
-
-        // 카메라 스레드 해소
-        cameraHandlerThreadMbr.stopHandlerThread()
-        imageReaderHandlerThreadMbr.stopHandlerThread()
 
         // 랜더 스크립트 객체 해소
         scriptCCropMbr.destroy()
@@ -521,7 +506,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         )
         scriptCRotatorMbr = ScriptC_rotator(renderScriptMbr)
 
-        scriptCCropMbr =ScriptC_crop(renderScriptMbr)
+        scriptCCropMbr = ScriptC_crop(renderScriptMbr)
 
         scriptIntrinsicResizeMbr = ScriptIntrinsicResize.create(
             renderScriptMbr
@@ -550,7 +535,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         val cameraObj = CameraObj.getInstance(
             this,
             cameraId!!,
-            cameraHandlerThreadMbr.handler!!,
             onCameraDisconnected = {}
         )
 
@@ -655,7 +639,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             // 설정 객체 반환
                             CameraObj.ImageReaderConfigVo(
                                 chosenImageReaderSurfaceSize,
-                                imageReaderHandlerThreadMbr.handler!!,
                                 imageReaderCallback = { reader ->
                                     processImage(reader)
                                 }
@@ -781,7 +764,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     // 설정 객체 반환
                                     CameraObj.ImageReaderConfigVo(
                                         chosenImageReaderSurfaceSize,
-                                        imageReaderHandlerThreadMbr.handler!!,
                                         imageReaderCallback = { reader ->
                                             processImage(reader)
                                         }
@@ -942,7 +924,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 // 설정 객체 반환
                 CameraObj.ImageReaderConfigVo(
                     chosenImageReaderSurfaceSize,
-                    imageReaderHandlerThreadMbr.handler!!,
                     imageReaderCallback = { reader ->
                         processImage(reader)
                     }

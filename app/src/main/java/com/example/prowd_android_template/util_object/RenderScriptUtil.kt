@@ -64,8 +64,6 @@ object RenderScriptUtil {
             Allocation.USAGE_SCRIPT
         )
 
-        bitmap.recycle()
-
         scriptCRotator._inImage = sourceAllocation
 
         val targetHeight: Int =
