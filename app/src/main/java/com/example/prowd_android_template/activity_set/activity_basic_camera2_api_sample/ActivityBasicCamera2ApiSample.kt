@@ -1001,11 +1001,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
 
             // 3. Image 객체를 ByteArray 로 변경 (* YUV_420_888 포멧만 가능)
-            val pixelCount = imageObj.width * imageObj.height
+            val imageWidth: Int = imageObj.width
+            val imageHeight: Int = imageObj.height
+            val pixelCount = imageWidth * imageHeight
+
             val yuvByteArray =
                 ByteArray(pixelCount * ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888) / 8)
 
+            // image planes 를 순회하면 yuvByteArray 채우기
             imageObj.planes.forEachIndexed { planeIndex, plane ->
+                val rowBuffer = ByteArray(plane.rowStride)
+                val planeBuffer = plane.buffer
+                val pixelStride = plane.pixelStride
+
                 val outputStride: Int
 
                 var outputOffset: Int
@@ -1028,10 +1036,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     }
                 }
 
-                val planeBuffer = plane.buffer
-                val pixelStride = plane.pixelStride
-
-                val imageCrop = Rect(0, 0, imageObj.width, imageObj.height)
+                val imageCrop = Rect(0, 0, imageWidth, imageHeight)
                 val planeCrop = if (planeIndex == 0) {
                     imageCrop
                 } else {
@@ -1045,13 +1050,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 val planeWidth = planeCrop.width()
 
-                val rowBuffer = ByteArray(plane.rowStride)
 
                 val rowLength = if (pixelStride == 1 && outputStride == 1) {
                     planeWidth
                 } else {
                     (planeWidth - 1) * pixelStride + 1
                 }
+
 
                 for (row in 0 until planeCrop.height()) {
                     planeBuffer.position(
@@ -1071,6 +1076,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
             }
 
+            imageObj.close()
+
             // 4. YUV_420_888 ByteArray to ARGB8888 Bitmap
             // RenderScript 사용
             // 카메라 방향에 따라 이미지가 정방향이 아닐 수 있음
@@ -1078,12 +1085,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
                     renderScriptMbr,
                     scriptIntrinsicYuvToRGBMbr,
-                    imageObj.width,
-                    imageObj.height,
+                    imageWidth,
+                    imageHeight,
                     yuvByteArray
                 )
-
-            imageObj.close()
 
             // 이미지를 정방향으로 회전
             val rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

@@ -14,7 +14,6 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
-import android.os.Handler
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -47,6 +46,7 @@ import kotlin.math.sqrt
 // todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance 등
 // todo : 전체 검증 : 특히 setSurface 의 디바이스 방향
+// todo : 다시 시작 스레드 관련 불안정
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -488,9 +488,7 @@ class CameraObj private constructor(
 
             // (카메라 상태 초기화)
             if (isRecordingMbr) {
-                mediaRecorderMbr?.pause()
                 mediaRecorderMbr?.stop()
-                mediaRecorderMbr?.reset()
                 isRecordingMbr = false
             }
 
@@ -1093,10 +1091,10 @@ class CameraObj private constructor(
     fun stopCameraObject(executorOnCameraStop: () -> Unit) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
+
+            // (카메라 상태 초기화)
             if (isRecordingMbr) {
-                mediaRecorderMbr?.pause()
                 mediaRecorderMbr?.stop()
-                mediaRecorderMbr?.reset()
                 isRecordingMbr = false
             }
 
@@ -1156,10 +1154,10 @@ class CameraObj private constructor(
     fun clearCameraObject(executorOnCameraClear: () -> Unit) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
+
+            // (카메라 상태 초기화)
             if (isRecordingMbr) {
-                mediaRecorderMbr?.pause()
                 mediaRecorderMbr?.stop()
-                mediaRecorderMbr?.reset()
                 isRecordingMbr = false
             }
 
@@ -1553,9 +1551,7 @@ class CameraObj private constructor(
                     onError = { errorCode, cameraCaptureSession ->
                         // (카메라 상태 초기화)
                         if (isRecordingMbr) {
-                            mediaRecorderMbr?.pause()
                             mediaRecorderMbr?.stop()
-                            mediaRecorderMbr?.reset()
                             isRecordingMbr = false
                         }
 
@@ -1656,9 +1652,7 @@ class CameraObj private constructor(
                 // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
                 override fun onDisconnected(camera: CameraDevice) {
                     if (isRecordingMbr) {
-                        mediaRecorderMbr?.pause()
                         mediaRecorderMbr?.stop()
-                        mediaRecorderMbr?.reset()
                         isRecordingMbr = false
                     }
 
@@ -1717,9 +1711,7 @@ class CameraObj private constructor(
                 override fun onError(camera: CameraDevice, error: Int) {
                     // (카메라 상태 초기화)
                     if (isRecordingMbr) {
-                        mediaRecorderMbr?.pause()
                         mediaRecorderMbr?.stop()
-                        mediaRecorderMbr?.reset()
                         isRecordingMbr = false
                     }
 
