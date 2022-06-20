@@ -18,6 +18,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.renderscript.Element
 import android.renderscript.RenderScript
+import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
 import android.view.Surface
 import android.view.View
@@ -42,6 +43,7 @@ import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_class.HandlerThreadObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
+import com.xxx.yyy.ScriptC_crop
 import java.io.File
 
 // todo 실제 카메라처럼 기능 개편
@@ -96,6 +98,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // image rotate
     private lateinit var scriptCRotatorMbr: ScriptC_rotator
 
+    // image crop
+    private lateinit var scriptCCropMbr: ScriptC_crop
+
+    // image resize
+    private lateinit var scriptIntrinsicResizeMbr: ScriptIntrinsicResize
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -288,6 +295,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         imageReaderHandlerThreadMbr.stopHandlerThread()
 
         // 랜더 스크립트 객체 해소
+        scriptCCropMbr.destroy()
+        scriptIntrinsicResizeMbr.destroy()
         scriptIntrinsicYuvToRGBMbr.destroy()
         scriptCRotatorMbr.destroy()
         renderScriptMbr.finish()
@@ -511,6 +520,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             Element.U8_4(renderScriptMbr)
         )
         scriptCRotatorMbr = ScriptC_rotator(renderScriptMbr)
+
+        scriptCCropMbr =ScriptC_crop(renderScriptMbr)
+
+        scriptIntrinsicResizeMbr = ScriptIntrinsicResize.create(
+            renderScriptMbr
+        )
 
         // (사용 카메라 객체 생성)
         val cameraId =
