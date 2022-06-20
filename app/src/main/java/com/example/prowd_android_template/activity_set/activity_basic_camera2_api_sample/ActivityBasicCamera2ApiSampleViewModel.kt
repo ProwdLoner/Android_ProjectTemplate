@@ -1,12 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_basic_camera2_api_sample
 
 import android.app.Application
-import android.renderscript.Element
-import android.renderscript.RenderScript
-import android.renderscript.ScriptIntrinsicYuvToRGB
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.prowd_android_template.ScriptC_rotator
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -44,6 +40,10 @@ class ActivityBasicCamera2ApiSampleViewModel(application: Application) :
 
     // 액티비티 진입 필수 권한 요청 여부
     var isActivityPermissionClearMbr = false
+
+    // 이미지 리더 프로세싱 일시정지 여부
+    var imageProcessingPauseMbr = false
+
 
 
     // ---------------------------------------------------------------------------------------------

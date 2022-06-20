@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.graphics.ImageFormat
+import android.graphics.Rect
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraMetadata
@@ -208,9 +210,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         imageReaderConfigVo,
                         null,
                         executorOnSurfaceAllReady = {
+                            // 떨림 보정
+                            cameraObjMbr.setCameraStabilization(
+                                true,
+                                executorOnCameraStabilizationSettingComplete = {})
 
                             // 카메라 리퀘스트 설정
-                            cameraObjMbr.setCameraRequestBuilder(
+                            cameraObjMbr.setCameraRequest(
                                 onPreview = true,
                                 onImageReader = true,
                                 onMediaRecorder = false,
@@ -222,8 +228,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         CameraMetadata.CONTROL_MODE_AUTO
                                     )
 
-                                    // 손떨림 방지
-                                    cameraObjMbr.setStabilizationRequest(it)
                                 },
                                 executorOnCameraRequestBuilderSet = {
 
@@ -292,7 +296,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        imageProcessingPauseMbr = true
+        viewModelMbr.imageProcessingPauseMbr = true
         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
             true,
             "카메라 종료",
@@ -307,12 +311,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             onNegBtnClicked = {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                imageProcessingPauseMbr = false
+                viewModelMbr.imageProcessingPauseMbr = false
             },
             onCanceled = {
                 viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                imageProcessingPauseMbr = false
+                viewModelMbr.imageProcessingPauseMbr = false
             }
         )
     }
@@ -674,8 +678,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         imageReaderConfigVo,
                         mediaRecorderConfigVo,
                         executorOnSurfaceAllReady = {
+                            // 떨림 보정
+                            cameraObjMbr.setCameraStabilization(
+                                true,
+                                executorOnCameraStabilizationSettingComplete = {})
+
                             // 카메라 리퀘스트 설정
-                            cameraObjMbr.setCameraRequestBuilder(
+                            cameraObjMbr.setCameraRequest(
                                 onPreview = true,
                                 onImageReader = true,
                                 onMediaRecorder = true,
@@ -686,9 +695,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         CaptureRequest.CONTROL_MODE,
                                         CameraMetadata.CONTROL_MODE_AUTO
                                     )
-
-                                    // 손떨림 방지
-                                    cameraObjMbr.setStabilizationRequest(it)
                                 },
                                 executorOnCameraRequestBuilderSet = {
                                     // 카메라 실행
@@ -775,9 +781,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 imageReaderConfigVo,
                                 null,
                                 executorOnSurfaceAllReady = {
+                                    // 떨림 보정
+                                    cameraObjMbr.setCameraStabilization(
+                                        true,
+                                        executorOnCameraStabilizationSettingComplete = {})
 
                                     // 카메라 리퀘스트 설정
-                                    cameraObjMbr.setCameraRequestBuilder(
+                                    cameraObjMbr.setCameraRequest(
                                         onPreview = true,
                                         onImageReader = true,
                                         onMediaRecorder = false,
@@ -788,9 +798,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                                 CaptureRequest.CONTROL_MODE,
                                                 CameraMetadata.CONTROL_MODE_AUTO
                                             )
-
-                                            // 손떨림 방지
-                                            cameraObjMbr.setStabilizationRequest(it)
                                         },
                                         executorOnCameraRequestBuilderSet = {
                                             bindingMbr.recordBtn.isEnabled = true
@@ -935,8 +942,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 imageReaderConfigVo,
                 null,
                 executorOnSurfaceAllReady = {
+                    // 떨림 보정
+                    cameraObjMbr.setCameraStabilization(
+                        true,
+                        executorOnCameraStabilizationSettingComplete = {})
+
                     // 카메라 리퀘스트 설정
-                    cameraObjMbr.setCameraRequestBuilder(
+                    cameraObjMbr.setCameraRequest(
                         onPreview = true,
                         onImageReader = true,
                         onMediaRecorder = false,
@@ -947,9 +959,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 CaptureRequest.CONTROL_MODE,
                                 CameraMetadata.CONTROL_MODE_AUTO
                             )
-
-                            // 손떨림 방지
-                            cameraObjMbr.setStabilizationRequest(it)
                         },
                         executorOnCameraRequestBuilderSet = {
                             // 카메라 실행
@@ -978,55 +987,106 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // (카메라 이미지 실시간 처리 콜백)
-    private var yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
-    private var imageProcessingPauseMbr = false
     private fun processImage(reader: ImageReader) {
         try {
+            // 1. Image 객체 요청
             val imageObj: Image = reader.acquireLatestImage() ?: return
 
-            // yuv ByteArray 를 rgb Bitmap 으로 변환 (병렬처리)
-            // 반환되는 비트맵 이미지는 카메라 센서 방향에 따라 정방향이 아닐 수 있음.
-
-            // 병렬처리 플래그
+            // 2. 첫번째 플래그
             if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
-                imageProcessingPauseMbr || // imageProcessing 정지 신호
-                isDestroyed || // 액티비티 자체가 종료
-                yuvByteArrayToArgbBitmapAsyncOnProgressMbr// 작업중
+                viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+                isDestroyed // 액티비티 자체가 종료
             ) {
                 // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
                 imageObj.close()
                 return
             }
 
-            // (이미지 데이터 복사 = yuv to rgb bitmap 변환 로직 병렬처리를 위한 데이터 백업)
-            // 최대한 빨리 imageObj 를 닫기 위하여(= 프레임을 다음으로 넘기기 위하여) imageObj 정보를 ByteArray 로 복사하여 사용
-            val imgWidth: Int = imageObj.width
-            val imgHeight: Int = imageObj.height
+            // 3. Image 객체를 ByteArray 로 변경 (* YUV_420_888 포멧만 가능)
+            val pixelCount = imageObj.width * imageObj.height
+            val yuvByteArray =
+                ByteArray(pixelCount * ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888) / 8)
 
-            val yuvByteArray = RenderScriptUtil.getYuv420888ImageByteArray(imageObj)
+            imageObj.planes.forEachIndexed { planeIndex, plane ->
+                val outputStride: Int
 
-            // 이미지 데이터가 복사되어 image 객체 해제
-            imageObj.close()
+                var outputOffset: Int
 
-            if (yuvByteArray == null) {
-                return
+                when (planeIndex) {
+                    0 -> {
+                        outputStride = 1
+                        outputOffset = 0
+                    }
+                    1 -> {
+                        outputStride = 2
+                        outputOffset = pixelCount + 1
+                    }
+                    2 -> {
+                        outputStride = 2
+                        outputOffset = pixelCount
+                    }
+                    else -> {
+                        return@forEachIndexed
+                    }
+                }
+
+                val planeBuffer = plane.buffer
+                val pixelStride = plane.pixelStride
+
+                val imageCrop = Rect(0, 0, imageObj.width, imageObj.height)
+                val planeCrop = if (planeIndex == 0) {
+                    imageCrop
+                } else {
+                    Rect(
+                        imageCrop.left / 2,
+                        imageCrop.top / 2,
+                        imageCrop.right / 2,
+                        imageCrop.bottom / 2
+                    )
+                }
+
+                val planeWidth = planeCrop.width()
+
+                val rowBuffer = ByteArray(plane.rowStride)
+
+                val rowLength = if (pixelStride == 1 && outputStride == 1) {
+                    planeWidth
+                } else {
+                    (planeWidth - 1) * pixelStride + 1
+                }
+
+                for (row in 0 until planeCrop.height()) {
+                    planeBuffer.position(
+                        (row + planeCrop.top) * plane.rowStride + planeCrop.left * pixelStride
+                    )
+
+                    if (pixelStride == 1 && outputStride == 1) {
+                        planeBuffer.get(yuvByteArray, outputOffset, rowLength)
+                        outputOffset += rowLength
+                    } else {
+                        planeBuffer.get(rowBuffer, 0, rowLength)
+                        for (col in 0 until planeWidth) {
+                            yuvByteArray[outputOffset] = rowBuffer[col * pixelStride]
+                            outputOffset += outputStride
+                        }
+                    }
+                }
             }
 
-            yuvByteArrayToArgbBitmapAsyncOnProgressMbr = true
-
-            // (YUV420 Image to ARGB8888 Bitmap)
+            // 4. YUV_420_888 ByteArray to ARGB8888 Bitmap
             // RenderScript 사용
             val bitmap =
                 RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
                     renderScriptMbr,
                     scriptIntrinsicYuvToRGBMbr,
-                    imgWidth,
-                    imgHeight,
+                    imageObj.width,
+                    imageObj.height,
                     yuvByteArray
                 )
 
-            yuvByteArrayToArgbBitmapAsyncOnProgressMbr = false
+            imageObj.close()
 
+            // 디버그를 위한 표시
             runOnUiThread {
                 if (!isDestroyed) {
                     Glide.with(this)

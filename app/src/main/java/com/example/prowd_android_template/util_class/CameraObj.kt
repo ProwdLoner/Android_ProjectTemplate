@@ -37,10 +37,10 @@ import kotlin.math.sqrt
 // 외부에서는 카메라 객체를 생성 후 startCamera 를 사용하여 카메라를 실행
 // 카메라를 종료할 때에는 stopCamera 를 사용
 // Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
+// 내부 제공 함수들은 대다수 비동기 동작을 수행합니다. 시점을 맞추기 위해선 제공되는 콜백을 사용하면 됩니다.
+// 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
 
-// todo : 이미지 리더 불안정 해결
-// todo : 전환시 queueBuffer: BufferQueue has been abandoned 해결
-// todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
+// todo : 이미지 리더 최대 크기일 때 불안정 해결
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 사진 찍기 기능 검증
 // todo : 서페이스 각자 세팅 기능 오버로딩(request setting callback 을 제거)
@@ -65,12 +65,19 @@ class CameraObj private constructor(
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
     // (카메라 정보)
-    // 떨림 보정 방지 기능 가능 여부 (기계적)
+    // 떨림 보정 기능 가능 여부 (기계적) : stabilization 설정을 할 때 우선 적용
     var isOpticalStabilizationAvailableMbr: Boolean = false
         private set
 
-    // 떨림 보정 방지 기능 가능 여부 (소프트웨어적)
+    // 떨림 보정 기능 가능 여부 (소프트웨어적) : stabilization 설정을 할 때 차선 적용
     var isVideoStabilizationAvailableMbr: Boolean = false
+        private set
+
+    // 떨림 보정 기능 적용 여부 :
+    // isOpticalStabilizationAvailableMbr 가 true 라면 이를 적용,
+    // 아니라면 isVideoStabilizationAvailableMbr 를 적용,
+    // 둘 다 지원 불가라면 보정 불가
+    var isCameraStabilizationSetMbr: Boolean = false
         private set
 
     // 센서 사이즈
@@ -852,7 +859,7 @@ class CameraObj private constructor(
     // 3 : preview 설정이지만 preview 서페이스가 없을 때
     // 4 : imageReader 설정이지만 imageReader 서페이스가 없을 때
     // 5 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
-    fun setCameraRequestBuilder(
+    fun setCameraRequest(
         onPreview: Boolean,
         onImageReader: Boolean,
         onMediaRecorder: Boolean,
@@ -949,6 +956,40 @@ class CameraObj private constructor(
                 captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
             }
 
+            // 카메라 떨림 보정 여부 반영
+            if (isCameraStabilizationSetMbr) { // 떨림 보정 on
+                // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
+                if (isOpticalStabilizationAvailableMbr) {
+                    captureRequestBuilderMbr!!.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilderMbr!!.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                } else if (isVideoStabilizationAvailableMbr) {
+                    captureRequestBuilderMbr!!.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilderMbr!!.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                }
+            } else { // 떨림 보정 off
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                )
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                )
+            }
+
+            // 기존 세션이 실행중이라면 곧바로 설정 적용
             if (isRepeatingMbr) {
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
@@ -1231,38 +1272,6 @@ class CameraObj private constructor(
         })
     }
 
-    // [리퀘스트 헬퍼 함수]
-    // (손떨림 방지 설정)
-    // 결과 값
-    // 0 : 촬영 안정화 기능이 제공되지 않음
-    // 1 : 기계적 안정화 설정
-    // 2 : 소프트웨어적 안정화 설정
-    fun setStabilizationRequest(captureRequestBuilder: CaptureRequest.Builder): Int {
-        if (isOpticalStabilizationAvailableMbr) {
-            captureRequestBuilder.set(
-                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-            )
-            captureRequestBuilder.set(
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-            )
-            return 1
-        } else if (isVideoStabilizationAvailableMbr) {
-            captureRequestBuilder.set(
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-            )
-            captureRequestBuilder.set(
-                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-            )
-            return 2
-        }
-
-        return 0
-    }
-
     // [미디어 레코더 변경 함수 모음]
     // prepare 는 서페이스 설정시 자동 실행
     // stop 은 cameraObject 를 stop 시킬 때, 혹은 setSurface 의 초기화 로직에서 자동으로 실행됨
@@ -1394,6 +1403,103 @@ class CameraObj private constructor(
             } else {
                 cameraSessionSemaphoreMbr.release()
                 executorOnZoomSettingComplete(zoom)
+            }
+        }
+    }
+
+    // (손떨림 방지 설정)
+    fun setCameraStabilization(
+        stabilizationOn: Boolean,
+        executorOnCameraStabilizationSettingComplete: () -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+
+            if (stabilizationOn) {
+                // 보정 기능이 하나도 제공되지 않는 경우
+                if (!isVideoStabilizationAvailableMbr &&
+                    !isOpticalStabilizationAvailableMbr
+                ) {
+                    isCameraStabilizationSetMbr = false
+                    cameraSessionSemaphoreMbr.release()
+                    executorOnCameraStabilizationSettingComplete()
+                    return@execute
+                }
+                isCameraStabilizationSetMbr = true
+
+                if (captureRequestBuilderMbr == null) {
+                    cameraSessionSemaphoreMbr.release()
+                    executorOnCameraStabilizationSettingComplete()
+                    return@execute
+                }
+
+                // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
+                if (isOpticalStabilizationAvailableMbr) {
+                    captureRequestBuilderMbr!!.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilderMbr!!.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                } else if (isVideoStabilizationAvailableMbr) {
+                    captureRequestBuilderMbr!!.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilderMbr!!.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                }
+
+                if (!isRepeatingMbr) {
+                    cameraSessionSemaphoreMbr.release()
+                    executorOnCameraStabilizationSettingComplete()
+                    return@execute
+                }
+
+                cameraCaptureSessionMbr!!.setRepeatingRequest(
+                    captureRequestBuilderMbr!!.build(),
+                    null,
+                    cameraApiHandlerMbr
+                )
+
+                cameraSessionSemaphoreMbr.release()
+                executorOnCameraStabilizationSettingComplete()
+            } else {
+                isCameraStabilizationSetMbr = false
+
+                if (captureRequestBuilderMbr == null) {
+                    cameraSessionSemaphoreMbr.release()
+                    executorOnCameraStabilizationSettingComplete()
+                    return@execute
+                }
+
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                )
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                )
+
+                if (!isRepeatingMbr) {
+                    cameraSessionSemaphoreMbr.release()
+                    executorOnCameraStabilizationSettingComplete()
+                    return@execute
+                }
+
+                cameraCaptureSessionMbr!!.setRepeatingRequest(
+                    captureRequestBuilderMbr!!.build(),
+                    null,
+                    cameraApiHandlerMbr
+                )
+
+                cameraSessionSemaphoreMbr.release()
+                executorOnCameraStabilizationSettingComplete()
             }
         }
     }
