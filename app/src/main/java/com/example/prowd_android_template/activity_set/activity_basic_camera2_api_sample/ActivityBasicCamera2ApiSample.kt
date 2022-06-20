@@ -987,6 +987,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // (카메라 이미지 실시간 처리 콜백)
+    // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
     private fun processImage(reader: ImageReader) {
         try {
             // 1. Image 객체 요청
@@ -1075,7 +1076,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // 4. YUV_420_888 ByteArray to ARGB8888 Bitmap
             // RenderScript 사용
-            val bitmap =
+            val cameraImageFrameBitmap =
                 RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
                     renderScriptMbr,
                     scriptIntrinsicYuvToRGBMbr,
@@ -1086,11 +1087,24 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             imageObj.close()
 
+            // todo : rotate 방향에 따라 적용
+
+//            val rotateCounterClockAngle =
+//                (360 - cameraObjMbr.sensorOrientationMbr)
+//
+//            val rotateCameraImageFrameBitmap =
+//                RenderScriptUtil.rotateBitmapCounterClock(
+//                    renderScriptMbr,
+//                    scriptCRotatorMbr,
+//                    cameraImageFrameBitmap,
+//                    rotateCounterClockAngle
+//                )
+
             // 디버그를 위한 표시
             runOnUiThread {
                 if (!isDestroyed) {
                     Glide.with(this)
-                        .load(bitmap)
+                        .load(cameraImageFrameBitmap)
                         .transform(FitCenter())
                         .into(bindingMbr.testImg)
                 }

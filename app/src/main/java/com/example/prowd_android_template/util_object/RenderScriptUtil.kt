@@ -73,7 +73,7 @@ object RenderScriptUtil {
     // (이미지를 특정 각도로 회전시키는 함수)
     // input example :
     //    var scriptCRotator: ScriptC_rotator = ScriptC_rotator(renderScript)
-    fun rotateBitmap(
+    fun rotateBitmapCounterClock(
         renderScript: RenderScript,
         scriptCRotator: ScriptC_rotator,
         bitmap: Bitmap,
