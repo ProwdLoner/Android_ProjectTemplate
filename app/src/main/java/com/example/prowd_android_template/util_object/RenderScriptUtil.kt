@@ -8,6 +8,7 @@ import android.renderscript.*
 import com.example.prowd_android_template.ScriptC_rotator
 import com.xxx.yyy.ScriptC_crop
 
+// [랜더스크립트 이미지 처리 유틸]
 object RenderScriptUtil {
     // (YUV 420 888 Byte Array 를 ARGB 8888 비트맵으로 변환하여 반환하는 함수)
     // input example :
@@ -39,33 +40,6 @@ object RenderScriptUtil {
         outputAllocation.destroy()
         inputAllocation.destroy()
         elemType.destroy()
-
-        return resultBitmap
-    }
-
-    // (비트맵을 특정 사이즈로 리사이징 하는 함수)
-    // input example :
-    //    var scriptIntrinsicResize: ScriptIntrinsicResize = ScriptIntrinsicResize.create(
-    //        renderScript
-    //    )
-    fun resizeBitmapIntrinsic(
-        renderScript: RenderScript,
-        scriptIntrinsicResize: ScriptIntrinsicResize,
-        bitmap: Bitmap,
-        dstWidth: Int,
-        dstHeight: Int
-    ): Bitmap {
-        val resultBitmap = Bitmap.createBitmap(dstWidth, dstHeight, bitmap.config)
-
-        val inAlloc = Allocation.createFromBitmap(renderScript, bitmap)
-        val outAlloc = Allocation.createFromBitmap(renderScript, resultBitmap)
-
-        scriptIntrinsicResize.setInput(inAlloc)
-        scriptIntrinsicResize.forEach_bicubic(outAlloc)
-        outAlloc.copyTo(resultBitmap)
-
-        inAlloc.destroy()
-        outAlloc.destroy()
 
         return resultBitmap
     }
@@ -110,7 +84,7 @@ object RenderScriptUtil {
             -1 -> scriptCRotator.forEach_flip_horizontally(targetAllocation, targetAllocation)
             -2 -> scriptCRotator.forEach_flip_vertically(targetAllocation, targetAllocation)
             90 -> scriptCRotator.forEach_rotate_90_clockwise(targetAllocation, targetAllocation)
-            180 -> scriptCRotator.forEach_flip_vertically(targetAllocation, targetAllocation)
+            180 -> scriptCRotator.forEach_rotate_180_clockwise(targetAllocation, targetAllocation)
             270 -> scriptCRotator.forEach_rotate_270_clockwise(targetAllocation, targetAllocation)
         }
         targetAllocation.copyTo(target)
@@ -119,6 +93,33 @@ object RenderScriptUtil {
         targetAllocation.destroy()
 
         return target
+    }
+
+    // (비트맵을 특정 사이즈로 리사이징 하는 함수)
+    // input example :
+    //    var scriptIntrinsicResize: ScriptIntrinsicResize = ScriptIntrinsicResize.create(
+    //        renderScript
+    //    )
+    fun resizeBitmapIntrinsic(
+        renderScript: RenderScript,
+        scriptIntrinsicResize: ScriptIntrinsicResize,
+        bitmap: Bitmap,
+        dstWidth: Int,
+        dstHeight: Int
+    ): Bitmap {
+        val resultBitmap = Bitmap.createBitmap(dstWidth, dstHeight, bitmap.config)
+
+        val inAlloc = Allocation.createFromBitmap(renderScript, bitmap)
+        val outAlloc = Allocation.createFromBitmap(renderScript, resultBitmap)
+
+        scriptIntrinsicResize.setInput(inAlloc)
+        scriptIntrinsicResize.forEach_bicubic(outAlloc)
+        outAlloc.copyTo(resultBitmap)
+
+        inAlloc.destroy()
+        outAlloc.destroy()
+
+        return resultBitmap
     }
 
     // (이미지를 특정 좌표에서 자르는 함수)

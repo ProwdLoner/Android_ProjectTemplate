@@ -45,6 +45,7 @@ import com.example.prowd_android_template.util_object.RenderScriptUtil
 import java.io.File
 
 // todo 실제 카메라처럼 기능 개편
+// todo 리사이징, 크롭 각 비동기 방식으로
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -1076,7 +1077,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // 4. YUV_420_888 ByteArray to ARGB8888 Bitmap
             // RenderScript 사용
-            val cameraImageFrameBitmap =
+            // 카메라 방향에 따라 이미지가 정방향이 아닐 수 있음
+            var cameraImageFrameBitmap =
                 RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
                     renderScriptMbr,
                     scriptIntrinsicYuvToRGBMbr,
@@ -1087,18 +1089,42 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             imageObj.close()
 
-            // todo : rotate 방향에 따라 적용
+            // 이미지를 정방향으로 회전
+            val rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                display!!.rotation
+            } else {
+                windowManager.defaultDisplay.rotation
+            }
 
-//            val rotateCounterClockAngle =
-//                (360 - cameraObjMbr.sensorOrientationMbr)
-//
-//            val rotateCameraImageFrameBitmap =
-//                RenderScriptUtil.rotateBitmapCounterClock(
-//                    renderScriptMbr,
-//                    scriptCRotatorMbr,
-//                    cameraImageFrameBitmap,
-//                    rotateCounterClockAngle
-//                )
+            val rotateCounterClockAngle: Int = when (rotation) {
+                Surface.ROTATION_0 -> { // 카메라 기본 방향
+                    // if sensorOrientationMbr = 90 -> 270
+                    360 - cameraObjMbr.sensorOrientationMbr
+                }
+                Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
+                    // if sensorOrientationMbr = 90 -> 0
+                    90 - cameraObjMbr.sensorOrientationMbr
+                }
+                Surface.ROTATION_180 -> {
+                    // if sensorOrientationMbr = 90 -> 90
+                    180 - cameraObjMbr.sensorOrientationMbr
+                }
+                Surface.ROTATION_270 -> {
+                    // if sensorOrientationMbr = 90 -> 180
+                    270 - cameraObjMbr.sensorOrientationMbr
+                }
+                else -> {
+                    0
+                }
+            }
+
+            cameraImageFrameBitmap =
+                RenderScriptUtil.rotateBitmapCounterClock(
+                    renderScriptMbr,
+                    scriptCRotatorMbr,
+                    cameraImageFrameBitmap,
+                    rotateCounterClockAngle
+                )
 
             // 디버그를 위한 표시
             runOnUiThread {

@@ -57,7 +57,7 @@ class CameraObj private constructor(
     val previewSurfaceSupportedSizeListMbr: Array<Size>?,
     val imageReaderSurfaceSupportedSizeListMbr: Array<Size>?,
     val mediaRecorderSurfaceSupportedSizeListMbr: Array<Size>?,
-    val sensorOrientationMbr: Int,
+    val sensorOrientationMbr: Int, // 카메라 방향이 시계방향으로 얼마나 돌려야 디바이스 방향과 일치하는지에 대한 각도
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
