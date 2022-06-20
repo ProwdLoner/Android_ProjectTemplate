@@ -6,9 +6,10 @@ import android.content.res.AssetManager
 import android.content.res.TypedArray
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Size
 import java.io.IOException
 import java.io.InputStream
-
+import kotlin.math.abs
 
 object CustomUtil {
     // 현재 실행 환경이 디버그 모드인지 파악하는 함수
@@ -68,4 +69,62 @@ object CustomUtil {
         return bitmap
     }
 
+    // todo : minmax 값 적용
+    // (사이즈 리스트 중 원하는 비율과 크기에 가까운 사이즈를 고르는 함수)
+    // preferredArea 0 은 최소, Long.MAX_VALUE 는 최대
+    // preferredWHRatio 0 이하면 비율을 신경쓰지 않고 넓이만으로 비교
+    fun getNearestSupportedCameraOutputSize(
+        sizeArray: Array<Size>,
+        preferredArea: Long,
+        preferredWHRatio: Double
+    ): Size {
+        if (0 >= preferredWHRatio) { // whRatio 를 0 이하로 선택하면 넓이만으로 비교
+            // 넓이 비슷한 것을 선정
+            var smallestAreaDiff: Long = Long.MAX_VALUE
+            var resultIndex = 0
+
+            for ((index, value) in sizeArray.withIndex()) {
+                val area = value.width.toLong() * value.height.toLong()
+                val areaDiff = abs(area - preferredArea)
+                if (areaDiff < smallestAreaDiff) {
+                    smallestAreaDiff = areaDiff
+                    resultIndex = index
+                }
+            }
+
+            return sizeArray[resultIndex]
+        } else { // 비율을 먼저 보고, 이후 넓이로 비교
+            // 비율 비슷한 것을 선정
+            var mostSameWhRatio = 0.0
+            var smallestWhRatioDiff: Double = Double.MAX_VALUE
+
+            for (value in sizeArray) {
+                val whRatio: Double = value.width.toDouble() / value.height.toDouble()
+
+                val whRatioDiff = abs(whRatio - preferredWHRatio)
+                if (whRatioDiff < smallestWhRatioDiff) {
+                    smallestWhRatioDiff = whRatioDiff
+                    mostSameWhRatio = whRatio
+                }
+            }
+
+            // 넓이 비슷한 것을 선정
+            var resultSizeIndex = 0
+            var smallestAreaDiff: Long = Long.MAX_VALUE
+            // 비슷한 비율중 가장 비슷한 넓이를 선정
+            for ((index, value) in sizeArray.withIndex()) {
+                val whRatio: Double = value.width.toDouble() / value.height.toDouble()
+
+                if (mostSameWhRatio == whRatio) {
+                    val area = value.width.toLong() * value.height.toLong()
+                    val areaDiff = abs(area - preferredArea)
+                    if (areaDiff < smallestAreaDiff) {
+                        smallestAreaDiff = areaDiff
+                        resultSizeIndex = index
+                    }
+                }
+            }
+            return sizeArray[resultSizeIndex]
+        }
+    }
 }

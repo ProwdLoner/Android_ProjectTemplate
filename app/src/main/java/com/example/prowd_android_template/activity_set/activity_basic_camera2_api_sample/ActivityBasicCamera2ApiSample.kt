@@ -146,10 +146,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        if (cameraObjMbr.isRecordingMbr) { // 레코딩 중이라면 기존 레코딩을 제거
+        if (cameraObjMbr.isRecordingMbr) { // 레코딩 중이라면 기존 레코딩 세션을 제거 후 프리뷰 세션으로 전환
             // 기존 저장 폴더 백업
             val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
-            // 카메라 초기화
+
+            // 카메라를 서페이스 까지 초기화
             cameraObjMbr.stopCameraObject(
                 executorOnCameraStop = {
                     // 기존 저장 폴더 삭제
@@ -160,12 +161,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                             // 지원 사이즈 탐지
                             val chosenPreviewSurfaceSize =
-                                CameraObj.getNearestSupportedCameraOutputSize(
-                                    this,
+                                CustomUtil.getNearestSupportedCameraOutputSize(
                                     cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                                    cameraObjMbr.sensorOrientationMbr,
                                     Long.MAX_VALUE,
-                                    2.0 / 3.0
+                                    3.0 / 2.0
                                 )
 
                             // 설정 객체 반환
@@ -184,12 +183,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                             // 지원 사이즈 탐지
                             val chosenImageReaderSurfaceSize =
-                                CameraObj.getNearestSupportedCameraOutputSize(
-                                    this,
+                                CustomUtil.getNearestSupportedCameraOutputSize(
                                     cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                                    cameraObjMbr.sensorOrientationMbr,
                                     500 * 500,
-                                    2.0 / 3.0
+                                    3.0 / 2.0
                                 )
 
                             // 설정 객체 반환
@@ -275,8 +272,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             null
         }
 
-        // 카메라 종료
+        // 카메라를 디바이스 객체까지 전부 초기화
         cameraObjMbr.clearCameraObject(executorOnCameraClear = {
+            // 레코딩 도중 저장중이던 파일 제거
             videoFile?.delete()
         })
 
@@ -593,22 +591,23 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             bindingMbr.recordBtn.visibility = View.VISIBLE
 
             // recording pause 시에는 녹화를 멈추고 기존 파일을 제거하도록 처리
-            // todo 중복 클릭 방지, 녹화중 화면 효과
+            // todo 녹화중 화면 효과
             // 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
             bindingMbr.recordBtn.setOnClickListener {
-                if (!(cameraObjMbr.isRecordingMbr)) {
+                // 처리 완료까지 중복 클릭 방지
+                bindingMbr.recordBtn.isEnabled = false
+
+                if (!(cameraObjMbr.isRecordingMbr)) { // 레코딩 중이 아닐 때
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
                     val previewConfigVo =
                         if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                             // 지원 사이즈 탐지
                             val chosenPreviewSurfaceSize =
-                                CameraObj.getNearestSupportedCameraOutputSize(
-                                    this,
+                                CustomUtil.getNearestSupportedCameraOutputSize(
                                     cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                                    cameraObjMbr.sensorOrientationMbr,
                                     Long.MAX_VALUE,
-                                    2.0 / 3.0
+                                    3.0 / 2.0
                                 )
 
                             // 설정 객체 반환
@@ -627,12 +626,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                             // 지원 사이즈 탐지
                             val chosenImageReaderSurfaceSize =
-                                CameraObj.getNearestSupportedCameraOutputSize(
-                                    this,
+                                CustomUtil.getNearestSupportedCameraOutputSize(
                                     cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                                    cameraObjMbr.sensorOrientationMbr,
                                     500 * 500,
-                                    2.0 / 3.0
+                                    3.0 / 2.0
                                 )
 
                             // 설정 객체 반환
@@ -652,12 +649,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         if (null != cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
                             // 지원 사이즈 탐지
                             val chosenSurfaceSize =
-                                CameraObj.getNearestSupportedCameraOutputSize(
-                                    this,
+                                CustomUtil.getNearestSupportedCameraOutputSize(
                                     cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
-                                    cameraObjMbr.sensorOrientationMbr,
                                     Long.MAX_VALUE,
-                                    2.0 / 3.0
+                                    3.0 / 2.0
                                 )
 
                             // 설정 객체 반환
@@ -702,24 +697,29 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         null,
                                         executorOnRequestComplete = {
                                             cameraObjMbr.startMediaRecording()
+
+                                            bindingMbr.recordBtn.isEnabled = true
                                         },
-                                        executorOnError = {})
+                                        executorOnError = {
+                                            bindingMbr.recordBtn.isEnabled = true
+                                        })
                                 },
                                 executorOnError = {
-
+                                    bindingMbr.recordBtn.isEnabled = true
                                 }
                             )
                         },
                         executorOnError = {
-
+                            bindingMbr.recordBtn.isEnabled = true
                         }
                     )
-                } else {
+                } else { // 레코딩 중일때
                     // 화면 고정 풀기
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
                     // 기존 저장 폴더 백업
                     val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+
                     // 카메라 초기화
                     cameraObjMbr.stopCameraObject(
                         executorOnCameraStop = {
@@ -728,12 +728,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                                     // 지원 사이즈 탐지
                                     val chosenPreviewSurfaceSize =
-                                        CameraObj.getNearestSupportedCameraOutputSize(
-                                            this,
+                                        CustomUtil.getNearestSupportedCameraOutputSize(
                                             cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                                            cameraObjMbr.sensorOrientationMbr,
                                             Long.MAX_VALUE,
-                                            2.0 / 3.0
+                                            3.0 / 2.0
                                         )
 
                                     // 설정 객체 반환
@@ -752,12 +750,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                                     // 지원 사이즈 탐지
                                     val chosenImageReaderSurfaceSize =
-                                        CameraObj.getNearestSupportedCameraOutputSize(
-                                            this,
+                                        CustomUtil.getNearestSupportedCameraOutputSize(
                                             cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                                            cameraObjMbr.sensorOrientationMbr,
                                             500 * 500,
-                                            2.0 / 3.0
+                                            3.0 / 2.0
                                         )
 
                                     // 설정 객체 반환
@@ -797,6 +793,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             cameraObjMbr.setStabilizationRequest(it)
                                         },
                                         executorOnCameraRequestBuilderSet = {
+                                            bindingMbr.recordBtn.isEnabled = true
+
                                             // 결과물 감상
                                             val mediaPlayerIntent = Intent()
                                             mediaPlayerIntent.action = Intent.ACTION_VIEW
@@ -818,11 +816,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             resultLauncherMbr.launch(mediaPlayerIntent)
                                         },
                                         executorOnError = {
+                                            bindingMbr.recordBtn.isEnabled = true
 
                                         }
                                     )
                                 },
                                 executorOnError = {
+                                    bindingMbr.recordBtn.isEnabled = true
 
                                 }
                             )
@@ -887,15 +887,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     private fun onCameraPermissionChecked(isOnCreate: Boolean) {
         if (isOnCreate) { // 처음 카메라 설정 시점
             // (카메라 실행)
-            // todo : 90도 회전시 프리뷰가 잘림 현상
             val previewConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                 // 지원 사이즈 탐지
-                val chosenPreviewSurfaceSize = CameraObj.getNearestSupportedCameraOutputSize(
-                    this,
+                val chosenPreviewSurfaceSize = CustomUtil.getNearestSupportedCameraOutputSize(
                     cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                    cameraObjMbr.sensorOrientationMbr,
                     Long.MAX_VALUE,
-                    2.0 / 3.0
+                    3.0 / 2.0
                 )
 
                 // 설정 객체 반환
@@ -913,12 +910,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val imageReaderConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
                 // 지원 사이즈 탐지
                 val chosenImageReaderSurfaceSize =
-                    CameraObj.getNearestSupportedCameraOutputSize(
-                        this,
+                    CustomUtil.getNearestSupportedCameraOutputSize(
                         cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                        cameraObjMbr.sensorOrientationMbr,
                         500 * 500,
-                        2.0 / 3.0
+                        3.0 / 2.0
                     )
 
                 // 설정 객체 반환

@@ -28,7 +28,6 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
-import kotlin.math.abs
 import kotlin.math.sqrt
 
 
@@ -44,22 +43,21 @@ import kotlin.math.sqrt
 // todo : 전환시 image reader waitForFreeSlotThenRelock: timeout
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 사진 찍기 기능 검증
-// todo : 녹화 관련 api 재개편
-// todo : 서페이스 각자 세팅 기능 오버라이딩
+// todo : 서페이스 각자 세팅 기능 오버로딩(request setting callback 을 제거)
 // todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance 등
-// todo : 90 도 환경에서 미디어 레코더 prepare 에러
+// todo : 전체 검증 : 특히 setSurface 의 디바이스 방향
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
     private val cameraApiHandlerMbr: Handler,
     private val cameraManagerMbr: CameraManager,
-    private val cameraCharacteristicsMbr: CameraCharacteristics,
+    cameraCharacteristicsMbr: CameraCharacteristics,
     private val streamConfigurationMapMbr: StreamConfigurationMap,
     val previewSurfaceSupportedSizeListMbr: Array<Size>?,
     val imageReaderSurfaceSupportedSizeListMbr: Array<Size>?,
     val mediaRecorderSurfaceSupportedSizeListMbr: Array<Size>?,
-    var sensorOrientationMbr: Int = 0,
+    val sensorOrientationMbr: Int,
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
@@ -67,42 +65,13 @@ class CameraObj private constructor(
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
     // (카메라 정보)
-    var currentCameraZoomFactorMbr = 1f
-        private set
-
     // 떨림 보정 방지 기능 가능 여부 (기계적)
     var isOpticalStabilizationAvailableMbr: Boolean = false
         private set
-        get() {
-            val availableOpticalStabilization =
-                cameraCharacteristicsMbr.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
-                    ?: return false
-
-            for (mode in availableOpticalStabilization) {
-                if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
-                    return true
-                }
-            }
-
-            return false
-        }
 
     // 떨림 보정 방지 기능 가능 여부 (소프트웨어적)
     var isVideoStabilizationAvailableMbr: Boolean = false
         private set
-        get() {
-            val availableVideoStabilization =
-                cameraCharacteristicsMbr.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
-                    ?: return false
-
-            for (mode in availableVideoStabilization) {
-                if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
-                    return true
-                }
-            }
-
-            return false
-        }
 
     // 센서 사이즈
     val sensorSize =
@@ -112,27 +81,21 @@ class CameraObj private constructor(
     // maxZoom 이 1.0 이라는 것은 줌이 불가능하다는 의미
     var maxZoomMbr = 1.0f
         private set
-        get() {
-            if (sensorSize == null) {
-                return 1.0f
-            }
 
-            val maxZoom =
-                cameraCharacteristicsMbr.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
-                    ?: return 1.0f
+    // 카메라 현재 줌 배수
+    var currentCameraZoomFactorMbr = 1.0f
+        private set
 
-            if (maxZoom < 1.0f) {
-                return 1.0f
-            }
-
-            return maxZoom
-        }
-
+    // 카메라가 현재 리퀘스트 반복 처리중인지
     var isRepeatingMbr: Boolean = false
         private set
 
+    // 카메라가 현재 미디어 레코딩 중인지
+    var isRecordingMbr = false
+        private set
 
-    // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성
+
+    // [카메라 기본 생성 객체] : 카메라 객체 생성시 생성 - 상태 변화에 따라 초기화
     // (카메라 부산 데이터)
     private val cameraSessionSemaphoreMbr = Semaphore(1)
     private var cameraDeviceMbr: CameraDevice? = null
@@ -145,7 +108,6 @@ class CameraObj private constructor(
     var mediaRecorderConfigVoMbr: MediaRecorderConfigVo? = null
     private var mediaRecorderMbr: MediaRecorder? = null
     private var mediaCodecSurfaceMbr: Surface? = null
-    var isRecordingMbr = false
 
     // 프리뷰 세팅 부산물
     val previewConfigVoListMbr: ArrayList<PreviewConfigVo> = ArrayList()
@@ -159,8 +121,119 @@ class CameraObj private constructor(
 
 
     // ---------------------------------------------------------------------------------------------
+    // <생성자 공간>
+    init {
+        // (max zoom 정보)
+        maxZoomMbr = if (sensorSize == null) {
+            1.0f
+        } else {
+            val maxZoom =
+                cameraCharacteristicsMbr.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
+
+            if (maxZoom == null) {
+                1.0f
+            } else {
+                if (maxZoom < 1.0f) {
+                    1.0f
+                } else {
+                    maxZoom
+                }
+            }
+        }
+
+        // (기계적 떨림 보정 정보)
+        val availableOpticalStabilization =
+            cameraCharacteristicsMbr.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
+
+        if (availableOpticalStabilization != null) {
+            for (mode in availableOpticalStabilization) {
+                if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
+                    isOpticalStabilizationAvailableMbr = true
+                }
+            }
+        }
+
+        // (소프트웨어 떨림 보정 정보)
+        val availableVideoStabilization =
+            cameraCharacteristicsMbr.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+
+        if (availableVideoStabilization != null) {
+            for (mode in availableVideoStabilization) {
+                if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
+                    isVideoStabilizationAvailableMbr = true
+                }
+            }
+        }
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
     // <스태틱 공간>
     companion object {
+        // (객체 생성 함수 = 조건에 맞지 않으면 null 반환)
+        // 조작하길 원하는 카메라 ID 를 설정하여 해당 카메라 정보를 생성
+        fun getInstance(
+            parentActivity: Activity,
+            cameraId: String,
+            cameraApiHandler: Handler,
+            onCameraDisconnected: (() -> Unit)
+        ): CameraObj? {
+            if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+                // 카메라 장치가 없다면 null 반환
+                return null
+            }
+
+            // 카메라 총괄 빌더
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            // 카메라 Id에 해당하는 카메라 정보 가져오기
+            val cameraCharacteristics =
+                cameraManager.getCameraCharacteristics(cameraId)
+
+            // 필수 정보 확인
+            val streamConfigurationMap: StreamConfigurationMap? =
+                cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+
+            val sensorOrientationMbr: Int? =
+                cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
+
+            if (null == streamConfigurationMap || null == sensorOrientationMbr) {
+                // 필수 정보가 하나라도 없으면 null 반환
+                return null
+            }
+
+            // 서페이스 출력 지원 사이즈 리스트
+            val previewSurfaceSupportedSizeList =
+                streamConfigurationMap.getOutputSizes(SurfaceTexture::class.java)
+            val imageReaderSurfaceSupportedSizeList =
+                streamConfigurationMap.getOutputSizes(ImageFormat.YUV_420_888)
+            val mediaRecorderSurfaceSupportedSizeList =
+                streamConfigurationMap.getOutputSizes(MediaRecorder::class.java)
+
+            // 출력 지원 사이즈가 하나도 없다면 null 반환
+            if (previewSurfaceSupportedSizeList == null &&
+                imageReaderSurfaceSupportedSizeList == null &&
+                mediaRecorderSurfaceSupportedSizeList == null
+            ) {
+                return null
+            }
+
+            return CameraObj(
+                parentActivity,
+                cameraId,
+                cameraApiHandler,
+                cameraManager,
+                cameraCharacteristics,
+                streamConfigurationMap,
+                previewSurfaceSupportedSizeList,
+                imageReaderSurfaceSupportedSizeList,
+                mediaRecorderSurfaceSupportedSizeList,
+                sensorOrientationMbr,
+                onCameraDisconnected
+            )
+        }
+
         // (카메라 아이디를 반환하는 스태틱 함수)
         // CameraCharacteristics.LENS_FACING_FRONT: 전면 카메라. value : 0
         // CameraCharacteristics.LENS_FACING_BACK: 후면 카메라. value : 1
@@ -191,100 +264,6 @@ class CameraObj private constructor(
             }
 
             return result
-        }
-
-        // todo : minmax 값 적용
-        // (supportedSizeArray 중에 preferredArea 와 가장 유사한 것을 선택하고, 그 중에서도 preferredWHRatio 가 유사한 것을 선택)
-        // preferredArea 0 은 최소, Long.MAX_VALUE 는 최대
-        // preferredWHRatio 0 이하면 비율을 신경쓰지 않고 넓이만으로 비교
-        // 반환 사이즈의 방향은 카메라 방향 (입력값은 디바이스 방향 기준으로 넣어주기)
-        fun getNearestSupportedCameraOutputSize(
-            parentActivity: Activity,
-            supportedSizeArray: Array<Size>,
-            cameraOrientation: Int,
-            preferredArea: Long,
-            preferredWHRatio: Double
-        ): Size {
-            if (0 >= preferredWHRatio) { // whRatio 를 0 이하로 선택하면 넓이만으로 비교
-                // 넓이 비슷한 것을 선정
-                var smallestAreaDiff: Long = Long.MAX_VALUE
-                var resultIndex = 0
-
-                for ((index, value) in supportedSizeArray.withIndex()) {
-                    val area = value.width.toLong() * value.height.toLong()
-                    val areaDiff = abs(area - preferredArea)
-                    if (areaDiff < smallestAreaDiff) {
-                        smallestAreaDiff = areaDiff
-                        resultIndex = index
-                    }
-                }
-
-                return supportedSizeArray[resultIndex]
-            } else { // 비율을 먼저 보고, 이후 넓이로 비교
-                // 카메라 디바이스와 휴대폰 rotation 이 서로 다른지를 확인
-                var isCameraDeviceAndMobileRotationDifferent = false
-
-                val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    parentActivity.display!!.rotation
-                } else {
-                    parentActivity.windowManager.defaultDisplay.rotation
-                }
-
-                // width, height 가 서로 달라지는지를 확인하는 것이므로 90도 단위 변경만을 캐치
-                when (deviceOrientation) {
-                    Surface.ROTATION_0, Surface.ROTATION_180 -> {
-                        if (cameraOrientation == 90 || cameraOrientation == 270) {
-                            isCameraDeviceAndMobileRotationDifferent = true
-                        }
-                    }
-
-                    Surface.ROTATION_90, Surface.ROTATION_270 -> {
-                        if (cameraOrientation == 0 || cameraOrientation == 180) {
-                            isCameraDeviceAndMobileRotationDifferent = true
-                        }
-                    }
-                }
-
-                // 비율 비슷한 것을 선정
-                var mostSameWhRatio = 0.0
-                var smallestWhRatioDiff: Double = Double.MAX_VALUE
-
-                for (value in supportedSizeArray) {
-                    val whRatio: Double = if (isCameraDeviceAndMobileRotationDifferent) {
-                        value.height.toDouble() / value.width.toDouble()
-                    } else {
-                        value.width.toDouble() / value.height.toDouble()
-                    }
-
-                    val whRatioDiff = abs(whRatio - preferredWHRatio)
-                    if (whRatioDiff < smallestWhRatioDiff) {
-                        smallestWhRatioDiff = whRatioDiff
-                        mostSameWhRatio = whRatio
-                    }
-                }
-
-                // 넓이 비슷한 것을 선정
-                var resultSizeIndex = 0
-                var smallestAreaDiff: Long = Long.MAX_VALUE
-                // 비슷한 비율중 가장 비슷한 넓이를 선정
-                for ((index, value) in supportedSizeArray.withIndex()) {
-                    val whRatio: Double = if (isCameraDeviceAndMobileRotationDifferent) {
-                        value.height.toDouble() / value.width.toDouble()
-                    } else {
-                        value.width.toDouble() / value.height.toDouble()
-                    }
-
-                    if (mostSameWhRatio == whRatio) {
-                        val area = value.width.toLong() * value.height.toLong()
-                        val areaDiff = abs(area - preferredArea)
-                        if (areaDiff < smallestAreaDiff) {
-                            smallestAreaDiff = areaDiff
-                            resultSizeIndex = index
-                        }
-                    }
-                }
-                return supportedSizeArray[resultSizeIndex]
-            }
         }
 
         // (가용 카메라 리스트 반환)
@@ -402,76 +381,11 @@ class CameraObj private constructor(
 
             return cameraInfoList
         }
-
-        // (객체 생성 함수 = 조건에 맞지 않으면 null 반환)
-        // 조작하길 원하는 카메라 ID 를 설정하여 해당 카메라 정보를 생성
-        fun getInstance(
-            parentActivity: Activity,
-            cameraId: String,
-            cameraApiHandler: Handler,
-            onCameraDisconnected: (() -> Unit)
-        ): CameraObj? {
-            if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-                // 카메라 장치가 없다면 null 반환
-                return null
-            }
-
-            // 카메라 총괄 빌더
-            val cameraManager: CameraManager =
-                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-            // 카메라 Id에 해당하는 카메라 정보 가져오기
-            val cameraCharacteristics =
-                cameraManager.getCameraCharacteristics(cameraId)
-
-            // 필수 정보 확인
-            val streamConfigurationMap: StreamConfigurationMap? =
-                cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-
-            val sensorOrientationMbr: Int? =
-                cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
-
-            if (null == streamConfigurationMap || null == sensorOrientationMbr) {
-                // 필수 정보가 하나라도 없으면 null 반환
-                return null
-            }
-
-            // 서페이스 출력 지원 사이즈 리스트
-            val previewSurfaceSupportedSizeList =
-                streamConfigurationMap.getOutputSizes(SurfaceTexture::class.java)
-            val imageReaderSurfaceSupportedSizeList =
-                streamConfigurationMap.getOutputSizes(ImageFormat.YUV_420_888)
-            val mediaRecorderSurfaceSupportedSizeList =
-                streamConfigurationMap.getOutputSizes(MediaRecorder::class.java)
-
-            // 출력 지원 사이즈가 하나도 없다면 null 반환
-            if (previewSurfaceSupportedSizeList == null &&
-                imageReaderSurfaceSupportedSizeList == null &&
-                mediaRecorderSurfaceSupportedSizeList == null
-            ) {
-                return null
-            }
-
-            return CameraObj(
-                parentActivity,
-                cameraId,
-                cameraApiHandler,
-                cameraManager,
-                cameraCharacteristics,
-                streamConfigurationMap,
-                previewSurfaceSupportedSizeList,
-                imageReaderSurfaceSupportedSizeList,
-                mediaRecorderSurfaceSupportedSizeList,
-                sensorOrientationMbr,
-                onCameraDisconnected
-            )
-        }
     }
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
 
-    // todo : 각각의 서페이스를 따로 설정 오버로딩
     // (출력 서페이스 설정 함수)
     // 서페이스 설정 검증 및 생성, 이후 CameraDevice, CameraCaptureSession 생성까지를 수행
     // 사용할 서페이스 사이즈 및 종류를 결정하는 것이 주요 기능
@@ -1115,12 +1029,6 @@ class CameraObj private constructor(
     ) {
         executorServiceMbr.execute {
             cameraSessionSemaphoreMbr.acquire()
-
-            if (isRecordingMbr) {
-                mediaRecorderMbr?.pause()
-                isRecordingMbr = false
-            }
-
             if (isRepeatingMbr) {
                 cameraCaptureSessionMbr?.stopRepeating()
                 isRepeatingMbr = false
@@ -1263,6 +1171,7 @@ class CameraObj private constructor(
 
     // (뷰 핀치 동작에 따른 줌 변경 리스너 주입 함수)
     // 뷰를 주입하면 해당 뷰를 핀칭할 때에 줌을 변경할수 있도록 리스너를 주입
+    // 뷰를 여러번 넣으면 각각의 뷰에 핀칭을 할 때마다 줌을 변경
     // delta : 단위 핀치 이벤트에 따른 줌 변화량 = 높을수록 민감
     var beforePinchSpacingMbr: Float? = null
     fun setCameraPinchZoomTouchListener(view: View, delta: Float = 0.05f) {
@@ -1356,8 +1265,10 @@ class CameraObj private constructor(
 
     // [미디어 레코더 변경 함수 모음]
     // prepare 는 서페이스 설정시 자동 실행
-    // start 는 원하는 녹화 시점에 한번만 실행, 이후 pause, resume 으로 정지 재개
-    // stop 은 외부 사용 금지. stop 을 하고 싶다면 cameraObject 를 stop 시키면 자동으로 실행됨
+    // stop 은 cameraObject 를 stop 시킬 때, 혹은 setSurface 의 초기화 로직에서 자동으로 실행됨
+    // 이외에 start, pause, resume 은 내부적으로 전혀 손대지 않기에 아래 함수로 사용자가 적절히 사용할 것.
+    // camera pause 시 아직 mediaRecorder 가 녹화중이라면 화면은 움직이지 않고 계속 시간에 따라 녹화가 진행됨.
+    // 고로 단순히 pause 후 연속 녹화를 하려면 외부에서 camera pause 이전에 mediaRecorder pause 를 먼저 해주는 것을 추천
 
     // (미디어 레코딩 시작)
     // 결과 코드 :
@@ -1410,15 +1321,22 @@ class CameraObj private constructor(
     }
 
     // (미디어 레코딩 일시정지)
-    fun pauseMediaRecording() {
-        mediaRecorderMbr!!.pause()
-        isRecordingMbr = false
+    // 결과 코드 :
+    // 0 : 정상 동작
+    // 1 : 미디어 레코딩 중이 아님
+    fun pauseMediaRecording(): Int {
+        return if (isRecordingMbr) {
+            mediaRecorderMbr?.pause()
+            isRecordingMbr = false
+            0
+        } else {
+            1
+        }
     }
 
 
     // [카메라 상태 변경 함수 모음]
     // CameraObj 객체 안의 상태 멤버변수를 조절하며 실제 세션 설정에 반영하는 함수
-    // todo : request setting callback 을 제거하고 모두 여기에 이식
 
     // (카메라 줌 비율을 변경하는 함수)
     // 카메라가 실행중 상태라면 즉시 반영
@@ -1479,6 +1397,7 @@ class CameraObj private constructor(
             }
         }
     }
+
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
