@@ -1373,7 +1373,7 @@ class CameraObj private constructor(
 
             currentCameraZoomFactorMbr = zoom
 
-            if (captureRequestBuilderMbr != null && zoom != 1.0f) {
+            if (captureRequestBuilderMbr != null) {
                 val centerX =
                     sensorSize!!.width() / 2
                 val centerY =
