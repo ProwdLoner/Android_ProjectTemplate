@@ -14,6 +14,7 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
+import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -64,14 +65,20 @@ class CameraObj private constructor(
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
     // Camera2 api 핸들러 스레드
-    private val cameraApiHandlerThreadObjMbr: HandlerThreadObj = HandlerThreadObj("camera").apply {
-        this.startHandlerThread()
-    }
+    private val cameraApiHandlerThreadObjMbr: HandlerThreadObj =
+        HandlerThreadObj(
+            publishCameraThreadName()
+        ).apply {
+            this.startHandlerThread()
+        }
 
     // 이미지 리더 핸들러 스레드
-    private val imageReaderHandlerThreadObjMbr = HandlerThreadObj("camera_image_reader").apply {
-        this.startHandlerThread()
-    }
+    private val imageReaderHandlerThreadObjMbr =
+        HandlerThreadObj(
+            publishImageReaderThreadName()
+        ).apply {
+            this.startHandlerThread()
+        }
 
     // (카메라 정보)
     // 떨림 보정 기능 가능 여부 (기계적) : stabilization 설정을 할 때 우선 적용
@@ -395,6 +402,88 @@ class CameraObj private constructor(
 
             return cameraInfoList
         }
+
+
+        private var cameraThreadNameSemaphore = Semaphore(1)
+        private val cameraThreadNameList = ArrayList<String>()
+        private fun publishCameraThreadName(): String {
+            cameraThreadNameSemaphore.acquire()
+            if (cameraThreadNameList.size == 0) {
+                val name = "camera_thread_0"
+                cameraThreadNameList.add(name)
+                cameraThreadNameSemaphore.release()
+                return name
+            } else {
+                var curNameIdx = 0
+                while (true) {
+                    val idx = cameraThreadNameList.indexOfFirst {
+                        it.split("_").last().toInt() == curNameIdx
+                    }
+
+                    if (idx == -1) {
+                        break
+                    }
+
+                    curNameIdx++
+                }
+
+                val name = "camera_thread_${curNameIdx}"
+                cameraThreadNameList.add(name)
+                cameraThreadNameSemaphore.release()
+                return name
+            }
+        }
+
+        private fun deleteCameraThreadName(name: String) {
+            cameraThreadNameSemaphore.acquire()
+            val idx = cameraThreadNameList.indexOfLast { it == name }
+            if (idx != -1) {
+                cameraThreadNameList.removeAt(idx)
+                Log.e("i", cameraThreadNameList.toString())
+            }
+            cameraThreadNameSemaphore.release()
+        }
+
+        private var imageReaderThreadNameSemaphore = Semaphore(1)
+        private val imageReaderThreadNameList = ArrayList<String>()
+        private fun publishImageReaderThreadName(): String {
+            imageReaderThreadNameSemaphore.acquire()
+            if (imageReaderThreadNameList.size == 0) {
+                val name = "image_reader_thread_0"
+                imageReaderThreadNameList.add(name)
+                imageReaderThreadNameSemaphore.release()
+                return name
+            } else {
+                var curNameIdx = 0
+                while (true) {
+                    val idx = imageReaderThreadNameList.indexOfFirst {
+                        it.split("_").last().toInt() == curNameIdx
+                    }
+
+                    if (idx == -1) {
+                        break
+                    }
+
+                    curNameIdx++
+                }
+
+                val name = "image_reader_thread_${curNameIdx}"
+                imageReaderThreadNameList.add(name)
+                imageReaderThreadNameSemaphore.release()
+                return name
+            }
+        }
+
+        private fun deleteImageReaderThreadName(name: String) {
+            imageReaderThreadNameSemaphore.acquire()
+            val idx = imageReaderThreadNameList.indexOfLast { it == name }
+            if (idx != -1) {
+                imageReaderThreadNameList.removeAt(idx)
+            }
+            imageReaderThreadNameSemaphore.release()
+        }
+
+        // todo : 카메라 id 별 세마포어 생성 및 제공
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -1098,6 +1187,12 @@ class CameraObj private constructor(
                 mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
                 isRecordingMbr = false
+
+                cameraCaptureSessionMbr?.stopRepeating()
+                isRepeatingMbr = false
+            } else if (isRepeatingMbr) {
+                cameraCaptureSessionMbr?.stopRepeating()
+                isRepeatingMbr = false
             }
 
             mediaRecorderMbr?.release()
@@ -1162,6 +1257,12 @@ class CameraObj private constructor(
                 mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
                 isRecordingMbr = false
+
+                cameraCaptureSessionMbr?.stopRepeating()
+                isRepeatingMbr = false
+            } else if (isRepeatingMbr) {
+                cameraCaptureSessionMbr?.stopRepeating()
+                isRepeatingMbr = false
             }
 
             mediaRecorderMbr?.release()
@@ -1211,6 +1312,11 @@ class CameraObj private constructor(
 
             cameraDeviceMbr?.close()
             cameraDeviceMbr = null
+
+            Log.e("d", cameraApiHandlerThreadObjMbr.threadName)
+            Log.e("s", imageReaderHandlerThreadObjMbr.threadName)
+            deleteCameraThreadName(cameraApiHandlerThreadObjMbr.threadName)
+            deleteImageReaderThreadName(imageReaderHandlerThreadObjMbr.threadName)
 
             cameraApiHandlerThreadObjMbr.stopHandlerThread()
             imageReaderHandlerThreadObjMbr.stopHandlerThread()
