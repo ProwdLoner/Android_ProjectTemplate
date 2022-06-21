@@ -40,7 +40,6 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
-import com.example.prowd_android_template.util_class.HandlerThreadObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 import com.xxx.yyy.ScriptC_crop
@@ -514,48 +513,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // (사용 카메라 객체 생성)
         val cameraId =
-            CameraObj.getCameraIdFromFacing(this, CameraCharacteristics.LENS_FACING_BACK)
-        if (null == cameraId) {
-            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                true,
-                "카메라 에러",
-                "카메라를 열 수 없습니다.\n액티비티를 종료합니다.",
-                null,
-                onCheckBtnClicked = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    finish()
-                },
-                onCanceled = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    finish()
-                }
-            )
-        }
+            CameraObj.getCameraIdFromFacing(this, CameraCharacteristics.LENS_FACING_BACK)!!
 
         val cameraObj = CameraObj.getInstance(
             this,
-            cameraId!!,
+            cameraId,
             onCameraDisconnected = {}
-        )
+        )!!
 
-        if (cameraObj == null) {
-            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                true,
-                "카메라 에러",
-                "카메라를 열 수 없습니다.\n액티비티를 종료합니다.",
-                null,
-                onCheckBtnClicked = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    finish()
-                },
-                onCanceled = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    finish()
-                }
-            )
-        }
-
-        cameraObjMbr = cameraObj!!
+        cameraObjMbr = cameraObj
 
         // 핀치 줌 설정
         cameraObjMbr.setCameraPinchZoomTouchListener(bindingMbr.cameraPreviewAutoFitTexture)
@@ -582,10 +548,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         if (deviceOrientation == Surface.ROTATION_0) {
             bindingMbr.recordBtn.y =
-                bindingMbr.recordBtn.y - CustomUtil.getNavigationBarHeightPixel(this)
+                bindingMbr.recordBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
         } else if (deviceOrientation == Surface.ROTATION_90) {
             bindingMbr.recordBtn.x =
-                bindingMbr.recordBtn.x - CustomUtil.getNavigationBarHeightPixel(this)
+                bindingMbr.recordBtn.x - CustomUtil.getSoftNavigationBarHeightPixel(this)
         }
 
         // 지원하는 미디어 레코더 사이즈가 없다면 녹화 버튼을 없애기
@@ -703,19 +669,27 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         executorOnRequestComplete = {
                                             cameraObjMbr.startMediaRecording()
 
-                                            bindingMbr.recordBtn.isEnabled = true
+                                            runOnUiThread {
+                                                bindingMbr.recordBtn.isEnabled = true
+                                            }
                                         },
                                         executorOnError = {
-                                            bindingMbr.recordBtn.isEnabled = true
+                                            runOnUiThread {
+                                                bindingMbr.recordBtn.isEnabled = true
+                                            }
                                         })
                                 },
                                 executorOnError = {
-                                    bindingMbr.recordBtn.isEnabled = true
+                                    runOnUiThread {
+                                        bindingMbr.recordBtn.isEnabled = true
+                                    }
                                 }
                             )
                         },
                         executorOnError = {
-                            bindingMbr.recordBtn.isEnabled = true
+                            runOnUiThread {
+                                bindingMbr.recordBtn.isEnabled = true
+                            }
                         }
                     )
                 } else { // 레코딩 중일때
@@ -798,7 +772,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             )
                                         },
                                         executorOnCameraRequestBuilderSet = {
-                                            bindingMbr.recordBtn.isEnabled = true
+                                            runOnUiThread {
+                                                bindingMbr.recordBtn.isEnabled = true
+                                            }
 
                                             // 결과물 감상
                                             val mediaPlayerIntent = Intent()
@@ -821,14 +797,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             resultLauncherMbr.launch(mediaPlayerIntent)
                                         },
                                         executorOnError = {
-                                            bindingMbr.recordBtn.isEnabled = true
-
+                                            runOnUiThread {
+                                                bindingMbr.recordBtn.isEnabled = true
+                                            }
                                         }
                                     )
                                 },
                                 executorOnError = {
-                                    bindingMbr.recordBtn.isEnabled = true
-
+                                    runOnUiThread {
+                                        bindingMbr.recordBtn.isEnabled = true
+                                    }
                                 }
                             )
                         }
@@ -986,7 +964,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (카메라 이미지 실시간 처리 콜백)
     // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
     private fun processImage(reader: ImageReader) {
-        try {
             // 1. Image 객체 요청
             val imageObj: Image = reader.acquireLatestImage() ?: return
 
@@ -1136,13 +1113,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         .into(bindingMbr.testImg)
                 }
             }
-        } catch (e: Exception) {
-            // 발생 가능한 에러 :
-            // 1. 이미지 객체를 사용하려 할 때, 액티비티가 종료되어 이미지 객체가 종료된 상황
-            // 2. Camera2 api 내부 에러 등
-            e.printStackTrace()
-            finish()
-        }
     }
 
 

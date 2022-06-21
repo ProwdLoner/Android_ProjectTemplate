@@ -6,10 +6,15 @@ import android.content.res.AssetManager
 import android.content.res.TypedArray
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Point
 import android.util.Size
-import java.io.IOException
+import android.view.Display
+import android.view.KeyCharacterMap
+import android.view.KeyEvent
+import android.view.WindowManager
 import java.io.InputStream
 import kotlin.math.abs
+
 
 object CustomUtil {
     // 현재 실행 환경이 디버그 모드인지 파악하는 함수
@@ -45,27 +50,31 @@ object CustomUtil {
         return actionBarHeight
     }
 
-    // 네비게이션 바 높이 픽셀 반환
-    fun getNavigationBarHeightPixel(context: Context): Int {
-        var navigationBarHeight = 0
-        val resourceId: Int =
-            context.resources.getIdentifier("navigation_bar_height", "dimen", "android")
-        if (resourceId > 0) {
-            navigationBarHeight = context.resources.getDimensionPixelSize(resourceId)
+    // 소프트 네비게이션 바 높이 픽셀 반환
+    fun getSoftNavigationBarHeightPixel(context: Context): Int {
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val display: Display = windowManager.defaultDisplay
+        val appUsableSize = Point()
+        display.getSize(appUsableSize)
+
+        val realScreenSize = Point()
+        display.getRealSize(realScreenSize)
+
+        return if (appUsableSize.x < realScreenSize.x) {
+            realScreenSize.x - appUsableSize.x
+        } else if (appUsableSize.y < realScreenSize.y) {
+            realScreenSize.y - appUsableSize.y
+        } else {
+            0
         }
-        return navigationBarHeight
     }
 
     fun getBitmapFromAssets(context: Context, filePath: String): Bitmap? {
         val assetManager: AssetManager = context.getAssets()
         val istr: InputStream
         var bitmap: Bitmap? = null
-        try {
-            istr = assetManager.open(filePath)
-            bitmap = BitmapFactory.decodeStream(istr)
-        } catch (e: IOException) {
-            // handle exception
-        }
+        istr = assetManager.open(filePath)
+        bitmap = BitmapFactory.decodeStream(istr)
         return bitmap
     }
 

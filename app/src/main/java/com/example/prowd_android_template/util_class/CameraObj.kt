@@ -489,6 +489,7 @@ class CameraObj private constructor(
             // (카메라 상태 초기화)
             if (isRecordingMbr) {
                 mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
                 isRecordingMbr = false
             }
 
@@ -1095,6 +1096,7 @@ class CameraObj private constructor(
             // (카메라 상태 초기화)
             if (isRecordingMbr) {
                 mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
                 isRecordingMbr = false
             }
 
@@ -1158,6 +1160,7 @@ class CameraObj private constructor(
             // (카메라 상태 초기화)
             if (isRecordingMbr) {
                 mediaRecorderMbr?.stop()
+                mediaRecorderMbr?.reset()
                 isRecordingMbr = false
             }
 
@@ -1552,6 +1555,7 @@ class CameraObj private constructor(
                         // (카메라 상태 초기화)
                         if (isRecordingMbr) {
                             mediaRecorderMbr?.stop()
+                            mediaRecorderMbr?.reset()
                             isRecordingMbr = false
                         }
 
@@ -1653,6 +1657,7 @@ class CameraObj private constructor(
                 override fun onDisconnected(camera: CameraDevice) {
                     if (isRecordingMbr) {
                         mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
                         isRecordingMbr = false
                     }
 
@@ -1712,6 +1717,7 @@ class CameraObj private constructor(
                     // (카메라 상태 초기화)
                     if (isRecordingMbr) {
                         mediaRecorderMbr?.stop()
+                        mediaRecorderMbr?.reset()
                         isRecordingMbr = false
                     }
 
