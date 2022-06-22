@@ -41,6 +41,7 @@ import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 import com.xxx.yyy.ScriptC_crop
 import java.nio.ByteBuffer
+import java.util.concurrent.Semaphore
 
 // todo 실제 카메라처럼 기능 개편
 // todo 리사이징, 크롭 각 비동기 방식으로
@@ -981,14 +982,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // image planes 를 순회하면 yuvByteArray 채우기
         val plane0: Image.Plane = imageObj.planes[0]
+        val plane1: Image.Plane = imageObj.planes[1]
+        val plane2: Image.Plane = imageObj.planes[2]
+
         val rowStride0: Int = plane0.rowStride
         val pixelStride0: Int = plane0.pixelStride
 
-        val plane1: Image.Plane = imageObj.planes[1]
         val rowStride1: Int = plane1.rowStride
         val pixelStride1: Int = plane1.pixelStride
 
-        val plane2: Image.Plane = imageObj.planes[2]
         val rowStride2: Int = plane2.rowStride
         val pixelStride2: Int = plane2.pixelStride
 
@@ -1024,196 +1026,261 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         imageObj.close()
 
-        // image to byteArray
-        val yuvByteArray =
-            ByteArray(pixelCount * ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888) / 8)
+        // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
+        // 아래부터 멀티 스레드를 사용 가능
 
-        val rowBuffer0 = ByteArray(rowStride0)
-        val outputStride0 = 1
+        // 이미지 객체에서 추출한 바이트 버퍼를 랜더 스크립트 주입용 바이트 어레이로 변환
+        byteBufferToByteArray(
+            imageWidth,
+            imageHeight,
+            pixelCount,
+            planeBuffer0,
+            rowStride0,
+            pixelStride0,
+            planeBuffer1,
+            rowStride1,
+            pixelStride1,
+            planeBuffer2,
+            rowStride2,
+            pixelStride2,
+            executorOnComplete = { imageWidth1, imageHeight1, yuvByteArray1 ->
 
-        var outputOffset0 = 0
+                if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+                    viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+                    isDestroyed // 액티비티 자체가 종료
+                ) {
+                    // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
+                    return@byteBufferToByteArray
+                }
 
-        val imageCrop0 = Rect(0, 0, imageWidth, imageHeight)
+                // 4. YUV_420_888 ByteArray to ARGB8888 Bitmap
+                // RenderScript 사용
+                // 카메라 방향에 따라 이미지가 정방향이 아닐 수 있음
+                var cameraImageFrameBitmap =
+                    RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
+                        renderScriptMbr,
+                        scriptIntrinsicYuvToRGBMbr,
+                        imageWidth1,
+                        imageHeight1,
+                        yuvByteArray1
+                    )
 
-        val planeWidth0 = imageCrop0.width()
+                // 이미지를 정방향으로 회전
+                val rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    display!!.rotation
+                } else {
+                    windowManager.defaultDisplay.rotation
+                }
 
-        val rowLength0 = if (pixelStride0 == 1 && outputStride0 == 1) {
-            planeWidth0
-        } else {
-            (planeWidth0 - 1) * pixelStride0 + 1
-        }
+                val rotateCounterClockAngle: Int = when (rotation) {
+                    Surface.ROTATION_0 -> { // 카메라 기본 방향
+                        // if sensorOrientationMbr = 90 -> 270
+                        360 - cameraObjMbr.sensorOrientationMbr
+                    }
+                    Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
+                        // if sensorOrientationMbr = 90 -> 0
+                        90 - cameraObjMbr.sensorOrientationMbr
+                    }
+                    Surface.ROTATION_180 -> {
+                        // if sensorOrientationMbr = 90 -> 90
+                        180 - cameraObjMbr.sensorOrientationMbr
+                    }
+                    Surface.ROTATION_270 -> {
+                        // if sensorOrientationMbr = 90 -> 180
+                        270 - cameraObjMbr.sensorOrientationMbr
+                    }
+                    else -> {
+                        0
+                    }
+                }
 
-        for (row in 0 until imageCrop0.height()) {
-            planeBuffer0.position(
-                (row + imageCrop0.top) * rowStride0 + imageCrop0.left * pixelStride0
-            )
+                if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+                    viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+                    isDestroyed // 액티비티 자체가 종료
+                ) {
+                    // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
+                    imageObj.close()
+                    return@byteBufferToByteArray
+                }
 
-            if (pixelStride0 == 1 && outputStride0 == 1) {
-                planeBuffer0.get(yuvByteArray, outputOffset0, rowLength0)
-                outputOffset0 += rowLength0
-            } else {
-                planeBuffer0.get(rowBuffer0, 0, rowLength0)
-                for (col in 0 until planeWidth0) {
-                    yuvByteArray[outputOffset0] = rowBuffer0[col * pixelStride0]
-                    outputOffset0 += outputStride0
+                cameraImageFrameBitmap =
+                    RenderScriptUtil.rotateBitmapCounterClock(
+                        renderScriptMbr,
+                        scriptCRotatorMbr,
+                        cameraImageFrameBitmap,
+                        rotateCounterClockAngle
+                    )
+
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(cameraImageFrameBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.testImg)
+                    }
                 }
             }
-        }
-
-
-        val rowBuffer1 = ByteArray(rowStride1)
-        val outputStride1 = 2
-
-        var outputOffset1: Int = pixelCount + 1
-
-        val imageCrop1 = Rect(0, 0, imageWidth, imageHeight)
-
-        val planeCrop1 = Rect(
-            imageCrop1.left / 2,
-            imageCrop1.top / 2,
-            imageCrop1.right / 2,
-            imageCrop1.bottom / 2
         )
+    }
 
-        val planeWidth1 = planeCrop1.width()
-
-        val rowLength1 = if (pixelStride1 == 1 && outputStride1 == 1) {
-            planeWidth1
-        } else {
-            (planeWidth1 - 1) * pixelStride1 + 1
-        }
-
-        for (row in 0 until planeCrop1.height()) {
-            planeBuffer1.position(
-                (row + planeCrop1.top) * rowStride1 + planeCrop1.left * pixelStride1
-            )
-
-            if (pixelStride1 == 1 && outputStride1 == 1) {
-                planeBuffer1.get(yuvByteArray, outputOffset1, rowLength1)
-                outputOffset1 += rowLength1
-            } else {
-                planeBuffer1.get(rowBuffer1, 0, rowLength1)
-                for (col in 0 until planeWidth1) {
-                    yuvByteArray[outputOffset1] = rowBuffer1[col * pixelStride1]
-                    outputOffset1 += outputStride1
-                }
-            }
-        }
-
-        val rowBuffer2 = ByteArray(rowStride2)
-        val outputStride2 = 2
-
-        var outputOffset2: Int = pixelCount
-
-        val imageCrop2 = Rect(0, 0, imageWidth, imageHeight)
-
-        val planeCrop2 = Rect(
-            imageCrop2.left / 2,
-            imageCrop2.top / 2,
-            imageCrop2.right / 2,
-            imageCrop2.bottom / 2
-        )
-
-        val planeWidth2 = planeCrop2.width()
-
-        val rowLength2 = if (pixelStride2 == 1 && outputStride2 == 1) {
-            planeWidth2
-        } else {
-            (planeWidth2 - 1) * pixelStride2 + 1
-        }
-
-        for (row in 0 until planeCrop2.height()) {
-            planeBuffer2.position(
-                (row + planeCrop2.top) * rowStride2 + planeCrop2.left * pixelStride2
-            )
-
-            if (pixelStride2 == 1 && outputStride2 == 1) {
-                planeBuffer2.get(yuvByteArray, outputOffset2, rowLength2)
-                outputOffset2 += rowLength2
-            } else {
-                planeBuffer2.get(rowBuffer2, 0, rowLength2)
-                for (col in 0 until planeWidth2) {
-                    yuvByteArray[outputOffset2] = rowBuffer2[col * pixelStride2]
-                    outputOffset2 += outputStride2
-                }
-            }
-        }
-
-        if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+    // (바이트 버퍼를 바이트 어레이로 변환하는 함수)
+    // executorOnComplete 파라미터 :
+    // imageWidth, imageHeight, yuvByteArray
+    private var byteBufferToByteArrayOnProgressMbr = false
+    private val byteBufferToByteArrayOnProgressSemaphoreMbr: Semaphore = Semaphore(1)
+    private fun byteBufferToByteArray(
+        imageWidth: Int,
+        imageHeight: Int,
+        pixelCount: Int,
+        originPlaneBuffer0: ByteBuffer,
+        rowStride0: Int,
+        pixelStride0: Int,
+        originPlaneBuffer1: ByteBuffer,
+        rowStride1: Int,
+        pixelStride1: Int,
+        originPlaneBuffer2: ByteBuffer,
+        rowStride2: Int,
+        pixelStride2: Int,
+        executorOnComplete: (Int, Int, ByteArray) -> Unit
+    ) {
+        byteBufferToByteArrayOnProgressSemaphoreMbr.acquire()
+        if (byteBufferToByteArrayOnProgressMbr ||
+            !cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
             viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
             isDestroyed // 액티비티 자체가 종료
         ) {
-            // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
-            imageObj.close()
+            byteBufferToByteArrayOnProgressSemaphoreMbr.release()
             return
         }
 
-        // 4. YUV_420_888 ByteArray to ARGB8888 Bitmap
-        // RenderScript 사용
-        // 카메라 방향에 따라 이미지가 정방향이 아닐 수 있음
-        var cameraImageFrameBitmap =
-            RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
-                renderScriptMbr,
-                scriptIntrinsicYuvToRGBMbr,
-                imageWidth,
-                imageHeight,
-                yuvByteArray
+        byteBufferToByteArrayOnProgressMbr = true
+        byteBufferToByteArrayOnProgressSemaphoreMbr.release()
+
+        // 레퍼런스 데이터 복제 (레퍼런스 변수는 함수 파라미터에 딥 카피가 되지 않으므로 복제)
+        val planeBuffer0 = CustomUtil.cloneByteBuffer(originPlaneBuffer0)
+        val planeBuffer1 = CustomUtil.cloneByteBuffer(originPlaneBuffer1)
+        val planeBuffer2 = CustomUtil.cloneByteBuffer(originPlaneBuffer2)
+
+        viewModelMbr.executorServiceMbr?.execute {
+            // image to byteArray
+            val yuvByteArray =
+                ByteArray(pixelCount * ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888) / 8)
+
+            val rowBuffer0 = ByteArray(rowStride0)
+            val outputStride0 = 1
+
+            var outputOffset0 = 0
+
+            val imageCrop0 = Rect(0, 0, imageWidth, imageHeight)
+
+            val planeWidth0 = imageCrop0.width()
+
+            val rowLength0 = if (pixelStride0 == 1 && outputStride0 == 1) {
+                planeWidth0
+            } else {
+                (planeWidth0 - 1) * pixelStride0 + 1
+            }
+
+            for (row in 0 until imageCrop0.height()) {
+                planeBuffer0.position(
+                    (row + imageCrop0.top) * rowStride0 + imageCrop0.left * pixelStride0
+                )
+
+                if (pixelStride0 == 1 && outputStride0 == 1) {
+                    planeBuffer0.get(yuvByteArray, outputOffset0, rowLength0)
+                    outputOffset0 += rowLength0
+                } else {
+                    planeBuffer0.get(rowBuffer0, 0, rowLength0)
+                    for (col in 0 until planeWidth0) {
+                        yuvByteArray[outputOffset0] = rowBuffer0[col * pixelStride0]
+                        outputOffset0 += outputStride0
+                    }
+                }
+            }
+
+            val rowBuffer1 = ByteArray(rowStride1)
+            val outputStride1 = 2
+
+            var outputOffset1: Int = pixelCount + 1
+
+            val imageCrop1 = Rect(0, 0, imageWidth, imageHeight)
+
+            val planeCrop1 = Rect(
+                imageCrop1.left / 2,
+                imageCrop1.top / 2,
+                imageCrop1.right / 2,
+                imageCrop1.bottom / 2
             )
 
-        // 이미지를 정방향으로 회전
-        val rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display!!.rotation
-        } else {
-            windowManager.defaultDisplay.rotation
-        }
+            val planeWidth1 = planeCrop1.width()
 
-        val rotateCounterClockAngle: Int = when (rotation) {
-            Surface.ROTATION_0 -> { // 카메라 기본 방향
-                // if sensorOrientationMbr = 90 -> 270
-                360 - cameraObjMbr.sensorOrientationMbr
+            val rowLength1 = if (pixelStride1 == 1 && outputStride1 == 1) {
+                planeWidth1
+            } else {
+                (planeWidth1 - 1) * pixelStride1 + 1
             }
-            Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
-                // if sensorOrientationMbr = 90 -> 0
-                90 - cameraObjMbr.sensorOrientationMbr
-            }
-            Surface.ROTATION_180 -> {
-                // if sensorOrientationMbr = 90 -> 90
-                180 - cameraObjMbr.sensorOrientationMbr
-            }
-            Surface.ROTATION_270 -> {
-                // if sensorOrientationMbr = 90 -> 180
-                270 - cameraObjMbr.sensorOrientationMbr
-            }
-            else -> {
-                0
-            }
-        }
 
-        if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
-            viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
-            isDestroyed // 액티비티 자체가 종료
-        ) {
-            // 현재 로테이팅 중 or 액티비티가 종료 or 이미지 수집이 완료
-            imageObj.close()
-            return
-        }
+            for (row in 0 until planeCrop1.height()) {
+                planeBuffer1.position(
+                    (row + planeCrop1.top) * rowStride1 + planeCrop1.left * pixelStride1
+                )
 
-        cameraImageFrameBitmap =
-            RenderScriptUtil.rotateBitmapCounterClock(
-                renderScriptMbr,
-                scriptCRotatorMbr,
-                cameraImageFrameBitmap,
-                rotateCounterClockAngle
+                if (pixelStride1 == 1 && outputStride1 == 1) {
+                    planeBuffer1.get(yuvByteArray, outputOffset1, rowLength1)
+                    outputOffset1 += rowLength1
+                } else {
+                    planeBuffer1.get(rowBuffer1, 0, rowLength1)
+                    for (col in 0 until planeWidth1) {
+                        yuvByteArray[outputOffset1] = rowBuffer1[col * pixelStride1]
+                        outputOffset1 += outputStride1
+                    }
+                }
+            }
+
+            val rowBuffer2 = ByteArray(rowStride2)
+            val outputStride2 = 2
+
+            var outputOffset2: Int = pixelCount
+
+            val imageCrop2 = Rect(0, 0, imageWidth, imageHeight)
+
+            val planeCrop2 = Rect(
+                imageCrop2.left / 2,
+                imageCrop2.top / 2,
+                imageCrop2.right / 2,
+                imageCrop2.bottom / 2
             )
 
-        // 디버그를 위한 표시
-        runOnUiThread {
-            if (!isDestroyed) {
-                Glide.with(this)
-                    .load(cameraImageFrameBitmap)
-                    .transform(FitCenter())
-                    .into(bindingMbr.testImg)
+            val planeWidth2 = planeCrop2.width()
+
+            val rowLength2 = if (pixelStride2 == 1 && outputStride2 == 1) {
+                planeWidth2
+            } else {
+                (planeWidth2 - 1) * pixelStride2 + 1
             }
+
+            for (row in 0 until planeCrop2.height()) {
+                planeBuffer2.position(
+                    (row + planeCrop2.top) * rowStride2 + planeCrop2.left * pixelStride2
+                )
+
+                if (pixelStride2 == 1 && outputStride2 == 1) {
+                    planeBuffer2.get(yuvByteArray, outputOffset2, rowLength2)
+                    outputOffset2 += rowLength2
+                } else {
+                    planeBuffer2.get(rowBuffer2, 0, rowLength2)
+                    for (col in 0 until planeWidth2) {
+                        yuvByteArray[outputOffset2] = rowBuffer2[col * pixelStride2]
+                        outputOffset2 += outputStride2
+                    }
+                }
+            }
+
+            byteBufferToByteArrayOnProgressSemaphoreMbr.acquire()
+            byteBufferToByteArrayOnProgressMbr = false
+            byteBufferToByteArrayOnProgressSemaphoreMbr.release()
+            executorOnComplete(imageWidth, imageHeight, yuvByteArray)
         }
     }
 
