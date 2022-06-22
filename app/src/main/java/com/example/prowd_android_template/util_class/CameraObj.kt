@@ -14,7 +14,6 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -439,7 +438,6 @@ class CameraObj private constructor(
             val idx = cameraThreadNameList.indexOfLast { it == name }
             if (idx != -1) {
                 cameraThreadNameList.removeAt(idx)
-                Log.e("i", cameraThreadNameList.toString())
             }
             cameraThreadNameSemaphore.release()
         }
@@ -576,22 +574,19 @@ class CameraObj private constructor(
             }
 
             // (카메라 상태 초기화)
+            imageReaderMbr?.setOnImageAvailableListener(null, null)
+
             if (isRecordingMbr) {
                 mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
                 isRecordingMbr = false
+
+                cameraCaptureSessionMbr?.stopRepeating()
+                isRepeatingMbr = false
+            } else if (isRepeatingMbr) {
+                cameraCaptureSessionMbr?.stopRepeating()
+                isRepeatingMbr = false
             }
-
-            mediaRecorderMbr?.release()
-            mediaRecorderMbr = null
-            mediaCodecSurfaceMbr?.release()
-            mediaCodecSurfaceMbr = null
-            mediaRecorderConfigVoMbr = null
-
-            imageReaderMbr?.setOnImageAvailableListener(null, null)
-            imageReaderMbr?.close()
-            imageReaderMbr = null
-            imageReaderConfigVoMbr = null
 
             for (previewConfigVo in previewConfigVoListMbr) {
                 previewConfigVo.autoFitTextureView.surfaceTextureListener =
@@ -615,13 +610,19 @@ class CameraObj private constructor(
                             Unit
                     }
             }
+
+            mediaRecorderMbr?.release()
+            mediaRecorderMbr = null
+            mediaCodecSurfaceMbr?.release()
+            mediaCodecSurfaceMbr = null
+            mediaRecorderConfigVoMbr = null
+
             previewConfigVoListMbr.clear()
             previewSurfaceListMbr.clear()
 
-            if (isRepeatingMbr) {
-                cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
-            }
+            imageReaderMbr?.close()
+            imageReaderMbr = null
+            imageReaderConfigVoMbr = null
 
             cameraCaptureSessionMbr?.close()
             cameraCaptureSessionMbr = null
@@ -1183,6 +1184,8 @@ class CameraObj private constructor(
             cameraSessionSemaphoreMbr.acquire()
 
             // (카메라 상태 초기화)
+            imageReaderMbr?.setOnImageAvailableListener(null, null)
+
             if (isRecordingMbr) {
                 mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
@@ -1194,17 +1197,6 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr?.stopRepeating()
                 isRepeatingMbr = false
             }
-
-            mediaRecorderMbr?.release()
-            mediaCodecSurfaceMbr?.release()
-            mediaCodecSurfaceMbr = null
-            mediaRecorderConfigVoMbr = null
-            mediaRecorderMbr = null
-
-            imageReaderMbr?.setOnImageAvailableListener(null, null)
-            imageReaderMbr?.close()
-            imageReaderMbr = null
-            imageReaderConfigVoMbr = null
 
             for (previewConfigVo in previewConfigVoListMbr) {
                 previewConfigVo.autoFitTextureView.surfaceTextureListener =
@@ -1228,13 +1220,19 @@ class CameraObj private constructor(
                             Unit
                     }
             }
+
+            mediaRecorderMbr?.release()
+            mediaCodecSurfaceMbr?.release()
+            mediaCodecSurfaceMbr = null
+            mediaRecorderConfigVoMbr = null
+            mediaRecorderMbr = null
+
             previewConfigVoListMbr.clear()
             previewSurfaceListMbr.clear()
 
-            if (isRepeatingMbr) {
-                cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
-            }
+            imageReaderMbr?.close()
+            imageReaderMbr = null
+            imageReaderConfigVoMbr = null
 
             cameraCaptureSessionMbr?.close()
             cameraCaptureSessionMbr = null
@@ -1242,6 +1240,7 @@ class CameraObj private constructor(
             captureRequestBuilderMbr = null
 
             cameraSessionSemaphoreMbr.release()
+
             executorOnCameraStop()
         }
     }
@@ -1253,6 +1252,8 @@ class CameraObj private constructor(
             cameraSessionSemaphoreMbr.acquire()
 
             // (카메라 상태 초기화)
+            imageReaderMbr?.setOnImageAvailableListener(null, null)
+
             if (isRecordingMbr) {
                 mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
@@ -1264,17 +1265,6 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr?.stopRepeating()
                 isRepeatingMbr = false
             }
-
-            mediaRecorderMbr?.release()
-            mediaCodecSurfaceMbr?.release()
-            mediaCodecSurfaceMbr = null
-            mediaRecorderConfigVoMbr = null
-            mediaRecorderMbr = null
-
-            imageReaderMbr?.setOnImageAvailableListener(null, null)
-            imageReaderMbr?.close()
-            imageReaderMbr = null
-            imageReaderConfigVoMbr = null
 
             for (previewConfigVo in previewConfigVoListMbr) {
                 previewConfigVo.autoFitTextureView.surfaceTextureListener =
@@ -1298,13 +1288,20 @@ class CameraObj private constructor(
                             Unit
                     }
             }
+
+            mediaRecorderMbr?.release()
+            mediaCodecSurfaceMbr?.release()
+            mediaCodecSurfaceMbr = null
+            mediaRecorderConfigVoMbr = null
+            mediaRecorderMbr = null
+
             previewConfigVoListMbr.clear()
             previewSurfaceListMbr.clear()
 
-            if (isRepeatingMbr) {
-                cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
-            }
+            imageReaderMbr?.close()
+            imageReaderMbr = null
+            imageReaderConfigVoMbr = null
+
             cameraCaptureSessionMbr?.close()
             cameraCaptureSessionMbr = null
 
@@ -1313,8 +1310,6 @@ class CameraObj private constructor(
             cameraDeviceMbr?.close()
             cameraDeviceMbr = null
 
-            Log.e("d", cameraApiHandlerThreadObjMbr.threadName)
-            Log.e("s", imageReaderHandlerThreadObjMbr.threadName)
             deleteCameraThreadName(cameraApiHandlerThreadObjMbr.threadName)
             deleteImageReaderThreadName(imageReaderHandlerThreadObjMbr.threadName)
 
@@ -1659,22 +1654,19 @@ class CameraObj private constructor(
                     },
                     onError = { errorCode, cameraCaptureSession ->
                         // (카메라 상태 초기화)
+                        imageReaderMbr?.setOnImageAvailableListener(null, null)
+
                         if (isRecordingMbr) {
                             mediaRecorderMbr?.stop()
                             mediaRecorderMbr?.reset()
                             isRecordingMbr = false
+
+                            cameraCaptureSessionMbr?.stopRepeating()
+                            isRepeatingMbr = false
+                        } else if (isRepeatingMbr) {
+                            cameraCaptureSessionMbr?.stopRepeating()
+                            isRepeatingMbr = false
                         }
-
-                        mediaRecorderMbr?.release()
-                        mediaCodecSurfaceMbr?.release()
-                        mediaCodecSurfaceMbr = null
-                        mediaRecorderConfigVoMbr = null
-                        mediaRecorderMbr = null
-
-                        imageReaderMbr?.setOnImageAvailableListener(null, null)
-                        imageReaderMbr?.close()
-                        imageReaderMbr = null
-                        imageReaderConfigVoMbr = null
 
                         for (previewConfigVo in previewConfigVoListMbr) {
                             previewConfigVo.autoFitTextureView.surfaceTextureListener =
@@ -1698,13 +1690,20 @@ class CameraObj private constructor(
                                         Unit
                                 }
                         }
+
+                        mediaRecorderMbr?.release()
+                        mediaCodecSurfaceMbr?.release()
+                        mediaCodecSurfaceMbr = null
+                        mediaRecorderConfigVoMbr = null
+                        mediaRecorderMbr = null
+
                         previewConfigVoListMbr.clear()
                         previewSurfaceListMbr.clear()
 
-                        if (isRepeatingMbr) {
-                            cameraCaptureSessionMbr?.stopRepeating()
-                            isRepeatingMbr = false
-                        }
+                        imageReaderMbr?.close()
+                        imageReaderMbr = null
+                        imageReaderConfigVoMbr = null
+
                         cameraCaptureSession.close()
                         cameraCaptureSessionMbr = null
 
@@ -1761,22 +1760,20 @@ class CameraObj private constructor(
 
                 // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
                 override fun onDisconnected(camera: CameraDevice) {
+                    // (카메라 상태 초기화)
+                    imageReaderMbr?.setOnImageAvailableListener(null, null)
+
                     if (isRecordingMbr) {
                         mediaRecorderMbr?.stop()
                         mediaRecorderMbr?.reset()
                         isRecordingMbr = false
+
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        isRepeatingMbr = false
+                    } else if (isRepeatingMbr) {
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        isRepeatingMbr = false
                     }
-
-                    mediaRecorderMbr?.release()
-                    mediaCodecSurfaceMbr?.release()
-                    mediaCodecSurfaceMbr = null
-                    mediaRecorderConfigVoMbr = null
-                    mediaRecorderMbr = null
-
-                    imageReaderMbr?.setOnImageAvailableListener(null, null)
-                    imageReaderMbr?.close()
-                    imageReaderMbr = null
-                    imageReaderConfigVoMbr = null
 
                     for (previewConfigVo in previewConfigVoListMbr) {
                         previewConfigVo.autoFitTextureView.surfaceTextureListener =
@@ -1800,14 +1797,20 @@ class CameraObj private constructor(
                                     Unit
                             }
                     }
+
+                    mediaRecorderMbr?.release()
+                    mediaCodecSurfaceMbr?.release()
+                    mediaCodecSurfaceMbr = null
+                    mediaRecorderConfigVoMbr = null
+                    mediaRecorderMbr = null
+
                     previewConfigVoListMbr.clear()
                     previewSurfaceListMbr.clear()
 
-                    if (isRepeatingMbr) {
-                        cameraCaptureSessionMbr?.stopRepeating()
+                    imageReaderMbr?.close()
+                    imageReaderMbr = null
+                    imageReaderConfigVoMbr = null
 
-                        isRepeatingMbr = false
-                    }
                     cameraCaptureSessionMbr?.close()
                     cameraCaptureSessionMbr = null
 
@@ -1821,22 +1824,19 @@ class CameraObj private constructor(
 
                 override fun onError(camera: CameraDevice, error: Int) {
                     // (카메라 상태 초기화)
+                    imageReaderMbr?.setOnImageAvailableListener(null, null)
+
                     if (isRecordingMbr) {
                         mediaRecorderMbr?.stop()
                         mediaRecorderMbr?.reset()
                         isRecordingMbr = false
+
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        isRepeatingMbr = false
+                    } else if (isRepeatingMbr) {
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        isRepeatingMbr = false
                     }
-
-                    mediaRecorderMbr?.release()
-                    mediaCodecSurfaceMbr?.release()
-                    mediaCodecSurfaceMbr = null
-                    mediaRecorderConfigVoMbr = null
-                    mediaRecorderMbr = null
-
-                    imageReaderMbr?.setOnImageAvailableListener(null, null)
-                    imageReaderMbr?.close()
-                    imageReaderMbr = null
-                    imageReaderConfigVoMbr = null
 
                     for (previewConfigVo in previewConfigVoListMbr) {
                         previewConfigVo.autoFitTextureView.surfaceTextureListener =
@@ -1860,13 +1860,20 @@ class CameraObj private constructor(
                                     Unit
                             }
                     }
+
+                    mediaRecorderMbr?.release()
+                    mediaCodecSurfaceMbr?.release()
+                    mediaCodecSurfaceMbr = null
+                    mediaRecorderConfigVoMbr = null
+                    mediaRecorderMbr = null
+
                     previewConfigVoListMbr.clear()
                     previewSurfaceListMbr.clear()
 
-                    if (isRepeatingMbr) {
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        isRepeatingMbr = false
-                    }
+                    imageReaderMbr?.close()
+                    imageReaderMbr = null
+                    imageReaderConfigVoMbr = null
+
                     cameraCaptureSessionMbr?.close()
                     cameraCaptureSessionMbr = null
 

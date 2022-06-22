@@ -9,10 +9,9 @@ import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.util.Size
 import android.view.Display
-import android.view.KeyCharacterMap
-import android.view.KeyEvent
 import android.view.WindowManager
 import java.io.InputStream
+import java.nio.ByteBuffer
 import kotlin.math.abs
 
 
@@ -135,5 +134,14 @@ object CustomUtil {
             }
             return sizeArray[resultSizeIndex]
         }
+    }
+
+    fun cloneByteBuffer(original: ByteBuffer): ByteBuffer {
+        val clone = ByteBuffer.allocate(original.capacity())
+        original.rewind()
+        clone.put(original)
+        original.rewind()
+        clone.flip()
+        return clone
     }
 }
