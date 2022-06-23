@@ -2088,6 +2088,8 @@ class CameraObj private constructor(
                 surfaces.add(surface)
             }
 
+            // todo android.hardware.camera2.CameraAccessException: CAMERA_ERROR (3): endConfigure:442: Camera 0: Error configuring streams: Function not implemented (-38)
+            // todo Caused by: android.os.ServiceSpecificException: endConfigure:442: Camera 0: Error configuring streams: Function not implemented (-38) (code 10)
             cameraDeviceMbr?.createCaptureSession(
                 surfaces,
                 object : CameraCaptureSession.StateCallback() {
