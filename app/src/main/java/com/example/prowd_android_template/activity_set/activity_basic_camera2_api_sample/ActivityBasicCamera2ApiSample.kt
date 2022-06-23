@@ -47,8 +47,8 @@ import com.xxx.yyy.ScriptC_crop
 import java.nio.ByteBuffer
 import java.util.concurrent.Semaphore
 
+
 // todo 실제 카메라처럼 기능 개편
-// todo 회전시 프리뷰 에러
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -94,6 +94,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // image resize
     private lateinit var scriptIntrinsicResizeMbr: ScriptIntrinsicResize
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -166,11 +167,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                                CustomUtil.getNearestSupportedCameraOutputSize(
 //                                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
 //                                    Long.MAX_VALUE,
-//                                    if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
 //                            3.0 / 2.0
-//                        } else {
-//                            2.0 / 3.0
-//                        }
 //                                )
 //
 //                            // 설정 객체 반환
@@ -192,11 +189,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                                CustomUtil.getNearestSupportedCameraOutputSize(
 //                                    cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
 //                                    500 * 500,
-//                                    if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
 //                            3.0 / 2.0
-//                        } else {
-//                            2.0 / 3.0
-//                        }
 //                                )
 //
 //                            // 설정 객체 반환
@@ -530,20 +523,22 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             this,
             cameraId,
             onCameraDisconnected = {
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "카메라 연결 끊김",
-                    "사용 카메라의 연결이 끊겼습니다.",
-                    null,
-                    onCheckBtnClicked = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                        finish()
-                    },
-                    onCanceled = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                        finish()
-                    }
-                )
+                runOnUiThread {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                        true,
+                        "카메라 연결 끊김",
+                        "현재 카메라와 연결이 끊겼습니다.",
+                        null,
+                        onCheckBtnClicked = {
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                            finish()
+                        },
+                        onCanceled = {
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                            finish()
+                        }
+                    )
+                }
             }
         )!!
 
@@ -626,11 +621,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                                CustomUtil.getNearestSupportedCameraOutputSize(
 //                                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
 //                                    Long.MAX_VALUE,
-//                                    if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
 //                            3.0 / 2.0
-//                        } else {
-//                            2.0 / 3.0
-//                        }
 //                                )
 //
 //                            // 설정 객체 반환
@@ -652,11 +643,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                                CustomUtil.getNearestSupportedCameraOutputSize(
 //                                    cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
 //                                    500 * 500,
-//                                    if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
 //                            3.0 / 2.0
-//                        } else {
-//                            2.0 / 3.0
-//                        }
 //                                )
 //
 //                            // 설정 객체 반환
@@ -678,11 +665,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                                CustomUtil.getNearestSupportedCameraOutputSize(
 //                                    cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
 //                                    Long.MAX_VALUE,
-//                                    if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
 //                            3.0 / 2.0
-//                        } else {
-//                            2.0 / 3.0
-//                        }
 //                                )
 //
 //                            // 설정 객체 반환
@@ -771,11 +754,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                                        CustomUtil.getNearestSupportedCameraOutputSize(
 //                                            cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
 //                                            Long.MAX_VALUE,
-//                                            if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
 //                            3.0 / 2.0
-//                        } else {
-//                            2.0 / 3.0
-//                        }
 //                                        )
 //
 //                                    // 설정 객체 반환
@@ -797,11 +776,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                                        CustomUtil.getNearestSupportedCameraOutputSize(
 //                                            cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
 //                                            500 * 500,
-//                                            if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
 //                            3.0 / 2.0
-//                        } else {
-//                            2.0 / 3.0
-//                        }
 //                                        )
 //
 //                                    // 설정 객체 반환
@@ -944,11 +919,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 val chosenPreviewSurfaceSize = CustomUtil.getNearestSupportedCameraOutputSize(
                     cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
                     Long.MAX_VALUE,
-                    if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
-                        3.0 / 2.0
-                    } else {
-                        2.0 / 3.0
-                    }
+                    3.0 / 2.0
                 )
 
                 // 설정 객체 반환
@@ -969,11 +940,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     CustomUtil.getNearestSupportedCameraOutputSize(
                         cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
                         500 * 500,
-                        if (cameraObjMbr.isDeviceAndCameraWhDifferentMbr) {
-                            3.0 / 2.0
-                        } else {
-                            2.0 / 3.0
-                        }
+                        3.0 / 2.0
                     )
 
                 // 설정 객체 반환
