@@ -1674,6 +1674,7 @@ class CameraObj private constructor(
         }
 
         // (카메라 디바이스 열기)
+        // todo : 빠르게 변환시 surfaceTexture null 에러
         openCameraDevice(
             onCameraDeviceReady = {
                 for (previewConfigVo in previewConfigVoListMbr) {

@@ -17,12 +17,12 @@ import android.media.ImageReader
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.provider.Settings
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -529,7 +529,22 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         val cameraObj = CameraObj.getInstance(
             this,
             cameraId,
-            onCameraDisconnected = {}
+            onCameraDisconnected = {
+                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                    true,
+                    "카메라 연결 끊김",
+                    "사용 카메라의 연결이 끊겼습니다.",
+                    null,
+                    onCheckBtnClicked = {
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                        finish()
+                    },
+                    onCanceled = {
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                        finish()
+                    }
+                )
+            }
         )!!
 
         cameraObjMbr = cameraObj
@@ -1030,6 +1045,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // (0. Image 객체 요청)
         val imageObj: Image = reader.acquireLatestImage() ?: return
 
+        val imageTimeStamp: Long = SystemClock.elapsedRealtime()
+
         if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
             viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
             isDestroyed // 액티비티 자체가 종료
@@ -1040,7 +1057,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         // 안정화를 위하여 Image 객체의 필요 데이터를 clone
-        val imageTimeStamp: Long = imageObj.timestamp
         val imageSize = Size(imageObj.width, imageObj.height)
         val pixelCount = imageSize.width * imageSize.height
 
