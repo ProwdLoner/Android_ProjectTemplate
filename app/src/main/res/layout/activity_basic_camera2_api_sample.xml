@@ -15,30 +15,43 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/rotate_img"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+    <LinearLayout
+        android:id="@+id/debug_image_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/camera_preview_auto_fit_texture" />
+        app:layout_constraintTop_toTopOf="@id/camera_preview_auto_fit_texture">
 
-    <ImageView
-        android:id="@+id/crop_img"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_marginTop="5dp"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/camera_preview_auto_fit_texture" />
+        <ImageView
+            android:id="@+id/debug_rotate_img"
+            android:layout_width="200dp"
+            android:layout_height="200dp" />
 
-    <ImageView
-        android:id="@+id/resize_img"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_marginTop="5dp"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/camera_preview_auto_fit_texture" />
+        <ImageView
+            android:id="@+id/debug_crop_img"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="5dp"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/debug_resize_img"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="5dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/debug_image_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+        android:text="ORIGIN"
+        android:textColor="#FFFFFFFF"
+        app:layout_constraintEnd_toEndOf="@id/debug_image_container"
+        app:layout_constraintStart_toStartOf="@id/debug_image_container"
+        app:layout_constraintTop_toBottomOf="@id/debug_image_container" />
 
     <com.example.prowd_android_template.custom_view.CircleImageView
         android:id="@+id/record_btn"

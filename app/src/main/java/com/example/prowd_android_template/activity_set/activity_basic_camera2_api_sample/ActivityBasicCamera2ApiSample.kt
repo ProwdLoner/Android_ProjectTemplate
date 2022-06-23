@@ -541,21 +541,27 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 디버그 이미지 뷰 전환 기능
-        bindingMbr.rotateImg.setOnClickListener {
-            bindingMbr.rotateImg.visibility = View.GONE
-            bindingMbr.resizeImg.visibility = View.VISIBLE
-            bindingMbr.cropImg.visibility = View.GONE
+        // (디버그 이미지 뷰 전환 기능)
+        bindingMbr.debugRotateImg.setOnClickListener {
+            bindingMbr.debugRotateImg.visibility = View.GONE
+            bindingMbr.debugResizeImg.visibility = View.VISIBLE
+            bindingMbr.debugCropImg.visibility = View.GONE
+
+            bindingMbr.debugImageLabel.text = "RESIZE"
         }
-        bindingMbr.resizeImg.setOnClickListener {
-            bindingMbr.rotateImg.visibility = View.GONE
-            bindingMbr.resizeImg.visibility = View.GONE
-            bindingMbr.cropImg.visibility = View.VISIBLE
+        bindingMbr.debugResizeImg.setOnClickListener {
+            bindingMbr.debugRotateImg.visibility = View.GONE
+            bindingMbr.debugResizeImg.visibility = View.GONE
+            bindingMbr.debugCropImg.visibility = View.VISIBLE
+
+            bindingMbr.debugImageLabel.text = "CROP"
         }
-        bindingMbr.cropImg.setOnClickListener {
-            bindingMbr.rotateImg.visibility = View.VISIBLE
-            bindingMbr.resizeImg.visibility = View.GONE
-            bindingMbr.cropImg.visibility = View.GONE
+        bindingMbr.debugCropImg.setOnClickListener {
+            bindingMbr.debugRotateImg.visibility = View.VISIBLE
+            bindingMbr.debugResizeImg.visibility = View.GONE
+            bindingMbr.debugCropImg.visibility = View.GONE
+
+            bindingMbr.debugImageLabel.text = "ORIGIN"
         }
 
         // 화면 방향에 따른 뷰 마진 설정
@@ -1113,7 +1119,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         Glide.with(this)
                                             .load(bitmap3)
                                             .transform(FitCenter())
-                                            .into(bindingMbr.rotateImg)
+                                            .into(bindingMbr.debugRotateImg)
                                     }
                                 }
 
@@ -1133,7 +1139,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                                 Glide.with(this)
                                                     .load(resizeBitmap4)
                                                     .transform(FitCenter())
-                                                    .into(bindingMbr.resizeImg)
+                                                    .into(bindingMbr.debugResizeImg)
                                             }
                                         }
 
@@ -1153,7 +1159,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                                 Glide.with(this)
                                                     .load(bitmap4)
                                                     .transform(FitCenter())
-                                                    .into(bindingMbr.cropImg)
+                                                    .into(bindingMbr.debugCropImg)
                                             }
                                         }
 
