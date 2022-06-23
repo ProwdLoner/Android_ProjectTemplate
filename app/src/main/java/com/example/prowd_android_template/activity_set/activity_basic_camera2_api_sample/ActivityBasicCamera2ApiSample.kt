@@ -23,6 +23,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -51,6 +52,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.Semaphore
 
+// todo : 레코딩 버튼 누른 후 빠르게 회전시 멈춤 현상
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -513,22 +515,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             this,
             cameraId,
             onCameraDisconnectedAndClearCamera = {
-                runOnUiThread {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                        true,
-                        "카메라 연결 끊김",
-                        "현재 카메라와 연결이 끊겼습니다.",
-                        null,
-                        onCheckBtnClicked = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                            finish()
-                        },
-                        onCanceled = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                            finish()
-                        }
-                    )
-                }
+                Log.e("disconnect", "camera disconnect")
             }
         )!!
 

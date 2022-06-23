@@ -546,6 +546,7 @@ class CameraObj private constructor(
     // 12 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
     // 13 : 카메라 세션 생성 실패
     // 14 : 녹화 파일 확장자가 mp4 가 아님
+    // 15 : 프리뷰 서페이스가 비어있음
     fun setCameraOutputSurfaces(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         imageReaderConfigVo: ImageReaderConfigVo?,
@@ -1705,11 +1706,17 @@ class CameraObj private constructor(
         }
 
         // (카메라 디바이스 열기)
-        // todo : 빠르게 변환시 surfaceTexture null 에러
         openCameraDevice(
             onCameraDeviceReady = {
                 for (previewConfigVo in previewConfigVoListMbr) {
-                    val surfaceTexture = previewConfigVo.autoFitTextureView.surfaceTexture!!
+                    val surfaceTexture = previewConfigVo.autoFitTextureView.surfaceTexture
+
+                    if (surfaceTexture == null) {
+                        cameraSessionSemaphoreMbr.release()
+                        onError(15)
+                        return@openCameraDevice
+                    }
+
                     surfaceTexture.setDefaultBufferSize(
                         previewConfigVo.cameraOrientSurfaceSize.width,
                         previewConfigVo.cameraOrientSurfaceSize.height
