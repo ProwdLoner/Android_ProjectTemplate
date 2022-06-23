@@ -45,6 +45,7 @@ import kotlin.math.sqrt
 // todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance 등
 // todo : 전체 검증 : 특히 setSurface 의 디바이스 방향
+// todo : 카메라 id 에 대한 스태틱 스레드와 세마포어
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -58,9 +59,6 @@ class CameraObj private constructor(
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
-    // (스레드 풀)
-    private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
-
     // Camera2 api 핸들러 스레드
     private val cameraApiHandlerThreadObjMbr: HandlerThreadObj =
         HandlerThreadObj(
@@ -231,6 +229,16 @@ class CameraObj private constructor(
     // ---------------------------------------------------------------------------------------------
     // <스태틱 공간>
     companion object {
+        // todo
+        // (CameraId 에 대한 핸들러 스레드 및 세마포어)
+        data class CameraIdThreadVo(
+            val cameraId: String,
+            val cameraSemaphore: Semaphore,
+            val cameraHandlerThreadObj: HandlerThreadObj,
+            var publishCount: Int
+        )
+
+
         // (객체 생성 함수 = 조건에 맞지 않으면 null 반환)
         // 조작하길 원하는 카메라 ID 를 설정하여 해당 카메라 정보를 생성
         fun getInstance(
