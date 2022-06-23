@@ -964,7 +964,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (카메라 이미지 실시간 처리 콜백)
     // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
     private fun processImage(reader: ImageReader) {
-        // 0. (Image 객체 요청)
+        // (0. Image 객체 요청)
         val imageObj: Image = reader.acquireLatestImage() ?: return
 
         if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
@@ -1031,7 +1031,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
         // 아래부터 멀티 스레드를 사용 가능
 
-        // 1. (이미지 객체에서 추출한 바이트 버퍼를 랜더 스크립트 주입용 바이트 어레이로 변환)
+        // (1. 이미지 객체에서 추출한 바이트 버퍼를 랜더 스크립트 주입용 바이트 어레이로 변환)
         yuv420888ByteBufferToYuv420888ByteArray(
             imageWidth,
             imageHeight,
