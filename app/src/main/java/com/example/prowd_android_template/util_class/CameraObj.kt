@@ -236,7 +236,7 @@ class CameraObj private constructor(
         fun getInstance(
             parentActivity: Activity,
             cameraId: String,
-            onCameraDisconnected: (() -> Unit)
+            onCameraDisconnectedAndClearCamera: (() -> Unit)
         ): CameraObj? {
             if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
                 // 카메라 장치가 없다면 null 반환
@@ -289,7 +289,7 @@ class CameraObj private constructor(
                 imageReaderSurfaceSupportedSizeList,
                 mediaRecorderSurfaceSupportedSizeList,
                 sensorOrientationMbr,
-                onCameraDisconnected
+                onCameraDisconnectedAndClearCamera
             )
         }
 

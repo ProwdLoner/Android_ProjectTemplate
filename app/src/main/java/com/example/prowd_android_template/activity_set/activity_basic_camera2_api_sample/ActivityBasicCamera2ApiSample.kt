@@ -515,14 +515,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             renderScriptMbr
         )
 
-        // (사용 카메라 객체 생성)
+        // (최초 사용 카메라 객체 생성)
         val cameraId =
             CameraObj.getCameraIdFromFacing(this, CameraCharacteristics.LENS_FACING_BACK)!!
 
         val cameraObj = CameraObj.getInstance(
             this,
             cameraId,
-            onCameraDisconnected = {
+            onCameraDisconnectedAndClearCamera = {
                 runOnUiThread {
                     viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
                         true,
