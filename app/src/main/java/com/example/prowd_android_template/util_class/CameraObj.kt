@@ -678,6 +678,7 @@ class CameraObj private constructor(
                     ImageFormat.YUV_420_888,
                     2
                 ).apply {
+                    // todo java.lang.IllegalArgumentException: handler is null but the current thread is not a looper
                     setOnImageAvailableListener(
                         imageReaderConfigVo.imageReaderCallback,
                         imageReaderHandlerThreadObjMbr.handler
@@ -1435,24 +1436,36 @@ class CameraObj private constructor(
     // 0 : 정상 동작
     // 1 : 미디어 레코딩 서페이스가 없음
     // 2 : 현재 카메라가 동작중이 아님
-    fun startMediaRecording(): Int {
-        if (null == mediaCodecSurfaceMbr) {
-            return 1
+    fun startMediaRecording(
+        onComplete: (Int) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            if (null == mediaCodecSurfaceMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onComplete(1)
+                return@execute
+            }
+
+            if (!isRepeatingMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onComplete(2)
+                return@execute
+            }
+
+            if (isRecordingMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onComplete(0)
+                return@execute
+            }
+
+            mediaRecorderMbr!!.start()
+
+            isRecordingMbr = true
+
+            cameraSessionSemaphoreMbr.release()
+            onComplete(0)
         }
-
-        if (!isRepeatingMbr) {
-            return 2
-        }
-
-        if (isRecordingMbr) {
-            return 0
-        }
-
-        mediaRecorderMbr!!.start()
-
-        isRecordingMbr = true
-
-        return 0
     }
 
     // (미디어 레코딩 재시작)
@@ -1460,37 +1473,56 @@ class CameraObj private constructor(
     // 0 : 정상 동작
     // 1 : 미디어 레코딩 서페이스가 없음
     // 2 : 현재 카메라가 동작중이 아님
-    fun resumeMediaRecording(): Int {
-        if (null == mediaCodecSurfaceMbr) {
-            return 1
+    fun resumeMediaRecording(
+        onComplete: (Int) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            if (null == mediaCodecSurfaceMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onComplete(1)
+                return@execute
+            }
+
+            if (!isRepeatingMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onComplete(2)
+                return@execute
+            }
+
+            if (isRecordingMbr) {
+                cameraSessionSemaphoreMbr.release()
+                onComplete(0)
+                return@execute
+            }
+
+            mediaRecorderMbr!!.resume()
+
+            isRecordingMbr = true
+
+            cameraSessionSemaphoreMbr.release()
+            onComplete(0)
         }
-
-        if (!isRepeatingMbr) {
-            return 2
-        }
-
-        if (isRecordingMbr) {
-            return 0
-        }
-
-        mediaRecorderMbr!!.resume()
-
-        isRecordingMbr = true
-
-        return 0
     }
 
     // (미디어 레코딩 일시정지)
     // 결과 코드 :
     // 0 : 정상 동작
     // 1 : 미디어 레코딩 중이 아님
-    fun pauseMediaRecording(): Int {
-        return if (isRecordingMbr) {
-            mediaRecorderMbr?.pause()
-            isRecordingMbr = false
-            0
-        } else {
-            1
+    fun pauseMediaRecording(
+        onComplete: (Int) -> Unit
+    ) {
+        executorServiceMbr.execute {
+            cameraSessionSemaphoreMbr.acquire()
+            if (isRecordingMbr) {
+                mediaRecorderMbr?.pause()
+                isRecordingMbr = false
+                cameraSessionSemaphoreMbr.release()
+                onComplete(0)
+            } else {
+                cameraSessionSemaphoreMbr.release()
+                onComplete(1)
+            }
         }
     }
 
