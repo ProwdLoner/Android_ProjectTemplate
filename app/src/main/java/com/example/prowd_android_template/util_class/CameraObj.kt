@@ -46,7 +46,6 @@ import kotlin.math.sqrt
 // todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance 등
 // todo : 전체 검증 : 특히 setSurface 의 디바이스 방향
-// todo : 다시 시작 스레드 관련 불안정
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -80,6 +79,47 @@ class CameraObj private constructor(
         }
 
     // (카메라 정보)
+    // 현 디바이스 방향과 카메라 방향에서 width, height 개념이 같은지 다른지
+    // 카메라와 디바이스 방향이 90도, 270 도 차이가 난다면 둘의 Width, Height 개념은 상반됨
+    var isDeviceAndCameraWhDifferentMbr: Boolean = false
+        get() {
+            // 디바이스 물리적 특정 방향을 0으로 뒀을 때의 현 방향
+            val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                parentActivityMbr.display!!.rotation
+            } else {
+                parentActivityMbr.windowManager.defaultDisplay.rotation
+            }
+
+            return when (deviceOrientation) {
+                Surface.ROTATION_90, Surface.ROTATION_270 -> {
+                    // 디바이스 현 방향이 90도 단위로 기울어졌을 때
+                    when (sensorOrientationMbr) {
+                        // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
+                        0, 180 -> {
+                            true
+                        }
+                        else -> {
+                            false
+                        }
+                    }
+                }
+
+                else -> {
+                    // 디바이스 현 방향이 90도 단위로 기울어지지 않았을 때
+                    when (sensorOrientationMbr) {
+                        // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
+                        0, 180 -> {
+                            false
+                        }
+                        else -> {
+                            true
+                        }
+                    }
+                }
+            }
+        }
+        private set
+
     // 떨림 보정 기능 가능 여부 (기계적) : stabilization 설정을 할 때 우선 적용
     var isOpticalStabilizationAvailableMbr: Boolean = false
         private set
