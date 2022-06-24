@@ -23,6 +23,8 @@ import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.math.sqrt
 
@@ -55,6 +57,9 @@ class CameraObj private constructor(
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
+    // 함수 사용 스레드풀
+    private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
     // 카메라 사용 스레드 세트
     private val cameraThreadVoMbr: CameraIdThreadVo =
         publishSharedCameraIdThreadVoOnStaticMemory(cameraIdMbr)
@@ -537,7 +542,7 @@ class CameraObj private constructor(
         executorOnSurfaceAllReady: () -> Unit,
         executorOnError: (Int) -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // [조건 검증]
@@ -549,7 +554,7 @@ class CameraObj private constructor(
             ) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(1)
-                return@run
+                return@execute
             }
 
             // (서페이스 사이즈 검사)
@@ -567,7 +572,7 @@ class CameraObj private constructor(
                 ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(2)
-                    return@run
+                    return@execute
                 }
             }
 
@@ -582,7 +587,7 @@ class CameraObj private constructor(
                 ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(4)
-                    return@run
+                    return@execute
                 } else {
                     for (previewConfig in previewConfigVoList) {
                         if (cameraSizes.indexOfFirst {
@@ -591,7 +596,7 @@ class CameraObj private constructor(
                             } == -1) {
                             cameraThreadVoMbr.cameraSemaphore.release()
                             executorOnError(4)
-                            return@run
+                            return@execute
                         }
                     }
                 }
@@ -691,7 +696,7 @@ class CameraObj private constructor(
                     imageReaderConfigVoMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(5)
-                    return@run
+                    return@execute
                 }
 
                 // 설정 파일 확장자 검증
@@ -700,7 +705,7 @@ class CameraObj private constructor(
                     imageReaderConfigVoMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(14)
-                    return@run
+                    return@execute
                 }
 
                 mediaRecorderConfigVoMbr = mediaRecorderConfigVo
@@ -881,7 +886,7 @@ class CameraObj private constructor(
                                 previewObj.height
                             )
 
-                            cameraThreadVoMbr.cameraHandlerThreadObj.run {
+                            executorServiceMbr.execute {
                                 checkedPreviewCountSemaphore.acquire()
                                 if (++checkedPreviewCount == previewListSize) {
                                     // 마지막 작업일 때
@@ -928,7 +933,7 @@ class CameraObj private constructor(
                                             height
                                         )
 
-                                        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+                                        executorServiceMbr.execute {
                                             checkedPreviewCountSemaphore.acquire()
                                             if (++checkedPreviewCount == previewListSize) {
                                                 // 마지막 작업일 때
@@ -997,13 +1002,13 @@ class CameraObj private constructor(
         executorOnCameraRequestBuilderSet: () -> Unit,
         executorOnError: (Int) -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             if (cameraDeviceMbr == null) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(1)
-                return@run
+                return@execute
             }
 
             if (previewConfigVoListMbr.isEmpty() &&
@@ -1012,7 +1017,7 @@ class CameraObj private constructor(
             ) { // 생성 서페이스가 하나도 존재하지 않으면,
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(2)
-                return@run
+                return@execute
             }
 
             // (리퀘스트 빌더 생성)
@@ -1023,7 +1028,7 @@ class CameraObj private constructor(
                 if (previewConfigVoListMbr.isEmpty()) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(3)
-                    return@run
+                    return@execute
                 } else {
                     for (previewSurface in previewSurfaceListMbr) {
                         captureRequestBuilderMbr!!.addTarget(previewSurface)
@@ -1035,7 +1040,7 @@ class CameraObj private constructor(
                 if (imageReaderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(4)
-                    return@run
+                    return@execute
                 } else {
                     captureRequestBuilderMbr!!.addTarget(imageReaderMbr!!.surface)
                 }
@@ -1045,7 +1050,7 @@ class CameraObj private constructor(
                 if (mediaCodecSurfaceMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(5)
-                    return@run
+                    return@execute
                 } else {
                     captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
                 }
@@ -1145,19 +1150,19 @@ class CameraObj private constructor(
         executorOnRequestComplete: () -> Unit,
         executorOnError: (Int) -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             if (cameraCaptureSessionMbr == null) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(1)
-                return@run
+                return@execute
             }
 
             if (captureRequestBuilderMbr == null) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(2)
-                return@run
+                return@execute
             }
 
             if (isRepeating) {
@@ -1174,7 +1179,7 @@ class CameraObj private constructor(
                 if (null == imageReaderMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(3)
-                    return@run
+                    return@execute
                 }
 
                 cameraCaptureSessionMbr!!.capture(
@@ -1197,7 +1202,7 @@ class CameraObj private constructor(
     fun pauseCameraSession(
         executorOnCameraPause: () -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
             if (isRepeatingMbr) {
                 cameraCaptureSessionMbr?.stopRepeating()
@@ -1213,7 +1218,7 @@ class CameraObj private constructor(
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
     fun stopCameraObject(executorOnCameraStop: () -> Unit) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // (카메라 상태 초기화)
@@ -1281,7 +1286,7 @@ class CameraObj private constructor(
     // (카메라 객체를 초기화하는 함수)
     // 카메라 디바이스 까지 닫기
     fun clearCameraObject(executorOnCameraClear: () -> Unit) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // (카메라 상태 초기화)
@@ -1428,24 +1433,24 @@ class CameraObj private constructor(
     fun startMediaRecording(
         onComplete: (Int) -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
             if (null == mediaCodecSurfaceMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(1)
-                return@run
+                return@execute
             }
 
             if (!isRepeatingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(2)
-                return@run
+                return@execute
             }
 
             if (isRecordingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(0)
-                return@run
+                return@execute
             }
 
             mediaRecorderMbr!!.start()
@@ -1465,24 +1470,24 @@ class CameraObj private constructor(
     fun resumeMediaRecording(
         onComplete: (Int) -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
             if (null == mediaCodecSurfaceMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(1)
-                return@run
+                return@execute
             }
 
             if (!isRepeatingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(2)
-                return@run
+                return@execute
             }
 
             if (isRecordingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(0)
-                return@run
+                return@execute
             }
 
             mediaRecorderMbr!!.resume()
@@ -1501,7 +1506,7 @@ class CameraObj private constructor(
     fun pauseMediaRecording(
         onComplete: (Int) -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
             if (isRecordingMbr) {
                 mediaRecorderMbr?.pause()
@@ -1526,7 +1531,7 @@ class CameraObj private constructor(
         zoomFactor: Float,
         executorOnZoomSettingComplete: (Float) -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
             val zoom = if (maxZoomMbr < zoomFactor) {
                 // 가용 줌 최대치에 설정을 맞추기
@@ -1584,7 +1589,7 @@ class CameraObj private constructor(
         stabilizationOn: Boolean,
         executorOnCameraStabilizationSettingComplete: () -> Unit
     ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+        executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             if (stabilizationOn) {
@@ -1595,14 +1600,14 @@ class CameraObj private constructor(
                     isCameraStabilizationSetMbr = false
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@run
+                    return@execute
                 }
                 isCameraStabilizationSetMbr = true
 
                 if (captureRequestBuilderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@run
+                    return@execute
                 }
 
                 // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
@@ -1629,7 +1634,7 @@ class CameraObj private constructor(
                 if (!isRepeatingMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@run
+                    return@execute
                 }
 
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
@@ -1646,7 +1651,7 @@ class CameraObj private constructor(
                 if (captureRequestBuilderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@run
+                    return@execute
                 }
 
                 captureRequestBuilderMbr!!.set(
@@ -1661,7 +1666,7 @@ class CameraObj private constructor(
                 if (!isRepeatingMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@run
+                    return@execute
                 }
 
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
