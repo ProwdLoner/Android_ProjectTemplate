@@ -1250,6 +1250,7 @@ class CameraObj private constructor(
 
             if (isRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
+                // todo : 녹화 빠르게 변경시 에러 발생 stop failed.
                 mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
                 isRecordingMbr = false
