@@ -14,8 +14,8 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
-import android.util.Log
 import android.util.Size
+import android.util.SparseIntArray
 import android.view.MotionEvent
 import android.view.Surface
 import android.view.TextureView
@@ -40,9 +40,9 @@ import kotlin.math.sqrt
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 사진 찍기 기능 검증
 // todo : 서페이스 각자 세팅 기능 오버로딩(request setting callback 을 제거)
-// todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
+// todo : exposure, whitebalance, iso 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
-// todo : 전체 검증 : 특히 setSurface 의 디바이스 방향
+// todo : 디바이스 방향 관련 부분 다시 살피기
 
 // todo : S22u 프리뷰 일그러짐 현상 함수 실행시 익시큐터를 사용했을땐 정상
 // todo : 함수 실행에 카메라 스레드가 아닌 익시큐터 사용때, 빠르게 회전시 멈춤
@@ -778,40 +778,34 @@ class CameraObj private constructor(
                 )
 
                 // 서페이스 방향 설정
-                // todo 검증
-                val rotateCounterClockAngle: Int =
-                    when (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        parentActivityMbr.display!!.rotation
-                    } else {
-                        parentActivityMbr.windowManager.defaultDisplay.rotation
-                    }) {
-                        Surface.ROTATION_0 -> { // 카메라 기본 방향
-                            // if sensorOrientationMbr = 90 -> 270
-                            Log.e("r", "0")
-                            90 - sensorOrientationMbr
-                        }
-                        Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
-                            // if sensorOrientationMbr = 90 -> 0
-                            Log.e("r", "90")
-                            180 - sensorOrientationMbr
-                        }
-                        Surface.ROTATION_180 -> {
-                            // if sensorOrientationMbr = 90 -> 90
-                            Log.e("r", "180")
-                            270 - sensorOrientationMbr
-                        }
-                        Surface.ROTATION_270 -> {
-                            // if sensorOrientationMbr = 90 -> 180
-                            Log.e("r", "270")
-                            360 - sensorOrientationMbr
-                        }
-                        else -> {
-                            0
-                        }
-                    }
-                Log.e("rc", rotateCounterClockAngle.toString())
+                val defaultOrientation = SparseIntArray()
+                defaultOrientation.append(Surface.ROTATION_90, 0)
+                defaultOrientation.append(Surface.ROTATION_0, 90)
+                defaultOrientation.append(Surface.ROTATION_270, 180)
+                defaultOrientation.append(Surface.ROTATION_180, 270)
 
-                mediaRecorderMbr!!.setOrientationHint(rotateCounterClockAngle)
+                val inverseOrientation = SparseIntArray()
+                inverseOrientation.append(Surface.ROTATION_270, 0)
+                inverseOrientation.append(Surface.ROTATION_180, 90)
+                inverseOrientation.append(Surface.ROTATION_90, 180)
+                inverseOrientation.append(Surface.ROTATION_0, 270)
+
+                val deviceOrientation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    parentActivityMbr.display!!.rotation
+                } else {
+                    parentActivityMbr.windowManager.defaultDisplay.rotation
+                }
+
+                when (sensorOrientationMbr) {
+                    90 ->
+                        mediaRecorderMbr!!.setOrientationHint(
+                            defaultOrientation.get(deviceOrientation)
+                        )
+                    270 ->
+                        mediaRecorderMbr!!.setOrientationHint(
+                            inverseOrientation.get(deviceOrientation)
+                        )
+                }
 
                 // 인코딩 타입 설정
                 mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
