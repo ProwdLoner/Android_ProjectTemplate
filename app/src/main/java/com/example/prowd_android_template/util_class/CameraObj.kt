@@ -44,6 +44,9 @@ import kotlin.math.sqrt
 // todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
 // todo : 전체 검증 : 특히 setSurface 의 디바이스 방향
+// todo : 함수 실행에 카메라 스레드가 아닌 익시큐터 사용때, 빠르게 회전시 멈춤
+//  = 익시큐터 내 외부에 카메라 스레드 사용 or 세마포어 락 에러로 보임. 즉, 할수있다면 락 시간을 설정
+//  카메라 스레드만 사용시에는 프리뷰가 일그러짐
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
