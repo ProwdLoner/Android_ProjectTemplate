@@ -28,17 +28,14 @@ import android.util.Size
 import android.view.Surface
 import android.view.View
 import android.view.WindowManager
-import android.webkit.MimeTypeMap
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.FitCenter
-import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.ScriptC_rotator
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -48,7 +45,6 @@ import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 import com.xxx.yyy.ScriptC_crop
-import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.Semaphore
 
@@ -273,7 +269,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
 
         // 카메라를 디바이스 객체까지 전부 초기화
-        cameraObjMbr.clearCameraObject(executorOnCameraClear = {})
+        cameraObjMbr.destroyCameraObject(executorOnCameraClear = {})
 
         // 랜더 스크립트 객체 해소
         scriptCCropMbr.destroy()
@@ -1041,6 +1037,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             imageObj.close()
             return
         }
+
+        // todo java.lang.NullPointerException: plane1.buffer must not be null
         val planeBuffer1: ByteBuffer = CustomUtil.cloneByteBuffer(plane1.buffer)
 
         if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
