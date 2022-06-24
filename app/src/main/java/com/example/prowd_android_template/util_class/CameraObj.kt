@@ -60,7 +60,7 @@ class CameraObj private constructor(
     // 함수 사용 스레드풀
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
-    // 카메라 사용 스레드 세트
+    // 카메라 API 사용 스레드 세트
     private val cameraThreadVoMbr: CameraIdThreadVo =
         publishSharedCameraIdThreadVoOnStaticMemory(cameraIdMbr)
 
@@ -1763,63 +1763,7 @@ class CameraObj private constructor(
                         cameraThreadVoMbr.cameraSemaphore.release()
                         onSurfaceAllReady()
                     },
-                    onErrorAndClearSurface = { errorCode, cameraCaptureSession ->
-                        // (카메라 상태 초기화)
-                        imageReaderMbr?.setOnImageAvailableListener(null, null)
-
-                        if (isRecordingMbr) {
-                            mediaRecorderMbr?.stop()
-                            mediaRecorderMbr?.reset()
-                            isRecordingMbr = false
-
-                            cameraCaptureSessionMbr?.stopRepeating()
-                            isRepeatingMbr = false
-                        } else if (isRepeatingMbr) {
-                            cameraCaptureSessionMbr?.stopRepeating()
-                            isRepeatingMbr = false
-                        }
-
-                        for (previewConfigVo in previewConfigVoListMbr) {
-                            previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                                object : TextureView.SurfaceTextureListener {
-                                    override fun onSurfaceTextureAvailable(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
-
-                                    override fun onSurfaceTextureSizeChanged(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
-
-                                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                        true
-
-                                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                        Unit
-                                }
-                        }
-
-                        mediaRecorderMbr?.release()
-                        mediaCodecSurfaceMbr?.release()
-                        mediaCodecSurfaceMbr = null
-                        mediaRecorderConfigVoMbr = null
-                        mediaRecorderMbr = null
-
-                        previewConfigVoListMbr.clear()
-                        previewSurfaceListMbr.clear()
-
-                        imageReaderMbr?.close()
-                        imageReaderMbr = null
-                        imageReaderConfigVoMbr = null
-
-                        cameraCaptureSession.close()
-                        cameraCaptureSessionMbr = null
-
-                        captureRequestBuilderMbr = null
-
+                    onErrorAndClearSurface = { errorCode ->
                         cameraThreadVoMbr.cameraSemaphore.release()
                         onError(errorCode)
                     }
@@ -2096,7 +2040,7 @@ class CameraObj private constructor(
 
     private fun createCameraSessionAsync(
         onCaptureSessionCreated: () -> Unit,
-        onErrorAndClearSurface: (Int, CameraCaptureSession) -> Unit
+        onErrorAndClearSurface: (Int) -> Unit
     ) {
         // api 28 이상 / 미만의 요청 방식이 다름
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
@@ -2169,6 +2113,7 @@ class CameraObj private constructor(
                         mediaRecorderMbr?.release()
                         mediaCodecSurfaceMbr?.release()
                         imageReaderMbr?.close()
+                        session.close()
 
                         // (멤버 변수 비우기)
                         mediaRecorderMbr = null
@@ -2178,8 +2123,9 @@ class CameraObj private constructor(
                         imageReaderConfigVoMbr = null
                         previewConfigVoListMbr.clear()
                         previewSurfaceListMbr.clear()
+                        cameraCaptureSessionMbr = null
 
-                        onErrorAndClearSurface(13, session)
+                        onErrorAndClearSurface(13)
                     }
                 }
             ))
@@ -2242,6 +2188,7 @@ class CameraObj private constructor(
                         mediaRecorderMbr?.release()
                         mediaCodecSurfaceMbr?.release()
                         imageReaderMbr?.close()
+                        session.close()
 
                         // (멤버 변수 비우기)
                         mediaRecorderMbr = null
@@ -2251,8 +2198,9 @@ class CameraObj private constructor(
                         imageReaderConfigVoMbr = null
                         previewConfigVoListMbr.clear()
                         previewSurfaceListMbr.clear()
+                        cameraCaptureSessionMbr = null
 
-                        onErrorAndClearSurface(13, session)
+                        onErrorAndClearSurface(13)
                     }
                 }, cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
