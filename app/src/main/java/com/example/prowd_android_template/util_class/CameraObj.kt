@@ -1080,36 +1080,38 @@ class CameraObj private constructor(
             // [카메라 오브젝트 내부 정보를 최종적으로 채택]
             // todo : 이 최종 영역 설정을 점차 늘리고, 위의 커스텀 설정 공간은 최종적으로 없애버릴 것
             // (오브젝트 내부 줌 정보를 설정)
-            val zoom = if (maxZoomMbr < currentCameraZoomFactorMbr) {
-                // 가용 줌 최대치에 설정을 맞추기
-                maxZoomMbr
-            } else {
-                currentCameraZoomFactorMbr
+            if (sensorSizeMbr != null) {
+                val zoom = if (maxZoomMbr < currentCameraZoomFactorMbr) {
+                    // 가용 줌 최대치에 설정을 맞추기
+                    maxZoomMbr
+                } else {
+                    currentCameraZoomFactorMbr
+                }
+
+                // 센서 사이즈 중심점
+                val centerX =
+                    sensorSizeMbr.width() / 2
+                val centerY =
+                    sensorSizeMbr.height() / 2
+
+                // 센서 사이즈에서 중심을 기반 크롭 박스 설정
+                // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
+                val deltaX =
+                    ((0.5f * sensorSizeMbr.width()) / zoom).toInt()
+                val deltaY =
+                    ((0.5f * sensorSizeMbr.height()) / zoom).toInt()
+
+                val mCropRegion = Rect().apply {
+                    set(
+                        centerX - deltaX,
+                        centerY - deltaY,
+                        centerX + deltaX,
+                        centerY + deltaY
+                    )
+                }
+
+                captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
             }
-
-            // 센서 사이즈 중심점
-            val centerX =
-                sensorSizeMbr!!.width() / 2
-            val centerY =
-                sensorSizeMbr.height() / 2
-
-            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
-            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
-            val deltaX =
-                ((0.5f * sensorSizeMbr.width()) / zoom).toInt()
-            val deltaY =
-                ((0.5f * sensorSizeMbr.height()) / zoom).toInt()
-
-            val mCropRegion = Rect().apply {
-                set(
-                    centerX - deltaX,
-                    centerY - deltaY,
-                    centerX + deltaX,
-                    centerY + deltaY
-                )
-            }
-
-            captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
 
             // (카메라 떨림 보정 여부 반영)
             if (isCameraStabilizationSetMbr) { // 떨림 보정 on
@@ -1571,9 +1573,9 @@ class CameraObj private constructor(
 
             currentCameraZoomFactorMbr = zoom
 
-            if (captureRequestBuilderMbr != null) {
+            if (captureRequestBuilderMbr != null && sensorSizeMbr != null) {
                 val centerX =
-                    sensorSizeMbr!!.width() / 2
+                    sensorSizeMbr.width() / 2
                 val centerY =
                     sensorSizeMbr.height() / 2
                 val deltaX =
