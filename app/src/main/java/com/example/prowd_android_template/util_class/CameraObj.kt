@@ -47,6 +47,7 @@ import kotlin.math.sqrt
 // todo : 함수 실행에 카메라 스레드가 아닌 익시큐터 사용때, 빠르게 회전시 멈춤
 //  = 익시큐터 내 외부에 카메라 스레드 사용 or 세마포어 락 에러로 보임. 즉, 할수있다면 락 시간을 설정
 //  카메라 스레드만 사용시에는 프리뷰가 일그러짐
+//  그러면 현재 사용중인 카메라 스레드를 최외곽에 두고, 이에 세마포어를 먹이고 익시큐터를 실행시키면 어떨까?
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
