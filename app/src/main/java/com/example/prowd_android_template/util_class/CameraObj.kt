@@ -23,8 +23,6 @@ import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.math.sqrt
 
@@ -44,11 +42,12 @@ import kotlin.math.sqrt
 // todo : exposure, whitebalance 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
 // todo : 전체 검증 : 특히 setSurface 의 디바이스 방향
+
+// todo : S22u 프리뷰 일그러짐 현상 함수 실행시 익시큐터를 사용했을땐 정상
 // todo : 함수 실행에 카메라 스레드가 아닌 익시큐터 사용때, 빠르게 회전시 멈춤
-//  = 익시큐터 내 외부에 카메라 스레드 사용 or 세마포어 락 에러로 보임. 즉, 할수있다면 락 시간을 설정
-//    혹은 익시큐터가 소멸하나? 그래서 release 가 되지 않는지도...
-//  카메라 스레드만 사용시에는 프리뷰가 일그러짐
-//  그러면 현재 사용중인 카메라 스레드를 최외곽에 두고, 이에 세마포어를 먹이고 익시큐터를 실행시키면 어떨까?
+//  = 익시큐터 내 외부에 카메라 스레드 사용 or 세마포어 락 에러로 보임.
+//    익시큐터가 소멸하나? 그래서 release 가 되지 않는지도...
+//  camera open 과 상관 있는듯 한데, 이때만 한시적으로 executor 를 사용하는건 어떨지...
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -62,9 +61,6 @@ class CameraObj private constructor(
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
-    // 함수 사용 스레드풀
-    private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
-
     // 카메라 API 사용 스레드 세트
     private val cameraThreadVoMbr: CameraIdThreadVo =
         publishSharedCameraIdThreadVoOnStaticMemory(cameraIdMbr)
@@ -176,6 +172,154 @@ class CameraObj private constructor(
     // ---------------------------------------------------------------------------------------------
     // <스태틱 공간>
     companion object {
+        // (카메라 아이디를 반환하는 스태틱 함수)
+        // CameraCharacteristics.LENS_FACING_FRONT: 전면 카메라. value : 0
+        // CameraCharacteristics.LENS_FACING_BACK: 후면 카메라. value : 1
+        // CameraCharacteristics.LENS_FACING_EXTERNAL: 기타 카메라. value : 2
+        fun getCameraIdFromFacing(parentActivity: Activity, lensFacing: Int): String? {
+            var result: String? = null
+
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            for (cameraId in cameraManager.cameraIdList) { // 존재하는 cameraId 를 순회
+                // 카메라 정보 반환
+                val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId)
+
+                // 카메라 Facing 반환
+                val deviceLensFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
+
+                if (null != deviceLensFacing) { // 카메라 Facing null 체크
+                    if (lensFacing == deviceLensFacing) { // 해당 카메라 facing 이 원하는 facing 일 경우
+                        val map =
+                            cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                        if (null != map) { // 현 id 에서 제공해주는 map 이 존재할 때에 제대로된 카메라 센서로 반환
+                            result = cameraId
+                            break
+                        }
+                    }
+                }
+            }
+
+            return result
+        }
+
+        // (가용 카메라 리스트 반환)
+        fun getCameraInfoList(parentActivity: Activity): ArrayList<CameraInfo> {
+            val cameraInfoList: ArrayList<CameraInfo> = ArrayList()
+
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            cameraManager.cameraIdList.forEach { id ->
+                val characteristics = cameraManager.getCameraCharacteristics(id)
+
+                val cameraConfig = characteristics.get(
+                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
+                )!!
+
+                val capabilities = characteristics.get(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
+                )!!
+
+                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
+
+                val previewInfoList = ArrayList<CameraInfo.DeviceInfo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    cameraConfig.getOutputSizes(SurfaceTexture::class.java).forEach { size ->
+                        val secondsPerFrame =
+                            cameraConfig.getOutputMinFrameDuration(
+                                SurfaceTexture::class.java,
+                                size
+                            ) / 1_000_000_000.0
+                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                        previewInfoList.add(
+                            CameraInfo.DeviceInfo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+
+                val imageReaderInfoList = ArrayList<CameraInfo.DeviceInfo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    cameraConfig.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+                        val secondsPerFrame =
+                            cameraConfig.getOutputMinFrameDuration(
+                                ImageFormat.YUV_420_888,
+                                size
+                            ) / 1_000_000_000.0
+                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                        imageReaderInfoList.add(
+                            CameraInfo.DeviceInfo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+
+                val mediaRecorderInfoList = ArrayList<CameraInfo.DeviceInfo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    cameraConfig.getOutputSizes(MediaRecorder::class.java).forEach { size ->
+                        val secondsPerFrame =
+                            cameraConfig.getOutputMinFrameDuration(
+                                MediaRecorder::class.java,
+                                size
+                            ) / 1_000_000_000.0
+                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                        mediaRecorderInfoList.add(
+                            CameraInfo.DeviceInfo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+
+                val highSpeedInfoList = ArrayList<CameraInfo.DeviceInfo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
+                    )
+                ) {
+                    cameraConfig.highSpeedVideoSizes.forEach { size ->
+                        cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
+                            val fps = fpsRange.upper
+                            highSpeedInfoList.add(
+                                CameraInfo.DeviceInfo(
+                                    size, fps
+                                )
+                            )
+                        }
+                    }
+                }
+
+                cameraInfoList.add(
+                    CameraInfo(
+                        id,
+                        facing,
+                        previewInfoList,
+                        imageReaderInfoList,
+                        mediaRecorderInfoList,
+                        highSpeedInfoList
+                    )
+                )
+            }
+
+            return cameraInfoList
+        }
+
         // (카메라 실행 스레드 리스트와 발행 세마포어)
         private val cameraIdThreadVoList: ArrayList<CameraIdThreadVo> = ArrayList()
         private val cameraIdThreadVoListSemaphore: Semaphore = Semaphore(1)
@@ -366,154 +510,6 @@ class CameraObj private constructor(
 
             return resultCameraObject
         }
-
-        // (카메라 아이디를 반환하는 스태틱 함수)
-        // CameraCharacteristics.LENS_FACING_FRONT: 전면 카메라. value : 0
-        // CameraCharacteristics.LENS_FACING_BACK: 후면 카메라. value : 1
-        // CameraCharacteristics.LENS_FACING_EXTERNAL: 기타 카메라. value : 2
-        fun getCameraIdFromFacing(parentActivity: Activity, lensFacing: Int): String? {
-            var result: String? = null
-
-            val cameraManager: CameraManager =
-                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-            for (cameraId in cameraManager.cameraIdList) { // 존재하는 cameraId 를 순회
-                // 카메라 정보 반환
-                val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId)
-
-                // 카메라 Facing 반환
-                val deviceLensFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
-
-                if (null != deviceLensFacing) { // 카메라 Facing null 체크
-                    if (lensFacing == deviceLensFacing) { // 해당 카메라 facing 이 원하는 facing 일 경우
-                        val map =
-                            cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                        if (null != map) { // 현 id 에서 제공해주는 map 이 존재할 때에 제대로된 카메라 센서로 반환
-                            result = cameraId
-                            break
-                        }
-                    }
-                }
-            }
-
-            return result
-        }
-
-        // (가용 카메라 리스트 반환)
-        fun getCameraInfoList(parentActivity: Activity): ArrayList<CameraInfo> {
-            val cameraInfoList: ArrayList<CameraInfo> = ArrayList()
-
-            val cameraManager: CameraManager =
-                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-            cameraManager.cameraIdList.forEach { id ->
-                val characteristics = cameraManager.getCameraCharacteristics(id)
-
-                val cameraConfig = characteristics.get(
-                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
-                )!!
-
-                val capabilities = characteristics.get(
-                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
-                )!!
-
-                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
-
-                val previewInfoList = ArrayList<CameraInfo.DeviceInfo>()
-                if (capabilities.contains(
-                        CameraCharacteristics
-                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
-                    )
-                ) {
-                    cameraConfig.getOutputSizes(SurfaceTexture::class.java).forEach { size ->
-                        val secondsPerFrame =
-                            cameraConfig.getOutputMinFrameDuration(
-                                SurfaceTexture::class.java,
-                                size
-                            ) / 1_000_000_000.0
-                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                        previewInfoList.add(
-                            CameraInfo.DeviceInfo(
-                                size, fps
-                            )
-                        )
-                    }
-                }
-
-                val imageReaderInfoList = ArrayList<CameraInfo.DeviceInfo>()
-                if (capabilities.contains(
-                        CameraCharacteristics
-                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
-                    )
-                ) {
-                    cameraConfig.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
-                        val secondsPerFrame =
-                            cameraConfig.getOutputMinFrameDuration(
-                                ImageFormat.YUV_420_888,
-                                size
-                            ) / 1_000_000_000.0
-                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                        imageReaderInfoList.add(
-                            CameraInfo.DeviceInfo(
-                                size, fps
-                            )
-                        )
-                    }
-                }
-
-                val mediaRecorderInfoList = ArrayList<CameraInfo.DeviceInfo>()
-                if (capabilities.contains(
-                        CameraCharacteristics
-                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
-                    )
-                ) {
-                    cameraConfig.getOutputSizes(MediaRecorder::class.java).forEach { size ->
-                        val secondsPerFrame =
-                            cameraConfig.getOutputMinFrameDuration(
-                                MediaRecorder::class.java,
-                                size
-                            ) / 1_000_000_000.0
-                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                        mediaRecorderInfoList.add(
-                            CameraInfo.DeviceInfo(
-                                size, fps
-                            )
-                        )
-                    }
-                }
-
-                val highSpeedInfoList = ArrayList<CameraInfo.DeviceInfo>()
-                if (capabilities.contains(
-                        CameraCharacteristics
-                            .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
-                    )
-                ) {
-                    cameraConfig.highSpeedVideoSizes.forEach { size ->
-                        cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
-                            val fps = fpsRange.upper
-                            highSpeedInfoList.add(
-                                CameraInfo.DeviceInfo(
-                                    size, fps
-                                )
-                            )
-                        }
-                    }
-                }
-
-                cameraInfoList.add(
-                    CameraInfo(
-                        id,
-                        facing,
-                        previewInfoList,
-                        imageReaderInfoList,
-                        mediaRecorderInfoList,
-                        highSpeedInfoList
-                    )
-                )
-            }
-
-            return cameraInfoList
-        }
     }
 
 
@@ -548,7 +544,7 @@ class CameraObj private constructor(
         executorOnSurfaceAllReady: () -> Unit,
         executorOnError: (Int) -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // [조건 검증]
@@ -560,7 +556,7 @@ class CameraObj private constructor(
             ) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(1)
-                return@execute
+                return@run
             }
 
             // (서페이스 사이즈 검사)
@@ -578,7 +574,7 @@ class CameraObj private constructor(
                 ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(2)
-                    return@execute
+                    return@run
                 }
             }
 
@@ -593,7 +589,7 @@ class CameraObj private constructor(
                 ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(4)
-                    return@execute
+                    return@run
                 } else {
                     for (previewConfig in previewConfigVoList) {
                         if (cameraSizes.indexOfFirst {
@@ -602,7 +598,7 @@ class CameraObj private constructor(
                             } == -1) {
                             cameraThreadVoMbr.cameraSemaphore.release()
                             executorOnError(4)
-                            return@execute
+                            return@run
                         }
                     }
                 }
@@ -702,7 +698,7 @@ class CameraObj private constructor(
                     imageReaderConfigVoMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(5)
-                    return@execute
+                    return@run
                 }
 
                 // 설정 파일 확장자 검증
@@ -711,7 +707,7 @@ class CameraObj private constructor(
                     imageReaderConfigVoMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(14)
-                    return@execute
+                    return@run
                 }
 
                 mediaRecorderConfigVoMbr = mediaRecorderConfigVo
@@ -892,19 +888,17 @@ class CameraObj private constructor(
                                 previewObj.height
                             )
 
-                            executorServiceMbr.execute {
-                                checkedPreviewCountSemaphore.acquire()
-                                if (++checkedPreviewCount == previewListSize) {
-                                    // 마지막 작업일 때
-                                    checkedPreviewCountSemaphore.release()
+                            checkedPreviewCountSemaphore.acquire()
+                            if (++checkedPreviewCount == previewListSize) {
+                                // 마지막 작업일 때
+                                checkedPreviewCountSemaphore.release()
 
-                                    onSurfacesAllChecked(
-                                        executorOnSurfaceAllReady,
-                                        executorOnError
-                                    )
-                                } else {
-                                    checkedPreviewCountSemaphore.release()
-                                }
+                                onSurfacesAllChecked(
+                                    executorOnSurfaceAllReady,
+                                    executorOnError
+                                )
+                            } else {
+                                checkedPreviewCountSemaphore.release()
                             }
                         } else {
                             previewObj.surfaceTextureListener =
@@ -939,19 +933,17 @@ class CameraObj private constructor(
                                             height
                                         )
 
-                                        executorServiceMbr.execute {
-                                            checkedPreviewCountSemaphore.acquire()
-                                            if (++checkedPreviewCount == previewListSize) {
-                                                // 마지막 작업일 때
-                                                checkedPreviewCountSemaphore.release()
+                                        checkedPreviewCountSemaphore.acquire()
+                                        if (++checkedPreviewCount == previewListSize) {
+                                            // 마지막 작업일 때
+                                            checkedPreviewCountSemaphore.release()
 
-                                                onSurfacesAllChecked(
-                                                    executorOnSurfaceAllReady,
-                                                    executorOnError
-                                                )
-                                            } else {
-                                                checkedPreviewCountSemaphore.release()
-                                            }
+                                            onSurfacesAllChecked(
+                                                executorOnSurfaceAllReady,
+                                                executorOnError
+                                            )
+                                        } else {
+                                            checkedPreviewCountSemaphore.release()
                                         }
                                     }
 
@@ -1008,14 +1000,14 @@ class CameraObj private constructor(
         executorOnCameraRequestBuilderSet: () -> Unit,
         executorOnError: (Int) -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // [조건 검증]
             if (cameraDeviceMbr == null) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(1)
-                return@execute
+                return@run
             }
 
             if (previewConfigVoListMbr.isEmpty() &&
@@ -1024,7 +1016,7 @@ class CameraObj private constructor(
             ) { // 생성 서페이스가 하나도 존재하지 않으면,
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(2)
-                return@execute
+                return@run
             }
 
 
@@ -1039,7 +1031,7 @@ class CameraObj private constructor(
                     captureRequestBuilderMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(3)
-                    return@execute
+                    return@run
                 } else {
                     // 프리뷰 서페이스 타겟 추가
                     for (previewSurface in previewSurfaceListMbr) {
@@ -1053,7 +1045,7 @@ class CameraObj private constructor(
                     captureRequestBuilderMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(4)
-                    return@execute
+                    return@run
                 } else {
                     // 이미지 리더 서페이스 타겟 추가
                     captureRequestBuilderMbr!!.addTarget(imageReaderMbr!!.surface)
@@ -1065,7 +1057,7 @@ class CameraObj private constructor(
                     captureRequestBuilderMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(5)
-                    return@execute
+                    return@run
                 } else {
                     // 미디어 레코더 서페이스 타겟 추가
                     captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
@@ -1174,19 +1166,19 @@ class CameraObj private constructor(
         executorOnRequestComplete: () -> Unit,
         executorOnError: (Int) -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             if (cameraCaptureSessionMbr == null) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(1)
-                return@execute
+                return@run
             }
 
             if (captureRequestBuilderMbr == null) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(2)
-                return@execute
+                return@run
             }
 
             if (isRepeating) {
@@ -1203,7 +1195,7 @@ class CameraObj private constructor(
                 if (null == imageReaderMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(3)
-                    return@execute
+                    return@run
                 }
 
                 cameraCaptureSessionMbr!!.capture(
@@ -1226,7 +1218,7 @@ class CameraObj private constructor(
     fun pauseCameraSession(
         executorOnCameraPause: () -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             if (isRepeatingMbr) {
@@ -1243,7 +1235,7 @@ class CameraObj private constructor(
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
     fun stopCameraObject(executorOnCameraStop: () -> Unit) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // [카메라 상태 초기화]
@@ -1314,7 +1306,7 @@ class CameraObj private constructor(
     // (카메라 객체를 초기화하는 함수)
     // 카메라 객체 생성자와 대비되는 함수로, 생성했으면 소멸을 시켜야 함.
     fun destroyCameraObject(executorOnCameraClear: () -> Unit) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // [카메라 상태 초기화]
@@ -1464,24 +1456,25 @@ class CameraObj private constructor(
     fun startMediaRecording(
         onComplete: (Int) -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
+
             if (null == mediaCodecSurfaceMbr) { // 미디어 레코딩 서페이스 설정을 하지 않았을 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(1)
-                return@execute
+                return@run
             }
 
             if (!isRepeatingMbr) { // 카메라 실행 중이 아닐 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(2)
-                return@execute
+                return@run
             }
 
             if (isRecordingMbr) { // 이미 녹화 중일 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(0)
-                return@execute
+                return@run
             }
 
             mediaRecorderMbr!!.start()
@@ -1501,24 +1494,25 @@ class CameraObj private constructor(
     fun resumeMediaRecording(
         onComplete: (Int) -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
+
             if (null == mediaCodecSurfaceMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(1)
-                return@execute
+                return@run
             }
 
             if (!isRepeatingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(2)
-                return@execute
+                return@run
             }
 
             if (isRecordingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(0)
-                return@execute
+                return@run
             }
 
             mediaRecorderMbr!!.resume()
@@ -1537,8 +1531,9 @@ class CameraObj private constructor(
     fun pauseMediaRecording(
         onComplete: (Int) -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
+
             if (isRecordingMbr) {
                 mediaRecorderMbr?.pause()
                 isRecordingMbr = false
@@ -1566,8 +1561,9 @@ class CameraObj private constructor(
         zoomFactor: Float,
         executorOnZoomSettingComplete: (Float) -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
+
             val zoom = if (maxZoomMbr < zoomFactor) {
                 // 가용 줌 최대치에 설정을 맞추기
                 maxZoomMbr
@@ -1624,7 +1620,7 @@ class CameraObj private constructor(
         stabilizationOn: Boolean,
         executorOnCameraStabilizationSettingComplete: () -> Unit
     ) {
-        executorServiceMbr.execute {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             if (stabilizationOn) { // 보정 기능 실행 설정
@@ -1635,7 +1631,7 @@ class CameraObj private constructor(
                     isCameraStabilizationSetMbr = false
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@execute
+                    return@run
                 }
                 isCameraStabilizationSetMbr = true
 
@@ -1643,7 +1639,7 @@ class CameraObj private constructor(
                 if (captureRequestBuilderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@execute
+                    return@run
                 }
 
                 // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
@@ -1671,7 +1667,7 @@ class CameraObj private constructor(
                 if (!isRepeatingMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@execute
+                    return@run
                 }
 
                 // 세션이 현재 실행중이라면 바로 적용하기
@@ -1689,7 +1685,7 @@ class CameraObj private constructor(
                 if (captureRequestBuilderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@execute
+                    return@run
                 }
 
                 // 모든 보정 중지
@@ -1705,7 +1701,7 @@ class CameraObj private constructor(
                 if (!isRepeatingMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
-                    return@execute
+                    return@run
                 }
 
                 cameraCaptureSessionMbr!!.setRepeatingRequest(

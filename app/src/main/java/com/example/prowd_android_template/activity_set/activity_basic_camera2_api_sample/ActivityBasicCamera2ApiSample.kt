@@ -511,7 +511,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             this,
             cameraId,
             onCameraDisconnectedAndClearCamera = {
-                
+
             }
         )!!
 
