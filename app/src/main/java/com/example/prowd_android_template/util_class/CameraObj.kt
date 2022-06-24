@@ -1554,6 +1554,10 @@ class CameraObj private constructor(
 
     // [카메라 상태 변경 함수 모음]
     // CameraObj 객체 안의 상태 멤버변수를 조절하며 실제 세션 설정에 반영하는 함수
+    // CameraObj 객체가 객체화 된 이후 바로 실행 가능
+    // 객체화된 직후라면 멤버변수에 저장되어 다음 실행시 적용됨
+    // 리퀘스트 빌더가 생성되었다면 set,
+    // 이미 실행중이라면 set 이후 세션에 바로 반영합
 
     // (카메라 줌 비율을 변경하는 함수)
     // 카메라가 실행중 상태라면 즉시 반영
@@ -1623,7 +1627,7 @@ class CameraObj private constructor(
         executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            if (stabilizationOn) {
+            if (stabilizationOn) { // 보정 기능 실행 설정
                 // 보정 기능이 하나도 제공되지 않는 경우
                 if (!isVideoStabilizationAvailableMbr &&
                     !isOpticalStabilizationAvailableMbr
@@ -1635,6 +1639,7 @@ class CameraObj private constructor(
                 }
                 isCameraStabilizationSetMbr = true
 
+                // 리퀘스트 빌더가 생성되지 않은 경우
                 if (captureRequestBuilderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
@@ -1642,7 +1647,7 @@ class CameraObj private constructor(
                 }
 
                 // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
-                if (isOpticalStabilizationAvailableMbr) {
+                if (isOpticalStabilizationAvailableMbr) { // 기계 보정 사용 가능
                     captureRequestBuilderMbr!!.set(
                         CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
                         CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
@@ -1651,7 +1656,7 @@ class CameraObj private constructor(
                         CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
                         CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
                     )
-                } else if (isVideoStabilizationAvailableMbr) {
+                } else if (isVideoStabilizationAvailableMbr) { // 소프트 웨어 보정 사용 가능
                     captureRequestBuilderMbr!!.set(
                         CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
                         CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
@@ -1662,12 +1667,14 @@ class CameraObj private constructor(
                     )
                 }
 
+                // 세션이 현재 실행중이 아니라면 여기서 멈추기
                 if (!isRepeatingMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
                     return@execute
                 }
 
+                // 세션이 현재 실행중이라면 바로 적용하기
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
                     null,
@@ -1676,7 +1683,7 @@ class CameraObj private constructor(
 
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnCameraStabilizationSettingComplete()
-            } else {
+            } else { // 보정 기능 중지 설정
                 isCameraStabilizationSetMbr = false
 
                 if (captureRequestBuilderMbr == null) {
@@ -1685,6 +1692,7 @@ class CameraObj private constructor(
                     return@execute
                 }
 
+                // 모든 보정 중지
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
                     CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF

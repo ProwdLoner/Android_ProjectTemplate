@@ -942,7 +942,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
-                        executorOnCameraStabilizationSettingComplete = {})
+                        executorOnCameraStabilizationSettingComplete = {
+
+                        }
+                    )
 
                     // 카메라 리퀘스트 설정
                     cameraObjMbr.setCameraRequest(
