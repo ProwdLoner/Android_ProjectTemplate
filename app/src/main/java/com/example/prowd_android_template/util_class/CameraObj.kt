@@ -613,7 +613,6 @@ class CameraObj private constructor(
 
             if (isRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
-                mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
                 isRecordingMbr = false
 
@@ -1283,8 +1282,8 @@ class CameraObj private constructor(
 
             if (isRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
-                // todo : 녹화 빠르게 변경시 에러 발생 stop failed.
-                mediaRecorderMbr?.stop()
+                // todo : 녹화 후 곧바로 pause 시 에러 발생 stop failed.
+                //  레코더가 start 명령어를 받았어도 곧바로 stop 시에는 에러 발생. 딜레이가 존재하는듯...
                 mediaRecorderMbr?.reset()
                 isRecordingMbr = false
 
@@ -1355,7 +1354,6 @@ class CameraObj private constructor(
 
             if (isRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
-                mediaRecorderMbr?.stop()
                 mediaRecorderMbr?.reset()
                 isRecordingMbr = false
 
@@ -1935,7 +1933,6 @@ class CameraObj private constructor(
 
                     if (isRecordingMbr) {
                         // 레코딩 중이라면 레코더 종료 후 세션 중지
-                        mediaRecorderMbr?.stop()
                         mediaRecorderMbr?.reset()
                         isRecordingMbr = false
 
@@ -2000,7 +1997,6 @@ class CameraObj private constructor(
 
                     if (isRecordingMbr) {
                         // 레코딩 중이라면 레코더 종료 후 세션 중지
-                        mediaRecorderMbr?.stop()
                         mediaRecorderMbr?.reset()
                         isRecordingMbr = false
 
