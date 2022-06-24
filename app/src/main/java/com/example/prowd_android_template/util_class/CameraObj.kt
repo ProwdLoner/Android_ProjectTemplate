@@ -46,6 +46,7 @@ import kotlin.math.sqrt
 // todo : 전체 검증 : 특히 setSurface 의 디바이스 방향
 // todo : 함수 실행에 카메라 스레드가 아닌 익시큐터 사용때, 빠르게 회전시 멈춤
 //  = 익시큐터 내 외부에 카메라 스레드 사용 or 세마포어 락 에러로 보임. 즉, 할수있다면 락 시간을 설정
+//    혹은 익시큐터가 소멸하나? 그래서 release 가 되지 않는지도...
 //  카메라 스레드만 사용시에는 프리뷰가 일그러짐
 //  그러면 현재 사용중인 카메라 스레드를 최외곽에 두고, 이에 세마포어를 먹이고 익시큐터를 실행시키면 어떨까?
 class CameraObj private constructor(
@@ -220,6 +221,7 @@ class CameraObj private constructor(
         }
 
         // (카메라 스레드를 전역 메모리에서 지우도록 요청)
+        // todo : destroy 가 적용 안되는 공간 확인 (camera disconnect 같은 것)
         // publish count 가 1 이하라면 삭제, 2 부터는 -1
         private fun requestForDeleteSharedCameraIdThreadVoOnStaticMemory(cameraId: String) {
             cameraIdThreadVoListSemaphore.acquire()
@@ -1374,14 +1376,15 @@ class CameraObj private constructor(
             previewSurfaceListMbr.clear()
             cameraDeviceMbr = null
 
-            cameraThreadVoMbr.cameraSemaphore.release()
-
             requestForDeleteSharedCameraIdThreadVoOnStaticMemory(cameraIdMbr)
+
+            cameraThreadVoMbr.cameraSemaphore.release()
 
             executorOnCameraClear()
         }
     }
 
+    // todo : 핀치 크기에 따라 델타 값 차등 적용
     // (뷰 핀치 동작에 따른 줌 변경 리스너 주입 함수)
     // 뷰를 주입하면 해당 뷰를 핀칭할 때에 줌을 변경할수 있도록 리스너를 주입
     // 뷰를 여러번 넣으면 각각의 뷰에 핀칭을 할 때마다 줌을 변경
@@ -1390,10 +1393,10 @@ class CameraObj private constructor(
     fun setCameraPinchZoomTouchListener(view: View, delta: Float = 0.05f) {
         view.setOnTouchListener(object : View.OnTouchListener {
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-                // 형식 맞추기 코드
                 when (event!!.action) {
                     MotionEvent.ACTION_DOWN -> {}
                     MotionEvent.ACTION_UP -> {
+                        // 형식 맞추기 코드
                         v!!.performClick()
 
                         // 손가락을 떼면 기존 핀치 너비 비우기
@@ -1461,19 +1464,19 @@ class CameraObj private constructor(
     ) {
         executorServiceMbr.execute {
             cameraThreadVoMbr.cameraSemaphore.acquire()
-            if (null == mediaCodecSurfaceMbr) {
+            if (null == mediaCodecSurfaceMbr) { // 미디어 레코딩 서페이스 설정을 하지 않았을 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(1)
                 return@execute
             }
 
-            if (!isRepeatingMbr) {
+            if (!isRepeatingMbr) { // 카메라 실행 중이 아닐 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(2)
                 return@execute
             }
 
-            if (isRecordingMbr) {
+            if (isRecordingMbr) { // 이미 녹화 중일 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(0)
                 return@execute
