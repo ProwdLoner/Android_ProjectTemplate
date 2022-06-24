@@ -652,6 +652,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.mp4"),
                                 null,
                                 null,
+                                null,
                                 false
                             )
                         } else {
