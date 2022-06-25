@@ -24,6 +24,8 @@ import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.math.sqrt
 
@@ -45,11 +47,6 @@ import kotlin.math.sqrt
 // todo : 디바이스 방향 관련 부분 다시 살피기
 
 // todo : s22u 녹화시 음성 녹음 설정을 하면 멈춤 현상
-// todo : S22u 프리뷰 일그러짐 현상 함수 실행시 익시큐터를 사용했을땐 정상
-// todo : 함수 실행에 카메라 스레드가 아닌 익시큐터 사용때, 빠르게 회전시 멈춤
-//  = 익시큐터 내 외부에 카메라 스레드 사용 or 세마포어 락 에러로 보임.
-//    익시큐터가 소멸하나? 그래서 release 가 되지 않는지도...
-//  camera open 과 상관 있는듯 한데, 이때만 한시적으로 executor 를 사용하는건 어떨지...
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -63,6 +60,9 @@ class CameraObj private constructor(
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
+    // (스레드 풀)
+    var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
     // 카메라 API 사용 스레드 세트
     private val cameraThreadVoMbr: CameraIdThreadVo =
         publishSharedCameraIdThreadVoOnStaticMemory(cameraIdMbr)
@@ -1770,86 +1770,91 @@ class CameraObj private constructor(
         }
 
         // (카메라 디바이스 열기)
-        openCameraDevice(
-            onCameraDeviceReady = { // 카메라 디바이스가 준비된 시점
-                for (previewConfigVo in previewConfigVoListMbr) {
-                    val surfaceTexture = previewConfigVo.autoFitTextureView.surfaceTexture
+        // openCamera 를 executor 에서 하지 않으면 화면 일그러짐 현상이 일어날 수 있음
+        executorServiceMbr.execute {
+            openCameraDevice(
+                onCameraDeviceReady = { // 카메라 디바이스가 준비된 시점
+                    cameraThreadVoMbr.cameraHandlerThreadObj.run {
+                        for (previewConfigVo in previewConfigVoListMbr) {
+                            val surfaceTexture = previewConfigVo.autoFitTextureView.surfaceTexture
 
-                    if (surfaceTexture == null) { // 프리뷰 설정이 존재할 때 서페이스 텍스쳐가 반환되지 않은 경우
-                        // 준비 서페이스 초기화
-                        // 프리뷰가 설정되어 있다면 리스너 비우기
-                        for (previewConfigVo1 in previewConfigVoListMbr) {
-                            previewConfigVo1.autoFitTextureView.surfaceTextureListener =
-                                object : TextureView.SurfaceTextureListener {
-                                    override fun onSurfaceTextureAvailable(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
+                            if (surfaceTexture == null) { // 프리뷰 설정이 존재할 때 서페이스 텍스쳐가 반환되지 않은 경우
+                                // 준비 서페이스 초기화
+                                // 프리뷰가 설정되어 있다면 리스너 비우기
+                                for (previewConfigVo1 in previewConfigVoListMbr) {
+                                    previewConfigVo1.autoFitTextureView.surfaceTextureListener =
+                                        object : TextureView.SurfaceTextureListener {
+                                            override fun onSurfaceTextureAvailable(
+                                                surface: SurfaceTexture,
+                                                width: Int,
+                                                height: Int
+                                            ) = Unit
 
-                                    override fun onSurfaceTextureSizeChanged(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
+                                            override fun onSurfaceTextureSizeChanged(
+                                                surface: SurfaceTexture,
+                                                width: Int,
+                                                height: Int
+                                            ) = Unit
 
-                                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                        true
+                                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                                true
 
-                                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                        Unit
+                                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                                                Unit
+                                        }
                                 }
+
+                                // (자원 해소)
+                                mediaRecorderMbr?.release()
+                                mediaCodecSurfaceMbr?.release()
+                                imageReaderMbr?.close()
+
+                                // (멤버 변수 비우기)
+                                mediaRecorderMbr = null
+                                mediaCodecSurfaceMbr = null
+                                mediaRecorderConfigVoMbr = null
+                                imageReaderMbr = null
+                                imageReaderConfigVoMbr = null
+                                previewConfigVoListMbr.clear()
+                                previewSurfaceListMbr.clear()
+
+                                cameraThreadVoMbr.cameraSemaphore.release()
+                                onError(15)
+                                return@openCameraDevice
+                            }
+
+                            surfaceTexture.setDefaultBufferSize(
+                                previewConfigVo.cameraOrientSurfaceSize.width,
+                                previewConfigVo.cameraOrientSurfaceSize.height
+                            )
+
+                            previewSurfaceListMbr.add(Surface(surfaceTexture))
                         }
 
-                        // (자원 해소)
-                        mediaRecorderMbr?.release()
-                        mediaCodecSurfaceMbr?.release()
-                        imageReaderMbr?.close()
-
-                        // (멤버 변수 비우기)
-                        mediaRecorderMbr = null
-                        mediaCodecSurfaceMbr = null
-                        mediaRecorderConfigVoMbr = null
-                        imageReaderMbr = null
-                        imageReaderConfigVoMbr = null
-                        previewConfigVoListMbr.clear()
-                        previewSurfaceListMbr.clear()
-
-                        cameraThreadVoMbr.cameraSemaphore.release()
-                        onError(15)
-                        return@openCameraDevice
+                        // (카메라 세션 생성)
+                        createCameraSessionAsync(
+                            onCaptureSessionCreated = {
+                                cameraThreadVoMbr.cameraSemaphore.release()
+                                onSurfaceAllReady()
+                            },
+                            onErrorAndClearSurface = { errorCode ->
+                                cameraThreadVoMbr.cameraSemaphore.release()
+                                onError(errorCode)
+                            }
+                        )
                     }
-
-                    surfaceTexture.setDefaultBufferSize(
-                        previewConfigVo.cameraOrientSurfaceSize.width,
-                        previewConfigVo.cameraOrientSurfaceSize.height
-                    )
-
-                    previewSurfaceListMbr.add(Surface(surfaceTexture))
+                },
+                onCameraDisconnectedAndClearCamera = {
+                    // (카메라 상태 초기화)
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onCameraDisconnectedMbr()
+                },
+                onErrorAndClearSurface = { errorCode ->
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(errorCode)
                 }
-
-                // (카메라 세션 생성)
-                createCameraSessionAsync(
-                    onCaptureSessionCreated = {
-                        cameraThreadVoMbr.cameraSemaphore.release()
-                        onSurfaceAllReady()
-                    },
-                    onErrorAndClearSurface = { errorCode ->
-                        cameraThreadVoMbr.cameraSemaphore.release()
-                        onError(errorCode)
-                    }
-                )
-            },
-            onCameraDisconnectedAndClearCamera = {
-                // (카메라 상태 초기화)
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onCameraDisconnectedMbr()
-            },
-            onErrorAndClearSurface = { errorCode ->
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onError(errorCode)
-            }
-        )
+            )
+        }
     }
 
     // 카메라 디바이스 생성
