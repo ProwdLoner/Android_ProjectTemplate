@@ -23,9 +23,15 @@
         app:layout_constraintTop_toTopOf="@id/camera_preview_auto_fit_texture">
 
         <ImageView
-            android:id="@+id/debug_rotate_img"
+            android:id="@+id/debug_yuv_to_rgb_img"
             android:layout_width="200dp"
             android:layout_height="200dp" />
+
+        <ImageView
+            android:id="@+id/debug_rotate_img"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:visibility="gone" />
 
         <ImageView
             android:id="@+id/debug_crop_img"
