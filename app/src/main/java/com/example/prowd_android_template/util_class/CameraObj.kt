@@ -39,13 +39,11 @@ import kotlin.math.sqrt
 // 내부 제공 함수들은 대다수 비동기 동작을 수행합니다. 시점을 맞추기 위해선 제공되는 콜백을 사용하면 됩니다.
 // 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
 
-// todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : 사진 찍기 기능 검증
 // todo : 서페이스 각자 세팅 기능 오버로딩(request setting callback 을 제거)
 // todo : exposure, whitebalance, iso 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
 // todo : 디바이스 방향 관련 부분 다시 살피기
-
 // todo : s22u 녹화시 음성 녹음 설정을 하면 멈춤 현상
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,

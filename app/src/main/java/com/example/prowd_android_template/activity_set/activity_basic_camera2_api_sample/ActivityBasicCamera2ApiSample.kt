@@ -52,6 +52,7 @@ import java.util.concurrent.Semaphore
 import kotlin.collections.ArrayList
 
 // todo : 레코딩 버튼 누른 후 빠르게 회전시 멈춤 현상
+// todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -271,7 +272,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
 
-        // 카메라를 디바이스 객체까지 전부 초기화
+        // 카메라 해소
         cameraObjMbr.destroyCameraObject(executorOnCameraClear = {})
 
         // 랜더 스크립트 객체 해소
