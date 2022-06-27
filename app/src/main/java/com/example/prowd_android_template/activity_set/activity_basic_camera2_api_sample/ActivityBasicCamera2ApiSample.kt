@@ -1027,7 +1027,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // image 객체가 빨리 close 되고 나머지는 비동기 처리를 하는게 좋음
 
             // 프레임 이미지 객체
-            val imageObj: Image = reader.acquireNextImage() ?: return
+            val imageObj: Image = reader.acquireLatestImage() ?: return
 
             // 조기 종료 플래그
             if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우

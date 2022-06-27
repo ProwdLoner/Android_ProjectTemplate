@@ -14,6 +14,7 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
+import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -607,7 +608,11 @@ class CameraObj private constructor(
 
             // [카메라 상태 초기화]
             // 이미지 리더 요청을 먼저 비우기
-            imageReaderMbr?.setOnImageAvailableListener(null, null)
+            imageReaderMbr?.setOnImageAvailableListener(
+                { it.acquireLatestImage().close() },
+                cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
+            )
+
 
             if (isRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
@@ -722,31 +727,32 @@ class CameraObj private constructor(
                         MediaRecorder()
                     }
 
-                // (레코더 정보 생성)
+                // (미디어 레코더 설정)
+                // 서페이스 소스 설정
+                if (mediaRecorderConfigVo.isAudioRecording) {
+                    mediaRecorderMbr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
+                }
+                mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+
+                // 파일 포멧 설정
+                mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+
+                // 파일 경로 설정
+                // 만일 같은 파일이 이전에 비휘발 메모리에 존재하면 새로써짐
+                if (mediaRecorderConfigVo.mediaRecordingMp4File.exists()) {
+                    mediaRecorderConfigVo.mediaRecordingMp4File.delete()
+                }
+                mediaRecorderConfigVo.mediaRecordingMp4File.createNewFile()
+                mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaRecordingMp4File.absolutePath)
+
+                // 데이터 저장 프레임 설정
                 // 비디오 FPS
                 val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
                     MediaRecorder::class.java,
                     mediaRecorderConfigVo.cameraOrientSurfaceSize
                 ) / 1_000_000_000.0)
                 val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
-
-                // (미디어 레코더 설정)
-                // 서페이스 소스 설정
-                mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
-                if (mediaRecorderConfigVo.isAudioRecording) {
-                    mediaRecorderMbr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
-                }
-
-                // 파일 포멧 설정
-                mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-
-                // 인코딩 타입 설정
-                mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                if (mediaRecorderConfigVo.isAudioRecording) {
-                    mediaRecorderMbr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                }
-
-                // 데이터 저장 프레임 설정
+                Log.e("fps", mediaRecorderFps.toString())
                 if (mediaRecorderConfigVo.recordingFpsQualityRate == null) { // 커스텀 설정 값이 없을 때
                     // 최대 설정
                     mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
@@ -766,7 +772,7 @@ class CameraObj private constructor(
 
                 // todo : max 값 에러 검증
                 // 영상 데이터 저장 퀄리티 설정
-                val maxVideoBitrate = Int.MAX_VALUE
+                val maxVideoBitrate = 10000000
                 if (mediaRecorderConfigVo.videoEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
                     // 최대 설정
                     mediaRecorderMbr!!.setVideoEncodingBitRate(maxVideoBitrate)
@@ -784,32 +790,41 @@ class CameraObj private constructor(
                     }
                 }
 
+                // todo
                 // 음성 데이터 저장 퀄리티 설정
-                if (mediaRecorderConfigVo.isAudioRecording) {
-                    val maxAudioBitrate = Int.MAX_VALUE
-                    if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
-                        // 최대 설정
-                        mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
-                    } else { // 커스텀 설정 값이 있을 때
-                        if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate >= 1.0) {
-                            // 최대 설정
-                            mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
-                        } else {
-                            var newBitrate =
-                                (maxAudioBitrate * mediaRecorderConfigVo.audioEncodingBitrateQualityRate).toInt()
-                            if (newBitrate == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
-                                newBitrate = 1
-                            }
-                            mediaRecorderMbr!!.setAudioEncodingBitRate(newBitrate)
-                        }
-                    }
-                }
+//                if (mediaRecorderConfigVo.isAudioRecording) {
+//
+//                    val maxAudioBitrate = 100
+//                    if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
+//                        // 최대 설정
+//                        mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
+//                    } else { // 커스텀 설정 값이 있을 때
+//                        if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate >= 1.0) {
+//                            // 최대 설정
+//                            mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
+//                        } else {
+//                            var newBitrate =
+//                                (maxAudioBitrate * mediaRecorderConfigVo.audioEncodingBitrateQualityRate).toInt()
+//                            if (newBitrate == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
+//                                newBitrate = 1
+//                            }
+//                            mediaRecorderMbr!!.setAudioEncodingBitRate(newBitrate)
+//                        }
+//                    }
+//
+//                }
 
                 // 서페이스 사이즈 설정
                 mediaRecorderMbr!!.setVideoSize(
                     mediaRecorderConfigVo.cameraOrientSurfaceSize.width,
                     mediaRecorderConfigVo.cameraOrientSurfaceSize.height
                 )
+
+                // 인코딩 타입 설정
+                mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                if (mediaRecorderConfigVo.isAudioRecording) {
+                    mediaRecorderMbr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                }
 
                 // 서페이스 방향 설정
                 val defaultOrientation = SparseIntArray()
@@ -840,14 +855,6 @@ class CameraObj private constructor(
                             inverseOrientation.get(deviceOrientation)
                         )
                 }
-
-                // 파일 경로 설정
-                // 만일 같은 파일이 이전에 비휘발 메모리에 존재하면 새로써짐
-                if (mediaRecorderConfigVo.mediaRecordingMp4File.exists()) {
-                    mediaRecorderConfigVo.mediaRecordingMp4File.delete()
-                }
-                mediaRecorderConfigVo.mediaRecordingMp4File.createNewFile()
-                mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaRecordingMp4File.absolutePath)
 
                 mediaRecorderMbr!!.setInputSurface(mediaCodecSurfaceMbr!!)
 
@@ -1276,7 +1283,10 @@ class CameraObj private constructor(
 
             // [카메라 상태 초기화]
             // 이미지 리더 요청을 먼저 비우기
-            imageReaderMbr?.setOnImageAvailableListener(null, null)
+            imageReaderMbr?.setOnImageAvailableListener(
+                { it.acquireLatestImage().close() },
+                cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
+            )
 
             if (isRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
@@ -1346,7 +1356,10 @@ class CameraObj private constructor(
 
             // [카메라 상태 초기화]
             // 이미지 리더 요청을 먼저 비우기
-            imageReaderMbr?.setOnImageAvailableListener(null, null)
+            imageReaderMbr?.setOnImageAvailableListener(
+                { it.acquireLatestImage().close() },
+                cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
+            )
 
             if (isRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
@@ -1930,7 +1943,10 @@ class CameraObj private constructor(
                 override fun onDisconnected(camera: CameraDevice) {
                     // [카메라 상태 초기화]
                     // 이미지 리더 요청을 먼저 비우기
-                    imageReaderMbr?.setOnImageAvailableListener(null, null)
+                    imageReaderMbr?.setOnImageAvailableListener(
+                        { it.acquireLatestImage().close() },
+                        cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
+                    )
 
                     if (isRecordingMbr) {
                         // 레코딩 중이라면 레코더 종료 후 세션 중지
@@ -1994,7 +2010,10 @@ class CameraObj private constructor(
                 override fun onError(camera: CameraDevice, error: Int) {
                     // [카메라 상태 초기화]
                     // 이미지 리더 요청을 먼저 비우기
-                    imageReaderMbr?.setOnImageAvailableListener(null, null)
+                    imageReaderMbr?.setOnImageAvailableListener(
+                        { it.acquireLatestImage().close() },
+                        cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
+                    )
 
                     if (isRecordingMbr) {
                         // 레코딩 중이라면 레코더 종료 후 세션 중지
