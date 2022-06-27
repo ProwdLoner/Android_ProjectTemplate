@@ -22,6 +22,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -509,8 +510,114 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         )
 
         // (최초 사용 카메라 객체 생성)
-        val cameraId =
-            CameraObj.getCameraIdFromFacing(this, CameraCharacteristics.LENS_FACING_BACK)!!
+        val cameraIdList = CameraObj.getCameraIdList(this)
+
+        if (cameraIdList.size == 0) {
+            // 지원하는 카메라가 없음
+            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                true,
+                "에러",
+                "지원되는 카메라를 찾을 수 없습니다.",
+                null,
+                onCheckBtnClicked = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    finish()
+                },
+                onCanceled = {
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    finish()
+                }
+            )
+        }
+
+        // 초기 카메라 아이디 선정
+        val cameraId: String =
+            if (viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId != null) { // 기존 아이디가 있을 때
+                if (cameraIdList.contains(viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId)) {
+                    // 기존 아이디가 제공 아이디 리스트에 있을 때
+                    viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId!!
+                } else {
+                    // 기존 아이디가 제공 아이디 리스트에 없을 때
+
+                    // 후면 카메라 적용 검토
+                    if (CameraObj.getCameraIdFromFacing(
+                            this,
+                            CameraCharacteristics.LENS_FACING_BACK
+                        ) != null &&
+                        cameraIdList.contains(
+                            CameraObj.getCameraIdFromFacing(
+                                this,
+                                CameraCharacteristics.LENS_FACING_BACK
+                            )!!
+                        )
+                    ) {
+                        CameraObj.getCameraIdFromFacing(
+                            this,
+                            CameraCharacteristics.LENS_FACING_BACK
+                        )!!
+                    } else { // 후면 카메라 아이디 지원 불가
+                        // 전면 카메라 적용 검토
+                        if (CameraObj.getCameraIdFromFacing(
+                                this,
+                                CameraCharacteristics.LENS_FACING_FRONT
+                            ) != null &&
+                            cameraIdList.contains(
+                                CameraObj.getCameraIdFromFacing(
+                                    this,
+                                    CameraCharacteristics.LENS_FACING_FRONT
+                                )!!
+                            )
+                        ) {
+                            CameraObj.getCameraIdFromFacing(
+                                this,
+                                CameraCharacteristics.LENS_FACING_FRONT
+                            )!!
+                        } else {
+                            // 전후면 카메라 지원 불가시 카메라 id 리스트 첫번째 아이디 적용
+                            cameraIdList[0]
+                        }
+                    }
+                }
+            } else { // 기존 아이디가 없을 때
+                // 후면 카메라 적용 검토
+                if (CameraObj.getCameraIdFromFacing(
+                        this,
+                        CameraCharacteristics.LENS_FACING_BACK
+                    ) != null &&
+                    cameraIdList.contains(
+                        CameraObj.getCameraIdFromFacing(
+                            this,
+                            CameraCharacteristics.LENS_FACING_BACK
+                        )!!
+                    )
+                ) {
+                    CameraObj.getCameraIdFromFacing(
+                        this,
+                        CameraCharacteristics.LENS_FACING_BACK
+                    )!!
+                } else { // 후면 카메라 아이디 지원 불가
+                    // 전면 카메라 적용 검토
+                    if (CameraObj.getCameraIdFromFacing(
+                            this,
+                            CameraCharacteristics.LENS_FACING_FRONT
+                        ) != null &&
+                        cameraIdList.contains(
+                            CameraObj.getCameraIdFromFacing(
+                                this,
+                                CameraCharacteristics.LENS_FACING_FRONT
+                            )!!
+                        )
+                    ) {
+                        CameraObj.getCameraIdFromFacing(
+                            this,
+                            CameraCharacteristics.LENS_FACING_FRONT
+                        )!!
+                    } else {
+                        // 전후면 카메라 지원 불가시 카메라 id 리스트 첫번째 아이디 적용
+                        cameraIdList[0]
+                    }
+                }
+            }
 
         val cameraObj = CameraObj.getInstance(
             this,
@@ -588,6 +695,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             bindingMbr.btn3.y =
                 bindingMbr.btn3.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+        }
+
+        bindingMbr.cameraChangeBtn.setOnClickListener {
+            Log.e("ff", CameraObj.getCameraIdList(this).toString())
+            Log.e("ci", CameraObj.getCameraInfo(this, "0").toString())
         }
 
         // todo 녹화중 화면 효과

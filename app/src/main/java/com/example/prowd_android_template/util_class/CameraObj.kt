@@ -201,7 +201,129 @@ class CameraObj private constructor(
             return result
         }
 
-        // (가용 카메라 리스트 반환)
+        // (가용 카메라 아이디 리스트 반환)
+        fun getCameraIdList(parentActivity: Activity): ArrayList<String> {
+
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            val cameraIdList: ArrayList<String> = ArrayList()
+            cameraIdList.addAll(cameraManager.cameraIdList)
+
+            return cameraIdList
+        }
+
+        // (카메라 아이디에 해당하는 가용 사이즈 & FPS 반환)
+        fun getCameraInfo(
+            parentActivity: Activity,
+            cameraId: String
+        ): CameraInfo {
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+
+            val cameraConfig = characteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
+            )!!
+
+            val capabilities = characteristics.get(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
+            )!!
+
+            val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
+
+            val previewInfoList = ArrayList<CameraInfo.DeviceInfo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                )
+            ) {
+                cameraConfig.getOutputSizes(SurfaceTexture::class.java).forEach { size ->
+                    val secondsPerFrame =
+                        cameraConfig.getOutputMinFrameDuration(
+                            SurfaceTexture::class.java,
+                            size
+                        ) / 1_000_000_000.0
+                    val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                    previewInfoList.add(
+                        CameraInfo.DeviceInfo(
+                            size, fps
+                        )
+                    )
+                }
+            }
+
+            val imageReaderInfoList = ArrayList<CameraInfo.DeviceInfo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                )
+            ) {
+                cameraConfig.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+                    val secondsPerFrame =
+                        cameraConfig.getOutputMinFrameDuration(
+                            ImageFormat.YUV_420_888,
+                            size
+                        ) / 1_000_000_000.0
+                    val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                    imageReaderInfoList.add(
+                        CameraInfo.DeviceInfo(
+                            size, fps
+                        )
+                    )
+                }
+            }
+
+            val mediaRecorderInfoList = ArrayList<CameraInfo.DeviceInfo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                )
+            ) {
+                cameraConfig.getOutputSizes(MediaRecorder::class.java).forEach { size ->
+                    val secondsPerFrame =
+                        cameraConfig.getOutputMinFrameDuration(
+                            MediaRecorder::class.java,
+                            size
+                        ) / 1_000_000_000.0
+                    val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                    mediaRecorderInfoList.add(
+                        CameraInfo.DeviceInfo(
+                            size, fps
+                        )
+                    )
+                }
+            }
+
+            val highSpeedInfoList = ArrayList<CameraInfo.DeviceInfo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
+                )
+            ) {
+                cameraConfig.highSpeedVideoSizes.forEach { size ->
+                    cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
+                        val fps = fpsRange.upper
+                        highSpeedInfoList.add(
+                            CameraInfo.DeviceInfo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+            }
+
+            return CameraInfo(
+                cameraId,
+                facing,
+                previewInfoList,
+                imageReaderInfoList,
+                mediaRecorderInfoList,
+                highSpeedInfoList
+            )
+        }
+
+        // (가용 카메라 정보 리스트 반환)
         fun getCameraInfoList(parentActivity: Activity): ArrayList<CameraInfo> {
             val cameraInfoList: ArrayList<CameraInfo> = ArrayList()
 

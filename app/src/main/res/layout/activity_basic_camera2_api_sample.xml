@@ -60,6 +60,16 @@
         app:layout_constraintTop_toBottomOf="@id/debug_image_container" />
 
     <com.example.prowd_android_template.custom_view.CircleImageView
+        android:id="@+id/camera_change_btn"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/img_activity_basic_camera2_api_sample_camera_change"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.example.prowd_android_template.custom_view.CircleImageView
         android:id="@+id/btn1"
         android:layout_width="70dp"
         android:layout_height="70dp"
