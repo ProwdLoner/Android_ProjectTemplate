@@ -1020,53 +1020,53 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (카메라 이미지 실시간 처리 콜백)
     // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
     private fun processImage(reader: ImageReader) {
-        // (1. Image 객체 정보 추출)
-        // reader 객체로 받은 image 객체의 이미지 정보가 처리되어 close 될 때까지는 동기적으로 처리
-        // image 객체가 빨리 close 되고 나머지는 비동기 처리를 하는게 좋음
+        try {
+            // (1. Image 객체 정보 추출)
+            // reader 객체로 받은 image 객체의 이미지 정보가 처리되어 close 될 때까지는 동기적으로 처리
+            // image 객체가 빨리 close 되고 나머지는 비동기 처리를 하는게 좋음
 
-        // 프레임 이미지 객체
-        val imageObj: Image = reader.acquireNextImage() ?: return
+            // 프레임 이미지 객체
+            val imageObj: Image = reader.acquireNextImage() ?: return
 
-        // 조기 종료 플래그
-        if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
-            viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
-            isDestroyed // 액티비티 자체가 종료
-        ) {
+            // 조기 종료 플래그
+            if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+                viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+                isDestroyed // 액티비티 자체가 종료
+            ) {
+                imageObj.close()
+                return
+            }
+
+            // 안정화를 위하여 Image 객체의 필요 데이터를 clone
+            // 이번 프레임 수집 시간 (time stamp nano sec -> milli sec)
+            val imageGainTimeMs: Long = imageObj.timestamp / 1000 / 1000
+
+            val imageWidth = imageObj.width
+            val imageHeight = imageObj.height
+            val pixelCount = imageWidth * imageHeight
+
+            // image planes 를 순회하면 yuvByteArray 채우기
+            val plane0: Image.Plane = imageObj.planes[0]
+            val plane1: Image.Plane = imageObj.planes[1]
+            val plane2: Image.Plane = imageObj.planes[2]
+
+            val rowStride0: Int = plane0.rowStride
+            val pixelStride0: Int = plane0.pixelStride
+
+            val rowStride1: Int = plane1.rowStride
+            val pixelStride1: Int = plane1.pixelStride
+
+            val rowStride2: Int = plane2.rowStride
+            val pixelStride2: Int = plane2.pixelStride
+
+            val planeBuffer0: ByteBuffer = CustomUtil.cloneByteBuffer(plane0.buffer)
+            val planeBuffer1: ByteBuffer = CustomUtil.cloneByteBuffer(plane1.buffer)
+            val planeBuffer2: ByteBuffer = CustomUtil.cloneByteBuffer(plane2.buffer)
+
             imageObj.close()
-            return
-        }
 
-        // 안정화를 위하여 Image 객체의 필요 데이터를 clone
-        // 이번 프레임 수집 시간 (time stamp nano sec -> milli sec)
-        val imageGainTimeMs: Long = imageObj.timestamp / 1000 / 1000
+            // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
 
-        val imageWidth = imageObj.width
-        val imageHeight = imageObj.height
-        val pixelCount = imageWidth * imageHeight
-
-        // image planes 를 순회하면 yuvByteArray 채우기
-        val plane0: Image.Plane = imageObj.planes[0]
-        val plane1: Image.Plane = imageObj.planes[1]
-        val plane2: Image.Plane = imageObj.planes[2]
-
-        val rowStride0: Int = plane0.rowStride
-        val pixelStride0: Int = plane0.pixelStride
-
-        val rowStride1: Int = plane1.rowStride
-        val pixelStride1: Int = plane1.pixelStride
-
-        val rowStride2: Int = plane2.rowStride
-        val pixelStride2: Int = plane2.pixelStride
-
-        val planeBuffer0: ByteBuffer = CustomUtil.cloneByteBuffer(plane0.buffer)
-        val planeBuffer1: ByteBuffer = CustomUtil.cloneByteBuffer(plane1.buffer)
-        val planeBuffer2: ByteBuffer = CustomUtil.cloneByteBuffer(plane2.buffer)
-
-        imageObj.close()
-
-        // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
-
-        viewModelMbr.executorServiceMbr?.execute {
             // (1.5 복제된 이미지 데이터를 큐에 저장)
             if (imageDataVoListMbr.size >= imageDataVoListSizeMbr) {
                 // 큐 개수를 유지하기 위해 허용 사이즈를 넘어가면 먼저 선입 선출
@@ -1092,161 +1092,175 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             )
 
             // (2. 이미지 프로세싱 스킵 검증)
+            // 조기 종료 플래그
+            if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+                viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+                isDestroyed // 액티비티 자체가 종료
+            ) {
+                // 스킵 횟수 초기화
+                frameSkipCountMbr = 0
+                return
+            }
+
             // 이미지 프로세싱 스킵 최소 횟수 검증
             if (minFrameSkipCountMbr > frameSkipCountMbr) {
                 // 일정 횟수 스킵하지 않으면 return
                 frameSkipCountMbr++
-                return@execute
-            } else {
-                // 일정 횟수 스킵하면 횟수 초기화
-                frameSkipCountMbr = 0
+                return
             }
 
             // 프로세싱 진입 최대 개수 검증
             // 프로세싱 종료시엔 필수로 currentImageProcessCountMbr 를 1 내려야 하는 것을 주의
             currentImageProcessCountSemaphoreMbr.acquire()
-            if (maxImageProcessCountMbr <= currentImageProcessCountMbr || // 현재 처리중인 프로세싱 개수가 최대 프로세싱 개수보다 크거나 같을 때
-                !cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
-                viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
-                isDestroyed // 액티비티 자체가 종료
-            ) {
+            if (maxImageProcessCountMbr <= currentImageProcessCountMbr) {
+                // 현재 처리중인 프로세싱 개수가 최대 프로세싱 개수보다 크거나 같을 때
                 currentImageProcessCountSemaphoreMbr.release()
-                return@execute
+                return
             }
             currentImageProcessCountMbr++
             currentImageProcessCountSemaphoreMbr.release()
 
-            // (3. 이미지 객체에서 추출한 YUV 420 888 바이트 버퍼를 ARGB 8888 비트맵으로 변환)
-            val cameraImageFrameBitmap = yuv420888ByteBufferToArgb8888Bitmap(
-                imageWidth,
-                imageHeight,
-                pixelCount,
-                rowStride0,
-                pixelStride0,
-                planeBuffer0,
-                rowStride1,
-                pixelStride1,
-                planeBuffer1,
-                rowStride2,
-                pixelStride2,
-                planeBuffer2
-            )
+            // 일정 횟수 스킵하고 프로세싱 진입을 하면 횟수 초기화
+            frameSkipCountMbr = 0
 
-            // 디버그를 위한 표시
-            runOnUiThread {
-                if (!isDestroyed) {
-                    Glide.with(this)
-                        .load(cameraImageFrameBitmap)
-                        .transform(FitCenter())
-                        .into(bindingMbr.debugYuvToRgbImg)
-                }
-            }
+            // (3. 비동기 이미지 프로세싱 시작)
+            viewModelMbr.executorServiceMbr?.execute {
+                // (4. 이미지 객체에서 추출한 YUV 420 888 바이트 버퍼를 ARGB 8888 비트맵으로 변환)
+                val cameraImageFrameBitmap = yuv420888ByteBufferToArgb8888Bitmap(
+                    imageWidth,
+                    imageHeight,
+                    pixelCount,
+                    rowStride0,
+                    pixelStride0,
+                    planeBuffer0,
+                    rowStride1,
+                    pixelStride1,
+                    planeBuffer1,
+                    rowStride2,
+                    pixelStride2,
+                    planeBuffer2
+                )
 
-            // (4. 이미지를 회전)
-            // 현 디바이스 방향으로 이미지를 맞추기 위해 역시계 방향으로 몇도를 돌려야 하는지
-            val rotateCounterClockAngle: Int =
-                when (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    display!!.rotation
-                } else {
-                    windowManager.defaultDisplay.rotation
-                }) {
-                    Surface.ROTATION_0 -> { // 카메라 기본 방향
-                        // if sensorOrientationMbr = 90 -> 270
-                        360 - cameraObjMbr.sensorOrientationMbr
-                    }
-                    Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
-                        // if sensorOrientationMbr = 90 -> 0
-                        90 - cameraObjMbr.sensorOrientationMbr
-                    }
-                    Surface.ROTATION_180 -> {
-                        // if sensorOrientationMbr = 90 -> 90
-                        180 - cameraObjMbr.sensorOrientationMbr
-                    }
-                    Surface.ROTATION_270 -> {
-                        // if sensorOrientationMbr = 90 -> 180
-                        270 - cameraObjMbr.sensorOrientationMbr
-                    }
-                    else -> {
-                        0
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(cameraImageFrameBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.debugYuvToRgbImg)
                     }
                 }
 
-            val rotatedCameraImageFrameBitmap =
-                RenderScriptUtil.rotateBitmapCounterClock(
+                // (5. 이미지를 회전)
+                // 현 디바이스 방향으로 이미지를 맞추기 위해 역시계 방향으로 몇도를 돌려야 하는지
+                val rotateCounterClockAngle: Int =
+                    when (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        display!!.rotation
+                    } else {
+                        windowManager.defaultDisplay.rotation
+                    }) {
+                        Surface.ROTATION_0 -> { // 카메라 기본 방향
+                            // if sensorOrientationMbr = 90 -> 270
+                            360 - cameraObjMbr.sensorOrientationMbr
+                        }
+                        Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
+                            // if sensorOrientationMbr = 90 -> 0
+                            90 - cameraObjMbr.sensorOrientationMbr
+                        }
+                        Surface.ROTATION_180 -> {
+                            // if sensorOrientationMbr = 90 -> 90
+                            180 - cameraObjMbr.sensorOrientationMbr
+                        }
+                        Surface.ROTATION_270 -> {
+                            // if sensorOrientationMbr = 90 -> 180
+                            270 - cameraObjMbr.sensorOrientationMbr
+                        }
+                        else -> {
+                            0
+                        }
+                    }
+
+                val rotatedCameraImageFrameBitmap =
+                    RenderScriptUtil.rotateBitmapCounterClock(
+                        renderScriptMbr,
+                        scriptCRotatorMbr,
+                        cameraImageFrameBitmap,
+                        rotateCounterClockAngle
+                    )
+
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(rotatedCameraImageFrameBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.debugRotateImg)
+                    }
+                }
+
+                // (6. 리사이징 테스트)
+                // 리사이징 사이즈
+                val dstSize = Size(
+                    rotatedCameraImageFrameBitmap.width / 2,
+                    rotatedCameraImageFrameBitmap.height / 2
+                )
+
+                val resizedBitmap = RenderScriptUtil.resizeBitmapIntrinsic(
                     renderScriptMbr,
-                    scriptCRotatorMbr,
-                    cameraImageFrameBitmap,
-                    rotateCounterClockAngle
+                    scriptIntrinsicResizeMbr,
+                    rotatedCameraImageFrameBitmap,
+                    dstSize.width,
+                    dstSize.height
                 )
 
-            // 디버그를 위한 표시
-            runOnUiThread {
-                if (!isDestroyed) {
-                    Glide.with(this)
-                        .load(rotatedCameraImageFrameBitmap)
-                        .transform(FitCenter())
-                        .into(bindingMbr.debugRotateImg)
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(resizedBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.debugResizeImg)
+                    }
                 }
-            }
 
-            // (5. 리사이징 테스트)
-            val dstSize = Size(
-                rotatedCameraImageFrameBitmap.width / 2,
-                rotatedCameraImageFrameBitmap.height / 2
-            )
-            val resizedBitmap = RenderScriptUtil.resizeBitmapIntrinsic(
-                renderScriptMbr,
-                scriptIntrinsicResizeMbr,
-                rotatedCameraImageFrameBitmap,
-                dstSize.width,
-                dstSize.height
-            )
-
-            // 디버그를 위한 표시
-            runOnUiThread {
-                if (!isDestroyed) {
-                    Glide.with(this)
-                        .load(resizedBitmap)
-                        .transform(FitCenter())
-                        .into(bindingMbr.debugResizeImg)
-                }
-            }
-
-            // 프로세스 한 사이클이 끝나면 반드시 count 를 내릴 것!
-            currentImageProcessCountSemaphoreMbr.acquire()
-            currentImageProcessCountMbr--
-            currentImageProcessCountSemaphoreMbr.release()
-
-            // (5. Crop 테스트)
-            // 좌표 width, height 을 1로 두었을 때, 어느 영역을 자를건지에 대한 비율
-            val cropAreaRatioRectF = RectF(
-                0.3f,
-                0.3f,
-                0.7f,
-                0.7f
-            )
-
-            val croppedBitmap = RenderScriptUtil.cropBitmap(
-                renderScriptMbr,
-                scriptCCropMbr,
-                rotatedCameraImageFrameBitmap,
-                Rect(
-                    (cropAreaRatioRectF.left * rotatedCameraImageFrameBitmap.width).toInt(),
-                    (cropAreaRatioRectF.top * rotatedCameraImageFrameBitmap.height).toInt(),
-                    (cropAreaRatioRectF.right * rotatedCameraImageFrameBitmap.width).toInt(),
-                    (cropAreaRatioRectF.bottom * rotatedCameraImageFrameBitmap.height).toInt()
+                // (7. Crop 테스트)
+                // 좌표 width, height 을 1로 두었을 때, 어느 영역을 자를건지에 대한 비율
+                val cropAreaRatioRectF = RectF(
+                    0.3f,
+                    0.3f,
+                    0.7f,
+                    0.7f
                 )
-            )
 
-            // 디버그를 위한 표시
-            runOnUiThread {
-                if (!isDestroyed) {
-                    Glide.with(this)
-                        .load(croppedBitmap)
-                        .transform(FitCenter())
-                        .into(bindingMbr.debugCropImg)
+                val croppedBitmap = RenderScriptUtil.cropBitmap(
+                    renderScriptMbr,
+                    scriptCCropMbr,
+                    rotatedCameraImageFrameBitmap,
+                    Rect(
+                        (cropAreaRatioRectF.left * rotatedCameraImageFrameBitmap.width).toInt(),
+                        (cropAreaRatioRectF.top * rotatedCameraImageFrameBitmap.height).toInt(),
+                        (cropAreaRatioRectF.right * rotatedCameraImageFrameBitmap.width).toInt(),
+                        (cropAreaRatioRectF.bottom * rotatedCameraImageFrameBitmap.height).toInt()
+                    )
+                )
+
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(croppedBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.debugCropImg)
+                    }
                 }
+
+                // 프로세스 한 사이클이 끝나면 반드시 count 를 내릴 것!
+                currentImageProcessCountSemaphoreMbr.acquire()
+                currentImageProcessCountMbr--
+                currentImageProcessCountSemaphoreMbr.release()
             }
+        } catch (e: Exception) {
+
         }
     }
 
