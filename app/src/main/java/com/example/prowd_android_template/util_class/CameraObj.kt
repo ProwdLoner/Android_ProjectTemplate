@@ -13,7 +13,6 @@ import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Build
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -44,7 +43,6 @@ import kotlin.math.sqrt
 // todo : exposure, whitebalance, iso 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
 // todo : 디바이스 방향 관련 부분 다시 살피기
-// todo : s22u 녹화시 음성 녹음 설정을 하면 멈춤 현상
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -744,8 +742,7 @@ class CameraObj private constructor(
                     MediaRecorder::class.java,
                     mediaRecorderConfigVo.cameraOrientSurfaceSize
                 ) / 1_000_000_000.0)
-                val mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
-                Log.e("fps", mediaRecorderFps.toString())
+                var mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
                 if (mediaRecorderConfigVo.recordingFpsQualityRate == null) { // 커스텀 설정 값이 없을 때
                     // 최대 설정
                     mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
@@ -754,32 +751,64 @@ class CameraObj private constructor(
                         // 최고값을 설정
                         mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
                     } else {
-                        var newFps =
+                        mediaRecorderFps =
                             (mediaRecorderFps * mediaRecorderConfigVo.recordingFpsQualityRate).toInt()
-                        if (newFps == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
-                            newFps = 1
+                        if (mediaRecorderFps == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
+                            mediaRecorderFps = 1
                         }
-                        mediaRecorderMbr!!.setVideoFrameRate(newFps)
+                        mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
                     }
                 }
 
-                // todo : max 값 에러 검증
                 // 영상 데이터 저장 퀄리티 설정
-                val maxVideoBitrate = 10000000
+                // 계산법을 여럿 검색 가능. 그 중 가장 높은 것에서 시작해서 오버플로우 시 낮은 설정으로 줄이기
+                var videoBitrate =
+                    mediaRecorderConfigVo.cameraOrientSurfaceSize.width *
+                            mediaRecorderConfigVo.cameraOrientSurfaceSize.height *
+                            mediaRecorderFps
+
+                if (videoBitrate <= 0) {
+                    // 오버플로우 발생시
+                    // 해상도 * fps / 8 로 계산.
+                    videoBitrate =
+                        (mediaRecorderConfigVo.cameraOrientSurfaceSize.width.toDouble() /
+                                8.0 *
+                                mediaRecorderConfigVo.cameraOrientSurfaceSize.height.toDouble() *
+                                mediaRecorderFps.toDouble()).toInt()
+
+                    if (videoBitrate <= 0) {
+                        // 오버플로우 발생시
+                        // 해상도 * fps * 코덱값 / 1024 로 계산.
+                        videoBitrate =
+                            (mediaRecorderConfigVo.cameraOrientSurfaceSize.width.toDouble() *
+                                    0.17 *
+                                    mediaRecorderConfigVo.cameraOrientSurfaceSize.height.toDouble() /
+                                    1024.0 *
+                                    mediaRecorderFps.toDouble()).toInt()
+
+                        if (videoBitrate <= 0) {
+                            // 오버플로우 발생시
+                            // 최종적으로 오버플로우 발생 직전 값으로 설정.
+                            // 다만 이 설정은 에러가 생길 여지가 존재
+                            videoBitrate = Int.MAX_VALUE
+                        }
+                    }
+                }
+
                 if (mediaRecorderConfigVo.videoEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
                     // 최대 설정
-                    mediaRecorderMbr!!.setVideoEncodingBitRate(maxVideoBitrate)
+                    mediaRecorderMbr!!.setVideoEncodingBitRate(videoBitrate)
                 } else { // 커스텀 설정 값이 있을 때
                     if (mediaRecorderConfigVo.videoEncodingBitrateQualityRate >= 1.0) {
                         // 최대 설정
-                        mediaRecorderMbr!!.setVideoEncodingBitRate(maxVideoBitrate)
+                        mediaRecorderMbr!!.setVideoEncodingBitRate(videoBitrate)
                     } else {
-                        var newBitrate =
-                            (maxVideoBitrate * mediaRecorderConfigVo.videoEncodingBitrateQualityRate).toInt()
-                        if (newBitrate == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
-                            newBitrate = 1
+                        videoBitrate =
+                            (videoBitrate * mediaRecorderConfigVo.videoEncodingBitrateQualityRate).toInt()
+                        if (videoBitrate == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
+                            videoBitrate = 1
                         }
-                        mediaRecorderMbr!!.setVideoEncodingBitRate(newBitrate)
+                        mediaRecorderMbr!!.setVideoEncodingBitRate(videoBitrate)
                     }
                 }
 
