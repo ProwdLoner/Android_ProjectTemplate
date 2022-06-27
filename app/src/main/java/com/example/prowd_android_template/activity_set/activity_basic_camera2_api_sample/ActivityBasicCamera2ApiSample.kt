@@ -42,6 +42,7 @@ import com.example.prowd_android_template.ScriptC_rotator
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
+import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.util_class.CameraObj
 import com.example.prowd_android_template.util_object.CustomUtil
@@ -71,6 +72,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
+
+    // 라디오 버튼 다이얼로그
+    var radioBtnDialogMbr: DialogRadioButtonChoose? = null
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
@@ -272,6 +276,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+        radioBtnDialogMbr?.dismiss()
 
         // 카메라 해소
         cameraObjMbr.destroyCameraObject(executorOnCameraClear = {})
@@ -698,8 +703,39 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         bindingMbr.cameraChangeBtn.setOnClickListener {
+            // todo : 카메라 아이디 리스트 선택
             Log.e("ff", CameraObj.getCameraIdList(this).toString())
             Log.e("ci", CameraObj.getCameraInfo(this, "0").toString())
+
+            val cameraItemList = ArrayList<String>()
+
+            for (id in CameraObj.getCameraIdList(this)) {
+                cameraItemList.add("Camera $id")
+            }
+
+            viewModelMbr.imageProcessingPauseMbr = true
+            viewModelMbr.radioButtonDialogInfoLiveDataMbr.value =
+                DialogRadioButtonChoose.DialogInfoVO(
+                    true,
+                    "카메라 선택",
+                    "ㅁ",
+                    cameraItemList,
+                    0,
+                    null,
+                    null,
+                    onChooseBtnClicked = {
+                        viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
+                        viewModelMbr.imageProcessingPauseMbr = false
+                    },
+                    onCancelBtnClicked = {
+                        viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
+                        viewModelMbr.imageProcessingPauseMbr = false
+                    },
+                    onCanceled = {
+                        viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
+                        viewModelMbr.imageProcessingPauseMbr = false
+                    }
+                )
         }
 
         // todo 녹화중 화면 효과
@@ -1010,6 +1046,22 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             } else {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
+            }
+        }
+
+        // 라디오 버튼 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonDialogInfoLiveDataMbr.observe(this) {
+            if (it != null) {
+                radioBtnDialogMbr?.dismiss()
+
+                radioBtnDialogMbr = DialogRadioButtonChoose(
+                    this,
+                    it
+                )
+                radioBtnDialogMbr?.show()
+            } else {
+                radioBtnDialogMbr?.dismiss()
+                radioBtnDialogMbr = null
             }
         }
     }
