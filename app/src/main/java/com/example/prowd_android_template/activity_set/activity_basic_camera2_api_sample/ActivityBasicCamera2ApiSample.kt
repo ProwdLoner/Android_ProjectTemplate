@@ -951,6 +951,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
 
             // (카메라 변수 설정)
+            // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
             // 떨림 보정
             cameraObjMbr.setCameraStabilization(
                 true,
