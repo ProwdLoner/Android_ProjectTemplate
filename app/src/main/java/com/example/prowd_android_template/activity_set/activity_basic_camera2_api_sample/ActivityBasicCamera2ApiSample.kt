@@ -1006,7 +1006,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // Image 객체에서 바로 복사해낸 이미지 필요 데이터를 저장한 리스트 (비가공 프레임 이미지 데이터 히스토리)
     // 이미지 프로세싱 비동기 처리시 특정 시점에서 전후 프레임과의 비교가 필요할 경우 사용
     private val imageDataVoListMbr: ArrayList<ImageDataVo> = ArrayList()
-    private val imageDataVoListSemaphoreMbr = Semaphore(1)
     private val imageDataVoListSizeMbr: Int = 10 // 이미지 프레임 큐의 최대 길이
 
     // todo : 처리 속도에 따라 스킵 개수를 구해서 이미지 처리 균등 배분
@@ -1021,75 +1020,60 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (카메라 이미지 실시간 처리 콜백)
     // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
     private fun processImage(reader: ImageReader) {
-        viewModelMbr.executorServiceMbr?.execute {
-            // (1. Image 객체 정보 추출)
-            // reader 객체로 받은 image 객체의 이미지 정보가 처리되어 close 될 때까지는 동기적으로 처리
-            // 프레임 이미지 객체
-            val imageObj: Image = reader.acquireLatestImage() ?: return@execute
+        // (1. Image 객체 정보 추출)
+        // reader 객체로 받은 image 객체의 이미지 정보가 처리되어 close 될 때까지는 동기적으로 처리
+        // image 객체가 빨리 close 되고 나머지는 비동기 처리를 하는게 좋음
 
-            // 조기 종료 플래그
-            if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
-                viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
-                isDestroyed // 액티비티 자체가 종료
-            ) {
-                imageObj.close()
-                return@execute
-            }
+        // 프레임 이미지 객체
+        val imageObj: Image = reader.acquireNextImage() ?: return
 
-            // 안정화를 위하여 Image 객체의 필요 데이터를 clone
-            // 이번 프레임 수집 시간 (time stamp nano sec -> milli sec)
-            val imageGainTimeMs: Long = imageObj.timestamp / 1000 / 1000
-
-            val imageWidth = imageObj.width
-            val imageHeight = imageObj.height
-            val pixelCount = imageWidth * imageHeight
-
-            // image planes 를 순회하면 yuvByteArray 채우기
-            val plane0: Image.Plane = imageObj.planes[0]
-            val plane1: Image.Plane = imageObj.planes[1]
-            val plane2: Image.Plane = imageObj.planes[2]
-
-            val rowStride0: Int = plane0.rowStride
-            val pixelStride0: Int = plane0.pixelStride
-
-            val rowStride1: Int = plane1.rowStride
-            val pixelStride1: Int = plane1.pixelStride
-
-            val rowStride2: Int = plane2.rowStride
-            val pixelStride2: Int = plane2.pixelStride
-
-            val planeBuffer0: ByteBuffer = CustomUtil.cloneByteBuffer(plane0.buffer)
-            val planeBuffer1: ByteBuffer = CustomUtil.cloneByteBuffer(plane1.buffer)
-            val planeBuffer2: ByteBuffer = CustomUtil.cloneByteBuffer(plane2.buffer)
-
+        // 조기 종료 플래그
+        if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+            viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+            isDestroyed // 액티비티 자체가 종료
+        ) {
             imageObj.close()
+            return
+        }
 
-            // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
+        // 안정화를 위하여 Image 객체의 필요 데이터를 clone
+        // 이번 프레임 수집 시간 (time stamp nano sec -> milli sec)
+        val imageGainTimeMs: Long = imageObj.timestamp / 1000 / 1000
 
-            // 복제된 이미지 객체 데이터를 큐에 저장
-            imageDataVoListSemaphoreMbr.acquire()
+        val imageWidth = imageObj.width
+        val imageHeight = imageObj.height
+        val pixelCount = imageWidth * imageHeight
+
+        // image planes 를 순회하면 yuvByteArray 채우기
+        val plane0: Image.Plane = imageObj.planes[0]
+        val plane1: Image.Plane = imageObj.planes[1]
+        val plane2: Image.Plane = imageObj.planes[2]
+
+        val rowStride0: Int = plane0.rowStride
+        val pixelStride0: Int = plane0.pixelStride
+
+        val rowStride1: Int = plane1.rowStride
+        val pixelStride1: Int = plane1.pixelStride
+
+        val rowStride2: Int = plane2.rowStride
+        val pixelStride2: Int = plane2.pixelStride
+
+        val planeBuffer0: ByteBuffer = CustomUtil.cloneByteBuffer(plane0.buffer)
+        val planeBuffer1: ByteBuffer = CustomUtil.cloneByteBuffer(plane1.buffer)
+        val planeBuffer2: ByteBuffer = CustomUtil.cloneByteBuffer(plane2.buffer)
+
+        imageObj.close()
+
+        // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
+
+        viewModelMbr.executorServiceMbr?.execute {
+            // (1.5 복제된 이미지 데이터를 큐에 저장)
             if (imageDataVoListMbr.size >= imageDataVoListSizeMbr) {
                 // 큐 개수를 유지하기 위해 허용 사이즈를 넘어가면 먼저 선입 선출
                 imageDataVoListMbr.removeFirst()
             }
 
-            // 여기까지도 비동기 처리로 인한 시간 순서가 다를수 있으므로
-            // 현 시간보다 작은 아이템들 중 가장 최근 아이템 뒤에 추가
-            var addIdx = 0
-
-            if (imageDataVoListMbr.size != 0) {
-                for (idx in imageDataVoListMbr.indices.reversed()) {
-                    // 뒤에서부터 검색하여 현재 시간보다 작은 시간의 아이템 위치까지 검색
-                    val imageDataVoTime = imageDataVoListMbr[idx].imageTimeMs
-                    if (imageDataVoTime <= imageGainTimeMs) {
-                        addIdx = idx + 1
-                        break
-                    }
-                }
-            }
-
             imageDataVoListMbr.add(
-                addIdx,
                 ImageDataVo(
                     imageGainTimeMs,
                     imageWidth,
@@ -1106,7 +1090,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     planeBuffer2
                 )
             )
-            imageDataVoListSemaphoreMbr.release()
 
             // (2. 이미지 프로세싱 스킵 검증)
             // 이미지 프로세싱 스킵 최소 횟수 검증
