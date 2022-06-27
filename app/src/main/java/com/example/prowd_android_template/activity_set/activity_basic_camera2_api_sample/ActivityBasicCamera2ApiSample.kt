@@ -580,25 +580,21 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         if (deviceOrientation == Surface.ROTATION_0) {
-            bindingMbr.recordBtn.y =
-                bindingMbr.recordBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
-        } else if (deviceOrientation == Surface.ROTATION_90) {
-            bindingMbr.recordBtn.x =
-                bindingMbr.recordBtn.x - CustomUtil.getSoftNavigationBarHeightPixel(this)
-        }
+            bindingMbr.btn1.y =
+                bindingMbr.btn1.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
 
-        // 지원하는 미디어 레코더 사이즈가 없다면 녹화 버튼을 없애기
-        if (null == cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
-            bindingMbr.recordBtn.visibility = View.GONE
-        } else {
-            bindingMbr.recordBtn.visibility = View.VISIBLE
+            bindingMbr.btn2.y =
+                bindingMbr.btn2.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+
+            bindingMbr.btn3.y =
+                bindingMbr.btn3.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
         }
 
         // todo 녹화중 화면 효과
         // todo 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
-        bindingMbr.recordBtn.setOnClickListener {
+        bindingMbr.btn1.setOnClickListener {
             // 처리 완료까지 중복 클릭 방지
-            bindingMbr.recordBtn.isEnabled = false
+            bindingMbr.btn1.isEnabled = false
 
             if (!(cameraObjMbr.isRecordingMbr)) { // 현재 레코딩 중이 아닐 때
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
@@ -706,26 +702,26 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             // (미디어 레코딩 녹화 실행)
                                             cameraObjMbr.startMediaRecording(onComplete = {
                                                 runOnUiThread {
-                                                    bindingMbr.recordBtn.isEnabled = true
+                                                    bindingMbr.btn1.isEnabled = true
                                                 }
                                             })
                                         },
                                         executorOnError = {
                                             runOnUiThread {
-                                                bindingMbr.recordBtn.isEnabled = true
+                                                bindingMbr.btn1.isEnabled = true
                                             }
                                         })
                                 },
                                 executorOnError = {
                                     runOnUiThread {
-                                        bindingMbr.recordBtn.isEnabled = true
+                                        bindingMbr.btn1.isEnabled = true
                                     }
                                 }
                             )
                         },
                         executorOnError = {
                             runOnUiThread {
-                                bindingMbr.recordBtn.isEnabled = true
+                                bindingMbr.btn1.isEnabled = true
                             }
                         }
                     )
@@ -813,7 +809,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     },
                                     executorOnCameraRequestBuilderSet = {
                                         runOnUiThread {
-                                            bindingMbr.recordBtn.isEnabled = true
+                                            bindingMbr.btn1.isEnabled = true
 
                                             // (결과물 감상)
                                             val mediaPlayerIntent = Intent()
@@ -838,14 +834,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     },
                                     executorOnError = {
                                         runOnUiThread {
-                                            bindingMbr.recordBtn.isEnabled = true
+                                            bindingMbr.btn1.isEnabled = true
                                         }
                                     }
                                 )
                             },
                             executorOnError = {
                                 runOnUiThread {
-                                    bindingMbr.recordBtn.isEnabled = true
+                                    bindingMbr.btn1.isEnabled = true
                                 }
                             }
                         )

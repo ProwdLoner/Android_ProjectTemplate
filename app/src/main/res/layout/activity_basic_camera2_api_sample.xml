@@ -60,13 +60,33 @@
         app:layout_constraintTop_toBottomOf="@id/debug_image_container" />
 
     <com.example.prowd_android_template.custom_view.CircleImageView
-        android:id="@+id/record_btn"
+        android:id="@+id/btn1"
         android:layout_width="70dp"
         android:layout_height="70dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginEnd="40dp"
+        android:layout_marginBottom="20dp"
+        android:src="@drawable/img_activity_basic_camera2_api_sample_record"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btn2" />
+
+    <com.example.prowd_android_template.custom_view.CircleImageView
+        android:id="@+id/btn2"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginBottom="20dp"
+        android:src="@drawable/img_activity_basic_camera2_api_sample_capture"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.example.prowd_android_template.custom_view.CircleImageView
+        android:id="@+id/btn3"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginStart="40dp"
         android:layout_marginBottom="20dp"
         android:src="#FFFFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toEndOf="@id/btn2" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
