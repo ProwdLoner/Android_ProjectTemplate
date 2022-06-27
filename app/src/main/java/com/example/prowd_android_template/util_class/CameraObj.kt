@@ -11,7 +11,6 @@ import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
-import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
@@ -157,7 +156,6 @@ class CameraObj private constructor(
     // 미디어 리코더 세팅 부산물
     var mediaRecorderConfigVoMbr: MediaRecorderConfigVo? = null
     private var mediaRecorderMbr: MediaRecorder? = null
-    private var mediaCodecSurfaceMbr: Surface? = null
 
     // 프리뷰 세팅 부산물
     val previewConfigVoListMbr: ArrayList<PreviewConfigVo> = ArrayList()
@@ -653,13 +651,11 @@ class CameraObj private constructor(
 
             // (자원 해소)
             mediaRecorderMbr?.release()
-            mediaCodecSurfaceMbr?.release()
             imageReaderMbr?.close()
             cameraCaptureSessionMbr?.close()
 
             // (멤버 변수 비우기)
             mediaRecorderMbr = null
-            mediaCodecSurfaceMbr = null
             mediaRecorderConfigVoMbr = null
             imageReaderMbr = null
             imageReaderConfigVoMbr = null
@@ -715,9 +711,6 @@ class CameraObj private constructor(
                 }
 
                 mediaRecorderConfigVoMbr = mediaRecorderConfigVo
-
-                // 미디어 코덱 서페이스 생성
-                mediaCodecSurfaceMbr = MediaCodec.createPersistentInputSurface()
 
                 // 미디어 레코더 생성
                 mediaRecorderMbr =
@@ -790,29 +783,28 @@ class CameraObj private constructor(
                     }
                 }
 
-                // todo
                 // 음성 데이터 저장 퀄리티 설정
-//                if (mediaRecorderConfigVo.isAudioRecording) {
-//
-//                    val maxAudioBitrate = 100
-//                    if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
-//                        // 최대 설정
-//                        mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
-//                    } else { // 커스텀 설정 값이 있을 때
-//                        if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate >= 1.0) {
-//                            // 최대 설정
-//                            mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
-//                        } else {
-//                            var newBitrate =
-//                                (maxAudioBitrate * mediaRecorderConfigVo.audioEncodingBitrateQualityRate).toInt()
-//                            if (newBitrate == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
-//                                newBitrate = 1
-//                            }
-//                            mediaRecorderMbr!!.setAudioEncodingBitRate(newBitrate)
-//                        }
-//                    }
-//
-//                }
+                if (mediaRecorderConfigVo.isAudioRecording) {
+
+                    val maxAudioBitrate = Int.MAX_VALUE
+                    if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
+                        // 최대 설정
+                        mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
+                    } else { // 커스텀 설정 값이 있을 때
+                        if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate >= 1.0) {
+                            // 최대 설정
+                            mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
+                        } else {
+                            var newBitrate =
+                                (maxAudioBitrate * mediaRecorderConfigVo.audioEncodingBitrateQualityRate).toInt()
+                            if (newBitrate == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
+                                newBitrate = 1
+                            }
+                            mediaRecorderMbr!!.setAudioEncodingBitRate(newBitrate)
+                        }
+                    }
+
+                }
 
                 // 서페이스 사이즈 설정
                 mediaRecorderMbr!!.setVideoSize(
@@ -855,8 +847,6 @@ class CameraObj private constructor(
                             inverseOrientation.get(deviceOrientation)
                         )
                 }
-
-                mediaRecorderMbr!!.setInputSurface(mediaCodecSurfaceMbr!!)
 
                 mediaRecorderMbr!!.prepare()
             }
@@ -1055,7 +1045,7 @@ class CameraObj private constructor(
 
             if (previewConfigVoListMbr.isEmpty() &&
                 imageReaderMbr == null &&
-                mediaCodecSurfaceMbr == null
+                mediaRecorderMbr == null
             ) { // 생성 서페이스가 하나도 존재하지 않으면,
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnError(2)
@@ -1096,14 +1086,14 @@ class CameraObj private constructor(
             }
 
             if (onMediaRecorder) { // 미디어 레코더 사용 설정
-                if (mediaCodecSurfaceMbr == null) { // 미디어 레코더 사용 설정인데 미디어 레코더 서페이스가 없을 때
+                if (mediaRecorderMbr == null) { // 미디어 레코더 사용 설정인데 미디어 레코더 서페이스가 없을 때
                     captureRequestBuilderMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnError(5)
                     return@run
                 } else {
                     // 미디어 레코더 서페이스 타겟 추가
-                    captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
+                    captureRequestBuilderMbr!!.addTarget(mediaRecorderMbr!!.surface)
                 }
             }
 
@@ -1327,13 +1317,11 @@ class CameraObj private constructor(
 
             // (자원 해소)
             mediaRecorderMbr?.release()
-            mediaCodecSurfaceMbr?.release()
             imageReaderMbr?.close()
             cameraCaptureSessionMbr?.close()
 
             // (멤버 변수 비우기)
             mediaRecorderMbr = null
-            mediaCodecSurfaceMbr = null
             mediaRecorderConfigVoMbr = null
             imageReaderMbr = null
             imageReaderConfigVoMbr = null
@@ -1400,14 +1388,12 @@ class CameraObj private constructor(
 
             // (자원 해소)
             mediaRecorderMbr?.release()
-            mediaCodecSurfaceMbr?.release()
             imageReaderMbr?.close()
             cameraCaptureSessionMbr?.close()
             cameraDeviceMbr?.close()
 
             // (멤버 변수 비우기)
             mediaRecorderMbr = null
-            mediaCodecSurfaceMbr = null
             mediaRecorderConfigVoMbr = null
             imageReaderMbr = null
             imageReaderConfigVoMbr = null
@@ -1506,7 +1492,7 @@ class CameraObj private constructor(
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            if (null == mediaCodecSurfaceMbr) { // 미디어 레코딩 서페이스 설정을 하지 않았을 때
+            if (null == mediaRecorderMbr) { // 미디어 레코딩 서페이스 설정을 하지 않았을 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(1)
                 return@run
@@ -1544,7 +1530,7 @@ class CameraObj private constructor(
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            if (null == mediaCodecSurfaceMbr) {
+            if (null == mediaRecorderMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(1)
                 return@run
@@ -1773,7 +1759,7 @@ class CameraObj private constructor(
     ) {
         if (previewConfigVoListMbr.isEmpty() &&
             imageReaderMbr == null &&
-            mediaCodecSurfaceMbr == null
+            mediaRecorderMbr == null
         ) { // 생성 서페이스가 하나도 존재하지 않으면,
             cameraThreadVoMbr.cameraSemaphore.release()
             onError(6)
@@ -1817,12 +1803,10 @@ class CameraObj private constructor(
 
                                 // (자원 해소)
                                 mediaRecorderMbr?.release()
-                                mediaCodecSurfaceMbr?.release()
                                 imageReaderMbr?.close()
 
                                 // (멤버 변수 비우기)
                                 mediaRecorderMbr = null
-                                mediaCodecSurfaceMbr = null
                                 mediaRecorderConfigVoMbr = null
                                 imageReaderMbr = null
                                 imageReaderConfigVoMbr = null
@@ -1912,12 +1896,10 @@ class CameraObj private constructor(
 
             // (자원 해소)
             mediaRecorderMbr?.release()
-            mediaCodecSurfaceMbr?.release()
             imageReaderMbr?.close()
 
             // (멤버 변수 비우기)
             mediaRecorderMbr = null
-            mediaCodecSurfaceMbr = null
             mediaRecorderConfigVoMbr = null
             imageReaderMbr = null
             imageReaderConfigVoMbr = null
@@ -1987,14 +1969,12 @@ class CameraObj private constructor(
 
                     // (자원 해소)
                     mediaRecorderMbr?.release()
-                    mediaCodecSurfaceMbr?.release()
                     imageReaderMbr?.close()
                     cameraCaptureSessionMbr?.close()
                     camera.close()
 
                     // (멤버 변수 비우기)
                     mediaRecorderMbr = null
-                    mediaCodecSurfaceMbr = null
                     mediaRecorderConfigVoMbr = null
                     imageReaderMbr = null
                     imageReaderConfigVoMbr = null
@@ -2054,14 +2034,12 @@ class CameraObj private constructor(
 
                     // (자원 해소)
                     mediaRecorderMbr?.release()
-                    mediaCodecSurfaceMbr?.release()
                     imageReaderMbr?.close()
                     cameraCaptureSessionMbr?.close()
                     camera.close()
 
                     // (멤버 변수 비우기)
                     mediaRecorderMbr = null
-                    mediaCodecSurfaceMbr = null
                     mediaRecorderConfigVoMbr = null
                     imageReaderMbr = null
                     imageReaderConfigVoMbr = null
@@ -2153,10 +2131,10 @@ class CameraObj private constructor(
             }
 
             // 미디어 리코더 서페이스 주입
-            if (null != mediaCodecSurfaceMbr) {
+            if (null != mediaRecorderMbr) {
                 outputConfigurationList.add(
                     OutputConfiguration(
-                        mediaCodecSurfaceMbr!!
+                        mediaRecorderMbr!!.surface
                     )
                 )
             }
@@ -2202,13 +2180,11 @@ class CameraObj private constructor(
 
                         // (자원 해소)
                         mediaRecorderMbr?.release()
-                        mediaCodecSurfaceMbr?.release()
                         imageReaderMbr?.close()
                         session.close()
 
                         // (멤버 변수 비우기)
                         mediaRecorderMbr = null
-                        mediaCodecSurfaceMbr = null
                         mediaRecorderConfigVoMbr = null
                         imageReaderMbr = null
                         imageReaderConfigVoMbr = null
@@ -2235,8 +2211,8 @@ class CameraObj private constructor(
             }
 
             // 비디오 리코더 서페이스 주입
-            if (null != mediaCodecSurfaceMbr) {
-                val surface = mediaCodecSurfaceMbr!!
+            if (null != mediaRecorderMbr) {
+                val surface = mediaRecorderMbr!!.surface
                 surfaces.add(surface)
             }
 
@@ -2277,13 +2253,11 @@ class CameraObj private constructor(
 
                         // (자원 해소)
                         mediaRecorderMbr?.release()
-                        mediaCodecSurfaceMbr?.release()
                         imageReaderMbr?.close()
                         session.close()
 
                         // (멤버 변수 비우기)
                         mediaRecorderMbr = null
-                        mediaCodecSurfaceMbr = null
                         mediaRecorderConfigVoMbr = null
                         imageReaderMbr = null
                         imageReaderConfigVoMbr = null

@@ -665,7 +665,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 null,
                                 null,
                                 null,
-                                false
+                                true
                             )
                         } else {
                             // 지원 사이즈가 없기에 null 반환
