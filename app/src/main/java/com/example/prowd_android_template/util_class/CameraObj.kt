@@ -84,6 +84,10 @@ class CameraObj private constructor(
     var minimumFocusDistanceMbr: Float = 0f
         private set
 
+    // todo focusDistance 변수와 설정 함수 생성
+    //   -1 일 때는 af, 가장 먼 0 부터 해서 수치가 커질수록 가까운 곳의 포커스, 인자값 최대값은 minimumFocusDistanceMbr
+    //   -1 의 af 일때 region 을 설정시 해당 위치, null 이라면 전체 위치
+
     // (현 디바이스 방향과 카메라 방향에서 width, height 개념이 같은)
     // 카메라와 디바이스 방향이 90도, 270 도 차이가 난다면 둘의 Width, Height 개념은 상반됨
     var isDeviceAndCameraWhSameMbr: Boolean = false
