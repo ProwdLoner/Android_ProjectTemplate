@@ -78,6 +78,12 @@ class CameraObj private constructor(
     var autoWhiteBalanceSupportedMbr: Boolean = false
         private set
 
+    // (LENS_FOCUS_DISTANCE 최소 초점 거리)
+    // 0f 는 가장 먼 초점 거리, 가장 가깝게 초점을 맞출 수 있는 nf 값
+    // 이것이 0f 라는 것은 초점이 고정되어 있다는 뜻
+    var minimumFocusDistanceMbr: Float = 0f
+        private set
+
     // (현 디바이스 방향과 카메라 방향에서 width, height 개념이 같은)
     // 카메라와 디바이스 방향이 90도, 270 도 차이가 난다면 둘의 Width, Height 개념은 상반됨
     var isDeviceAndCameraWhSameMbr: Boolean = false
@@ -506,6 +512,12 @@ class CameraObj private constructor(
             resultCameraObject.autoWhiteBalanceSupportedMbr =
                 !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
                         && awbAvailableModes[0] == CameraMetadata.CONTROL_AWB_MODE_OFF))
+
+            // (가장 가까운 초점 거리)
+            resultCameraObject.minimumFocusDistanceMbr =
+                cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
+                    ?: 0f
+
 
             // (max zoom 정보)
             resultCameraObject.maxZoomMbr = if (resultCameraObject.sensorSizeMbr == null) {

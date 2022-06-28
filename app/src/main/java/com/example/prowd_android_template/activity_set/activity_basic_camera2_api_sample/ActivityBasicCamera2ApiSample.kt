@@ -22,6 +22,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
