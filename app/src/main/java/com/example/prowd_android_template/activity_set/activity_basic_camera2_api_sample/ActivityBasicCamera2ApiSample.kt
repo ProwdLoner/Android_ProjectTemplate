@@ -22,7 +22,6 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -933,10 +932,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             CameraObj.MediaRecorderConfigVo(
                                 chosenSurfaceSize,
                                 File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.mp4"),
-                                null,
-                                null,
-                                null,
-                                true
+                                true,
+                                Int.MAX_VALUE,
+                                Int.MAX_VALUE,
+                                Int.MAX_VALUE
                             )
                         } else {
                             // 지원 사이즈가 없기에 null 반환

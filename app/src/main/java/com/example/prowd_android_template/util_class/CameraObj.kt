@@ -730,7 +730,7 @@ class CameraObj private constructor(
             if (mediaRecorderConfigVo != null) {
                 // 오디오 권한 검증
                 // 녹음 설정을 했는데 권한이 없을 때, 에러
-                if (mediaRecorderConfigVo.isAudioRecording &&
+                if (mediaRecorderConfigVo.audioRecordingBitrate != null &&
                     ActivityCompat.checkSelfPermission(
                         parentActivityMbr,
                         Manifest.permission.RECORD_AUDIO
@@ -767,7 +767,7 @@ class CameraObj private constructor(
 
                 // (미디어 레코더 설정)
                 // 서페이스 소스 설정
-                if (mediaRecorderConfigVo.isAudioRecording) {
+                if (mediaRecorderConfigVo.audioRecordingBitrate != null) {
                     mediaRecorderMbr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
                 }
                 mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
@@ -789,66 +789,36 @@ class CameraObj private constructor(
                     MediaRecorder::class.java,
                     mediaRecorderConfigVo.cameraOrientSurfaceSize
                 ) / 1_000_000_000.0)
-                var mediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
-                if (mediaRecorderConfigVo.recordingFpsQualityRate == null) { // 커스텀 설정 값이 없을 때
-                    // 최대 설정
-                    mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
-                } else { // 커스텀 설정 값이 있을 때
-                    if (mediaRecorderConfigVo.recordingFpsQualityRate >= 1.0f) { // 축소율 1.0 이상
-                        // 최고값을 설정
-                        mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
-                    } else {
-                        mediaRecorderFps =
-                            (mediaRecorderFps * mediaRecorderConfigVo.recordingFpsQualityRate).toInt()
-                        if (mediaRecorderFps == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
-                            mediaRecorderFps = 1
-                        }
-                        mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderFps)
-                    }
+                val maxMediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
+
+                if (mediaRecorderConfigVo.videoRecordingFps > maxMediaRecorderFps) {
+                    mediaRecorderConfigVo.videoRecordingFps = maxMediaRecorderFps
                 }
+
+                mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderConfigVo.videoRecordingFps)
 
                 // 영상 데이터 저장 퀄리티 설정
                 // todo
-                var videoBitrate = Int.MAX_VALUE
+                val maxVideoBitrate = Int.MAX_VALUE
 
-                if (mediaRecorderConfigVo.videoEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
-                    // 최대 설정
-                    mediaRecorderMbr!!.setVideoEncodingBitRate(videoBitrate)
-                } else { // 커스텀 설정 값이 있을 때
-                    if (mediaRecorderConfigVo.videoEncodingBitrateQualityRate >= 1.0) {
-                        // 최대 설정
-                        mediaRecorderMbr!!.setVideoEncodingBitRate(videoBitrate)
-                    } else {
-                        videoBitrate =
-                            (videoBitrate * mediaRecorderConfigVo.videoEncodingBitrateQualityRate).toInt()
-                        if (videoBitrate == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
-                            videoBitrate = 1
-                        }
-                        mediaRecorderMbr!!.setVideoEncodingBitRate(videoBitrate)
-                    }
+                // 커스텀 설정 값이 있을 때
+                if (mediaRecorderConfigVo.videoRecordingBitrate > maxVideoBitrate) {
+                    mediaRecorderConfigVo.videoRecordingBitrate = maxVideoBitrate
                 }
 
+                mediaRecorderMbr!!.setVideoEncodingBitRate(mediaRecorderConfigVo.videoRecordingBitrate)
+
                 // 음성 데이터 저장 퀄리티 설정
-                if (mediaRecorderConfigVo.isAudioRecording) {
+                if (mediaRecorderConfigVo.audioRecordingBitrate != null) {
 
                     val maxAudioBitrate = 2048000 // 256 kb
-                    if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
-                        // 최대 설정
-                        mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
-                    } else { // 커스텀 설정 값이 있을 때
-                        if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate >= 1.0) {
-                            // 최대 설정
-                            mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
-                        } else {
-                            var newBitrate =
-                                (maxAudioBitrate * mediaRecorderConfigVo.audioEncodingBitrateQualityRate).toInt()
-                            if (newBitrate == 0) { // 축소 결과가 0 이라면 최소 단위로 변경
-                                newBitrate = 1
-                            }
-                            mediaRecorderMbr!!.setAudioEncodingBitRate(newBitrate)
-                        }
+
+                    // 커스텀 설정 값이 있을 때
+                    if (mediaRecorderConfigVo.audioRecordingBitrate!! > maxAudioBitrate) {
+                        mediaRecorderConfigVo.audioRecordingBitrate = maxAudioBitrate
                     }
 
+                    mediaRecorderMbr!!.setAudioEncodingBitRate(mediaRecorderConfigVo.audioRecordingBitrate!!)
                 }
 
                 // 서페이스 사이즈 설정
@@ -858,8 +828,12 @@ class CameraObj private constructor(
                 )
 
                 // 인코딩 타입 설정
-                mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                if (mediaRecorderConfigVo.isAudioRecording) {
+                if (mediaRecorderConfigVo.useH265Codec) {
+                    mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.HEVC)
+                } else {
+                    mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                }
+                if (mediaRecorderConfigVo.audioRecordingBitrate != null) {
                     mediaRecorderMbr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                 }
 
@@ -2339,14 +2313,14 @@ class CameraObj private constructor(
         val imageReaderCallback: ImageReader.OnImageAvailableListener
     )
 
-    // CompressRat : 0에서 1로 하여 최대 지원값에서 얼마만큼 축소할지(0 은 최소 퀄리티 1 이 최대 퀄리티)
+    // mp4, H264, AAC 고정
     data class MediaRecorderConfigVo(
         val cameraOrientSurfaceSize: Size,
-        var mediaRecordingMp4File: File,
-        val recordingFpsQualityRate: Float?,
-        val videoEncodingBitrateQualityRate: Float?,
-        val audioEncodingBitrateQualityRate: Float?,
-        val isAudioRecording: Boolean
+        val mediaRecordingMp4File: File,
+        val useH265Codec: Boolean,
+        var videoRecordingFps: Int,
+        var videoRecordingBitrate: Int,
+        var audioRecordingBitrate: Int?
     )
 
     // image reader format : YUV 420 888 을 사용
