@@ -798,8 +798,8 @@ class CameraObj private constructor(
                 mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderConfigVo.videoRecordingFps)
 
                 // 영상 데이터 저장 퀄리티 설정
-                // todo
-                val maxVideoBitrate = Int.MAX_VALUE
+                // todo 최소 타겟 디바이스에서 에러 발생 안하는 최대 값
+                val maxVideoBitrate = (Int.MAX_VALUE * 0.8).toInt()
 
                 // 커스텀 설정 값이 있을 때
                 if (mediaRecorderConfigVo.videoRecordingBitrate > maxVideoBitrate) {
@@ -811,6 +811,7 @@ class CameraObj private constructor(
                 // 음성 데이터 저장 퀄리티 설정
                 if (mediaRecorderConfigVo.audioRecordingBitrate != null) {
 
+                    // todo
                     val maxAudioBitrate = 2048000 // 256 kb
 
                     // 커스텀 설정 값이 있을 때
@@ -2314,6 +2315,7 @@ class CameraObj private constructor(
     )
 
     // mp4, H264, AAC 고정
+    // fps, bitrate 수치값이 가용 최대값을 넘어가면 가용 최대값으로 변경
     data class MediaRecorderConfigVo(
         val cameraOrientSurfaceSize: Size,
         val mediaRecordingMp4File: File,
