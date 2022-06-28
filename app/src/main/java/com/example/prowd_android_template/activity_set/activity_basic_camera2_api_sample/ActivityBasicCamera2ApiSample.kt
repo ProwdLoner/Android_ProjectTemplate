@@ -1387,7 +1387,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     }
                 }
 
-                // (5. 이미지를 회전)
+                // (4. 이미지를 회전)
                 // 현 디바이스 방향으로 이미지를 맞추기 위해 역시계 방향으로 몇도를 돌려야 하는지
                 val rotateCounterClockAngle: Int =
                     when (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -1434,7 +1434,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     }
                 }
 
-                // (6. 리사이징 테스트)
+                // (5. 리사이징 테스트)
                 // 리사이징 사이즈
                 val dstSize = Size(
                     rotatedCameraImageFrameBitmap.width / 2,
@@ -1459,7 +1459,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     }
                 }
 
-                // (7. Crop 테스트)
+                // (6. Crop 테스트)
                 // 좌표 width, height 을 1로 두었을 때, 어느 영역을 자를건지에 대한 비율
                 val cropAreaRatioRectF = RectF(
                     0.3f,
