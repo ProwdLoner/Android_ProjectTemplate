@@ -10,6 +10,7 @@ import android.view.TouchDelegate
 import android.view.View
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import androidx.constraintlayout.widget.ConstraintSet
 import com.example.prowd_android_template.databinding.DialogRadioButtonChooseBinding
 
 class DialogRadioButtonChoose constructor(
@@ -66,20 +67,41 @@ class DialogRadioButtonChoose constructor(
             radioGroup.addView(btn)
         }
 
-        if (dialogInfoMbr.checkedItemIdx != null){
-            if (dialogInfoMbr.radioButtonContentList.lastIndex >= dialogInfoMbr.checkedItemIdx!!){
+        if (dialogInfoMbr.checkedItemIdx != null) {
+            if (dialogInfoMbr.radioButtonContentList.lastIndex >= dialogInfoMbr.checkedItemIdx!!) {
                 radioGroup.check(dialogInfoMbr.checkedItemIdx!!)
-            }else{
+            } else {
                 radioGroup.check(dialogInfoMbr.radioButtonContentList.lastIndex)
             }
-        }else{
+        } else {
             radioGroup.check(0)
         }
 
-        bindingMbr.contentContainerInnerScroll.addView(radioGroup)
+        radioGroup.id = View.generateViewId()
+
+        bindingMbr.contentContainerInnerScroll.addView(radioGroup, 0)
+
+        val set = ConstraintSet()
+        set.clone(bindingMbr.contentContainerInnerScroll)
+        set.connect(
+            radioGroup.id,
+            ConstraintSet.START,
+            bindingMbr.contentContainerInnerScroll.id,
+            ConstraintSet.START,
+            0
+        )
+        set.connect(
+            radioGroup.id,
+            ConstraintSet.TOP,
+            bindingMbr.contentTxt.id,
+            ConstraintSet.BOTTOM,
+            0
+        )
+        set.applyTo(bindingMbr.contentContainerInnerScroll)
 
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
             checkedItemIndexMbr = checkedId
+            dialogInfoMbr.onRadioItemClicked(checkedId)
         }
 
         // (버튼 클릭 크기 조정)
@@ -133,9 +155,10 @@ class DialogRadioButtonChoose constructor(
         var title: String,
         var contentMsg: String?,
         val radioButtonContentList: ArrayList<String>,
-        val checkedItemIdx : Int?,
+        val checkedItemIdx: Int?,
         var chooseBtnTxt: String?,
         var cancelBtnTxt: String?,
+        var onRadioItemClicked: (Int) -> Unit,
         var onChooseBtnClicked: (Int) -> Unit,
         var onCancelBtnClicked: Runnable,
         var onCanceled: Runnable

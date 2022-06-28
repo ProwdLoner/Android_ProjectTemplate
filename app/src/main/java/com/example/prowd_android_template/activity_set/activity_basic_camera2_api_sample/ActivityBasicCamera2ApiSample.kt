@@ -636,6 +636,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 핀치 줌 설정
         cameraObjMbr.setCameraPinchZoomTouchListener(bindingMbr.cameraPreviewAutoFitTexture)
+
+        viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId = cameraId
     }
 
     // viewModel 저장용 데이터 초기화
@@ -702,30 +704,162 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 bindingMbr.btn3.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
         }
 
+        // 카메라 전환
         bindingMbr.cameraChangeBtn.setOnClickListener {
-            // todo : 카메라 아이디 리스트 선택
-            Log.e("ff", CameraObj.getCameraIdList(this).toString())
-            Log.e("ci", CameraObj.getCameraInfo(this, "0").toString())
-
+            val cameraIdList = CameraObj.getCameraIdList(this)
             val cameraItemList = ArrayList<String>()
 
-            for (id in CameraObj.getCameraIdList(this)) {
+            for (id in cameraIdList) {
                 cameraItemList.add("Camera $id")
+            }
+
+            var checkedIdx = cameraIdList.indexOfFirst {
+                it == viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId
+            }
+
+            if (checkedIdx == -1) {
+                checkedIdx = 0
             }
 
             viewModelMbr.imageProcessingPauseMbr = true
             viewModelMbr.radioButtonDialogInfoLiveDataMbr.value =
                 DialogRadioButtonChoose.DialogInfoVO(
-                    true,
-                    "카메라 선택",
-                    "ㅁ",
-                    cameraItemList,
-                    0,
-                    null,
-                    null,
+                    isCancelable = true,
+                    title = "카메라 선택",
+                    contentMsg = null,
+                    radioButtonContentList = cameraItemList,
+                    checkedItemIdx = checkedIdx,
+                    chooseBtnTxt = null,
+                    cancelBtnTxt = null,
+                    onRadioItemClicked = {
+
+                    },
                     onChooseBtnClicked = {
                         viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
                         viewModelMbr.imageProcessingPauseMbr = false
+
+                        val checkedCameraId = cameraIdList[it]
+
+                        if (checkedCameraId != viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId) {
+                            // todo 카메라 전환
+                            Log.e("cc", checkedCameraId)
+
+                            // 기존 저장 폴더 백업
+                            val videoFile = if (cameraObjMbr.isRecordingMbr) {
+                                cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+                            } else {
+                                null
+                            }
+
+                            cameraObjMbr.destroyCameraObject {
+                                videoFile?.delete()
+
+                                val cameraObj = CameraObj.getInstance(
+                                    this,
+                                    checkedCameraId,
+                                    onCameraDisconnectedAndClearCamera = {
+
+                                    }
+                                )!!
+
+                                cameraObjMbr = cameraObj
+
+                                // 핀치 줌 설정
+                                cameraObjMbr.setCameraPinchZoomTouchListener(bindingMbr.cameraPreviewAutoFitTexture)
+
+                                viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId =
+                                    checkedCameraId
+
+                                // (카메라 실행)
+                                val previewConfigVo =
+                                    if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                                        // 지원 사이즈 탐지
+                                        val chosenPreviewSurfaceSize =
+                                            CustomUtil.getNearestSupportedCameraOutputSize(
+                                                cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
+                                                Long.MAX_VALUE,
+                                                3.0 / 2.0
+                                            )
+
+                                        // 설정 객체 반환
+                                        arrayListOf(
+                                            CameraObj.PreviewConfigVo(
+                                                chosenPreviewSurfaceSize,
+                                                bindingMbr.cameraPreviewAutoFitTexture
+                                            )
+                                        )
+                                    } else {
+                                        // 지원 사이즈가 없기에 null 반환
+                                        null
+                                    }
+
+                                val imageReaderConfigVo =
+                                    if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
+                                        // 지원 사이즈 탐지
+                                        val chosenImageReaderSurfaceSize =
+                                            CustomUtil.getNearestSupportedCameraOutputSize(
+                                                cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
+                                                500 * 500,
+                                                3.0 / 2.0
+                                            )
+
+                                        // 설정 객체 반환
+                                        CameraObj.ImageReaderConfigVo(
+                                            chosenImageReaderSurfaceSize,
+                                            imageReaderCallback = { reader ->
+                                                processImage(reader)
+                                            }
+                                        )
+                                    } else {
+                                        // 지원 사이즈가 없기에 null 반환
+                                        null
+                                    }
+
+                                // (카메라 변수 설정)
+                                // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
+                                // 떨림 보정
+                                cameraObjMbr.setCameraStabilization(
+                                    true,
+                                    executorOnCameraStabilizationSettingComplete = {})
+
+                                // (카메라 서페이스 설정)
+                                cameraObjMbr.setCameraOutputSurfaces(
+                                    previewConfigVo,
+                                    imageReaderConfigVo,
+                                    null,
+                                    executorOnSurfaceAllReady = {
+                                        // (카메라 리퀘스트 설정)
+                                        cameraObjMbr.setCameraRequest(
+                                            onPreview = true,
+                                            onImageReader = true,
+                                            onMediaRecorder = false,
+                                            CameraDevice.TEMPLATE_PREVIEW,
+                                            executorOnCameraRequestSettingTime = {
+                                                // Auto WhiteBalance, Auto Focus, Auto Exposure
+                                                it.set(
+                                                    CaptureRequest.CONTROL_MODE,
+                                                    CameraMetadata.CONTROL_MODE_AUTO
+                                                )
+                                            },
+                                            executorOnCameraRequestBuilderSet = {
+                                                // (카메라 실행)
+                                                cameraObjMbr.runCameraRequest(
+                                                    true,
+                                                    null,
+                                                    executorOnRequestComplete = {},
+                                                    executorOnError = {})
+                                            },
+                                            executorOnError = {
+
+                                            }
+                                        )
+                                    },
+                                    executorOnError = {
+
+                                    }
+                                )
+                            }
+                        }
                     },
                     onCancelBtnClicked = {
                         viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
