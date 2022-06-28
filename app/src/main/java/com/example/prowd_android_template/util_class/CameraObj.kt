@@ -40,10 +40,13 @@ import kotlin.math.sqrt
 // 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
 
 // todo : 사진 찍기 기능 검증
-// todo : 서페이스 각자 세팅 기능 오버로딩(request setting callback 을 제거)
+// todo : 서페이스 각자 세팅 기능 오버로딩
+// todo : request setting callback 을 제거
 // todo : exposure, whitebalance, iso 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
+// todo : https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=gream50&logNo=221438568982
 // todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
 // todo : 디바이스 방향 관련 부분 다시 살피기
+// todo : iso = https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
