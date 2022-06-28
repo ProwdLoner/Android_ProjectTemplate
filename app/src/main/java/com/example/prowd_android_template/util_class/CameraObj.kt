@@ -70,6 +70,10 @@ class CameraObj private constructor(
     var autoFocusSupportedMbr: Boolean = false
         private set
 
+    // (Auto Exposure 기능을 지원해주는지)
+    var autoExposureSupportedMbr: Boolean = false
+        private set
+
     // (현 디바이스 방향과 카메라 방향에서 width, height 개념이 같은)
     // 카메라와 디바이스 방향이 90도, 270 도 차이가 난다면 둘의 Width, Height 개념은 상반됨
     var isDeviceAndCameraWhSameMbr: Boolean = false
@@ -598,6 +602,14 @@ class CameraObj private constructor(
             resultCameraObject.autoFocusSupportedMbr =
                 !(afAvailableModes == null || afAvailableModes.isEmpty() || (afAvailableModes.size == 1
                         && afAvailableModes[0] == CameraMetadata.CONTROL_AF_MODE_OFF))
+
+            // (AE 지원 가능 여부)
+            val aeAvailableModes: IntArray? =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES)
+
+            resultCameraObject.autoExposureSupportedMbr =
+                !(aeAvailableModes == null || aeAvailableModes.isEmpty() || (aeAvailableModes.size == 1
+                        && aeAvailableModes[0] == CameraMetadata.CONTROL_AE_MODE_OFF))
 
             // (max zoom 정보)
             resultCameraObject.maxZoomMbr = if (resultCameraObject.sensorSizeMbr == null) {
