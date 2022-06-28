@@ -11,6 +11,7 @@ import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
+import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Size
@@ -154,6 +155,7 @@ class CameraObj private constructor(
     // 미디어 리코더 세팅 부산물
     var mediaRecorderConfigVoMbr: MediaRecorderConfigVo? = null
     private var mediaRecorderMbr: MediaRecorder? = null
+    private var mediaCodecSurfaceMbr: Surface? = null
 
     // 프리뷰 세팅 부산물
     val previewConfigVoListMbr: ArrayList<PreviewConfigVo> = ArrayList()
@@ -771,6 +773,7 @@ class CameraObj private constructor(
 
             // (자원 해소)
             mediaRecorderMbr?.release()
+            mediaCodecSurfaceMbr?.release()
             imageReaderMbr?.close()
             cameraCaptureSessionMbr?.close()
 
@@ -831,6 +834,8 @@ class CameraObj private constructor(
                 }
 
                 mediaRecorderConfigVoMbr = mediaRecorderConfigVo
+
+                mediaCodecSurfaceMbr = MediaCodec.createPersistentInputSurface()
 
                 // 미디어 레코더 생성
                 mediaRecorderMbr =
@@ -999,6 +1004,7 @@ class CameraObj private constructor(
                         )
                 }
 
+                mediaRecorderMbr!!.setInputSurface(mediaCodecSurfaceMbr!!)
                 mediaRecorderMbr!!.prepare()
             }
 
@@ -1244,7 +1250,7 @@ class CameraObj private constructor(
                     return@run
                 } else {
                     // 미디어 레코더 서페이스 타겟 추가
-                    captureRequestBuilderMbr!!.addTarget(mediaRecorderMbr!!.surface)
+                    captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
                 }
             }
 
@@ -1468,6 +1474,7 @@ class CameraObj private constructor(
 
             // (자원 해소)
             mediaRecorderMbr?.release()
+            mediaCodecSurfaceMbr?.release()
             imageReaderMbr?.close()
             cameraCaptureSessionMbr?.close()
 
@@ -1539,6 +1546,7 @@ class CameraObj private constructor(
 
             // (자원 해소)
             mediaRecorderMbr?.release()
+            mediaCodecSurfaceMbr?.release()
             imageReaderMbr?.close()
             cameraCaptureSessionMbr?.close()
             cameraDeviceMbr?.close()
@@ -1954,6 +1962,7 @@ class CameraObj private constructor(
 
                                 // (자원 해소)
                                 mediaRecorderMbr?.release()
+                                mediaCodecSurfaceMbr?.release()
                                 imageReaderMbr?.close()
 
                                 // (멤버 변수 비우기)
@@ -2047,6 +2056,7 @@ class CameraObj private constructor(
 
             // (자원 해소)
             mediaRecorderMbr?.release()
+            mediaCodecSurfaceMbr?.release()
             imageReaderMbr?.close()
 
             // (멤버 변수 비우기)
@@ -2120,6 +2130,7 @@ class CameraObj private constructor(
 
                     // (자원 해소)
                     mediaRecorderMbr?.release()
+                    mediaCodecSurfaceMbr?.release()
                     imageReaderMbr?.close()
                     cameraCaptureSessionMbr?.close()
                     camera.close()
@@ -2185,6 +2196,7 @@ class CameraObj private constructor(
 
                     // (자원 해소)
                     mediaRecorderMbr?.release()
+                    mediaCodecSurfaceMbr?.release()
                     imageReaderMbr?.close()
                     cameraCaptureSessionMbr?.close()
                     camera.close()
@@ -2285,7 +2297,7 @@ class CameraObj private constructor(
             if (null != mediaRecorderMbr) {
                 outputConfigurationList.add(
                     OutputConfiguration(
-                        mediaRecorderMbr!!.surface
+                        mediaCodecSurfaceMbr!!
                     )
                 )
             }
@@ -2331,6 +2343,7 @@ class CameraObj private constructor(
 
                         // (자원 해소)
                         mediaRecorderMbr?.release()
+                        mediaCodecSurfaceMbr?.release()
                         imageReaderMbr?.close()
                         session.close()
 
@@ -2363,7 +2376,7 @@ class CameraObj private constructor(
 
             // 비디오 리코더 서페이스 주입
             if (null != mediaRecorderMbr) {
-                val surface = mediaRecorderMbr!!.surface
+                val surface = mediaCodecSurfaceMbr!!
                 surfaces.add(surface)
             }
 
@@ -2404,6 +2417,7 @@ class CameraObj private constructor(
 
                         // (자원 해소)
                         mediaRecorderMbr?.release()
+                        mediaCodecSurfaceMbr?.release()
                         imageReaderMbr?.close()
                         session.close()
 
