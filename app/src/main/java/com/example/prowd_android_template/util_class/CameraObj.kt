@@ -942,7 +942,7 @@ class CameraObj private constructor(
                 // 음성 데이터 저장 퀄리티 설정
                 if (mediaRecorderConfigVo.isAudioRecording) {
 
-                    val maxAudioBitrate = Int.MAX_VALUE
+                    val maxAudioBitrate = 2048000
                     if (mediaRecorderConfigVo.audioEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
                         // 최대 설정
                         mediaRecorderMbr!!.setAudioEncodingBitRate(maxAudioBitrate)
