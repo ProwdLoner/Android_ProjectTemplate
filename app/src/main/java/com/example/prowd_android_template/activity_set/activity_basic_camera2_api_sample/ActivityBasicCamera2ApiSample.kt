@@ -729,21 +729,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     contentMsg = null,
                     radioButtonContentList = cameraItemList,
                     checkedItemIdx = checkedIdx,
-                    chooseBtnTxt = null,
                     cancelBtnTxt = null,
                     onRadioItemClicked = {
-
-                    },
-                    onChooseBtnClicked = {
                         viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
                         viewModelMbr.imageProcessingPauseMbr = false
 
                         val checkedCameraId = cameraIdList[it]
 
                         if (checkedCameraId != viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId) {
-                            // todo 카메라 전환
-                            Log.e("cc", checkedCameraId)
-
                             // 기존 저장 폴더 백업
                             val videoFile = if (cameraObjMbr.isRecordingMbr) {
                                 cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
@@ -1298,19 +1291,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
     }
 
-    // Image 객체에서 바로 복사해낸 이미지 필요 데이터를 저장한 리스트 (비가공 프레임 이미지 데이터 히스토리)
-    // 이미지 프로세싱 비동기 처리시 특정 시점에서 전후 프레임과의 비교가 필요할 경우 사용
-    private val imageDataVoListMbr: ArrayList<ImageDataVo> = ArrayList()
-    private val imageDataVoListSizeMbr: Int = 10 // 이미지 프레임 큐의 최대 길이
-
-    // todo : 처리 속도에 따라 스킵 개수를 구해서 이미지 처리 균등 배분
-    private val minFrameSkipCountMbr = 1
-    private var frameSkipCountMbr = 0
-
     // 최대 이미지 프로세싱 개수 (현재 처리중인 이미지 프로세싱 개수가 이것을 넘어가면 그냥 return)
-    private val maxImageProcessCountMbr = 6
-    private var currentImageProcessCountMbr = 0
-    private val currentImageProcessCountSemaphoreMbr = Semaphore(1)
+    private var asyncImageProcessingOnProgressMbr = false
+    private val asyncImageProcessingOnProgressSemaphoreMbr = Semaphore(1)
 
     // (카메라 이미지 실시간 처리 콜백)
     // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
@@ -1362,65 +1345,23 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
 
-            // (1.5 복제된 이미지 데이터를 큐에 저장)
-            if (imageDataVoListMbr.size >= imageDataVoListSizeMbr) {
-                // 큐 개수를 유지하기 위해 허용 사이즈를 넘어가면 먼저 선입 선출
-                imageDataVoListMbr.removeFirst()
-            }
-
-            imageDataVoListMbr.add(
-                ImageDataVo(
-                    imageGainTimeMs,
-                    imageWidth,
-                    imageHeight,
-                    pixelCount,
-                    rowStride0,
-                    pixelStride0,
-                    planeBuffer0,
-                    rowStride1,
-                    pixelStride1,
-                    planeBuffer1,
-                    rowStride2,
-                    pixelStride2,
-                    planeBuffer2
-                )
-            )
-
-            // (2. 이미지 프로세싱 스킵 검증)
-            // 조기 종료 플래그
-            if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
-                viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
-                isDestroyed // 액티비티 자체가 종료
-            ) {
-                // 스킵 횟수 초기화
-                frameSkipCountMbr = 0
-                return
-            }
-
-            // 이미지 프로세싱 스킵 최소 횟수 검증
-            if (minFrameSkipCountMbr > frameSkipCountMbr) {
-                // 일정 횟수 스킵하지 않으면 return
-                frameSkipCountMbr++
-                return
-            }
-
-            // 프로세싱 진입 최대 개수 검증
-            // 프로세싱 종료시엔 필수로 currentImageProcessCountMbr 를 1 내려야 하는 것을 주의
-            currentImageProcessCountSemaphoreMbr.acquire()
-            if (maxImageProcessCountMbr <= currentImageProcessCountMbr) {
-                // 현재 처리중인 프로세싱 개수가 최대 프로세싱 개수보다 크거나 같을 때
-                currentImageProcessCountSemaphoreMbr.release()
-                return
-            }
-            currentImageProcessCountMbr++
-            currentImageProcessCountSemaphoreMbr.release()
-
-            // 일정 횟수 스킵하고 프로세싱 진입을 하면 횟수 초기화
-            frameSkipCountMbr = 0
-
-            // (3. 비동기 이미지 프로세싱 시작)
+            // (2. 비동기 이미지 프로세싱 시작)
             viewModelMbr.executorServiceMbr?.execute {
-                // (4. 이미지 객체에서 추출한 YUV 420 888 바이트 버퍼를 ARGB 8888 비트맵으로 변환)
+
+                // 조기 종료 확인
+                asyncImageProcessingOnProgressSemaphoreMbr.acquire()
+                if (asyncImageProcessingOnProgressMbr || // 현재 비동기 이미지 프로세싱 중일 때
+                    !cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+                    viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+                    isDestroyed // 액티비티 자체가 종료
+                ) {
+                    asyncImageProcessingOnProgressSemaphoreMbr.release()
+                    return@execute
+                }
+                asyncImageProcessingOnProgressMbr = true
+                asyncImageProcessingOnProgressSemaphoreMbr.release()
+
+                // (3. 이미지 객체에서 추출한 YUV 420 888 바이트 버퍼를 ARGB 8888 비트맵으로 변환)
                 val cameraImageFrameBitmap = yuv420888ByteBufferToArgb8888Bitmap(
                     imageWidth,
                     imageHeight,
@@ -1550,12 +1491,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
 
                 // 프로세스 한 사이클이 끝나면 반드시 count 를 내릴 것!
-                currentImageProcessCountSemaphoreMbr.acquire()
-                currentImageProcessCountMbr--
-                currentImageProcessCountSemaphoreMbr.release()
+                asyncImageProcessingOnProgressSemaphoreMbr.acquire()
+                asyncImageProcessingOnProgressMbr = false
+                asyncImageProcessingOnProgressSemaphoreMbr.release()
+
             }
         } catch (e: Exception) {
-
+            e.printStackTrace()
         }
     }
 

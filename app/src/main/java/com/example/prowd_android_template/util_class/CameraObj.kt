@@ -888,39 +888,8 @@ class CameraObj private constructor(
                 }
 
                 // 영상 데이터 저장 퀄리티 설정
-                // 계산법을 여럿 검색 가능. 그 중 가장 높은 것에서 시작해서 오버플로우 시 낮은 설정으로 줄이기
-                var videoBitrate =
-                    mediaRecorderConfigVo.cameraOrientSurfaceSize.width *
-                            mediaRecorderConfigVo.cameraOrientSurfaceSize.height *
-                            mediaRecorderFps
-
-                if (videoBitrate <= 0) {
-                    // 오버플로우 발생시
-                    // 해상도 * fps / 8 로 계산.
-                    videoBitrate =
-                        (mediaRecorderConfigVo.cameraOrientSurfaceSize.width.toDouble() /
-                                8.0 *
-                                mediaRecorderConfigVo.cameraOrientSurfaceSize.height.toDouble() *
-                                mediaRecorderFps.toDouble()).toInt()
-
-                    if (videoBitrate <= 0) {
-                        // 오버플로우 발생시
-                        // 해상도 * fps * 코덱값 / 1024 로 계산.
-                        videoBitrate =
-                            (mediaRecorderConfigVo.cameraOrientSurfaceSize.width.toDouble() *
-                                    0.17 *
-                                    mediaRecorderConfigVo.cameraOrientSurfaceSize.height.toDouble() /
-                                    1024.0 *
-                                    mediaRecorderFps.toDouble()).toInt()
-
-                        if (videoBitrate <= 0) {
-                            // 오버플로우 발생시
-                            // 최종적으로 오버플로우 발생 직전 값으로 설정.
-                            // 다만 이 설정은 에러가 생길 여지가 존재
-                            videoBitrate = Int.MAX_VALUE
-                        }
-                    }
-                }
+                // todo
+                var videoBitrate = Int.MAX_VALUE
 
                 if (mediaRecorderConfigVo.videoEncodingBitrateQualityRate == null) { // 커스텀 설정 값이 없을 때
                     // 최대 설정

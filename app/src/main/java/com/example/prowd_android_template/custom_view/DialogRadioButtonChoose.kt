@@ -40,10 +40,6 @@ class DialogRadioButtonChoose constructor(
             dialogInfoMbr.onCanceled.run()
         }
 
-        if (null != dialogInfoMbr.chooseBtnTxt) {
-            bindingMbr.chooseBtn.text = dialogInfoMbr.chooseBtnTxt
-        }
-
         if (null != dialogInfoMbr.cancelBtnTxt) {
             bindingMbr.cancelBtn.text = dialogInfoMbr.cancelBtnTxt
         }
@@ -105,17 +101,6 @@ class DialogRadioButtonChoose constructor(
         }
 
         // (버튼 클릭 크기 조정)
-        (bindingMbr.chooseBtn.parent as View).post {
-            val rect = Rect()
-            bindingMbr.chooseBtn.getHitRect(rect)
-            rect.top -= 100 // increase top hit area
-            rect.left -= 100 // increase left hit area
-            rect.bottom += 100 // increase bottom hit area
-            rect.right += 100 // increase right hit area
-            (bindingMbr.chooseBtn.parent as View).touchDelegate =
-                TouchDelegate(rect, bindingMbr.chooseBtn)
-        }
-
         (bindingMbr.cancelBtn.parent as View).post {
             val rect = Rect()
             bindingMbr.cancelBtn.getHitRect(rect)
@@ -128,11 +113,6 @@ class DialogRadioButtonChoose constructor(
         }
 
         // (리스너 설정)
-        bindingMbr.chooseBtn.setOnClickListener {
-            dialogInfoMbr.onChooseBtnClicked(checkedItemIndexMbr)
-            this.dismiss()
-        }
-
         bindingMbr.cancelBtn.setOnClickListener {
             dialogInfoMbr.onCancelBtnClicked.run()
             this.dismiss()
@@ -156,10 +136,8 @@ class DialogRadioButtonChoose constructor(
         var contentMsg: String?,
         val radioButtonContentList: ArrayList<String>,
         val checkedItemIdx: Int?,
-        var chooseBtnTxt: String?,
         var cancelBtnTxt: String?,
         var onRadioItemClicked: (Int) -> Unit,
-        var onChooseBtnClicked: (Int) -> Unit,
         var onCancelBtnClicked: Runnable,
         var onCanceled: Runnable
     )
