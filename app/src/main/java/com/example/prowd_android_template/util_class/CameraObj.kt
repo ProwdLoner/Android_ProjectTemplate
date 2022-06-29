@@ -48,6 +48,7 @@ import kotlin.math.sqrt
 // todo : whitebalance, iso 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 //    https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 // todo : 디바이스 방향 관련 부분 다시 살피기
+// todo : 최고 화질시 녹화 에러 확인
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -737,7 +738,7 @@ class CameraObj private constructor(
             // [카메라 상태 초기화]
             // 이미지 리더 요청을 먼저 비우기
             imageReaderMbr?.setOnImageAvailableListener(
-                { it.acquireLatestImage().close() },
+                { it.acquireLatestImage()?.close() },
                 cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
             )
 
@@ -1423,7 +1424,7 @@ class CameraObj private constructor(
             // [카메라 상태 초기화]
             // 이미지 리더 요청을 먼저 비우기
             imageReaderMbr?.setOnImageAvailableListener(
-                { it.acquireLatestImage().close() },
+                { it.acquireLatestImage()?.close() },
                 cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
             )
 
@@ -1495,7 +1496,7 @@ class CameraObj private constructor(
             // [카메라 상태 초기화]
             // 이미지 리더 요청을 먼저 비우기
             imageReaderMbr?.setOnImageAvailableListener(
-                { it.acquireLatestImage().close() },
+                { it.acquireLatestImage()?.close() },
                 cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
             )
 
@@ -2357,7 +2358,7 @@ class CameraObj private constructor(
                     // [카메라 상태 초기화]
                     // 이미지 리더 요청을 먼저 비우기
                     imageReaderMbr?.setOnImageAvailableListener(
-                        { it.acquireLatestImage().close() },
+                        { it.acquireLatestImage()?.close() },
                         cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
                     )
 
@@ -2423,7 +2424,7 @@ class CameraObj private constructor(
                     // [카메라 상태 초기화]
                     // 이미지 리더 요청을 먼저 비우기
                     imageReaderMbr?.setOnImageAvailableListener(
-                        { it.acquireLatestImage().close() },
+                        { it.acquireLatestImage()?.close() },
                         cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
                     )
 
