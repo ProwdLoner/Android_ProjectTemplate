@@ -218,6 +218,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         true,
                         executorOnCameraStabilizationSettingComplete = {})
 
+                    cameraObjMbr.setAutoFocus(
+                        null,
+                        true,
+                        executorOnComplete = {})
+
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
@@ -232,10 +237,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 CameraDevice.TEMPLATE_PREVIEW,
                                 executorOnCameraRequestSettingTime = {
                                     // Auto WhiteBalance, Auto Focus, Auto Exposure
-                                    it.set(
-                                        CaptureRequest.CONTROL_MODE,
-                                        CameraMetadata.CONTROL_MODE_AUTO
-                                    )
+
+                                    // todo AWB, AE
+//                                    it.set(
+//                                        CaptureRequest.CONTROL_MODE,
+//                                        CameraMetadata.CONTROL_MODE_AUTO
+//                                    )
                                 },
                                 executorOnCameraRequestBuilderSet = {
                                     // todo : 비동기라서 start 를 안할시 실행 안될 위험이 있음
@@ -815,6 +822,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     true,
                                     executorOnCameraStabilizationSettingComplete = {})
 
+                                cameraObjMbr.setAutoFocus(
+                                    null,
+                                    true,
+                                    executorOnComplete = {})
+
                                 // (카메라 서페이스 설정)
                                 cameraObjMbr.setCameraOutputSurfaces(
                                     previewConfigVo,
@@ -829,10 +841,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             CameraDevice.TEMPLATE_PREVIEW,
                                             executorOnCameraRequestSettingTime = {
                                                 // Auto WhiteBalance, Auto Focus, Auto Exposure
-                                                it.set(
-                                                    CaptureRequest.CONTROL_MODE,
-                                                    CameraMetadata.CONTROL_MODE_AUTO
-                                                )
+
+                                                // todo AWB, AE
+//                                                it.set(
+//                                                    CaptureRequest.CONTROL_MODE,
+//                                                    CameraMetadata.CONTROL_MODE_AUTO
+//                                                )
                                             },
                                             executorOnCameraRequestBuilderSet = {
                                                 // (카메라 실행)
@@ -949,6 +963,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         true,
                         executorOnCameraStabilizationSettingComplete = {})
 
+                    cameraObjMbr.setAutoFocus(
+                        null,
+                        true,
+                        executorOnComplete = {})
+
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
@@ -963,10 +982,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 CameraDevice.TEMPLATE_RECORD,
                                 executorOnCameraRequestSettingTime = {
                                     // Auto WhiteBalance, Auto Focus, Auto Exposure
-                                    it.set(
-                                        CaptureRequest.CONTROL_MODE,
-                                        CameraMetadata.CONTROL_MODE_AUTO
-                                    )
+                                    // todo AWB, AE
+//                                    it.set(
+//                                        CaptureRequest.CONTROL_MODE,
+//                                        CameraMetadata.CONTROL_MODE_AUTO
+//                                    )
                                 },
                                 executorOnCameraRequestBuilderSet = {
                                     // (카메라 실행)
@@ -1063,6 +1083,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             true,
                             executorOnCameraStabilizationSettingComplete = {})
 
+                        cameraObjMbr.setAutoFocus(
+                            null,
+                            true,
+                            executorOnComplete = {})
+
                         // (카메라 서페이스 설정)
                         cameraObjMbr.setCameraOutputSurfaces(
                             previewConfigVo,
@@ -1077,10 +1102,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     CameraDevice.TEMPLATE_PREVIEW,
                                     executorOnCameraRequestSettingTime = {
                                         // Auto WhiteBalance, Auto Focus, Auto Exposure
-                                        it.set(
-                                            CaptureRequest.CONTROL_MODE,
-                                            CameraMetadata.CONTROL_MODE_AUTO
-                                        )
+                                        // todo AWB, AE
+//                                        it.set(
+//                                            CaptureRequest.CONTROL_MODE,
+//                                            CameraMetadata.CONTROL_MODE_AUTO
+//                                        )
                                     },
                                     executorOnCameraRequestBuilderSet = {
                                         runOnUiThread {
@@ -1264,6 +1290,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         CameraDevice.TEMPLATE_PREVIEW,
                         executorOnCameraRequestSettingTime = {
                             // Auto WhiteBalance, Auto Focus, Auto Exposure
+                            // todo AWB, AE
 //                            it.set(
 //                                CaptureRequest.CONTROL_MODE,
 //                                CameraMetadata.CONTROL_MODE_AUTO

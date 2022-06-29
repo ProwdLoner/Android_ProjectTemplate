@@ -716,7 +716,6 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
             )
 
-
             if (isRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
                 mediaRecorderMbr?.reset()
