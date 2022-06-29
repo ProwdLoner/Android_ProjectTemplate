@@ -1217,7 +1217,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     private fun onCameraPermissionChecked(isOnCreate: Boolean) {
-        Log.e("ae", cameraObjMbr.autoExposureMeteringAreaSupportedMbr.toString())
         if (isOnCreate) { // 처음 카메라 설정 시점
             // (카메라 실행)
             val previewConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
