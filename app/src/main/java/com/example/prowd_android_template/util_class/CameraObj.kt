@@ -818,7 +818,7 @@ class CameraObj private constructor(
 
                 // 영상 데이터 저장 퀄리티 설정
                 // todo 최소 타겟 디바이스에서 에러 발생 안하는 최대 값
-                val maxVideoBitrate = (Int.MAX_VALUE * 0.8).toInt()
+                val maxVideoBitrate = (Int.MAX_VALUE * 0.85).toInt()
 
                 // 커스텀 설정 값이 있을 때
                 if (mediaRecorderConfigVo.videoRecordingBitrate > maxVideoBitrate) {
