@@ -1245,8 +1245,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 true,
                 executorOnCameraStabilizationSettingComplete = {})
 
-            cameraObjMbr.setFocusDistance(
-                -2f,
+            cameraObjMbr.setAutoFocus(
+                null,
+                true,
                 executorOnComplete = {})
 
             // (카메라 서페이스 설정)
