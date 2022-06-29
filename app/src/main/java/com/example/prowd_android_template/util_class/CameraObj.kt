@@ -14,7 +14,6 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -77,6 +76,10 @@ class CameraObj private constructor(
 
     // CONTROL_AF_MODE_CONTINUOUS_VIDEO
     var naturalAutoFocusSupportedMbr: Boolean = false
+        private set
+
+    // AutoFocusArea 설정 가능 여부
+    var autoFocusMeteringAreaSupportedMbr: Boolean = false
         private set
 
     // (Auto Exposure 기능을 지원해주는지)
@@ -521,7 +524,6 @@ class CameraObj private constructor(
             if (afAvailableModes == null || afAvailableModes.isEmpty() || (afAvailableModes.size == 1
                         && afAvailableModes[0] == CameraMetadata.CONTROL_AF_MODE_OFF)
             ) {
-
                 resultCameraObject.fastAutoFocusSupportedMbr = false
                 resultCameraObject.naturalAutoFocusSupportedMbr = false
             } else {
@@ -531,6 +533,12 @@ class CameraObj private constructor(
                 resultCameraObject.naturalAutoFocusSupportedMbr =
                     afAvailableModes.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
             }
+
+            val maxRegionAf =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF)
+
+            resultCameraObject.autoFocusMeteringAreaSupportedMbr =
+                null != maxRegionAf && maxRegionAf >= 1
 
             // (가장 가까운 초점 거리)
             resultCameraObject.minimumFocusDistanceMbr =
@@ -1916,14 +1924,11 @@ class CameraObj private constructor(
         }
     }
 
-    // todo : 오토 포커스 구역
     // (오토 포커스 설정)
     // fastAutoFocus true 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
     // fastAutoFocus false 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-    // autoFocusUnitArea 가 있다면 CONTROL_AF_REGIONS 사용, 아니라면 사용 안함
-    // 오토 포커스 설정시, 하나가 불가능하면 다른 것을 시도하고, 그것도 안된다면 고정값 중앙 거리를 사용
+    // 이 함수는 전체 기본 오토 포커스로, 포커스 범위 설정은 setFocusArea 에서
     fun setAutoFocus(
-        autoFocusUnitArea: RectF?,
         fastAutoFocus: Boolean,
         executorOnComplete: () -> Unit
     ) {
@@ -1937,7 +1942,7 @@ class CameraObj private constructor(
                 return@run
             }
 
-            autoFocusUnitAreaMbr = autoFocusUnitArea
+            autoFocusUnitAreaMbr = null
 
             if (fastAutoFocus) {
                 focusDistanceMbr = if (fastAutoFocusSupportedMbr) {
@@ -1965,13 +1970,11 @@ class CameraObj private constructor(
             }
 
             if (focusDistanceMbr == -1f) {
-                // todo 포커스 범위
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
                 )
             } else if (focusDistanceMbr == -2f) {
-                // todo 포커스 범위
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
@@ -1996,6 +1999,84 @@ class CameraObj private constructor(
             executorOnComplete()
         }
     }
+
+    // todo
+    // (오토 포커스 구역 설정)
+//    fun setFocusArea(
+//        focusUnitArea: RectF,
+//        executorOnComplete: () -> Unit
+//    ) {
+//        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+//            cameraThreadVoMbr.cameraSemaphore.acquire()
+//
+//
+//
+//
+//
+//            if (!fastAutoFocusSupportedMbr && !naturalAutoFocusSupportedMbr) {
+//                // 오토 포커스 지원이 안되면
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                executorOnComplete()
+//                return@run
+//            }
+//
+//            autoFocusUnitAreaMbr = null
+//
+//            if (fastAutoFocus) {
+//                focusDistanceMbr = if (fastAutoFocusSupportedMbr) {
+//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
+//                    -2f
+//                } else {
+//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
+//                    -1f
+//                }
+//            } else {
+//                focusDistanceMbr = if (naturalAutoFocusSupportedMbr) {
+//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
+//                    -1f
+//                } else {
+//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
+//                    -2f
+//                }
+//            }
+//
+//            // 리퀘스트 빌더가 생성되지 않은 경우
+//            if (captureRequestBuilderMbr == null) {
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                executorOnComplete()
+//                return@run
+//            }
+//
+//            if (focusDistanceMbr == -1f) {
+//                captureRequestBuilderMbr!!.set(
+//                    CaptureRequest.CONTROL_AF_MODE,
+//                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+//                )
+//            } else if (focusDistanceMbr == -2f) {
+//                captureRequestBuilderMbr!!.set(
+//                    CaptureRequest.CONTROL_AF_MODE,
+//                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+//                )
+//            }
+//
+//            // 세션이 현재 실행중이 아니라면 여기서 멈추기
+//            if (!isRepeatingMbr) {
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                executorOnComplete()
+//                return@run
+//            }
+//
+//            // 세션이 현재 실행중이라면 바로 적용하기
+//            cameraCaptureSessionMbr!!.setRepeatingRequest(
+//                captureRequestBuilderMbr!!.build(),
+//                null,
+//                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+//            )
+//
+//            cameraThreadVoMbr.cameraSemaphore.release()
+//            executorOnComplete()
+//        }
+//    }
 
 
     // ---------------------------------------------------------------------------------------------

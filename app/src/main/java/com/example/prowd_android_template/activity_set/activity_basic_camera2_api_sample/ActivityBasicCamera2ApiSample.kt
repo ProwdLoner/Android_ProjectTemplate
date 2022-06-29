@@ -219,7 +219,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         executorOnCameraStabilizationSettingComplete = {})
 
                     cameraObjMbr.setAutoFocus(
-                        null,
                         true,
                         executorOnComplete = {})
 
@@ -823,7 +822,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     executorOnCameraStabilizationSettingComplete = {})
 
                                 cameraObjMbr.setAutoFocus(
-                                    null,
                                     true,
                                     executorOnComplete = {})
 
@@ -964,7 +962,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         executorOnCameraStabilizationSettingComplete = {})
 
                     cameraObjMbr.setAutoFocus(
-                        null,
                         true,
                         executorOnComplete = {})
 
@@ -1084,7 +1081,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             executorOnCameraStabilizationSettingComplete = {})
 
                         cameraObjMbr.setAutoFocus(
-                            null,
                             true,
                             executorOnComplete = {})
 
@@ -1272,7 +1268,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 executorOnCameraStabilizationSettingComplete = {})
 
             cameraObjMbr.setAutoFocus(
-                null,
                 true,
                 executorOnComplete = {})
 
