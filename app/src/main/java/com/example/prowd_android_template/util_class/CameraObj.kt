@@ -190,6 +190,7 @@ class CameraObj private constructor(
         private set
 
     // 카메라 현재 줌 배수
+    // 1f 부터 maxZoomMbr 까지
     var currentCameraZoomFactorMbr = 1.0f
         private set
 
@@ -1259,6 +1260,8 @@ class CameraObj private constructor(
                 val zoom = if (maxZoomMbr < currentCameraZoomFactorMbr) {
                     // 가용 줌 최대치에 설정을 맞추기
                     maxZoomMbr
+                } else if (currentCameraZoomFactorMbr < 1f) {
+                    1f
                 } else {
                     currentCameraZoomFactorMbr
                 }
@@ -1753,6 +1756,8 @@ class CameraObj private constructor(
             val zoom = if (maxZoomMbr < zoomFactor) {
                 // 가용 줌 최대치에 설정을 맞추기
                 maxZoomMbr
+            } else if (currentCameraZoomFactorMbr < 1f) {
+                1f
             } else {
                 zoomFactor
             }
