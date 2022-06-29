@@ -39,6 +39,7 @@ import kotlin.math.sqrt
 // 내부 제공 함수들은 대다수 비동기 동작을 수행합니다. 시점을 맞추기 위해선 제공되는 콜백을 사용하면 됩니다.
 // 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
 
+// todo : 프리뷰, 이미지 리더, 레코더 서페이스 비율 동일하게(리스트 반환시 비율이 같은 것들만 반환)
 // todo : 사진 찍기 기능 검증
 // todo : 서페이스 각자 세팅 기능 오버로딩
 // todo : request setting callback 을 제거
@@ -2002,6 +2003,7 @@ class CameraObj private constructor(
 
     // todo
     // (오토 포커스 구역 설정)
+    // focusUnitArea : 어느 부분을 기점으로 포커스를 맞출지에 대해, 이미지 높이 너비를 1로 표준화 했을 때의 0 ~ 1 사이 좌표값
 //    fun setFocusArea(
 //        focusUnitArea: RectF,
 //        executorOnComplete: () -> Unit
