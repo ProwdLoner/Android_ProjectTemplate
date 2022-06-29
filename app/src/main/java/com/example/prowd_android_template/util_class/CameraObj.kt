@@ -39,13 +39,13 @@ import kotlin.math.sqrt
 // 내부 제공 함수들은 대다수 비동기 동작을 수행합니다. 시점을 맞추기 위해선 제공되는 콜백을 사용하면 됩니다.
 // 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
 
-// todo : 프리뷰, 이미지 리더, 레코더 서페이스 비율 동일하게(리스트 반환시 비율이 같은 것들만 반환)
+// todo : auto 설정일 때 focus distance 등의 현재 수치 가져오기
 // todo : 사진 찍기 기능 검증
 // todo : 서페이스 각자 세팅 기능 오버로딩
 // todo : request setting callback 을 제거
-// todo : exposure, whitebalance, iso 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
-// todo : https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=gream50&logNo=221438568982
+// todo : af, ae, awb, iso 영역 설정
 // todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
+// todo : whitebalance, iso 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 // todo : 디바이스 방향 관련 부분 다시 살피기
 // todo : iso = https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 class CameraObj private constructor(
@@ -109,6 +109,12 @@ class CameraObj private constructor(
     // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
     // -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
     var focusDistanceMbr: Float = 0f
+        private set
+
+    // (Exposure 시간 : 나노초 == 초/1000000000)
+    // null 이라면 Auto Exposure ON
+    // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
+    var exposureTimeNsMbr: Long? = null
         private set
 
     // (오토 포커스 범위)
@@ -1229,7 +1235,25 @@ class CameraObj private constructor(
                 )
             }
 
-            // (오브젝트 내부 줌 정보를 설정)
+            // (Exposure 설정)
+            if (exposureTimeNsMbr == null) {
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON
+                )
+            } else {
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_OFF
+                )
+
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.SENSOR_EXPOSURE_TIME,
+                    exposureTimeNsMbr
+                )
+            }
+
+           // (오브젝트 내부 줌 정보를 설정)
             if (sensorSizeMbr != null) {
                 val zoom = if (maxZoomMbr < currentCameraZoomFactorMbr) {
                     // 가용 줌 최대치에 설정을 맞추기
@@ -1990,6 +2014,69 @@ class CameraObj private constructor(
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                )
+            }
+
+            // 세션이 현재 실행중이 아니라면 여기서 멈추기
+            if (!isRepeatingMbr) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                executorOnComplete()
+                return@run
+            }
+
+            // 세션이 현재 실행중이라면 바로 적용하기
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                captureRequestBuilderMbr!!.build(),
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+            executorOnComplete()
+        }
+    }
+
+    // (Exposure 설정)
+    // exposureNanoSec : 나노초 == 초/1000000000
+    //     음수라면 Auto Exposure ON
+    // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
+    fun setExposureTime(
+        exposureNanoSec : Long?,
+        executorOnComplete: () -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+
+            if (!autoExposureSupportedMbr) {
+                // 오토 Exposure 지원이 안되면
+                cameraThreadVoMbr.cameraSemaphore.release()
+                executorOnComplete()
+                return@run
+            }
+
+            exposureTimeNsMbr = exposureNanoSec
+
+            // 리퀘스트 빌더가 생성되지 않은 경우
+            if (captureRequestBuilderMbr == null) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                executorOnComplete()
+                return@run
+            }
+
+            if (exposureTimeNsMbr == null) {
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON
+                )
+            } else {
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_OFF
+                )
+
+                captureRequestBuilderMbr!!.set(
+                    CaptureRequest.SENSOR_EXPOSURE_TIME,
+                    exposureTimeNsMbr
                 )
             }
 

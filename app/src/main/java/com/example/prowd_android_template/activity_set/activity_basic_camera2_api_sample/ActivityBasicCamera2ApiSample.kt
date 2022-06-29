@@ -10,8 +10,6 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraMetadata
-import android.hardware.camera2.CaptureRequest
 import android.media.Image
 import android.media.ImageReader
 import android.net.Uri
@@ -22,7 +20,6 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -220,6 +217,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                     cameraObjMbr.setAutoFocus(
                         true,
+                        executorOnComplete = {})
+
+                    cameraObjMbr.setExposureTime(
+                        null,
                         executorOnComplete = {})
 
                     // (카메라 서페이스 설정)
@@ -825,6 +826,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     true,
                                     executorOnComplete = {})
 
+                                cameraObjMbr.setExposureTime(
+                                    null,
+                                    executorOnComplete = {})
+
                                 // (카메라 서페이스 설정)
                                 cameraObjMbr.setCameraOutputSurfaces(
                                     previewConfigVo,
@@ -965,6 +970,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         true,
                         executorOnComplete = {})
 
+                    cameraObjMbr.setExposureTime(
+                        null,
+                        executorOnComplete = {})
+
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
@@ -1082,6 +1091,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                         cameraObjMbr.setAutoFocus(
                             true,
+                            executorOnComplete = {})
+
+                        cameraObjMbr.setExposureTime(
+                            null,
                             executorOnComplete = {})
 
                         // (카메라 서페이스 설정)
@@ -1269,6 +1282,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             cameraObjMbr.setAutoFocus(
                 true,
+                executorOnComplete = {})
+
+            cameraObjMbr.setExposureTime(
+                null,
                 executorOnComplete = {})
 
             // (카메라 서페이스 설정)
