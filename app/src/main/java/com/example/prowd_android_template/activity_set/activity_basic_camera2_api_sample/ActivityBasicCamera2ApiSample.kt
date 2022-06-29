@@ -1124,6 +1124,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 )
             }
         }
+
     }
 
     // 라이브 데이터 설정
@@ -1244,6 +1245,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 true,
                 executorOnCameraStabilizationSettingComplete = {})
 
+            cameraObjMbr.setFocusDistance(
+                -2f,
+                executorOnComplete = {})
+
             // (카메라 서페이스 설정)
             cameraObjMbr.setCameraOutputSurfaces(
                 previewConfigVo,
@@ -1258,10 +1263,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         CameraDevice.TEMPLATE_PREVIEW,
                         executorOnCameraRequestSettingTime = {
                             // Auto WhiteBalance, Auto Focus, Auto Exposure
-                            it.set(
-                                CaptureRequest.CONTROL_MODE,
-                                CameraMetadata.CONTROL_MODE_AUTO
-                            )
+//                            it.set(
+//                                CaptureRequest.CONTROL_MODE,
+//                                CameraMetadata.CONTROL_MODE_AUTO
+//                            )
                         },
                         executorOnCameraRequestBuilderSet = {
                             // (카메라 실행)
