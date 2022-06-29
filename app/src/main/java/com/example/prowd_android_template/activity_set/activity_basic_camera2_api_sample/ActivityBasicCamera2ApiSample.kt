@@ -10,6 +10,7 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CaptureRequest
 import android.media.Image
 import android.media.ImageReader
 import android.net.Uri
@@ -236,13 +237,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 onMediaRecorder = false,
                                 CameraDevice.TEMPLATE_PREVIEW,
                                 executorOnCameraRequestSettingTime = {
-                                    // Auto WhiteBalance, Auto Focus, Auto Exposure
-
-                                    // todo AWB, AE
-//                                    it.set(
-//                                        CaptureRequest.CONTROL_MODE,
-//                                        CameraMetadata.CONTROL_MODE_AUTO
-//                                    )
+                                    // todo : 멤버변수로
+                                    it.set(
+                                        CaptureRequest.CONTROL_AWB_MODE,
+                                        CaptureRequest.CONTROL_AWB_MODE_AUTO
+                                    )
                                 },
                                 executorOnCameraRequestBuilderSet = {
                                     // todo : 비동기라서 start 를 안할시 실행 안될 위험이 있음
@@ -843,13 +842,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             onMediaRecorder = false,
                                             CameraDevice.TEMPLATE_PREVIEW,
                                             executorOnCameraRequestSettingTime = {
-                                                // Auto WhiteBalance, Auto Focus, Auto Exposure
-
-                                                // todo AWB, AE
-//                                                it.set(
-//                                                    CaptureRequest.CONTROL_MODE,
-//                                                    CameraMetadata.CONTROL_MODE_AUTO
-//                                                )
+                                                // todo : 멤버변수로
+                                                it.set(
+                                                    CaptureRequest.CONTROL_AWB_MODE,
+                                                    CaptureRequest.CONTROL_AWB_MODE_AUTO
+                                                )
                                             },
                                             executorOnCameraRequestBuilderSet = {
                                                 // (카메라 실행)
@@ -987,12 +984,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 onMediaRecorder = true,
                                 CameraDevice.TEMPLATE_RECORD,
                                 executorOnCameraRequestSettingTime = {
-                                    // Auto WhiteBalance, Auto Focus, Auto Exposure
-                                    // todo AWB, AE
-//                                    it.set(
-//                                        CaptureRequest.CONTROL_MODE,
-//                                        CameraMetadata.CONTROL_MODE_AUTO
-//                                    )
+                                    // todo : 멤버변수로
+                                    it.set(
+                                        CaptureRequest.CONTROL_AWB_MODE,
+                                        CaptureRequest.CONTROL_AWB_MODE_AUTO
+                                    )
                                 },
                                 executorOnCameraRequestBuilderSet = {
                                     // (카메라 실행)
@@ -1110,12 +1106,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     onMediaRecorder = false,
                                     CameraDevice.TEMPLATE_PREVIEW,
                                     executorOnCameraRequestSettingTime = {
-                                        // Auto WhiteBalance, Auto Focus, Auto Exposure
-                                        // todo AWB, AE
-//                                        it.set(
-//                                            CaptureRequest.CONTROL_MODE,
-//                                            CameraMetadata.CONTROL_MODE_AUTO
-//                                        )
+                                        // todo : 멤버변수로
+                                        it.set(
+                                            CaptureRequest.CONTROL_AWB_MODE,
+                                            CaptureRequest.CONTROL_AWB_MODE_AUTO
+                                        )
                                     },
                                     executorOnCameraRequestBuilderSet = {
                                         runOnUiThread {
@@ -1301,12 +1296,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         onMediaRecorder = false,
                         CameraDevice.TEMPLATE_PREVIEW,
                         executorOnCameraRequestSettingTime = {
-                            // Auto WhiteBalance, Auto Focus, Auto Exposure
-                            // todo AWB, AE
-//                            it.set(
-//                                CaptureRequest.CONTROL_MODE,
-//                                CameraMetadata.CONTROL_MODE_AUTO
-//                            )
+                            // todo : 멤버변수로
+                            it.set(
+                                CaptureRequest.CONTROL_AWB_MODE,
+                                CaptureRequest.CONTROL_AWB_MODE_AUTO
+                            )
                         },
                         executorOnCameraRequestBuilderSet = {
                             // (카메라 실행)

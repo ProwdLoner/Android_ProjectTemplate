@@ -45,9 +45,9 @@ import kotlin.math.sqrt
 // todo : request setting callback 을 제거
 // todo : af, ae, awb, iso 영역 설정
 // todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
-// todo : whitebalance, iso 등을 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
+// todo : whitebalance, iso 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
+//    https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 // todo : 디바이스 방향 관련 부분 다시 살피기
-// todo : iso = https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -1253,7 +1253,7 @@ class CameraObj private constructor(
                 )
             }
 
-           // (오브젝트 내부 줌 정보를 설정)
+            // (오브젝트 내부 줌 정보를 설정)
             if (sensorSizeMbr != null) {
                 val zoom = if (maxZoomMbr < currentCameraZoomFactorMbr) {
                     // 가용 줌 최대치에 설정을 맞추기
@@ -2041,7 +2041,7 @@ class CameraObj private constructor(
     //     음수라면 Auto Exposure ON
     // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
     fun setExposureTime(
-        exposureNanoSec : Long?,
+        exposureNanoSec: Long?,
         executorOnComplete: () -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
