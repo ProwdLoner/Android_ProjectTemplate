@@ -14,6 +14,8 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
+import android.os.SystemClock
+import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -1573,6 +1575,10 @@ class CameraObj private constructor(
     // 뷰를 여러번 넣으면 각각의 뷰에 핀칭을 할 때마다 줌을 변경
     // delta : 단위 핀치 이벤트에 따른 줌 변화량 = 높을수록 민감
     var beforePinchSpacingMbr: Float? = null
+    var pinchBeforeMbr: Boolean = false
+    var clickStartTimeMsMbr: Long? = null
+    var longClickedBeforeMbr = false
+    val longClickTimeMsMbr = 500
     fun setCameraPinchZoomTouchListener(view: View, delta: Float = 0.05f) {
         view.setOnTouchListener(object : View.OnTouchListener {
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
@@ -1588,43 +1594,104 @@ class CameraObj private constructor(
                     else -> {}
                 }
 
-                if (event.pointerCount == 2) { // 핀치를 위한 더블 터치일 경우
-                    // 현재 핀치 넓이 구하기
-                    val currentFingerSpacing: Float
-                    val x = event.getX(0) - event.getX(1)
-                    val y = event.getY(0) - event.getY(1)
-                    currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+                when (event.pointerCount) {
+                    2 -> { // 핀치를 위한 더블 터치일 경우
+                        // 두손가락을 대고있는 매 순간 실행
 
-                    if (beforePinchSpacingMbr != null) {
-                        if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
-                            val zoom =
-                                if ((currentCameraZoomFactorMbr + delta) > maxZoomMbr) {
-                                    maxZoomMbr
-                                } else {
-                                    currentCameraZoomFactorMbr + delta
-                                }
-                            setZoomFactor(
-                                zoom,
-                                executorOnZoomSettingComplete = {})
-                        } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
-                            val zoom =
-                                if ((currentCameraZoomFactorMbr - delta) < 1.0f) {
-                                    1.0f
-                                } else {
-                                    currentCameraZoomFactorMbr - delta
-                                }
-                            setZoomFactor(
-                                zoom,
-                                executorOnZoomSettingComplete = {})
+                        // 현재 핀치 넓이 구하기
+                        val currentFingerSpacing: Float
+                        val x = event.getX(0) - event.getX(1)
+                        val y = event.getY(0) - event.getY(1)
+                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+
+                        if (beforePinchSpacingMbr != null) {
+                            if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
+                                val zoom =
+                                    if ((currentCameraZoomFactorMbr + delta) > maxZoomMbr) {
+                                        maxZoomMbr
+                                    } else {
+                                        currentCameraZoomFactorMbr + delta
+                                    }
+                                setZoomFactor(
+                                    zoom,
+                                    executorOnZoomSettingComplete = {})
+                            } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
+                                val zoom =
+                                    if ((currentCameraZoomFactorMbr - delta) < 1.0f) {
+                                        1.0f
+                                    } else {
+                                        currentCameraZoomFactorMbr - delta
+                                    }
+                                setZoomFactor(
+                                    zoom,
+                                    executorOnZoomSettingComplete = {})
+                            }
                         }
+
+                        // 핀치 너비를 갱신
+                        beforePinchSpacingMbr = currentFingerSpacing
+
+                        pinchBeforeMbr = true
+                        clickStartTimeMsMbr = null
+                        longClickedBeforeMbr = false
+
+                        return true
                     }
+                    1 -> { // 한손가락을 대고있는 매 순간 실행
 
-                    // 핀치 너비를 갱신
-                    beforePinchSpacingMbr = currentFingerSpacing
+                        // long click 탐지
+                        if (!pinchBeforeMbr) {
+                            if (clickStartTimeMsMbr == null) {
+                                clickStartTimeMsMbr = SystemClock.elapsedRealtime()
+                                longClickedBeforeMbr = false
+                            } else {
+                                longClickedBeforeMbr =
+                                    if (SystemClock.elapsedRealtime() - clickStartTimeMsMbr!! >= longClickTimeMsMbr) {
+                                        if (!longClickedBeforeMbr) {
+                                            // longClick 으로 전환되는 순간
 
-                    return true
-                } else {
-                    return true
+                                            Log.e(
+                                                "lc",
+                                                "x : ${event.getX(0)}, y : ${event.getY(0)}"
+                                            )
+                                        }
+                                        true
+                                    } else {
+                                        false
+                                    }
+                            }
+                        }
+
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                pinchBeforeMbr = false
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                if (!pinchBeforeMbr && !longClickedBeforeMbr) {
+                                    // 핀치도, 롱 클릭도 아닌 단순 클릭
+
+                                    Log.e("oc", "x : ${event.getX(0)}, y : ${event.getY(0)}")
+                                }
+
+                                pinchBeforeMbr = false
+                                longClickedBeforeMbr = false
+                                clickStartTimeMsMbr = null
+                            }
+
+                            MotionEvent.ACTION_CANCEL -> {
+                                pinchBeforeMbr = false
+                                longClickedBeforeMbr = false
+                                clickStartTimeMsMbr = null
+                            }
+                            else -> {}
+                        }
+
+                        return true
+                    }
+                    else -> {
+                        Log.e("tc", "tc")
+                        return true
+                    }
                 }
             }
         })
