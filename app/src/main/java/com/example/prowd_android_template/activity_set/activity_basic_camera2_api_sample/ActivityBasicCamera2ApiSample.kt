@@ -161,7 +161,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // (카메라를 서페이스 까지 초기화)
             cameraObjMbr.stopCameraObject(
-                executorOnCameraStop = {
+                onCameraStop = {
                     // 기존 저장 폴더 삭제
                     videoFile.delete()
 
@@ -214,51 +214,51 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
-                        executorOnCameraStabilizationSettingComplete = {})
+                        onComplete = {})
 
                     cameraObjMbr.setAutoFocus(
                         true,
-                        executorOnComplete = {})
+                        onComplete = {})
 
                     cameraObjMbr.setExposureTime(
                         null,
-                        executorOnComplete = {})
+                        onComplete = {})
 
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
                         imageReaderConfigVo,
                         null,
-                        executorOnSurfaceAllReady = {
+                        onComplete = {
                             // (카메라 리퀘스트 설정)
                             cameraObjMbr.setCameraRequest(
                                 onPreview = true,
                                 onImageReader = true,
                                 onMediaRecorder = false,
                                 CameraDevice.TEMPLATE_PREVIEW,
-                                executorOnCameraRequestSettingTime = {
+                                onCameraRequestSettingTime = {
                                     // todo : 멤버변수로
                                     it.set(
                                         CaptureRequest.CONTROL_AWB_MODE,
                                         CaptureRequest.CONTROL_AWB_MODE_AUTO
                                     )
                                 },
-                                executorOnCameraRequestBuilderSet = {
+                                onComplete = {
                                     // todo : 비동기라서 start 를 안할시 실행 안될 위험이 있음
                                 },
-                                executorOnError = {
+                                onError = {
 
                                 }
                             )
                         },
-                        executorOnError = {
+                        onError = {
 
                         }
                     )
                 }
             )
         } else {
-            cameraObjMbr.pauseCameraSession(executorOnCameraPause = {})
+            cameraObjMbr.pauseCameraSession(onCameraPause = {})
         }
 
         super.onPause()
@@ -285,7 +285,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         radioBtnDialogMbr?.dismiss()
 
         // 카메라 해소
-        cameraObjMbr.destroyCameraObject(executorOnCameraClear = {})
+        cameraObjMbr.destroyCameraObject(onCameraClear = {})
 
         // 랜더 스크립트 객체 해소
         scriptCCropMbr.destroy()
@@ -789,49 +789,48 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 // 떨림 보정
                                 cameraObjMbr.setCameraStabilization(
                                     true,
-                                    executorOnCameraStabilizationSettingComplete = {})
+                                    onComplete = {})
 
                                 cameraObjMbr.setAutoFocus(
                                     true,
-                                    executorOnComplete = {})
+                                    onComplete = {})
 
                                 cameraObjMbr.setExposureTime(
                                     null,
-                                    executorOnComplete = {})
+                                    onComplete = {})
 
                                 // (카메라 서페이스 설정)
                                 cameraObjMbr.setCameraOutputSurfaces(
                                     previewConfigVo,
                                     imageReaderConfigVo,
                                     null,
-                                    executorOnSurfaceAllReady = {
+                                    onComplete = {
                                         // (카메라 리퀘스트 설정)
                                         cameraObjMbr.setCameraRequest(
                                             onPreview = true,
                                             onImageReader = true,
                                             onMediaRecorder = false,
                                             CameraDevice.TEMPLATE_PREVIEW,
-                                            executorOnCameraRequestSettingTime = {
+                                            onCameraRequestSettingTime = {
                                                 // todo : 멤버변수로
                                                 it.set(
                                                     CaptureRequest.CONTROL_AWB_MODE,
                                                     CaptureRequest.CONTROL_AWB_MODE_AUTO
                                                 )
                                             },
-                                            executorOnCameraRequestBuilderSet = {
+                                            onComplete = {
                                                 // (카메라 실행)
-                                                cameraObjMbr.runCameraRequest(
-                                                    true,
+                                                cameraObjMbr.startRepeatingCameraRequest(
                                                     null,
-                                                    executorOnRequestComplete = {},
-                                                    executorOnError = {})
+                                                    onComplete = {},
+                                                    onError = {})
                                             },
-                                            executorOnError = {
+                                            onError = {
 
                                             }
                                         )
                                     },
-                                    executorOnError = {
+                                    onError = {
 
                                     }
                                 )
@@ -931,41 +930,40 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
-                        executorOnCameraStabilizationSettingComplete = {})
+                        onComplete = {})
 
                     cameraObjMbr.setAutoFocus(
                         true,
-                        executorOnComplete = {})
+                        onComplete = {})
 
                     cameraObjMbr.setExposureTime(
                         null,
-                        executorOnComplete = {})
+                        onComplete = {})
 
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
                         imageReaderConfigVo,
                         mediaRecorderConfigVo,
-                        executorOnSurfaceAllReady = {
+                        onComplete = {
                             // (카메라 리퀘스트 설정)
                             cameraObjMbr.setCameraRequest(
                                 onPreview = true,
                                 onImageReader = true,
                                 onMediaRecorder = true,
                                 CameraDevice.TEMPLATE_RECORD,
-                                executorOnCameraRequestSettingTime = {
+                                onCameraRequestSettingTime = {
                                     // todo : 멤버변수로
                                     it.set(
                                         CaptureRequest.CONTROL_AWB_MODE,
                                         CaptureRequest.CONTROL_AWB_MODE_AUTO
                                     )
                                 },
-                                executorOnCameraRequestBuilderSet = {
+                                onComplete = {
                                     // (카메라 실행)
-                                    cameraObjMbr.runCameraRequest(
-                                        true,
+                                    cameraObjMbr.startRepeatingCameraRequest(
                                         null,
-                                        executorOnRequestComplete = {
+                                        onComplete = {
                                             // (미디어 레코딩 녹화 실행)
                                             cameraObjMbr.startMediaRecording(onComplete = {
                                                 runOnUiThread {
@@ -973,20 +971,20 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                                 }
                                             })
                                         },
-                                        executorOnError = {
+                                        onError = {
                                             runOnUiThread {
                                                 bindingMbr.btn1.isEnabled = true
                                             }
                                         })
                                 },
-                                executorOnError = {
+                                onError = {
                                     runOnUiThread {
                                         bindingMbr.btn1.isEnabled = true
                                     }
                                 }
                             )
                         },
-                        executorOnError = {
+                        onError = {
                             runOnUiThread {
                                 bindingMbr.btn1.isEnabled = true
                             }
@@ -1003,7 +1001,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 // 카메라 초기화
                 cameraObjMbr.stopCameraObject(
-                    executorOnCameraStop = {
+                    onCameraStop = {
                         // 미디어 레코드를 제외한 카메라 세션 준비
                         val previewConfigVo =
                             if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
@@ -1053,36 +1051,36 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         // 떨림 보정
                         cameraObjMbr.setCameraStabilization(
                             true,
-                            executorOnCameraStabilizationSettingComplete = {})
+                            onComplete = {})
 
                         cameraObjMbr.setAutoFocus(
                             true,
-                            executorOnComplete = {})
+                            onComplete = {})
 
                         cameraObjMbr.setExposureTime(
                             null,
-                            executorOnComplete = {})
+                            onComplete = {})
 
                         // (카메라 서페이스 설정)
                         cameraObjMbr.setCameraOutputSurfaces(
                             previewConfigVo,
                             imageReaderConfigVo,
                             null,
-                            executorOnSurfaceAllReady = {
+                            onComplete = {
                                 // (카메라 리퀘스트 설정)
                                 cameraObjMbr.setCameraRequest(
                                     onPreview = true,
                                     onImageReader = true,
                                     onMediaRecorder = false,
                                     CameraDevice.TEMPLATE_PREVIEW,
-                                    executorOnCameraRequestSettingTime = {
+                                    onCameraRequestSettingTime = {
                                         // todo : 멤버변수로
                                         it.set(
                                             CaptureRequest.CONTROL_AWB_MODE,
                                             CaptureRequest.CONTROL_AWB_MODE_AUTO
                                         )
                                     },
-                                    executorOnCameraRequestBuilderSet = {
+                                    onComplete = {
                                         runOnUiThread {
                                             bindingMbr.btn1.isEnabled = true
 
@@ -1107,14 +1105,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             resultLauncherMbr.launch(mediaPlayerIntent)
                                         }
                                     },
-                                    executorOnError = {
+                                    onError = {
                                         runOnUiThread {
                                             bindingMbr.btn1.isEnabled = true
                                         }
                                     }
                                 )
                             },
-                            executorOnError = {
+                            onError = {
                                 runOnUiThread {
                                     bindingMbr.btn1.isEnabled = true
                                 }
@@ -1243,60 +1241,58 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 떨림 보정
             cameraObjMbr.setCameraStabilization(
                 true,
-                executorOnCameraStabilizationSettingComplete = {})
+                onComplete = {})
 
             cameraObjMbr.setAutoFocus(
                 true,
-                executorOnComplete = {})
+                onComplete = {})
 
             cameraObjMbr.setExposureTime(
                 null,
-                executorOnComplete = {})
+                onComplete = {})
 
             // (카메라 서페이스 설정)
             cameraObjMbr.setCameraOutputSurfaces(
                 previewConfigVo,
                 imageReaderConfigVo,
                 null,
-                executorOnSurfaceAllReady = {
+                onComplete = {
                     // (카메라 리퀘스트 설정)
                     cameraObjMbr.setCameraRequest(
                         onPreview = true,
                         onImageReader = true,
                         onMediaRecorder = false,
                         CameraDevice.TEMPLATE_PREVIEW,
-                        executorOnCameraRequestSettingTime = {
+                        onCameraRequestSettingTime = {
                             // todo : 멤버변수로
                             it.set(
                                 CaptureRequest.CONTROL_AWB_MODE,
                                 CaptureRequest.CONTROL_AWB_MODE_AUTO
                             )
                         },
-                        executorOnCameraRequestBuilderSet = {
+                        onComplete = {
                             // (카메라 실행)
-                            cameraObjMbr.runCameraRequest(
-                                true,
+                            cameraObjMbr.startRepeatingCameraRequest(
                                 null,
-                                executorOnRequestComplete = {},
-                                executorOnError = {})
+                                onComplete = {},
+                                onError = {})
                         },
-                        executorOnError = {
+                        onError = {
 
                         }
                     )
                 },
-                executorOnError = {
+                onError = {
 
                 }
             )
 
         } else { // onPause 에서 카메라가 pause 된 시점
             // (카메라 실행)
-            cameraObjMbr.runCameraRequest(
-                true,
+            cameraObjMbr.startRepeatingCameraRequest(
                 null,
-                executorOnRequestComplete = {},
-                executorOnError = {})
+                onComplete = {},
+                onError = {})
         }
     }
 
