@@ -521,9 +521,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         )
 
         // (최초 사용 카메라 객체 생성)
-        val cameraIdList = CameraObj.getCameraIdList(this)
+        val cameraInfoList = CameraObj.getSupportedCameraInfoList(this)
 
-        if (cameraIdList.size == 0) {
+        if (cameraInfoList.size == 0) {
             // 지원하는 카메라가 없음
             viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
                 true,
@@ -544,7 +544,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 초기 카메라 아이디 선정
         val cameraId: String =
             if (viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId != null) { // 기존 아이디가 있을 때
-                if (cameraIdList.contains(viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId)) {
+
+                // 기존 아이디가 현재 지원 카메라 리스트에 있는지를 확인
+                val lastCameraIdIdx = cameraInfoList.indexOfFirst {
+                    it.cameraId == viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId
+                }
+
+                if (lastCameraIdIdx != -1) {
                     // 기존 아이디가 제공 아이디 리스트에 있을 때
                     viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId!!
                 } else {
@@ -554,13 +560,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     if (CameraObj.getCameraIdFromFacing(
                             this,
                             CameraCharacteristics.LENS_FACING_BACK
-                        ) != null &&
-                        cameraIdList.contains(
-                            CameraObj.getCameraIdFromFacing(
-                                this,
-                                CameraCharacteristics.LENS_FACING_BACK
-                            )!!
-                        )
+                        ) != null
                     ) {
                         CameraObj.getCameraIdFromFacing(
                             this,
@@ -571,13 +571,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         if (CameraObj.getCameraIdFromFacing(
                                 this,
                                 CameraCharacteristics.LENS_FACING_FRONT
-                            ) != null &&
-                            cameraIdList.contains(
-                                CameraObj.getCameraIdFromFacing(
-                                    this,
-                                    CameraCharacteristics.LENS_FACING_FRONT
-                                )!!
-                            )
+                            ) != null
                         ) {
                             CameraObj.getCameraIdFromFacing(
                                 this,
@@ -585,7 +579,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             )!!
                         } else {
                             // 전후면 카메라 지원 불가시 카메라 id 리스트 첫번째 아이디 적용
-                            cameraIdList[0]
+                            cameraInfoList[0].cameraId
                         }
                     }
                 }
@@ -594,13 +588,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 if (CameraObj.getCameraIdFromFacing(
                         this,
                         CameraCharacteristics.LENS_FACING_BACK
-                    ) != null &&
-                    cameraIdList.contains(
-                        CameraObj.getCameraIdFromFacing(
-                            this,
-                            CameraCharacteristics.LENS_FACING_BACK
-                        )!!
-                    )
+                    ) != null
                 ) {
                     CameraObj.getCameraIdFromFacing(
                         this,
@@ -611,13 +599,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     if (CameraObj.getCameraIdFromFacing(
                             this,
                             CameraCharacteristics.LENS_FACING_FRONT
-                        ) != null &&
-                        cameraIdList.contains(
-                            CameraObj.getCameraIdFromFacing(
-                                this,
-                                CameraCharacteristics.LENS_FACING_FRONT
-                            )!!
-                        )
+                        ) != null
                     ) {
                         CameraObj.getCameraIdFromFacing(
                             this,
@@ -625,7 +607,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         )!!
                     } else {
                         // 전후면 카메라 지원 불가시 카메라 id 리스트 첫번째 아이디 적용
-                        cameraIdList[0]
+                        cameraInfoList[0].cameraId
                     }
                 }
             }
@@ -712,15 +694,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 카메라 전환
         bindingMbr.cameraChangeBtn.setOnClickListener {
-            val cameraIdList = CameraObj.getCameraIdList(this)
+            val cameraInfoList = CameraObj.getSupportedCameraInfoList(this)
             val cameraItemList = ArrayList<String>()
 
-            for (id in cameraIdList) {
-                cameraItemList.add("Camera $id")
+            for (id in cameraInfoList) {
+                cameraItemList.add("Camera ${id.cameraId}")
             }
 
-            var checkedIdx = cameraIdList.indexOfFirst {
-                it == viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId
+            var checkedIdx = cameraInfoList.indexOfFirst {
+                it.cameraId == viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId
             }
 
             if (checkedIdx == -1) {
@@ -740,7 +722,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
                         viewModelMbr.imageProcessingPauseMbr = false
 
-                        val checkedCameraId = cameraIdList[it]
+                        val checkedCameraId = cameraInfoList[it].cameraId
 
                         if (checkedCameraId != viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId) {
                             // 기존 저장 폴더 백업

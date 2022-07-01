@@ -31,7 +31,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.math.sqrt
 
-
 // <Camera 디바이스 하나에 대한 obj>
 // 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체
 // 센서를 조작하는 액티비티 객체와 센서 카메라 아이디 하나를 가져와서 사용
@@ -61,6 +60,7 @@ class CameraObj private constructor(
     val imageReaderSurfaceSupportedSizeListMbr: Array<Size>?,
     val mediaRecorderSurfaceSupportedSizeListMbr: Array<Size>?,
     val sensorOrientationMbr: Int, // 카메라 방향이 시계방향으로 얼마나 돌려야 디바이스 방향과 일치하는지에 대한 각도
+    val sensorSizeMbr: Rect,
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
@@ -72,7 +72,7 @@ class CameraObj private constructor(
         publishSharedCameraIdThreadVoOnStaticMemory(cameraIdMbr)
 
 
-    // [카메라 정보]
+    // [카메라 지원 정보]
     // (Auto Focus 기능을 지원해주는지)
     // CONTROL_AF_MODE_CONTINUOUS_PICTURE
     var fastAutoFocusSupportedMbr: Boolean = false
@@ -101,23 +101,28 @@ class CameraObj private constructor(
     // (LENS_FOCUS_DISTANCE 최소 초점 거리)
     // 0f 는 가장 먼 초점 거리, 가장 가깝게 초점을 맞출 수 있는 nf 값
     // 이것이 0f 라는 것은 초점이 고정되어 있다는 뜻
-    var minimumFocusDistanceMbr: Float = 0f
+    var supportedMinimumFocusDistanceMbr: Float = 0f
         private set
 
-    // todo focusDistance 변수와 설정 함수 생성
-    //   -1 의 af 일때 region 을 설정시 해당 위치, null 이라면 전체 위치
-    // (포커스 거리)
-    // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
-    // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
-    // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-    // -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-    var focusDistanceMbr: Float = 0f
+    // 떨림 보정 기능 가능 여부 (기계적) : stabilization 설정을 할 때 우선 적용
+    var isOpticalStabilizationAvailableMbr: Boolean = false
         private set
 
-    // (Exposure 시간 : 나노초 == 초/1000000000)
-    // null 이라면 Auto Exposure ON
-    // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
-    var exposureTimeNsMbr: Long? = null
+    // 떨림 보정 기능 가능 여부 (소프트웨어적) : stabilization 설정을 할 때 차선 적용
+    var isVideoStabilizationAvailableMbr: Boolean = false
+        private set
+
+    // 카메라 최대 줌 배수
+    // maxZoom 이 1.0 이라는 것은 줌이 불가능하다는 의미
+    var maxZoomMbr: Float = 1.0f
+        private set
+
+    // 카메라가 현재 리퀘스트 반복 처리중인지
+    var isRepeatingMbr: Boolean = false
+        private set
+
+    // 카메라가 현재 미디어 레코딩 중인지
+    var isRecordingMbr = false
         private set
 
     // (현 디바이스 방향과 카메라 방향에서 width, height 개념이 같은)
@@ -161,12 +166,22 @@ class CameraObj private constructor(
             }
         }
 
-    // 떨림 보정 기능 가능 여부 (기계적) : stabilization 설정을 할 때 우선 적용
-    var isOpticalStabilizationAvailableMbr: Boolean = false
+
+    // [카메라 상태 정보] : 카메라 설정에 대한 현 상태 정보
+    // todo focusDistance 변수와 설정 함수 생성
+    //   -1 의 af 일때 region 을 설정시 해당 위치, null 이라면 전체 위치
+    // (포커스 거리)
+    // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
+    // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
+    // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+    // -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+    var currentFocusDistanceMbr: Float = 0f
         private set
 
-    // 떨림 보정 기능 가능 여부 (소프트웨어적) : stabilization 설정을 할 때 차선 적용
-    var isVideoStabilizationAvailableMbr: Boolean = false
+    // (Exposure 시간 : 나노초 == 초/1000000000)
+    // null 이라면 Auto Exposure ON
+    // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
+    var exposureTimeNsMbr: Long? = null
         private set
 
     // 떨림 보정 기능 적용 여부 :
@@ -176,26 +191,9 @@ class CameraObj private constructor(
     var isCameraStabilizationSetMbr: Boolean = false
         private set
 
-    // 카메라 센서 사이즈
-    val sensorSizeMbr =
-        cameraCharacteristicsMbr.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
-
-    // 카메라 최대 줌 배수
-    // maxZoom 이 1.0 이라는 것은 줌이 불가능하다는 의미
-    var maxZoomMbr = 1.0f
-        private set
-
     // 카메라 현재 줌 배수
     // 1f 부터 maxZoomMbr 까지
-    var currentCameraZoomFactorMbr = 1.0f
-        private set
-
-    // 카메라가 현재 리퀘스트 반복 처리중인지
-    var isRepeatingMbr: Boolean = false
-        private set
-
-    // 카메라가 현재 미디어 레코딩 중인지
-    var isRecordingMbr = false
+    var currentCameraZoomFactorMbr: Float = 1.0f
         private set
 
 
@@ -258,23 +256,133 @@ class CameraObj private constructor(
             return result
         }
 
-        // (가용 카메라 아이디 리스트 반환)
-        fun getCameraIdList(parentActivity: Activity): ArrayList<String> {
-
+        // (가용 카메라 정보 리스트 반환)
+        // todo 멤버변수가 늘어나면 더 추가
+        fun getSupportedCameraInfoList(parentActivity: Activity): ArrayList<CameraInfoVo> {
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
-            val cameraIdList: ArrayList<String> = ArrayList()
-            cameraIdList.addAll(cameraManager.cameraIdList)
+            val supportedCameraInfoList: ArrayList<CameraInfoVo> = ArrayList()
 
-            return cameraIdList
+            for (cameraId in cameraManager.cameraIdList) {
+                val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+
+                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
+
+                val sensorOrientation: Int? =
+                    characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
+
+                val afAvailableModes: IntArray? =
+                    characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
+
+                val fastAutoFocusSupported =
+                    afAvailableModes?.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                        ?: false
+
+                val naturalAutoFocusSupported =
+                    afAvailableModes?.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+                        ?: false
+
+                val maxRegionAf =
+                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF)
+
+                val autoFocusMeteringAreaSupported =
+                    null != maxRegionAf && maxRegionAf >= 1
+
+                val aeAvailableModes: IntArray? =
+                    characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES)
+
+                val autoExposureSupported =
+                    !(aeAvailableModes == null || aeAvailableModes.isEmpty() || (aeAvailableModes.size == 1
+                            && aeAvailableModes[0] == CameraMetadata.CONTROL_AE_MODE_OFF))
+
+                val aeState: Int? =
+                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE)
+                val autoExposureMeteringAreaSupported =
+                    aeState != null && aeState >= 1
+
+                val awbAvailableModes: IntArray? =
+                    characteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)
+
+                val autoWhiteBalanceSupported =
+                    !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
+                            && awbAvailableModes[0] == CameraMetadata.CONTROL_AWB_MODE_OFF))
+
+                val supportedMinimumFocusDistance =
+                    characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
+                        ?: 0f
+
+
+                // (기계적 떨림 보정 정보)
+                val availableOpticalStabilization =
+                    characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
+
+                var isOpticalStabilizationAvailable = false
+                if (availableOpticalStabilization != null) {
+                    for (mode in availableOpticalStabilization) {
+                        if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
+                            isOpticalStabilizationAvailable = true
+                        }
+                    }
+                }
+
+                // (소프트웨어 떨림 보정 정보)
+                val availableVideoStabilization =
+                    characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+
+                var isVideoStabilizationAvailable = false
+                if (availableVideoStabilization != null) {
+                    for (mode in availableVideoStabilization) {
+                        if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
+                            isVideoStabilizationAvailable = true
+                        }
+                    }
+                }
+
+                val sensorSize =
+                    characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
+
+                val maxZoom: Float =
+                    if (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) == null) {
+                        1.0f
+                    } else {
+                        if (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)!! < 1.0f) {
+                            1.0f
+                        } else {
+                            characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)!!
+                        }
+                    }
+
+                if (sensorOrientation != null && sensorSize != null) {
+                    supportedCameraInfoList.add(
+                        CameraInfoVo(
+                            cameraId,
+                            facing,
+                            sensorOrientation,
+                            fastAutoFocusSupported,
+                            naturalAutoFocusSupported,
+                            autoFocusMeteringAreaSupported,
+                            autoExposureSupported,
+                            autoExposureMeteringAreaSupported,
+                            autoWhiteBalanceSupported,
+                            supportedMinimumFocusDistance,
+                            isOpticalStabilizationAvailable,
+                            isVideoStabilizationAvailable,
+                            sensorSize,
+                            maxZoom
+                        )
+                    )
+                }
+            }
+
+            return supportedCameraInfoList
         }
 
         // (카메라 아이디에 해당하는 가용 사이즈 & FPS 반환)
         fun getCameraInfo(
             parentActivity: Activity,
             cameraId: String
-        ): CameraInfo {
+        ): CameraSizeInfoVo {
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
             val characteristics = cameraManager.getCameraCharacteristics(cameraId)
@@ -287,9 +395,7 @@ class CameraObj private constructor(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
             )!!
 
-            val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
-
-            val previewInfoList = ArrayList<CameraInfo.DeviceInfo>()
+            val previewInfoList = ArrayList<CameraSizeInfoVo.SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -303,14 +409,14 @@ class CameraObj private constructor(
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     previewInfoList.add(
-                        CameraInfo.DeviceInfo(
+                        CameraSizeInfoVo.SizeSpecInfoVo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val imageReaderInfoList = ArrayList<CameraInfo.DeviceInfo>()
+            val imageReaderInfoList = ArrayList<CameraSizeInfoVo.SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -324,14 +430,14 @@ class CameraObj private constructor(
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     imageReaderInfoList.add(
-                        CameraInfo.DeviceInfo(
+                        CameraSizeInfoVo.SizeSpecInfoVo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val mediaRecorderInfoList = ArrayList<CameraInfo.DeviceInfo>()
+            val mediaRecorderInfoList = ArrayList<CameraSizeInfoVo.SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -345,14 +451,14 @@ class CameraObj private constructor(
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     mediaRecorderInfoList.add(
-                        CameraInfo.DeviceInfo(
+                        CameraSizeInfoVo.SizeSpecInfoVo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val highSpeedInfoList = ArrayList<CameraInfo.DeviceInfo>()
+            val highSpeedInfoList = ArrayList<CameraSizeInfoVo.SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
@@ -362,7 +468,7 @@ class CameraObj private constructor(
                     cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
                         val fps = fpsRange.upper
                         highSpeedInfoList.add(
-                            CameraInfo.DeviceInfo(
+                            CameraSizeInfoVo.SizeSpecInfoVo(
                                 size, fps
                             )
                         )
@@ -370,9 +476,7 @@ class CameraObj private constructor(
                 }
             }
 
-            return CameraInfo(
-                cameraId,
-                facing,
+            return CameraSizeInfoVo(
                 previewInfoList,
                 imageReaderInfoList,
                 mediaRecorderInfoList,
@@ -491,7 +595,11 @@ class CameraObj private constructor(
             val sensorOrientationMbr: Int? =
                 cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
 
-            if (null == streamConfigurationMap || null == sensorOrientationMbr) {
+
+            val sensorSize =
+                cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
+
+            if (null == streamConfigurationMap || null == sensorOrientationMbr || null == sensorSize) {
                 // 필수 정보가 하나라도 없으면 null 반환
                 return null
             }
@@ -522,6 +630,7 @@ class CameraObj private constructor(
                 imageReaderSurfaceSupportedSizeList,
                 mediaRecorderSurfaceSupportedSizeList,
                 sensorOrientationMbr,
+                sensorSize,
                 onCameraDisconnectedAndClearCamera
             )
 
@@ -550,11 +659,11 @@ class CameraObj private constructor(
                 null != maxRegionAf && maxRegionAf >= 1
 
             // (가장 가까운 초점 거리)
-            resultCameraObject.minimumFocusDistanceMbr =
+            resultCameraObject.supportedMinimumFocusDistanceMbr =
                 cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                     ?: 0f
 
-            resultCameraObject.focusDistanceMbr =
+            resultCameraObject.currentFocusDistanceMbr =
                 if (resultCameraObject.naturalAutoFocusSupportedMbr) {
                     // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
                     -1f
@@ -563,11 +672,11 @@ class CameraObj private constructor(
                     -2f
                 } else {
                     // 사용 가능 오토 포커스가 없을 때
-                    if (resultCameraObject.minimumFocusDistanceMbr >= 0.5) {
+                    if (resultCameraObject.supportedMinimumFocusDistanceMbr >= 0.5) {
                         // 최소 포커스 거리가 0.5 이상이라면 0.5
                         0.5f
                     } else {
-                        resultCameraObject.minimumFocusDistanceMbr
+                        resultCameraObject.supportedMinimumFocusDistanceMbr
                     }
                 }
 
@@ -1210,26 +1319,26 @@ class CameraObj private constructor(
             // [카메라 오브젝트 내부 정보를 최종적으로 채택]
             // todo : 이 최종 영역 설정을 점차 늘리고, 위의 커스텀 설정 공간은 최종적으로 없애버릴 것
             // (포커스 거리 설정)
-            if (focusDistanceMbr == -1f) {
+            if (currentFocusDistanceMbr == -1f) {
                 // todo 포커스 범위
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
                 )
-            } else if (focusDistanceMbr == -2f) {
+            } else if (currentFocusDistanceMbr == -2f) {
                 // todo 포커스 범위
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                 )
-            } else if (focusDistanceMbr >= 0f) {
+            } else if (currentFocusDistanceMbr >= 0f) {
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_OFF
                 )
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.LENS_FOCUS_DISTANCE,
-                    focusDistanceMbr
+                    currentFocusDistanceMbr
                 )
             }
 
@@ -1985,10 +2094,10 @@ class CameraObj private constructor(
                 return@run
             }
 
-            focusDistanceMbr = focusDistance
+            currentFocusDistanceMbr = focusDistance
 
-            if (focusDistance > minimumFocusDistanceMbr) {
-                focusDistanceMbr = minimumFocusDistanceMbr
+            if (focusDistance > supportedMinimumFocusDistanceMbr) {
+                currentFocusDistanceMbr = supportedMinimumFocusDistanceMbr
             }
 
             // 리퀘스트 빌더가 생성되지 않은 경우
@@ -2004,7 +2113,7 @@ class CameraObj private constructor(
             )
             captureRequestBuilderMbr!!.set(
                 CaptureRequest.LENS_FOCUS_DISTANCE,
-                focusDistanceMbr
+                currentFocusDistanceMbr
             )
 
             // 세션이 현재 실행중이 아니라면 여기서 멈추기
@@ -2045,7 +2154,7 @@ class CameraObj private constructor(
             }
 
             if (fastAutoFocus) {
-                focusDistanceMbr = if (fastAutoFocusSupportedMbr) {
+                currentFocusDistanceMbr = if (fastAutoFocusSupportedMbr) {
                     // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
                     -2f
                 } else {
@@ -2053,7 +2162,7 @@ class CameraObj private constructor(
                     -1f
                 }
             } else {
-                focusDistanceMbr = if (naturalAutoFocusSupportedMbr) {
+                currentFocusDistanceMbr = if (naturalAutoFocusSupportedMbr) {
                     // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
                     -1f
                 } else {
@@ -2069,12 +2178,12 @@ class CameraObj private constructor(
                 return@run
             }
 
-            if (focusDistanceMbr == -1f) {
+            if (currentFocusDistanceMbr == -1f) {
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
                 )
-            } else if (focusDistanceMbr == -2f) {
+            } else if (currentFocusDistanceMbr == -2f) {
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
@@ -2717,23 +2826,53 @@ class CameraObj private constructor(
     )
 
     // image reader format : YUV 420 888 을 사용
-    data class CameraInfo(
+    data class CameraSizeInfoVo(
+        val previewInfoList: ArrayList<SizeSpecInfoVo>,
+        val imageReaderInfoList: ArrayList<SizeSpecInfoVo>,
+        val mediaRecorderInfoList: ArrayList<SizeSpecInfoVo>,
+        val highSpeedInfoList: ArrayList<SizeSpecInfoVo>
+    ) {
+        data class SizeSpecInfoVo(
+            val size: Size,
+            val fps: Int
+        )
+    }
+
+    data class CameraInfoVo(
         val cameraId: String,
         // facing
         // 전면 카메라. value : 0
         // 후면 카메라. value : 1
         // 기타 카메라. value : 2
         val facing: Int,
-        val previewInfoList: ArrayList<DeviceInfo>,
-        val imageReaderInfoList: ArrayList<DeviceInfo>,
-        val mediaRecorderInfoList: ArrayList<DeviceInfo>,
-        val highSpeedInfoList: ArrayList<DeviceInfo>
-    ) {
-        data class DeviceInfo(
-            val size: Size,
-            val fps: Int
-        )
-    }
+        // 카메라 방향이 시계방향으로 얼마나 돌려야 디바이스 방향과 일치하는지에 대한 각도
+        val sensorOrientation: Int,
+        // CONTROL_AF_MODE_CONTINUOUS_PICTURE auto focus 지원 여부
+        val fastAutoFocusSupported: Boolean,
+        // CONTROL_AF_MODE_CONTINUOUS_VIDEO auto focus 지원 여부
+        val naturalAutoFocusSupported: Boolean,
+        // AutoFocusArea 설정 가능 여부
+        val autoFocusMeteringAreaSupported: Boolean,
+        // Auto Exposure 기능을 지원해주는지
+        val autoExposureSupported: Boolean,
+        // AutoExposureArea 설정 가능 여부
+        val autoExposureMeteringAreaSupported: Boolean,
+        // Auto WhiteBalance 기능을 지원해주는지
+        val autoWhiteBalanceSupported: Boolean,
+        // LENS_FOCUS_DISTANCE 최소 초점 거리
+        // 0f 는 가장 먼 초점 거리, 가장 가깝게 초점을 맞출 수 있는 nf 값
+        // 이것이 0f 라는 것은 초점이 고정되어 있다는 뜻
+        var supportedMinimumFocusDistance: Float,
+        // 떨림 보정 기능 가능 여부 (기계적) : stabilization 설정을 할 때 우선 적용
+        var isOpticalStabilizationAvailable: Boolean,
+        // 떨림 보정 기능 가능 여부 (소프트웨어적) : stabilization 설정을 할 때 차선 적용
+        var isVideoStabilizationAvailable: Boolean,
+        // 카메라 센서 사이즈
+        val sensorSize: Rect,
+        // 카메라 최대 줌 배수
+        // maxZoom 이 1.0 이라는 것은 줌이 불가능하다는 의미
+        var maxZoom: Float
+    )
 
     data class CameraIdThreadVo(
         val cameraSemaphore: Semaphore,
