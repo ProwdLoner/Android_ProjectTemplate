@@ -117,14 +117,6 @@ class CameraObj private constructor(
     var maxZoomMbr: Float = 1.0f
         private set
 
-    // 카메라가 현재 리퀘스트 반복 처리중인지
-    var isRepeatingMbr: Boolean = false
-        private set
-
-    // 카메라가 현재 미디어 레코딩 중인지
-    var isRecordingMbr = false
-        private set
-
     // (현 디바이스 방향과 카메라 방향에서 width, height 개념이 같은)
     // 카메라와 디바이스 방향이 90도, 270 도 차이가 난다면 둘의 Width, Height 개념은 상반됨
     var isDeviceAndCameraWhSameMbr: Boolean = false
@@ -167,10 +159,10 @@ class CameraObj private constructor(
         }
 
 
-    // [카메라 상태 정보] : 카메라 설정에 대한 현 상태 정보
+    // [카메라 상태 정보] : 설정된 카메라 현 상태 정보
     // todo focusDistance 변수와 설정 함수 생성
     //   -1 의 af 일때 region 을 설정시 해당 위치, null 이라면 전체 위치
-    // (포커스 거리)
+    // (현 설정 포커스 거리)
     // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
     // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
     // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
@@ -178,10 +170,11 @@ class CameraObj private constructor(
     var currentFocusDistanceMbr: Float = 0f
         private set
 
-    // (Exposure 시간 : 나노초 == 초/1000000000)
+    // (현 설정 센서 노출 시간 : 나노초 == 초/1000000000)
+    // 한 프레임에 대한 노출 시간
     // null 이라면 Auto Exposure ON
     // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
-    var exposureTimeNsMbr: Long? = null
+    var currentFrameExposureTimeNsMbr: Long? = null
         private set
 
     // 떨림 보정 기능 적용 여부 :
@@ -194,6 +187,14 @@ class CameraObj private constructor(
     // 카메라 현재 줌 배수
     // 1f 부터 maxZoomMbr 까지
     var currentCameraZoomFactorMbr: Float = 1.0f
+        private set
+
+    // 카메라가 현재 리퀘스트 반복 처리중인지
+    var nowRepeatingMbr: Boolean = false
+        private set
+
+    // 카메라가 현재 미디어 레코딩 중인지
+    var nowRecordingMbr = false
         private set
 
 
@@ -224,40 +225,8 @@ class CameraObj private constructor(
     // ---------------------------------------------------------------------------------------------
     // <스태틱 공간>
     companion object {
-        // (카메라 아이디를 반환하는 스태틱 함수)
-        // CameraCharacteristics.LENS_FACING_FRONT: 전면 카메라. value : 0
-        // CameraCharacteristics.LENS_FACING_BACK: 후면 카메라. value : 1
-        // CameraCharacteristics.LENS_FACING_EXTERNAL: 기타 카메라. value : 2
-        fun getCameraIdFromFacing(parentActivity: Activity, lensFacing: Int): String? {
-            var result: String? = null
-
-            val cameraManager: CameraManager =
-                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-            for (cameraId in cameraManager.cameraIdList) { // 존재하는 cameraId 를 순회
-                // 카메라 정보 반환
-                val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId)
-
-                // 카메라 Facing 반환
-                val deviceLensFacing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
-
-                if (null != deviceLensFacing) { // 카메라 Facing null 체크
-                    if (lensFacing == deviceLensFacing) { // 해당 카메라 facing 이 원하는 facing 일 경우
-                        val map =
-                            cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                        if (null != map) { // 현 id 에서 제공해주는 map 이 존재할 때에 제대로된 카메라 센서로 반환
-                            result = cameraId
-                            break
-                        }
-                    }
-                }
-            }
-
-            return result
-        }
-
         // (가용 카메라 정보 리스트 반환)
-        // todo 멤버변수가 늘어나면 더 추가
+        // todo 카메라 지원 정보가 늘어나면 더 추가
         fun getSupportedCameraInfoList(parentActivity: Activity): ArrayList<CameraInfoVo> {
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -379,7 +348,7 @@ class CameraObj private constructor(
         }
 
         // (카메라 아이디에 해당하는 가용 사이즈 & FPS 반환)
-        fun getCameraInfo(
+        fun getSupportedCameraSizeInfo(
             parentActivity: Activity,
             cameraId: String
         ): CameraSizeInfoVo {
@@ -485,6 +454,17 @@ class CameraObj private constructor(
         }
 
         // (카메라 실행 스레드 리스트와 발행 세마포어)
+        // 카메라 관련 함수 실행시 사용될 스레드와 세마포어
+        // 카메라라는 자원은 하나이므로 하나의 카메라를 조작할 때에는 하나의 스레드에서 싱크를 맞춰야
+        // 하기에 이를 스태틱 공간에 생성하여 사용
+        data class CameraIdThreadVo(
+            val cameraId: String,
+            val cameraSemaphore: Semaphore,
+            val cameraHandlerThreadObj: HandlerThreadObj,
+            val imageReaderHandlerThreadObj: HandlerThreadObj,
+            var publishCount: Int
+        )
+
         private val cameraIdThreadVoList: ArrayList<CameraIdThreadVo> = ArrayList()
         private val cameraIdThreadVoListSemaphore: Semaphore = Semaphore(1)
 
@@ -494,14 +474,15 @@ class CameraObj private constructor(
         private fun publishSharedCameraIdThreadVoOnStaticMemory(cameraId: String): CameraIdThreadVo {
             cameraIdThreadVoListSemaphore.acquire()
 
-            // 해당 아이디에 기존 발행된 스레드가 존재하는지 찾기
+            // 해당 아이디에 대해 기존 발행된 스레드가 존재하는지 찾기
             val listIdx = cameraIdThreadVoList.indexOfFirst {
-                it.cameraHandlerThreadObj.threadName == cameraId
+                it.cameraId == cameraId
             }
 
             if (-1 == listIdx) { // 기존에 발행된 스레드 객체가 없다면,
                 // 새로운 스레드 객체를 발행
                 val cameraThreadVo = CameraIdThreadVo(
+                    cameraId,
                     Semaphore(1),
                     HandlerThreadObj(cameraId),
                     HandlerThreadObj(cameraId),
@@ -536,7 +517,7 @@ class CameraObj private constructor(
 
             // 해당 아이디에 기존 발행된 스레드가 존재하는지 찾기
             val listIdx = cameraIdThreadVoList.indexOfFirst {
-                it.cameraHandlerThreadObj.threadName == cameraId
+                it.cameraId == cameraId
             }
 
             if (listIdx == -1) { // 발행된적 없는 경우
@@ -595,11 +576,13 @@ class CameraObj private constructor(
             val sensorOrientationMbr: Int? =
                 cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
 
-
             val sensorSize =
                 cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
 
-            if (null == streamConfigurationMap || null == sensorOrientationMbr || null == sensorSize) {
+            if (null == streamConfigurationMap ||
+                null == sensorOrientationMbr ||
+                null == sensorSize
+            ) {
                 // 필수 정보가 하나라도 없으면 null 반환
                 return null
             }
@@ -635,7 +618,7 @@ class CameraObj private constructor(
             )
 
             // [카메라 객체 내부 멤버변수 생성]
-            // (AF 지원 가능 여부)
+            // AF 지원 가능 여부
             val afAvailableModes: IntArray? =
                 cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
 
@@ -658,7 +641,7 @@ class CameraObj private constructor(
             resultCameraObject.autoFocusMeteringAreaSupportedMbr =
                 null != maxRegionAf && maxRegionAf >= 1
 
-            // (가장 가까운 초점 거리)
+            // 가장 가까운 초점 거리
             resultCameraObject.supportedMinimumFocusDistanceMbr =
                 cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                     ?: 0f
@@ -680,7 +663,7 @@ class CameraObj private constructor(
                     }
                 }
 
-            // (AE 지원 가능 여부)
+            // AE 지원 가능 여부
             val aeAvailableModes: IntArray? =
                 cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES)
 
@@ -694,7 +677,7 @@ class CameraObj private constructor(
             resultCameraObject.autoExposureMeteringAreaSupportedMbr =
                 aeState != null && aeState >= 1
 
-            // (AWB 지원 가능 여부)
+            // AWB 지원 가능 여부
             val awbAvailableModes: IntArray? =
                 cameraCharacteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)
 
@@ -702,7 +685,7 @@ class CameraObj private constructor(
                 !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
                         && awbAvailableModes[0] == CameraMetadata.CONTROL_AWB_MODE_OFF))
 
-            // (max zoom 정보)
+            // max zoom 정보
             resultCameraObject.maxZoomMbr = if (resultCameraObject.sensorSizeMbr == null) {
                 1.0f
             } else {
@@ -720,7 +703,7 @@ class CameraObj private constructor(
                 }
             }
 
-            // (기계적 떨림 보정 정보)
+            // 기계적 떨림 보정 정보
             val availableOpticalStabilization =
                 cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
 
@@ -732,7 +715,7 @@ class CameraObj private constructor(
                 }
             }
 
-            // (소프트웨어 떨림 보정 정보)
+            // 소프트웨어 떨림 보정 정보
             val availableVideoStabilization =
                 cameraCharacteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
 
@@ -758,6 +741,7 @@ class CameraObj private constructor(
     // 실행시 카메라 초기화를 먼저 실행 (이미 생성된 CameraDevice 만 놔두고 모든것을 초기화)
 
     // onError 에러 코드 :
+    // 아래 에러코드가 실행된다면 카메라가 초기화 된 상태에서 멈추며 executorOnError 가 실행됨
     // 1 : 출력 서페이스가 하나도 입력되어 있지 않음
     // 2 : 해당 사이즈 이미지 리더를 지원하지 않음
     // 3 : 해당 사이즈 미디어 리코더를 지원하지 않음
@@ -848,17 +832,17 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
             )
 
-            if (isRecordingMbr) {
+            if (nowRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
                 mediaRecorderMbr?.reset()
-                isRecordingMbr = false
+                nowRecordingMbr = false
 
                 cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
-            } else if (isRepeatingMbr) {
+                nowRepeatingMbr = false
+            } else if (nowRepeatingMbr) {
                 // 세션이 실행중이라면 중지
                 cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
+                nowRepeatingMbr = false
             }
 
             // 프리뷰가 설정되어 있다면 리스너 비우기
@@ -1320,18 +1304,19 @@ class CameraObj private constructor(
             // todo : 이 최종 영역 설정을 점차 늘리고, 위의 커스텀 설정 공간은 최종적으로 없애버릴 것
             // (포커스 거리 설정)
             if (currentFocusDistanceMbr == -1f) {
-                // todo 포커스 범위
+                // 자연스런 오토 포커스 설정
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
                 )
             } else if (currentFocusDistanceMbr == -2f) {
-                // todo 포커스 범위
+                // 빠른 오토 포커스 설정
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                 )
             } else if (currentFocusDistanceMbr >= 0f) {
+                // 포커스 수동 거리 설정
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_OFF
@@ -1343,12 +1328,14 @@ class CameraObj private constructor(
             }
 
             // (Exposure 설정)
-            if (exposureTimeNsMbr == null) {
+            if (currentFrameExposureTimeNsMbr == null) {
+                // AE 설정
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON
                 )
             } else {
+                // 수동 노출 시간 설정
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_OFF
@@ -1356,45 +1343,43 @@ class CameraObj private constructor(
 
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    exposureTimeNsMbr
+                    currentFrameExposureTimeNsMbr
                 )
             }
 
             // (오브젝트 내부 줌 정보를 설정)
-            if (sensorSizeMbr != null) {
-                val zoom = if (maxZoomMbr < currentCameraZoomFactorMbr) {
-                    // 가용 줌 최대치에 설정을 맞추기
-                    maxZoomMbr
-                } else if (currentCameraZoomFactorMbr < 1f) {
-                    1f
-                } else {
-                    currentCameraZoomFactorMbr
-                }
-
-                // 센서 사이즈 중심점
-                val centerX =
-                    sensorSizeMbr.width() / 2
-                val centerY =
-                    sensorSizeMbr.height() / 2
-
-                // 센서 사이즈에서 중심을 기반 크롭 박스 설정
-                // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
-                val deltaX =
-                    ((0.5f * sensorSizeMbr.width()) / zoom).toInt()
-                val deltaY =
-                    ((0.5f * sensorSizeMbr.height()) / zoom).toInt()
-
-                val mCropRegion = Rect().apply {
-                    set(
-                        centerX - deltaX,
-                        centerY - deltaY,
-                        centerX + deltaX,
-                        centerY + deltaY
-                    )
-                }
-
-                captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+            val zoom = if (maxZoomMbr < currentCameraZoomFactorMbr) {
+                // 가용 줌 최대치에 설정을 맞추기
+                maxZoomMbr
+            } else if (currentCameraZoomFactorMbr < 1f) {
+                1f
+            } else {
+                currentCameraZoomFactorMbr
             }
+
+            // 센서 사이즈 중심점
+            val centerX =
+                sensorSizeMbr.width() / 2
+            val centerY =
+                sensorSizeMbr.height() / 2
+
+            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
+            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
+            val deltaX =
+                ((0.5f * sensorSizeMbr.width()) / zoom).toInt()
+            val deltaY =
+                ((0.5f * sensorSizeMbr.height()) / zoom).toInt()
+
+            val mCropRegion = Rect().apply {
+                set(
+                    centerX - deltaX,
+                    centerY - deltaY,
+                    centerX + deltaX,
+                    centerY + deltaY
+                )
+            }
+
+            captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
 
             // (카메라 떨림 보정 여부 반영)
             if (isCameraStabilizationSetMbr) { // 떨림 보정 on
@@ -1431,7 +1416,7 @@ class CameraObj private constructor(
 
 
             // [기존 세션이 실행중이라면 곧바로 설정 적용]
-            if (isRepeatingMbr) {
+            if (nowRepeatingMbr) {
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
                     null,
@@ -1444,9 +1429,9 @@ class CameraObj private constructor(
         }
     }
 
+    // todo captureCallback 설정 처리
     // (준비된 카메라 리퀘스트 실행 함수)
     // isRepeating 인자가 true 라면 프리뷰와 같은 지속적 요청, false 라면 capture
-
     // onError 에러 코드 :
     // 1 : 카메라 세션이 생성되지 않음
     // 2 : 카메라 리퀘스트 빌더가 생성되지 않음
@@ -1478,7 +1463,7 @@ class CameraObj private constructor(
                     captureCallback,
                     cameraThreadVoMbr.cameraHandlerThreadObj.handler
                 )
-                isRepeatingMbr = true
+                nowRepeatingMbr = true
 
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnRequestComplete()
@@ -1495,7 +1480,7 @@ class CameraObj private constructor(
                     cameraThreadVoMbr.cameraHandlerThreadObj.handler
                 )
 
-                isRepeatingMbr = false
+                nowRepeatingMbr = false
 
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnRequestComplete()
@@ -1512,9 +1497,9 @@ class CameraObj private constructor(
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            if (isRepeatingMbr) {
+            if (nowRepeatingMbr) {
                 cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
+                nowRepeatingMbr = false
             }
 
             cameraThreadVoMbr.cameraSemaphore.release()
@@ -1536,17 +1521,17 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
             )
 
-            if (isRecordingMbr) {
+            if (nowRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
                 mediaRecorderMbr?.reset()
-                isRecordingMbr = false
+                nowRecordingMbr = false
 
                 cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
-            } else if (isRepeatingMbr) {
+                nowRepeatingMbr = false
+            } else if (nowRepeatingMbr) {
                 // 세션이 실행중이라면 중지
                 cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
+                nowRepeatingMbr = false
             }
 
             // 프리뷰가 설정되어 있다면 리스너 비우기
@@ -1608,17 +1593,17 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
             )
 
-            if (isRecordingMbr) {
+            if (nowRecordingMbr) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
                 mediaRecorderMbr?.reset()
-                isRecordingMbr = false
+                nowRecordingMbr = false
 
                 cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
-            } else if (isRepeatingMbr) {
+                nowRepeatingMbr = false
+            } else if (nowRepeatingMbr) {
                 // 세션이 실행중이라면 중지
                 cameraCaptureSessionMbr?.stopRepeating()
-                isRepeatingMbr = false
+                nowRepeatingMbr = false
             }
 
             // 프리뷰가 설정되어 있다면 리스너 비우기
@@ -1824,13 +1809,13 @@ class CameraObj private constructor(
                 return@run
             }
 
-            if (!isRepeatingMbr) { // 카메라 실행 중이 아닐 때
+            if (!nowRepeatingMbr) { // 카메라 실행 중이 아닐 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(2)
                 return@run
             }
 
-            if (isRecordingMbr) { // 이미 녹화 중일 때
+            if (nowRecordingMbr) { // 이미 녹화 중일 때
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(0)
                 return@run
@@ -1838,7 +1823,7 @@ class CameraObj private constructor(
 
             mediaRecorderMbr!!.start()
 
-            isRecordingMbr = true
+            nowRecordingMbr = true
 
             cameraThreadVoMbr.cameraSemaphore.release()
             onComplete(0)
@@ -1862,13 +1847,13 @@ class CameraObj private constructor(
                 return@run
             }
 
-            if (!isRepeatingMbr) {
+            if (!nowRepeatingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(2)
                 return@run
             }
 
-            if (isRecordingMbr) {
+            if (nowRecordingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(0)
                 return@run
@@ -1876,7 +1861,7 @@ class CameraObj private constructor(
 
             mediaRecorderMbr!!.resume()
 
-            isRecordingMbr = true
+            nowRecordingMbr = true
 
             cameraThreadVoMbr.cameraSemaphore.release()
             onComplete(0)
@@ -1893,9 +1878,9 @@ class CameraObj private constructor(
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            if (isRecordingMbr) {
+            if (nowRecordingMbr) {
                 mediaRecorderMbr?.pause()
-                isRecordingMbr = false
+                nowRecordingMbr = false
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(0)
             } else {
@@ -1934,7 +1919,7 @@ class CameraObj private constructor(
 
             currentCameraZoomFactorMbr = zoom
 
-            if (captureRequestBuilderMbr != null && sensorSizeMbr != null) {
+            if (captureRequestBuilderMbr != null) {
                 val centerX =
                     sensorSizeMbr.width() / 2
                 val centerY =
@@ -1955,13 +1940,13 @@ class CameraObj private constructor(
 
                 captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
 
-                if (isRepeatingMbr) {
+                if (nowRepeatingMbr) {
                     cameraCaptureSessionMbr!!.setRepeatingRequest(
                         captureRequestBuilderMbr!!.build(),
                         null,
                         cameraThreadVoMbr.cameraHandlerThreadObj.handler
                     )
-                    isRepeatingMbr = true
+                    nowRepeatingMbr = true
 
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnZoomSettingComplete(zoom)
@@ -2025,7 +2010,7 @@ class CameraObj private constructor(
                 }
 
                 // 세션이 현재 실행중이 아니라면 여기서 멈추기
-                if (!isRepeatingMbr) {
+                if (!nowRepeatingMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
                     return@run
@@ -2059,7 +2044,7 @@ class CameraObj private constructor(
                     CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
                 )
 
-                if (!isRepeatingMbr) {
+                if (!nowRepeatingMbr) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     executorOnCameraStabilizationSettingComplete()
                     return@run
@@ -2117,7 +2102,7 @@ class CameraObj private constructor(
             )
 
             // 세션이 현재 실행중이 아니라면 여기서 멈추기
-            if (!isRepeatingMbr) {
+            if (!nowRepeatingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnComplete()
                 return@run
@@ -2191,7 +2176,7 @@ class CameraObj private constructor(
             }
 
             // 세션이 현재 실행중이 아니라면 여기서 멈추기
-            if (!isRepeatingMbr) {
+            if (!nowRepeatingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnComplete()
                 return@run
@@ -2212,7 +2197,7 @@ class CameraObj private constructor(
     // (Exposure 설정)
     // exposureNanoSec : 나노초 == 초/1000000000
     //     음수라면 Auto Exposure ON
-    // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
+    // ex : 1000000000 / 80
     fun setExposureTime(
         exposureNanoSec: Long?,
         executorOnComplete: () -> Unit
@@ -2227,7 +2212,11 @@ class CameraObj private constructor(
                 return@run
             }
 
-            exposureTimeNsMbr = exposureNanoSec
+            currentFrameExposureTimeNsMbr = if (exposureNanoSec == null || exposureNanoSec < 0) {
+                null
+            } else {
+                exposureNanoSec
+            }
 
             // 리퀘스트 빌더가 생성되지 않은 경우
             if (captureRequestBuilderMbr == null) {
@@ -2236,7 +2225,7 @@ class CameraObj private constructor(
                 return@run
             }
 
-            if (exposureTimeNsMbr == null) {
+            if (currentFrameExposureTimeNsMbr == null) {
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON
@@ -2249,12 +2238,12 @@ class CameraObj private constructor(
 
                 captureRequestBuilderMbr!!.set(
                     CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    exposureTimeNsMbr
+                    currentFrameExposureTimeNsMbr
                 )
             }
 
             // 세션이 현재 실행중이 아니라면 여기서 멈추기
-            if (!isRepeatingMbr) {
+            if (!nowRepeatingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 executorOnComplete()
                 return@run
@@ -2455,17 +2444,17 @@ class CameraObj private constructor(
                         cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
                     )
 
-                    if (isRecordingMbr) {
+                    if (nowRecordingMbr) {
                         // 레코딩 중이라면 레코더 종료 후 세션 중지
                         mediaRecorderMbr?.reset()
-                        isRecordingMbr = false
+                        nowRecordingMbr = false
 
                         cameraCaptureSessionMbr?.stopRepeating()
-                        isRepeatingMbr = false
-                    } else if (isRepeatingMbr) {
+                        nowRepeatingMbr = false
+                    } else if (nowRepeatingMbr) {
                         // 세션이 실행중이라면 중지
                         cameraCaptureSessionMbr?.stopRepeating()
-                        isRepeatingMbr = false
+                        nowRepeatingMbr = false
                     }
 
                     // 프리뷰가 설정되어 있다면 리스너 비우기
@@ -2521,17 +2510,17 @@ class CameraObj private constructor(
                         cameraThreadVoMbr.imageReaderHandlerThreadObj.handler
                     )
 
-                    if (isRecordingMbr) {
+                    if (nowRecordingMbr) {
                         // 레코딩 중이라면 레코더 종료 후 세션 중지
                         mediaRecorderMbr?.reset()
-                        isRecordingMbr = false
+                        nowRecordingMbr = false
 
                         cameraCaptureSessionMbr?.stopRepeating()
-                        isRepeatingMbr = false
-                    } else if (isRepeatingMbr) {
+                        nowRepeatingMbr = false
+                    } else if (nowRepeatingMbr) {
                         // 세션이 실행중이라면 중지
                         cameraCaptureSessionMbr?.stopRepeating()
-                        isRepeatingMbr = false
+                        nowRepeatingMbr = false
                     }
 
                     // 프리뷰가 설정되어 있다면 리스너 비우기
@@ -2841,9 +2830,9 @@ class CameraObj private constructor(
     data class CameraInfoVo(
         val cameraId: String,
         // facing
-        // 전면 카메라. value : 0
-        // 후면 카메라. value : 1
-        // 기타 카메라. value : 2
+        // CameraCharacteristics.LENS_FACING_FRONT: 전면 카메라. value : 0
+        // CameraCharacteristics.LENS_FACING_BACK: 후면 카메라. value : 1
+        // CameraCharacteristics.LENS_FACING_EXTERNAL: 기타 카메라. value : 2
         val facing: Int,
         // 카메라 방향이 시계방향으로 얼마나 돌려야 디바이스 방향과 일치하는지에 대한 각도
         val sensorOrientation: Int,
@@ -2872,12 +2861,5 @@ class CameraObj private constructor(
         // 카메라 최대 줌 배수
         // maxZoom 이 1.0 이라는 것은 줌이 불가능하다는 의미
         var maxZoom: Float
-    )
-
-    data class CameraIdThreadVo(
-        val cameraSemaphore: Semaphore,
-        val cameraHandlerThreadObj: HandlerThreadObj,
-        val imageReaderHandlerThreadObj: HandlerThreadObj,
-        var publishCount: Int
     )
 }

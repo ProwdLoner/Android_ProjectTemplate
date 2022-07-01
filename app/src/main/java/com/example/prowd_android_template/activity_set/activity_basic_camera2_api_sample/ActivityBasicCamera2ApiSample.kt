@@ -155,7 +155,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        if (cameraObjMbr.isRecordingMbr) { // 레코딩 중이라면 기존 레코딩 세션을 제거 후 프리뷰 세션으로 전환
+        if (cameraObjMbr.nowRecordingMbr) { // 레코딩 중이라면 기존 레코딩 세션을 제거 후 프리뷰 세션으로 전환
             // 기존 저장 폴더 백업
             val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
 
@@ -554,57 +554,45 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 기존 아이디가 제공 아이디 리스트에 있을 때
                     viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId!!
                 } else {
-                    // 기존 아이디가 제공 아이디 리스트에 없을 때
+                    // 기존 아이디가 제공 아이디 리스트에 없을 때 = 후면 카메라를 먼저 적용
+                    val backCameraIdx = cameraInfoList.indexOfFirst {
+                        it.facing == CameraCharacteristics.LENS_FACING_BACK
+                    }
 
                     // 후면 카메라 적용 검토
-                    if (CameraObj.getCameraIdFromFacing(
-                            this,
-                            CameraCharacteristics.LENS_FACING_BACK
-                        ) != null
-                    ) {
-                        CameraObj.getCameraIdFromFacing(
-                            this,
-                            CameraCharacteristics.LENS_FACING_BACK
-                        )!!
+                    if (backCameraIdx != -1) {
+                        cameraInfoList[backCameraIdx].cameraId
                     } else { // 후면 카메라 아이디 지원 불가
                         // 전면 카메라 적용 검토
-                        if (CameraObj.getCameraIdFromFacing(
-                                this,
-                                CameraCharacteristics.LENS_FACING_FRONT
-                            ) != null
-                        ) {
-                            CameraObj.getCameraIdFromFacing(
-                                this,
-                                CameraCharacteristics.LENS_FACING_FRONT
-                            )!!
+                        val frontCameraIdx = cameraInfoList.indexOfFirst {
+                            it.facing == CameraCharacteristics.LENS_FACING_FRONT
+                        }
+
+                        if (frontCameraIdx != -1) {
+                            cameraInfoList[frontCameraIdx].cameraId
                         } else {
                             // 전후면 카메라 지원 불가시 카메라 id 리스트 첫번째 아이디 적용
                             cameraInfoList[0].cameraId
                         }
                     }
                 }
-            } else { // 기존 아이디가 없을 때
+            } else {
+                // 기존 아이디가 제공 아이디 리스트에 없을 때 = 후면 카메라를 먼저 적용
+                val backCameraIdx = cameraInfoList.indexOfFirst {
+                    it.facing == CameraCharacteristics.LENS_FACING_BACK
+                }
+
                 // 후면 카메라 적용 검토
-                if (CameraObj.getCameraIdFromFacing(
-                        this,
-                        CameraCharacteristics.LENS_FACING_BACK
-                    ) != null
-                ) {
-                    CameraObj.getCameraIdFromFacing(
-                        this,
-                        CameraCharacteristics.LENS_FACING_BACK
-                    )!!
+                if (backCameraIdx != -1) {
+                    cameraInfoList[backCameraIdx].cameraId
                 } else { // 후면 카메라 아이디 지원 불가
                     // 전면 카메라 적용 검토
-                    if (CameraObj.getCameraIdFromFacing(
-                            this,
-                            CameraCharacteristics.LENS_FACING_FRONT
-                        ) != null
-                    ) {
-                        CameraObj.getCameraIdFromFacing(
-                            this,
-                            CameraCharacteristics.LENS_FACING_FRONT
-                        )!!
+                    val frontCameraIdx = cameraInfoList.indexOfFirst {
+                        it.facing == CameraCharacteristics.LENS_FACING_FRONT
+                    }
+
+                    if (frontCameraIdx != -1) {
+                        cameraInfoList[frontCameraIdx].cameraId
                     } else {
                         // 전후면 카메라 지원 불가시 카메라 id 리스트 첫번째 아이디 적용
                         cameraInfoList[0].cameraId
@@ -726,7 +714,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                         if (checkedCameraId != viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId) {
                             // 기존 저장 폴더 백업
-                            val videoFile = if (cameraObjMbr.isRecordingMbr) {
+                            val videoFile = if (cameraObjMbr.nowRecordingMbr) {
                                 cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
                             } else {
                                 null
@@ -867,7 +855,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 처리 완료까지 중복 클릭 방지
             bindingMbr.btn1.isEnabled = false
 
-            if (!(cameraObjMbr.isRecordingMbr)) { // 현재 레코딩 중이 아닐 때
+            if (!(cameraObjMbr.nowRecordingMbr)) { // 현재 레코딩 중이 아닐 때
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
                 cameraObjMbr.stopCameraObject {
@@ -1328,7 +1316,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val imageObj: Image = reader.acquireLatestImage() ?: return
 
             // 조기 종료 플래그
-            if (!cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+            if (!cameraObjMbr.nowRepeatingMbr || // repeating 상태가 아닐 경우
                 viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
                 isDestroyed // 액티비티 자체가 종료
             ) {
@@ -1372,7 +1360,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 // 조기 종료 확인
                 asyncImageProcessingOnProgressSemaphoreMbr.acquire()
                 if (asyncImageProcessingOnProgressMbr || // 현재 비동기 이미지 프로세싱 중일 때
-                    !cameraObjMbr.isRepeatingMbr || // repeating 상태가 아닐 경우
+                    !cameraObjMbr.nowRepeatingMbr || // repeating 상태가 아닐 경우
                     viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
                     isDestroyed // 액티비티 자체가 종료
                 ) {
