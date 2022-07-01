@@ -351,7 +351,7 @@ class CameraObj private constructor(
         fun getSupportedCameraSizeInfo(
             parentActivity: Activity,
             cameraId: String
-        ): CameraSizeInfoVo {
+        ): CameraSurfacesSizeListInfoVo {
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
             val characteristics = cameraManager.getCameraCharacteristics(cameraId)
@@ -364,7 +364,7 @@ class CameraObj private constructor(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
             )!!
 
-            val previewInfoList = ArrayList<CameraSizeInfoVo.SizeSpecInfoVo>()
+            val previewInfoList = ArrayList<CameraSurfacesSizeListInfoVo.SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -378,14 +378,14 @@ class CameraObj private constructor(
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     previewInfoList.add(
-                        CameraSizeInfoVo.SizeSpecInfoVo(
+                        CameraSurfacesSizeListInfoVo.SizeSpecInfoVo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val imageReaderInfoList = ArrayList<CameraSizeInfoVo.SizeSpecInfoVo>()
+            val imageReaderInfoList = ArrayList<CameraSurfacesSizeListInfoVo.SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -399,14 +399,14 @@ class CameraObj private constructor(
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     imageReaderInfoList.add(
-                        CameraSizeInfoVo.SizeSpecInfoVo(
+                        CameraSurfacesSizeListInfoVo.SizeSpecInfoVo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val mediaRecorderInfoList = ArrayList<CameraSizeInfoVo.SizeSpecInfoVo>()
+            val mediaRecorderInfoList = ArrayList<CameraSurfacesSizeListInfoVo.SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
@@ -420,14 +420,14 @@ class CameraObj private constructor(
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                     mediaRecorderInfoList.add(
-                        CameraSizeInfoVo.SizeSpecInfoVo(
+                        CameraSurfacesSizeListInfoVo.SizeSpecInfoVo(
                             size, fps
                         )
                     )
                 }
             }
 
-            val highSpeedInfoList = ArrayList<CameraSizeInfoVo.SizeSpecInfoVo>()
+            val highSpeedInfoList = ArrayList<CameraSurfacesSizeListInfoVo.SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
@@ -437,7 +437,7 @@ class CameraObj private constructor(
                     cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
                         val fps = fpsRange.upper
                         highSpeedInfoList.add(
-                            CameraSizeInfoVo.SizeSpecInfoVo(
+                            CameraSurfacesSizeListInfoVo.SizeSpecInfoVo(
                                 size, fps
                             )
                         )
@@ -445,7 +445,7 @@ class CameraObj private constructor(
                 }
             }
 
-            return CameraSizeInfoVo(
+            return CameraSurfacesSizeListInfoVo(
                 previewInfoList,
                 imageReaderInfoList,
                 mediaRecorderInfoList,
@@ -2815,7 +2815,7 @@ class CameraObj private constructor(
     )
 
     // image reader format : YUV 420 888 을 사용
-    data class CameraSizeInfoVo(
+    data class CameraSurfacesSizeListInfoVo(
         val previewInfoList: ArrayList<SizeSpecInfoVo>,
         val imageReaderInfoList: ArrayList<SizeSpecInfoVo>,
         val mediaRecorderInfoList: ArrayList<SizeSpecInfoVo>,
