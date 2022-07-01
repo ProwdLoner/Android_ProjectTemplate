@@ -120,12 +120,6 @@ class CameraObj private constructor(
     var exposureTimeNsMbr: Long? = null
         private set
 
-    // (오토 포커스 범위)
-    // 원하는 범위에 오토 포커스를 설정하고 싶을 때 사용
-    // 고정 값이거나 전체 범위 오토 포커스라면 null
-    var autoFocusUnitAreaMbr: RectF? = null
-        private set
-
     // (현 디바이스 방향과 카메라 방향에서 width, height 개념이 같은)
     // 카메라와 디바이스 방향이 90도, 270 도 차이가 난다면 둘의 Width, Height 개념은 상반됨
     var isDeviceAndCameraWhSameMbr: Boolean = false
@@ -182,7 +176,7 @@ class CameraObj private constructor(
     var isCameraStabilizationSetMbr: Boolean = false
         private set
 
-    // 센서 사이즈
+    // 카메라 센서 사이즈
     val sensorSizeMbr =
         cameraCharacteristicsMbr.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
 
@@ -1372,7 +1366,7 @@ class CameraObj private constructor(
             if (isRepeating) {
                 cameraCaptureSessionMbr!!.setRepeatingRequest(
                     captureRequestBuilderMbr!!.build(),
-                    null,
+                    captureCallback,
                     cameraThreadVoMbr.cameraHandlerThreadObj.handler
                 )
                 isRepeatingMbr = true
@@ -1992,7 +1986,6 @@ class CameraObj private constructor(
             }
 
             focusDistanceMbr = focusDistance
-            autoFocusUnitAreaMbr = null
 
             if (focusDistance > minimumFocusDistanceMbr) {
                 focusDistanceMbr = minimumFocusDistanceMbr
@@ -2050,8 +2043,6 @@ class CameraObj private constructor(
                 executorOnComplete()
                 return@run
             }
-
-            autoFocusUnitAreaMbr = null
 
             if (fastAutoFocus) {
                 focusDistanceMbr = if (fastAutoFocusSupportedMbr) {
@@ -2171,85 +2162,6 @@ class CameraObj private constructor(
             executorOnComplete()
         }
     }
-
-    // todo
-    // (오토 포커스 구역 설정)
-    // focusUnitArea : 어느 부분을 기점으로 포커스를 맞출지에 대해, 이미지 높이 너비를 1로 표준화 했을 때의 0 ~ 1 사이 좌표값
-//    fun setFocusArea(
-//        focusUnitArea: RectF,
-//        executorOnComplete: () -> Unit
-//    ) {
-//        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-//            cameraThreadVoMbr.cameraSemaphore.acquire()
-//
-//
-//
-//
-//
-//            if (!fastAutoFocusSupportedMbr && !naturalAutoFocusSupportedMbr) {
-//                // 오토 포커스 지원이 안되면
-//                cameraThreadVoMbr.cameraSemaphore.release()
-//                executorOnComplete()
-//                return@run
-//            }
-//
-//            autoFocusUnitAreaMbr = null
-//
-//            if (fastAutoFocus) {
-//                focusDistanceMbr = if (fastAutoFocusSupportedMbr) {
-//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
-//                    -2f
-//                } else {
-//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
-//                    -1f
-//                }
-//            } else {
-//                focusDistanceMbr = if (naturalAutoFocusSupportedMbr) {
-//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
-//                    -1f
-//                } else {
-//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
-//                    -2f
-//                }
-//            }
-//
-//            // 리퀘스트 빌더가 생성되지 않은 경우
-//            if (captureRequestBuilderMbr == null) {
-//                cameraThreadVoMbr.cameraSemaphore.release()
-//                executorOnComplete()
-//                return@run
-//            }
-//
-//            if (focusDistanceMbr == -1f) {
-//                captureRequestBuilderMbr!!.set(
-//                    CaptureRequest.CONTROL_AF_MODE,
-//                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-//                )
-//            } else if (focusDistanceMbr == -2f) {
-//                captureRequestBuilderMbr!!.set(
-//                    CaptureRequest.CONTROL_AF_MODE,
-//                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-//                )
-//            }
-//
-//            // 세션이 현재 실행중이 아니라면 여기서 멈추기
-//            if (!isRepeatingMbr) {
-//                cameraThreadVoMbr.cameraSemaphore.release()
-//                executorOnComplete()
-//                return@run
-//            }
-//
-//            // 세션이 현재 실행중이라면 바로 적용하기
-//            cameraCaptureSessionMbr!!.setRepeatingRequest(
-//                captureRequestBuilderMbr!!.build(),
-//                null,
-//                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-//            )
-//
-//            cameraThreadVoMbr.cameraSemaphore.release()
-//            executorOnComplete()
-//        }
-//    }
 
 
     // ---------------------------------------------------------------------------------------------
