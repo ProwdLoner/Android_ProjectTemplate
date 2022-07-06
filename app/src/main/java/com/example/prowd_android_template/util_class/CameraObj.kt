@@ -31,24 +31,25 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import kotlin.math.sqrt
 
-// <Camera 디바이스 하나에 대한 obj>
-// 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체
-// 센서를 조작하는 액티비티 객체와 센서 카메라 아이디 하나를 가져와서 사용
-// 외부에서는 카메라 객체를 생성 후 startCamera 를 사용하여 카메라를 실행
-// 카메라를 종료할 때에는 stopCamera 를 사용
-// Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더와 미디어 리코더는 1개만 설정 가능
-// 내부 제공 함수들은 대다수 비동기 동작을 수행합니다. 시점을 맞추기 위해선 제공되는 콜백을 사용하면 됩니다.
+// <Camera 객체>
+// 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체 (생성시 카메라 아이디를 주입)
+// 생성시엔 생성 함수 getInstance 를 사용하고, 카메라 사용이 필요 없어지면 destroyCameraObject 를 사용할것
+// Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더는 2개, 미디어 리코더는 1개만 설정 가능
+// 이미지 리더 중 한개는 캡쳐용, 다른 하나는 분석용으로, 분석용은 상시 실행이 가능하지만 캡쳐용은 캡쳐 시점 일순간만 실행됨
+//     (평소엔 캡쳐용 서페이스는 설정을 해두어도 침묵해있다가, 캡쳐용 사용 함수를 하면 분석용 서페이스를 잠시 중단하고 캡쳐 순간 실행됨)
+// 내부 제공 함수들은 대다수 Ui 스레드와 별도의 카메라 스레드에서 비동기 동작을 수행합니다.
 // 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
 
 // todo : auto 설정일 때 focus distance 등의 현재 수치 가져오기
-// todo : 사진 찍기 기능 검증
-// todo : request setting callback 을 제거
-// todo : af, ae, awb, iso 영역 설정
-// todo : 클릭 exposure, whitebalance, focus 등 (핀치 줌을 참고)
+// todo : capture request 검증
+// todo : af, ae, awb, iso area 설정
+// todo : 터치 exposure, whitebalance, focus 등 (핀치 줌을 참고)
 // todo : whitebalance, iso 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 //    https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 // todo : 디바이스 방향 관련 부분 다시 살피기
-// todo : 최고 화질시 녹화 에러 확인
+// todo : 최고 화질시 녹화 확인
+// todo : 분석용 이미지 리더와 캡쳐용 나누기 : 캡쳐용은 캡쳐시 한순간만...
+
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     val cameraIdMbr: String,
@@ -67,8 +68,7 @@ class CameraObj private constructor(
     var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
     // 카메라 API 사용 스레드 세트
-    private val cameraThreadVoMbr: CameraIdThreadVo =
-        publishSharedCameraIdThreadVoOnStaticMemory(cameraIdMbr)
+    private lateinit var cameraThreadVoMbr: CameraIdThreadVo
 
 
     // [카메라 지원 정보]
@@ -725,6 +725,10 @@ class CameraObj private constructor(
                     }
                 }
             }
+
+            // 카메라 사용 스레드
+            resultCameraObject.cameraThreadVoMbr =
+                publishSharedCameraIdThreadVoOnStaticMemory(cameraId)
 
             return resultCameraObject
         }
