@@ -13,6 +13,8 @@ import android.view.WindowManager
 import java.io.InputStream
 import java.nio.ByteBuffer
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 
 object CustomUtil {
@@ -144,4 +146,20 @@ object CustomUtil {
         clone.flip()
         return clone
     }
+
+    // 최대공약수
+    fun getGcd(a: Int, b: Int): Int {
+        val maximum = max(a, b)
+        val minimum = min(a, b)
+
+        return if (minimum == 0) {
+            maximum
+        } else {
+            getGcd(minimum, maximum % minimum)
+        }
+    }
+
+    // 최소공배수
+    fun getLcm(a: Int, b: Int): Int =
+        (a * b) / getGcd(a, b)
 }
