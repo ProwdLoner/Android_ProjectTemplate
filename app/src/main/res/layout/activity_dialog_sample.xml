@@ -110,6 +110,18 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/test_binary_choose_dialog_btn" />
 
+                <Button
+                    android:id="@+id/test_radio_button_choose_dialog_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="라디오 버튼 선택 다이얼로그 테스트"
+                    android:textColor="#FF000000"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/test_confirm_dialog_btn" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
 

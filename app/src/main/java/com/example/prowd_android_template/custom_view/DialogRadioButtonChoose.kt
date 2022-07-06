@@ -56,11 +56,13 @@ class DialogRadioButtonChoose constructor(
         val radioGroup = RadioGroup(context)
         radioGroup.orientation = RadioGroup.VERTICAL
 
+        val radioButtonList = ArrayList<RadioButton>()
         for (report in dialogInfoMbr.radioButtonContentList.withIndex()) {
             val btn = RadioButton(context)
             btn.text = report.value
-            btn.id = report.index
+            btn.id = View.generateViewId()
             radioGroup.addView(btn)
+            radioButtonList.add(btn)
         }
 
         if (dialogInfoMbr.checkedItemIdx != null) {
@@ -69,8 +71,6 @@ class DialogRadioButtonChoose constructor(
             } else {
                 radioGroup.check(dialogInfoMbr.radioButtonContentList.lastIndex)
             }
-        } else {
-            radioGroup.check(0)
         }
 
         radioGroup.id = View.generateViewId()
@@ -96,8 +96,11 @@ class DialogRadioButtonChoose constructor(
         set.applyTo(bindingMbr.contentContainerInnerScroll)
 
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            checkedItemIndexMbr = checkedId
-            dialogInfoMbr.onRadioItemClicked(checkedId)
+            val checkedIdx = radioButtonList.indexOfFirst {
+                it.id == checkedId
+            }
+            checkedItemIndexMbr = checkedIdx
+            dialogInfoMbr.onRadioItemClicked(checkedIdx)
         }
 
         // (버튼 클릭 크기 조정)
@@ -115,6 +118,11 @@ class DialogRadioButtonChoose constructor(
         // (리스너 설정)
         bindingMbr.cancelBtn.setOnClickListener {
             dialogInfoMbr.onCancelBtnClicked.run()
+            this.dismiss()
+        }
+
+        bindingMbr.selectBtn.setOnClickListener {
+            dialogInfoMbr.onSelectBtnClicked(checkedItemIndexMbr)
             this.dismiss()
         }
     }
@@ -138,6 +146,7 @@ class DialogRadioButtonChoose constructor(
         val checkedItemIdx: Int?,
         var cancelBtnTxt: String?,
         var onRadioItemClicked: (Int) -> Unit,
+        var onSelectBtnClicked: (Int) -> Unit,
         var onCancelBtnClicked: Runnable,
         var onCanceled: Runnable
     )

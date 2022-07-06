@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
+import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityDialogSampleBinding
 
 class ActivityDialogSample : AppCompatActivity() {
@@ -27,6 +28,9 @@ class ActivityDialogSample : AppCompatActivity() {
 
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
+
+    // 라디오 버튼 선택 다이얼로그
+    var radioButtonChooseDialogMbr: DialogRadioButtonChoose? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -88,6 +92,7 @@ class ActivityDialogSample : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
         confirmDialogMbr?.dismiss()
+        radioButtonChooseDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -133,12 +138,13 @@ class ActivityDialogSample : AppCompatActivity() {
                         myToast.show()
 
                         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
+                        viewModelMbr.progressDialogSample2ProgressValue.value = -1
                     }
                 )
         }
 
         bindingMbr.testLoadingDialogWithProgressBarBtn.setOnClickListener {
-            if (viewModelMbr.progressDialogSample2ProgressValue.value != 0
+            if (viewModelMbr.progressDialogSample2ProgressValue.value != -1
             ) {
                 return@setOnClickListener
             }
@@ -163,7 +169,7 @@ class ActivityDialogSample : AppCompatActivity() {
 
                 runOnUiThread {
                     viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-                    viewModelMbr.progressDialogSample2ProgressValue.value = 0
+                    viewModelMbr.progressDialogSample2ProgressValue.value = -1
                 }
             }
         }
@@ -241,6 +247,54 @@ class ActivityDialogSample : AppCompatActivity() {
                 )
         }
 
+        // 라디오 버튼 선택 다이얼로그 테스트 버튼
+        bindingMbr.testRadioButtonChooseDialogBtn.setOnClickListener {
+            val radioButtonArray = arrayListOf("선택 1", "선택 2", "선택 3", "선택 4", "선택 5")
+
+            viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value =
+                DialogRadioButtonChoose.DialogInfoVO(
+                    true,
+                    "라디오 버튼 다이얼로그 테스트",
+                    "아래 항목 중 하나를 선택하세요.",
+                    radioButtonArray,
+                    null,
+                    null,
+                    onRadioItemClicked = {
+
+                    },
+                    onSelectBtnClicked = {
+                        val myToast = Toast.makeText(
+                            this,
+                            "confirmDialogMbr? - ${radioButtonArray[it]}",
+                            Toast.LENGTH_SHORT
+                        )
+                        myToast.show()
+
+                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
+                    },
+                    onCancelBtnClicked = {
+                        val myToast = Toast.makeText(
+                            this,
+                            "confirmDialogMbr? - canceled",
+                            Toast.LENGTH_SHORT
+                        )
+                        myToast.show()
+
+                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
+                    },
+                    onCanceled = {
+                        val myToast = Toast.makeText(
+                            this,
+                            "confirmDialogMbr? - canceled",
+                            Toast.LENGTH_SHORT
+                        )
+                        myToast.show()
+
+                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
+                    }
+                )
+        }
+
     }
 
     // 라이브 데이터 설정
@@ -258,6 +312,16 @@ class ActivityDialogSample : AppCompatActivity() {
             } else {
                 progressLoadingDialogMbr?.dismiss()
                 progressLoadingDialogMbr = null
+            }
+        }
+
+        // progressSample2 진행도
+        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
+            if (it != -1) {
+                val loadingText = "로딩중 $it%"
+                progressLoadingDialogMbr?.bindingMbr?.progressMessageTxt?.text = loadingText
+                progressLoadingDialogMbr?.bindingMbr?.progressBar?.visibility = View.VISIBLE
+                progressLoadingDialogMbr?.bindingMbr?.progressBar?.progress = it
             }
         }
 
@@ -293,12 +357,20 @@ class ActivityDialogSample : AppCompatActivity() {
             }
         }
 
-        // progressSample2 진행도
-        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
-            val loadingText = "로딩중 $it%"
-            progressLoadingDialogMbr?.bindingMbr?.progressMessageTxt?.text = loadingText
-            progressLoadingDialogMbr?.bindingMbr?.progressBar?.visibility = View.VISIBLE
-            progressLoadingDialogMbr?.bindingMbr?.progressBar?.progress = it
+        // 라디오 버튼 선택 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.observe(this) {
+            if (it != null) {
+                radioButtonChooseDialogMbr?.dismiss()
+
+                radioButtonChooseDialogMbr = DialogRadioButtonChoose(
+                    this,
+                    it
+                )
+                radioButtonChooseDialogMbr?.show()
+            } else {
+                radioButtonChooseDialogMbr?.dismiss()
+                radioButtonChooseDialogMbr = null
+            }
         }
     }
 }

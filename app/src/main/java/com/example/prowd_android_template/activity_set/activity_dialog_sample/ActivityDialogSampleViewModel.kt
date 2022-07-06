@@ -7,6 +7,7 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -42,6 +43,9 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
         MutableLiveData(null)
 
+    val progressDialogSample2ProgressValue : MutableLiveData<Int> =
+        MutableLiveData(-1)
+
     // 선택 다이얼로그 출력 정보
     val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
         MutableLiveData(null)
@@ -50,8 +54,9 @@ class ActivityDialogSampleViewModel(application: Application) : AndroidViewModel
     val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
         MutableLiveData(null)
 
-    val progressDialogSample2ProgressValue : MutableLiveData<Int> =
-        MutableLiveData(0)
+    // 라디오 버튼 선택 다이얼로그 출력 정보
+    val radioButtonChooseDialogInfoLiveDataMbr: MutableLiveData<DialogRadioButtonChoose.DialogInfoVO?> =
+        MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------

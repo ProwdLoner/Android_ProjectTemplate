@@ -841,6 +841,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
                         viewModelMbr.imageProcessingPauseMbr = false
                     },
+                    onSelectBtnClicked = {
+                        viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
+                        viewModelMbr.imageProcessingPauseMbr = false
+                    },
                     onCanceled = {
                         viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
                         viewModelMbr.imageProcessingPauseMbr = false
