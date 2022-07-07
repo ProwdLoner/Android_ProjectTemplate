@@ -1751,9 +1751,7 @@ class CameraObj private constructor(
                 val cameraSizes = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
 
                 // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
-                if (cameraSizes == null ||
-                    cameraSizes.isEmpty() ||
-                    cameraSizes.indexOfFirst {
+                if (cameraSizes.isEmpty() || cameraSizes.indexOfFirst {
                         it.size.width == analysisImageReaderConfigVo.cameraOrientSurfaceSize.width &&
                                 it.size.height == analysisImageReaderConfigVo.cameraOrientSurfaceSize.height
                     } == -1
@@ -1769,8 +1767,7 @@ class CameraObj private constructor(
                 val cameraSizes = cameraSurfacesSizeListInfoVoMbr.previewInfoList
 
                 // 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
-                if (cameraSizes == null ||
-                    cameraSizes.isEmpty()
+                if (cameraSizes.isEmpty()
                 ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onError(4)

@@ -200,22 +200,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             }
                         )
 
-                    val chosenCaptureImageReaderSurfaceSize =
-                        cameraObjMbr.getNearestSupportedCameraOutputSize(
-                            2,
-                            Long.MAX_VALUE,
-                            3.0 / 2.0
-                        )!!
-
-                    val captureImageReaderConfigVo =
-                        // 설정 객체 반환
-                        CameraObj.ImageReaderConfigVo(
-                            chosenCaptureImageReaderSurfaceSize,
-                            imageReaderCallback = { reader ->
-                                processImage(reader)
-                            }
-                        )
-
                     // (카메라 변수 설정)
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
@@ -233,7 +217,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
-                        captureImageReaderConfigVo,
+                        null,
                         null,
                         analysisImageReaderConfigVo,
                         onComplete = {
@@ -781,22 +765,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         }
                                     )
 
-                                val chosenCaptureImageReaderSurfaceSize =
-                                    cameraObjMbr.getNearestSupportedCameraOutputSize(
-                                        2,
-                                        Long.MAX_VALUE,
-                                        3.0 / 2.0
-                                    )!!
-
-                                val captureImageReaderConfigVo =
-                                    // 설정 객체 반환
-                                    CameraObj.ImageReaderConfigVo(
-                                        chosenCaptureImageReaderSurfaceSize,
-                                        imageReaderCallback = { reader ->
-                                            processImage(reader)
-                                        }
-                                    )
-
                                 // (카메라 변수 설정)
                                 // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
                                 // 떨림 보정
@@ -815,7 +783,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 // (카메라 서페이스 설정)
                                 cameraObjMbr.setCameraOutputSurfaces(
                                     previewConfigVo,
-                                    captureImageReaderConfigVo,
+                                    null,
                                     null,
                                     analysisImageReaderConfigVo,
                                     onComplete = {
@@ -910,22 +878,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             }
                         )
 
-                    val chosenCaptureImageReaderSurfaceSize =
-                        cameraObjMbr.getNearestSupportedCameraOutputSize(
-                            2,
-                            Long.MAX_VALUE,
-                            3.0 / 2.0
-                        )!!
-
-                    val captureImageReaderConfigVo =
-                        // 설정 객체 반환
-                        CameraObj.ImageReaderConfigVo(
-                            chosenCaptureImageReaderSurfaceSize,
-                            imageReaderCallback = { reader ->
-                                processImage(reader)
-                            }
-                        )
-
                     // 지원 사이즈 탐지
                     val chosenSurfaceSize =
                         cameraObjMbr.getNearestSupportedCameraOutputSize(
@@ -962,7 +914,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
-                        captureImageReaderConfigVo,
+                        null,
                         mediaRecorderConfigVo,
                         analysisImageReaderConfigVo,
                         onComplete = {
@@ -1057,22 +1009,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 }
                             )
 
-                        val chosenCaptureImageReaderSurfaceSize =
-                            cameraObjMbr.getNearestSupportedCameraOutputSize(
-                                2,
-                                Long.MAX_VALUE,
-                                3.0 / 2.0
-                            )!!
-
-                        val captureImageReaderConfigVo =
-                            // 설정 객체 반환
-                            CameraObj.ImageReaderConfigVo(
-                                chosenCaptureImageReaderSurfaceSize,
-                                imageReaderCallback = { reader ->
-                                    processImage(reader)
-                                }
-                            )
-
                         // (카메라 변수 설정)
                         // 떨림 보정
                         cameraObjMbr.setCameraStabilization(
@@ -1090,7 +1026,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         // (카메라 서페이스 설정)
                         cameraObjMbr.setCameraOutputSurfaces(
                             previewConfigVo,
-                            captureImageReaderConfigVo,
+                            null,
                             null,
                             analysisImageReaderConfigVo,
                             onComplete = {
@@ -1256,22 +1192,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     }
                 )
 
-            val chosenCaptureImageReaderSurfaceSize =
-                cameraObjMbr.getNearestSupportedCameraOutputSize(
-                    2,
-                    Long.MAX_VALUE,
-                    3.0 / 2.0
-                )!!
-
-            val captureImageReaderConfigVo =
-                // 설정 객체 반환
-                CameraObj.ImageReaderConfigVo(
-                    chosenCaptureImageReaderSurfaceSize,
-                    imageReaderCallback = { reader ->
-                        processImage(reader)
-                    }
-                )
-
             // (카메라 변수 설정)
             // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
             // 떨림 보정
@@ -1290,7 +1210,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // (카메라 서페이스 설정)
             cameraObjMbr.setCameraOutputSurfaces(
                 previewConfigVo,
-                captureImageReaderConfigVo,
+                null,
                 null,
                 analysisImageReaderConfigVo,
                 onComplete = {
