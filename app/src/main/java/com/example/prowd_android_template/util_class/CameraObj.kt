@@ -74,49 +74,6 @@ class CameraObj private constructor(
         private set
 
 
-    // [카메라 지원 정보]
-    // (현 디바이스 방향과 카메라 방향에서 width, height 개념이 같은)
-    // 카메라와 디바이스 방향이 90도, 270 도 차이가 난다면 둘의 Width, Height 개념은 상반됨
-    var isDeviceAndCameraWhSameMbr: Boolean = false
-        private set
-        get() {
-            // 디바이스 물리적 특정 방향을 0으로 뒀을 때의 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
-            val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                parentActivityMbr.display!!.rotation
-            } else {
-                parentActivityMbr.windowManager.defaultDisplay.rotation
-            }
-
-            return when (deviceOrientation) {
-                Surface.ROTATION_90, Surface.ROTATION_270 -> {
-                    // 디바이스 현 방향이 90도 단위로 기울어졌을 때
-                    when (cameraInfoVoMbr.sensorOrientation) {
-                        // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
-                        0, 180 -> {
-                            false
-                        }
-                        else -> {
-                            true
-                        }
-                    }
-                }
-
-                else -> {
-                    // 디바이스 현 방향이 90도 단위로 기울어지지 않았을 때
-                    when (cameraInfoVoMbr.sensorOrientation) {
-                        // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
-                        0, 180 -> {
-                            true
-                        }
-                        else -> {
-                            false
-                        }
-                    }
-                }
-            }
-        }
-
-
     // [카메라 상태 정보] : 설정된 카메라 현 상태 정보
     // todo focusDistance 변수와 설정 함수 생성
     //   -1 의 af 일때 region 을 설정시 해당 위치, null 이라면 전체 위치
@@ -183,6 +140,57 @@ class CameraObj private constructor(
     // ---------------------------------------------------------------------------------------------
     // <스태틱 공간>
     companion object {
+
+        // (카메라와 현 디바이스의 Width, height 개념이 동일한지)
+        // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨₩
+        fun cameraSensorOrientationAndDeviceAreSameWh(
+            parentActivity: Activity,
+            cameraId: String
+        ): Boolean? {
+            // 디바이스 물리적 특정 방향을 0으로 뒀을 때의 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
+            val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                parentActivity.display!!.rotation
+            } else {
+                parentActivity.windowManager.defaultDisplay.rotation
+            }
+
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+
+            val sensorOrientation: Int =
+                characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: return null
+
+            return when (deviceOrientation) {
+                Surface.ROTATION_90, Surface.ROTATION_270 -> {
+                    // 디바이스 현 방향이 90도 단위로 기울어졌을 때
+                    when (sensorOrientation) {
+                        // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
+                        0, 180 -> {
+                            false
+                        }
+                        else -> {
+                            true
+                        }
+                    }
+                }
+
+                else -> {
+                    // 디바이스 현 방향이 90도 단위로 기울어지지 않았을 때
+                    when (sensorOrientation) {
+                        // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
+                        0, 180 -> {
+                            true
+                        }
+                        else -> {
+                            false
+                        }
+                    }
+                }
+            }
+        }
+
         // (가용 카메라 정보 리스트 반환)
         // todo 카메라 지원 정보가 늘어나면 더 추가
         fun getSupportedCameraInfoList(parentActivity: Activity): ArrayList<CameraInfoVo> {
@@ -829,6 +837,45 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
+
+    // (카메라와 현 디바이스의 Width, height 개념이 동일한지)
+    // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨₩
+    fun cameraSensorOrientationAndDeviceAreSameWh(): Boolean {
+        // 디바이스 물리적 특정 방향을 0으로 뒀을 때의 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
+        val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            parentActivityMbr.display!!.rotation
+        } else {
+            parentActivityMbr.windowManager.defaultDisplay.rotation
+        }
+
+        return when (deviceOrientation) {
+            Surface.ROTATION_90, Surface.ROTATION_270 -> {
+                // 디바이스 현 방향이 90도 단위로 기울어졌을 때
+                when (cameraInfoVoMbr.sensorOrientation) {
+                    // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
+                    0, 180 -> {
+                        false
+                    }
+                    else -> {
+                        true
+                    }
+                }
+            }
+
+            else -> {
+                // 디바이스 현 방향이 90도 단위로 기울어지지 않았을 때
+                when (cameraInfoVoMbr.sensorOrientation) {
+                    // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
+                    0, 180 -> {
+                        true
+                    }
+                    else -> {
+                        false
+                    }
+                }
+            }
+        }
+    }
 
     // (현 카메라의 제공 사이즈와 조건이 맞는 사이즈 반환)
     // surfaceType
