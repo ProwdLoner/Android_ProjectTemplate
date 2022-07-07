@@ -29,6 +29,7 @@ import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 // <Camera 객체>
@@ -53,10 +54,6 @@ import kotlin.math.sqrt
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     private val cameraManagerMbr: CameraManager,
-    private val streamConfigurationMapMbr: StreamConfigurationMap,
-    val previewSurfaceSupportedSizeListMbr: Array<Size>?,
-    val imageReaderSurfaceSupportedSizeListMbr: Array<Size>?,
-    val mediaRecorderSurfaceSupportedSizeListMbr: Array<Size>?,
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
     // <멤버 변수 공간>
@@ -70,6 +67,10 @@ class CameraObj private constructor(
     // [카메라 지원 정보]
     // 현 카메라 정보
     lateinit var cameraInfoVoMbr: CameraInfoVo
+        private set
+
+    // 현 카메라 제공 사이즈 정보
+    lateinit var cameraSurfacesSizeListInfoVoMbr: CameraSurfacesSizeListInfoVo
         private set
 
 
@@ -686,10 +687,6 @@ class CameraObj private constructor(
             val resultCameraObject = CameraObj(
                 parentActivity,
                 cameraManager,
-                streamConfigurationMap,
-                previewSurfaceSupportedSizeList,
-                imageReaderSurfaceSupportedSizeList,
-                mediaRecorderSurfaceSupportedSizeList,
                 onCameraDisconnectedAndClearCamera
             )
 
@@ -790,6 +787,37 @@ class CameraObj private constructor(
                 maxZoom
             )
 
+            val whRatioSet = HashSet<Double>()
+
+            for (sizeInfo in previewInfoList) {
+                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
+                whRatioSet.add(whRatio)
+            }
+
+            for (sizeInfo in imageReaderInfoList) {
+                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
+                whRatioSet.add(whRatio)
+            }
+
+            for (sizeInfo in mediaRecorderInfoList) {
+                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
+                whRatioSet.add(whRatio)
+            }
+
+            for (sizeInfo in highSpeedInfoList) {
+                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
+                whRatioSet.add(whRatio)
+            }
+
+            // 카메라 지원 사이즈 정보
+            resultCameraObject.cameraSurfacesSizeListInfoVoMbr = CameraSurfacesSizeListInfoVo(
+                whRatioSet,
+                previewInfoList,
+                imageReaderInfoList,
+                mediaRecorderInfoList,
+                highSpeedInfoList
+            )
+
             // 카메라 사용 스레드
             resultCameraObject.cameraThreadVoMbr =
                 publishSharedCameraIdThreadVoOnStaticMemory(cameraId)
@@ -801,6 +829,87 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
+
+    // (현 카메라의 제공 사이즈와 조건이 맞는 사이즈 반환)
+    // surfaceType
+    // 1 : preview
+    // 2 : imageReader
+    // 3 : mediaRecorder
+    // 4 : high speed
+    // preferredArea : 원하는 넓이
+    // cameraOrientPreferredWHRatio : 원하는 width * height 비율(width, height 개념은 카메라 방향 기준)
+    fun getNearestSupportedCameraOutputSize(
+        surfaceType: Int,
+        preferredArea: Long,
+        cameraOrientPreferredWHRatio: Double
+    ): Size? {
+        val sizeInfoList = when (surfaceType) {
+            1 -> {
+                cameraSurfacesSizeListInfoVoMbr.previewInfoList
+            }
+            2 -> {
+                cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
+            }
+            3 -> {
+                cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
+            }
+            4 -> {
+                cameraSurfacesSizeListInfoVoMbr.highSpeedInfoList
+            }
+            else -> {
+                null
+            }
+        } ?: return null // surfaceType 인자를 잘못 입력한 상황
+
+        if (0 >= cameraOrientPreferredWHRatio) { // whRatio 를 0 이하로 선택하면 넓이만으로 비교
+            // 넓이 비슷한 것을 선정
+            var smallestAreaDiff: Long = Long.MAX_VALUE
+            var resultIndex = 0
+
+            for ((index, value) in sizeInfoList.withIndex()) {
+                val area = value.size.width.toLong() * value.size.height.toLong()
+                val areaDiff = abs(area - preferredArea)
+                if (areaDiff < smallestAreaDiff) {
+                    smallestAreaDiff = areaDiff
+                    resultIndex = index
+                }
+            }
+
+            return sizeInfoList[resultIndex].size
+        } else { // 비율을 먼저 보고, 이후 넓이로 비교
+            // 비율 비슷한 것을 선정
+            var mostSameWhRatio = 0.0
+            var smallestWhRatioDiff: Double = Double.MAX_VALUE
+
+            for (value in sizeInfoList) {
+                val whRatio: Double = value.size.width.toDouble() / value.size.height.toDouble()
+
+                val whRatioDiff = abs(whRatio - cameraOrientPreferredWHRatio)
+                if (whRatioDiff < smallestWhRatioDiff) {
+                    smallestWhRatioDiff = whRatioDiff
+                    mostSameWhRatio = whRatio
+                }
+            }
+
+            // 넓이 비슷한 것을 선정
+            var resultSizeIndex = 0
+            var smallestAreaDiff: Long = Long.MAX_VALUE
+            // 비슷한 비율중 가장 비슷한 넓이를 선정
+            for ((index, value) in sizeInfoList.withIndex()) {
+                val whRatio: Double = value.size.width.toDouble() / value.size.height.toDouble()
+
+                if (mostSameWhRatio == whRatio) {
+                    val area = value.size.width.toLong() * value.size.height.toLong()
+                    val areaDiff = abs(area - preferredArea)
+                    if (areaDiff < smallestAreaDiff) {
+                        smallestAreaDiff = areaDiff
+                        resultSizeIndex = index
+                    }
+                }
+            }
+            return sizeInfoList[resultSizeIndex].size
+        }
+    }
 
     // todo 서페이스 개별 변경 함수
     // todo : 서페이스 각자 세팅 기능 오버로딩
@@ -850,15 +959,14 @@ class CameraObj private constructor(
 
             // (서페이스 사이즈 검사)
             if (imageReaderConfigVo != null) {
-                val cameraSizes =
-                    streamConfigurationMapMbr.getOutputSizes(ImageFormat.YUV_420_888)
+                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
 
                 // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes == null ||
                     cameraSizes.isEmpty() ||
                     cameraSizes.indexOfFirst {
-                        it.width == imageReaderConfigVo.cameraOrientSurfaceSize.width &&
-                                it.height == imageReaderConfigVo.cameraOrientSurfaceSize.height
+                        it.size.width == imageReaderConfigVo.cameraOrientSurfaceSize.width &&
+                                it.size.height == imageReaderConfigVo.cameraOrientSurfaceSize.height
                     } == -1
                 ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
@@ -869,8 +977,7 @@ class CameraObj private constructor(
 
             // 프리뷰 리스트 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
             if (previewConfigVoList != null && previewConfigVoList.isNotEmpty()) {
-                val cameraSizes =
-                    streamConfigurationMapMbr.getOutputSizes(SurfaceTexture::class.java)
+                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.previewInfoList
 
                 // 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes == null ||
@@ -882,8 +989,8 @@ class CameraObj private constructor(
                 } else {
                     for (previewConfig in previewConfigVoList) {
                         if (cameraSizes.indexOfFirst {
-                                it.width == previewConfig.cameraOrientSurfaceSize.width &&
-                                        it.height == previewConfig.cameraOrientSurfaceSize.height
+                                it.size.width == previewConfig.cameraOrientSurfaceSize.width &&
+                                        it.size.height == previewConfig.cameraOrientSurfaceSize.height
                             } == -1) {
                             cameraThreadVoMbr.cameraSemaphore.release()
                             onError(4)
@@ -1032,11 +1139,14 @@ class CameraObj private constructor(
 
                 // 데이터 저장 프레임 설정
                 // 비디오 FPS
-                val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
-                    MediaRecorder::class.java,
-                    mediaRecorderConfigVo.cameraOrientSurfaceSize
-                ) / 1_000_000_000.0)
-                val maxMediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
+//                val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
+//                    MediaRecorder::class.java,
+//                    mediaRecorderConfigVo.cameraOrientSurfaceSize
+//                ) / 1_000_000_000.0)
+//                val maxMediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
+
+                // todo
+                val maxMediaRecorderFps = 30
 
                 if (mediaRecorderConfigVo.videoRecordingFps > maxMediaRecorderFps) {
                     mediaRecorderConfigVo.videoRecordingFps = maxMediaRecorderFps

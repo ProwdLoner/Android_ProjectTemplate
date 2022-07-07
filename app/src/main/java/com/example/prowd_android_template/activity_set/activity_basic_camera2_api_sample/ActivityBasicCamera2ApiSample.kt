@@ -166,49 +166,39 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     videoFile.delete()
 
                     // 미디어 레코드를 제외한 카메라 세션 준비
-                    val previewConfigVo =
-                        if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                            // 지원 사이즈 탐지
-                            val chosenPreviewSurfaceSize =
-                                CustomUtil.getNearestSupportedCameraOutputSize(
-                                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                                    Long.MAX_VALUE,
-                                    3.0 / 2.0
-                                )
+                    // 지원 사이즈 탐지
+                    val chosenPreviewSurfaceSize =
+                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+                            3,
+                            Long.MAX_VALUE,
+                            3.0 / 2.0
+                        )!!
 
-                            // 설정 객체 반환
-                            arrayListOf(
-                                CameraObj.PreviewConfigVo(
-                                    chosenPreviewSurfaceSize,
-                                    bindingMbr.cameraPreviewAutoFitTexture
-                                )
+                    val previewConfigVo =
+                        // 설정 객체 반환
+                        arrayListOf(
+                            CameraObj.PreviewConfigVo(
+                                chosenPreviewSurfaceSize,
+                                bindingMbr.cameraPreviewAutoFitTexture
                             )
-                        } else {
-                            // 지원 사이즈가 없기에 null 반환
-                            null
-                        }
+                        )
+
+                    // 지원 사이즈 탐지
+                    val chosenImageReaderSurfaceSize =
+                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+                            2,
+                            500 * 500,
+                            3.0 / 2.0
+                        )!!
 
                     val imageReaderConfigVo =
-                        if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                            // 지원 사이즈 탐지
-                            val chosenImageReaderSurfaceSize =
-                                CustomUtil.getNearestSupportedCameraOutputSize(
-                                    cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                                    500 * 500,
-                                    3.0 / 2.0
-                                )
-
-                            // 설정 객체 반환
-                            CameraObj.ImageReaderConfigVo(
-                                chosenImageReaderSurfaceSize,
-                                imageReaderCallback = { reader ->
-                                    processImage(reader)
-                                }
-                            )
-                        } else {
-                            // 지원 사이즈가 없기에 null 반환
-                            null
-                        }
+                        // 설정 객체 반환
+                        CameraObj.ImageReaderConfigVo(
+                            chosenImageReaderSurfaceSize,
+                            imageReaderCallback = { reader ->
+                                processImage(reader)
+                            }
+                        )
 
                     // (카메라 변수 설정)
                     // 떨림 보정
@@ -740,49 +730,39 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     checkedCameraId
 
                                 // (카메라 실행)
-                                val previewConfigVo =
-                                    if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                                        // 지원 사이즈 탐지
-                                        val chosenPreviewSurfaceSize =
-                                            CustomUtil.getNearestSupportedCameraOutputSize(
-                                                cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                                                Long.MAX_VALUE,
-                                                3.0 / 2.0
-                                            )
+                                // 지원 사이즈 탐지
+                                val chosenPreviewSurfaceSize =
+                                    cameraObjMbr.getNearestSupportedCameraOutputSize(
+                                        1,
+                                        Long.MAX_VALUE,
+                                        3.0 / 2.0
+                                    )!!
 
-                                        // 설정 객체 반환
-                                        arrayListOf(
-                                            CameraObj.PreviewConfigVo(
-                                                chosenPreviewSurfaceSize,
-                                                bindingMbr.cameraPreviewAutoFitTexture
-                                            )
+                                val previewConfigVo =
+                                    // 설정 객체 반환
+                                    arrayListOf(
+                                        CameraObj.PreviewConfigVo(
+                                            chosenPreviewSurfaceSize,
+                                            bindingMbr.cameraPreviewAutoFitTexture
                                         )
-                                    } else {
-                                        // 지원 사이즈가 없기에 null 반환
-                                        null
-                                    }
+                                    )
+
+                                // 지원 사이즈 탐지
+                                val chosenImageReaderSurfaceSize =
+                                    cameraObjMbr.getNearestSupportedCameraOutputSize(
+                                        2,
+                                        500 * 500,
+                                        3.0 / 2.0
+                                    )!!
 
                                 val imageReaderConfigVo =
-                                    if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                                        // 지원 사이즈 탐지
-                                        val chosenImageReaderSurfaceSize =
-                                            CustomUtil.getNearestSupportedCameraOutputSize(
-                                                cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                                                500 * 500,
-                                                3.0 / 2.0
-                                            )
-
-                                        // 설정 객체 반환
-                                        CameraObj.ImageReaderConfigVo(
-                                            chosenImageReaderSurfaceSize,
-                                            imageReaderCallback = { reader ->
-                                                processImage(reader)
-                                            }
-                                        )
-                                    } else {
-                                        // 지원 사이즈가 없기에 null 반환
-                                        null
-                                    }
+                                    // 설정 객체 반환
+                                    CameraObj.ImageReaderConfigVo(
+                                        chosenImageReaderSurfaceSize,
+                                        imageReaderCallback = { reader ->
+                                            processImage(reader)
+                                        }
+                                    )
 
                                 // (카메라 변수 설정)
                                 // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
@@ -862,73 +842,58 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
                 cameraObjMbr.stopCameraObject {
-                    val previewConfigVo =
-                        if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                            // 지원 사이즈 탐지
-                            val chosenPreviewSurfaceSize =
-                                CustomUtil.getNearestSupportedCameraOutputSize(
-                                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                                    Long.MAX_VALUE,
-                                    3.0 / 2.0
-                                )
+                    // 지원 사이즈 탐지
+                    val chosenPreviewSurfaceSize =
+                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+                            1,
+                            Long.MAX_VALUE,
+                            3.0 / 2.0
+                        )!!
 
-                            // 설정 객체 반환
-                            arrayListOf(
-                                CameraObj.PreviewConfigVo(
-                                    chosenPreviewSurfaceSize,
-                                    bindingMbr.cameraPreviewAutoFitTexture
-                                )
+                    val previewConfigVo =
+                        // 설정 객체 반환
+                        arrayListOf(
+                            CameraObj.PreviewConfigVo(
+                                chosenPreviewSurfaceSize,
+                                bindingMbr.cameraPreviewAutoFitTexture
                             )
-                        } else {
-                            // 지원 사이즈가 없기에 null 반환
-                            null
-                        }
+                        )
+
+                    // 지원 사이즈 탐지
+                    val chosenImageReaderSurfaceSize =
+                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+                            2,
+                            500 * 500,
+                            3.0 / 2.0
+                        )!!
 
                     val imageReaderConfigVo =
-                        if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                            // 지원 사이즈 탐지
-                            val chosenImageReaderSurfaceSize =
-                                CustomUtil.getNearestSupportedCameraOutputSize(
-                                    cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                                    500 * 500,
-                                    3.0 / 2.0
-                                )
+                        // 설정 객체 반환
+                        CameraObj.ImageReaderConfigVo(
+                            chosenImageReaderSurfaceSize,
+                            imageReaderCallback = { reader ->
+                                processImage(reader)
+                            }
+                        )
 
-                            // 설정 객체 반환
-                            CameraObj.ImageReaderConfigVo(
-                                chosenImageReaderSurfaceSize,
-                                imageReaderCallback = { reader ->
-                                    processImage(reader)
-                                }
-                            )
-                        } else {
-                            // 지원 사이즈가 없기에 null 반환
-                            null
-                        }
+                    // 지원 사이즈 탐지
+                    val chosenSurfaceSize =
+                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+                            3,
+                            Long.MAX_VALUE,
+                            3.0 / 2.0
+                        )!!
 
                     val mediaRecorderConfigVo =
-                        if (null != cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr) {
-                            // 지원 사이즈 탐지
-                            val chosenSurfaceSize =
-                                CustomUtil.getNearestSupportedCameraOutputSize(
-                                    cameraObjMbr.mediaRecorderSurfaceSupportedSizeListMbr!!,
-                                    Long.MAX_VALUE,
-                                    3.0 / 2.0
-                                )
-
-                            // 설정 객체 반환
-                            CameraObj.MediaRecorderConfigVo(
-                                chosenSurfaceSize,
-                                File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.mp4"),
-                                true,
-                                Int.MAX_VALUE,
-                                Int.MAX_VALUE,
-                                Int.MAX_VALUE
-                            )
-                        } else {
-                            // 지원 사이즈가 없기에 null 반환
-                            null
-                        }
+                        // 설정 객체 반환
+                        CameraObj.MediaRecorderConfigVo(
+                            chosenSurfaceSize,
+                            File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.mp4"),
+                            true,
+                            Int.MAX_VALUE,
+                            Int.MAX_VALUE,
+                            Int.MAX_VALUE
+                        )
 
                     // (카메라 변수 설정)
                     // 떨림 보정
@@ -1007,49 +972,39 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 cameraObjMbr.stopCameraObject(
                     onCameraStop = {
                         // 미디어 레코드를 제외한 카메라 세션 준비
-                        val previewConfigVo =
-                            if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                                // 지원 사이즈 탐지
-                                val chosenPreviewSurfaceSize =
-                                    CustomUtil.getNearestSupportedCameraOutputSize(
-                                        cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
-                                        Long.MAX_VALUE,
-                                        3.0 / 2.0
-                                    )
+                        // 지원 사이즈 탐지
+                        val chosenPreviewSurfaceSize =
+                            cameraObjMbr.getNearestSupportedCameraOutputSize(
+                                1,
+                                Long.MAX_VALUE,
+                                3.0 / 2.0
+                            )!!
 
-                                // 설정 객체 반환
-                                arrayListOf(
-                                    CameraObj.PreviewConfigVo(
-                                        chosenPreviewSurfaceSize,
-                                        bindingMbr.cameraPreviewAutoFitTexture
-                                    )
+                        val previewConfigVo =
+                            // 설정 객체 반환
+                            arrayListOf(
+                                CameraObj.PreviewConfigVo(
+                                    chosenPreviewSurfaceSize,
+                                    bindingMbr.cameraPreviewAutoFitTexture
                                 )
-                            } else {
-                                // 지원 사이즈가 없기에 null 반환
-                                null
-                            }
+                            )
+
+                        // 지원 사이즈 탐지
+                        val chosenImageReaderSurfaceSize =
+                            cameraObjMbr.getNearestSupportedCameraOutputSize(
+                                2,
+                                500 * 500,
+                                3.0 / 2.0
+                            )!!
 
                         val imageReaderConfigVo =
-                            if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                                // 지원 사이즈 탐지
-                                val chosenImageReaderSurfaceSize =
-                                    CustomUtil.getNearestSupportedCameraOutputSize(
-                                        cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                                        500 * 500,
-                                        3.0 / 2.0
-                                    )
-
-                                // 설정 객체 반환
-                                CameraObj.ImageReaderConfigVo(
-                                    chosenImageReaderSurfaceSize,
-                                    imageReaderCallback = { reader ->
-                                        processImage(reader)
-                                    }
-                                )
-                            } else {
-                                // 지원 사이즈가 없기에 null 반환
-                                null
-                            }
+                            // 설정 객체 반환
+                            CameraObj.ImageReaderConfigVo(
+                                chosenImageReaderSurfaceSize,
+                                imageReaderCallback = { reader ->
+                                    processImage(reader)
+                                }
+                            )
 
                         // (카메라 변수 설정)
                         // 떨림 보정
@@ -1199,14 +1154,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     private fun onCameraPermissionChecked(isOnCreate: Boolean) {
         if (isOnCreate) { // 처음 카메라 설정 시점
             // (카메라 실행)
-            val previewConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                // 지원 사이즈 탐지
-                val chosenPreviewSurfaceSize = CustomUtil.getNearestSupportedCameraOutputSize(
-                    cameraObjMbr.previewSurfaceSupportedSizeListMbr!!,
+            // 지원 사이즈 탐지
+            val chosenPreviewSurfaceSize =
+                cameraObjMbr.getNearestSupportedCameraOutputSize(
+                    1,
                     Long.MAX_VALUE,
                     3.0 / 2.0
-                )
+                )!!
 
+            val previewConfigVo =
                 // 설정 객체 반환
                 arrayListOf(
                     CameraObj.PreviewConfigVo(
@@ -1214,20 +1170,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         bindingMbr.cameraPreviewAutoFitTexture
                     )
                 )
-            } else {
-                // 지원 사이즈가 없기에 null 반환
-                null
-            }
 
-            val imageReaderConfigVo = if (null != cameraObjMbr.previewSurfaceSupportedSizeListMbr) {
-                // 지원 사이즈 탐지
-                val chosenImageReaderSurfaceSize =
-                    CustomUtil.getNearestSupportedCameraOutputSize(
-                        cameraObjMbr.imageReaderSurfaceSupportedSizeListMbr!!,
-                        500 * 500,
-                        3.0 / 2.0
-                    )
+            // 지원 사이즈 탐지
+            val chosenImageReaderSurfaceSize =
+                cameraObjMbr.getNearestSupportedCameraOutputSize(
+                    2,
+                    500 * 500,
+                    3.0 / 2.0
+                )!!
 
+            val imageReaderConfigVo =
                 // 설정 객체 반환
                 CameraObj.ImageReaderConfigVo(
                     chosenImageReaderSurfaceSize,
@@ -1235,10 +1187,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         processImage(reader)
                     }
                 )
-            } else {
-                // 지원 사이즈가 없기에 null 반환
-                null
-            }
 
             // (카메라 변수 설정)
             // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
