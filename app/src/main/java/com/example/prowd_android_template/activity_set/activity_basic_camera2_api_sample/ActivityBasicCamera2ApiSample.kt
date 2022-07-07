@@ -184,17 +184,33 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         )
 
                     // 지원 사이즈 탐지
-                    val chosenImageReaderSurfaceSize =
+                    val chosenAnalysisImageReaderSurfaceSize =
                         cameraObjMbr.getNearestSupportedCameraOutputSize(
                             2,
                             500 * 500,
                             3.0 / 2.0
                         )!!
 
-                    val imageReaderConfigVo =
+                    val analysisImageReaderConfigVo =
                         // 설정 객체 반환
                         CameraObj.ImageReaderConfigVo(
-                            chosenImageReaderSurfaceSize,
+                            chosenAnalysisImageReaderSurfaceSize,
+                            imageReaderCallback = { reader ->
+                                processImage(reader)
+                            }
+                        )
+
+                    val chosenCaptureImageReaderSurfaceSize =
+                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+                            2,
+                            Long.MAX_VALUE,
+                            3.0 / 2.0
+                        )!!
+
+                    val captureImageReaderConfigVo =
+                        // 설정 객체 반환
+                        CameraObj.ImageReaderConfigVo(
+                            chosenCaptureImageReaderSurfaceSize,
                             imageReaderCallback = { reader ->
                                 processImage(reader)
                             }
@@ -217,8 +233,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
-                        imageReaderConfigVo,
+                        captureImageReaderConfigVo,
                         null,
+                        analysisImageReaderConfigVo,
                         onComplete = {
                             // (카메라 리퀘스트 설정)
                             cameraObjMbr.setCameraRequest(
@@ -755,10 +772,26 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         3.0 / 2.0
                                     )!!
 
-                                val imageReaderConfigVo =
+                                val analysisImageReaderConfigVo =
                                     // 설정 객체 반환
                                     CameraObj.ImageReaderConfigVo(
                                         chosenImageReaderSurfaceSize,
+                                        imageReaderCallback = { reader ->
+                                            processImage(reader)
+                                        }
+                                    )
+
+                                val chosenCaptureImageReaderSurfaceSize =
+                                    cameraObjMbr.getNearestSupportedCameraOutputSize(
+                                        2,
+                                        Long.MAX_VALUE,
+                                        3.0 / 2.0
+                                    )!!
+
+                                val captureImageReaderConfigVo =
+                                    // 설정 객체 반환
+                                    CameraObj.ImageReaderConfigVo(
+                                        chosenCaptureImageReaderSurfaceSize,
                                         imageReaderCallback = { reader ->
                                             processImage(reader)
                                         }
@@ -782,8 +815,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 // (카메라 서페이스 설정)
                                 cameraObjMbr.setCameraOutputSurfaces(
                                     previewConfigVo,
-                                    imageReaderConfigVo,
+                                    captureImageReaderConfigVo,
                                     null,
+                                    analysisImageReaderConfigVo,
                                     onComplete = {
                                         // (카메라 리퀘스트 설정)
                                         cameraObjMbr.setCameraRequest(
@@ -867,10 +901,26 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             3.0 / 2.0
                         )!!
 
-                    val imageReaderConfigVo =
+                    val analysisImageReaderConfigVo =
                         // 설정 객체 반환
                         CameraObj.ImageReaderConfigVo(
                             chosenImageReaderSurfaceSize,
+                            imageReaderCallback = { reader ->
+                                processImage(reader)
+                            }
+                        )
+
+                    val chosenCaptureImageReaderSurfaceSize =
+                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+                            2,
+                            Long.MAX_VALUE,
+                            3.0 / 2.0
+                        )!!
+
+                    val captureImageReaderConfigVo =
+                        // 설정 객체 반환
+                        CameraObj.ImageReaderConfigVo(
+                            chosenCaptureImageReaderSurfaceSize,
                             imageReaderCallback = { reader ->
                                 processImage(reader)
                             }
@@ -912,8 +962,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
-                        imageReaderConfigVo,
+                        captureImageReaderConfigVo,
                         mediaRecorderConfigVo,
+                        analysisImageReaderConfigVo,
                         onComplete = {
                             // (카메라 리퀘스트 설정)
                             cameraObjMbr.setCameraRequest(
@@ -997,10 +1048,26 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 3.0 / 2.0
                             )!!
 
-                        val imageReaderConfigVo =
+                        val analysisImageReaderConfigVo =
                             // 설정 객체 반환
                             CameraObj.ImageReaderConfigVo(
                                 chosenImageReaderSurfaceSize,
+                                imageReaderCallback = { reader ->
+                                    processImage(reader)
+                                }
+                            )
+
+                        val chosenCaptureImageReaderSurfaceSize =
+                            cameraObjMbr.getNearestSupportedCameraOutputSize(
+                                2,
+                                Long.MAX_VALUE,
+                                3.0 / 2.0
+                            )!!
+
+                        val captureImageReaderConfigVo =
+                            // 설정 객체 반환
+                            CameraObj.ImageReaderConfigVo(
+                                chosenCaptureImageReaderSurfaceSize,
                                 imageReaderCallback = { reader ->
                                     processImage(reader)
                                 }
@@ -1023,8 +1090,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         // (카메라 서페이스 설정)
                         cameraObjMbr.setCameraOutputSurfaces(
                             previewConfigVo,
-                            imageReaderConfigVo,
+                            captureImageReaderConfigVo,
                             null,
+                            analysisImageReaderConfigVo,
                             onComplete = {
                                 // (카메라 리퀘스트 설정)
                                 cameraObjMbr.setCameraRequest(
@@ -1179,10 +1247,26 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     3.0 / 2.0
                 )!!
 
-            val imageReaderConfigVo =
+            val analysisImageReaderConfigVo =
                 // 설정 객체 반환
                 CameraObj.ImageReaderConfigVo(
                     chosenImageReaderSurfaceSize,
+                    imageReaderCallback = { reader ->
+                        processImage(reader)
+                    }
+                )
+
+            val chosenCaptureImageReaderSurfaceSize =
+                cameraObjMbr.getNearestSupportedCameraOutputSize(
+                    2,
+                    Long.MAX_VALUE,
+                    3.0 / 2.0
+                )!!
+
+            val captureImageReaderConfigVo =
+                // 설정 객체 반환
+                CameraObj.ImageReaderConfigVo(
+                    chosenCaptureImageReaderSurfaceSize,
                     imageReaderCallback = { reader ->
                         processImage(reader)
                     }
@@ -1206,8 +1290,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // (카메라 서페이스 설정)
             cameraObjMbr.setCameraOutputSurfaces(
                 previewConfigVo,
-                imageReaderConfigVo,
+                captureImageReaderConfigVo,
                 null,
+                analysisImageReaderConfigVo,
                 onComplete = {
                     // (카메라 리퀘스트 설정)
                     cameraObjMbr.setCameraRequest(
