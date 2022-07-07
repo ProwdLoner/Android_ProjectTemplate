@@ -1406,19 +1406,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     }) {
                         Surface.ROTATION_0 -> { // 카메라 기본 방향
                             // if sensorOrientationMbr = 90 -> 270
-                            360 - cameraObjMbr.sensorOrientationMbr
+                            360 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
                         }
                         Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
                             // if sensorOrientationMbr = 90 -> 0
-                            90 - cameraObjMbr.sensorOrientationMbr
+                            90 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
                         }
                         Surface.ROTATION_180 -> {
                             // if sensorOrientationMbr = 90 -> 90
-                            180 - cameraObjMbr.sensorOrientationMbr
+                            180 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
                         }
                         Surface.ROTATION_270 -> {
                             // if sensorOrientationMbr = 90 -> 180
-                            270 - cameraObjMbr.sensorOrientationMbr
+                            270 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
                         }
                         else -> {
                             0
