@@ -511,7 +511,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         )
 
         // (최초 사용 카메라 객체 생성)
-        val cameraInfoList = CameraObj.getSupportedCameraInfoList(this)
+        val cameraInfoList = CameraObj.getAllSupportedCameraInfoList(this)
 
         if (cameraInfoList.size == 0) {
             // 지원하는 카메라가 없음
@@ -672,7 +672,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 카메라 전환
         bindingMbr.cameraChangeBtn.setOnClickListener {
-            val cameraInfoList = CameraObj.getSupportedCameraInfoList(this)
+            val cameraInfoList = CameraObj.getAllSupportedCameraInfoList(this)
             val cameraItemList = ArrayList<String>()
 
             for (id in cameraInfoList) {
