@@ -1656,6 +1656,7 @@ class CameraObj private constructor(
                                     }
                                 setZoomFactor(
                                     zoom,
+                                    null,
                                     onComplete = {})
                             } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
                                 val zoom =
@@ -1666,6 +1667,7 @@ class CameraObj private constructor(
                                     }
                                 setZoomFactor(
                                     zoom,
+                                    null,
                                     onComplete = {})
                             }
                         }
@@ -2400,6 +2402,7 @@ class CameraObj private constructor(
 
     // (반복 리퀘스트 실행)
     // forPreview, forAnalysisImageReader, forMediaRecorder -> 어느 서페이스를 사용할지를 결정
+    // captureCallback -> 리퀘스트가 적용된 시점의 콜백
     // onError 에러 코드 :
     // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
     // 2 : 서페이스가 하나도 생성되지 않은 경우
@@ -2410,6 +2413,7 @@ class CameraObj private constructor(
         forPreview: Boolean,
         forAnalysisImageReader: Boolean,
         forMediaRecorder: Boolean,
+        captureCallback: CameraCaptureSession.CaptureCallback?,
         onComplete: () -> Unit,
         onError: (Int) -> Unit
     ) {
@@ -2626,7 +2630,12 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr!!.stopRepeating()
             }
 
-            // todo capture 하여 콜백 후 repeat
+            cameraCaptureSessionMbr!!.capture(
+                captureRequestBuilder.build(),
+                captureCallback,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
             cameraCaptureSessionMbr!!.setRepeatingRequest(
                 captureRequestBuilder.build(),
                 null,
@@ -2657,6 +2666,7 @@ class CameraObj private constructor(
     // onZoomSettingComplete : 반환값 = 적용된 현재 줌 펙터 값
     fun setZoomFactor(
         zoomFactor: Float,
+        captureCallback: CameraCaptureSession.CaptureCallback?,
         onComplete: (Float) -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
@@ -2834,6 +2844,12 @@ class CameraObj private constructor(
             cameraCaptureSessionMbr!!.stopRepeating()
 
             // todo capture 하여 콜백 후 repeat
+            cameraCaptureSessionMbr!!.capture(
+                captureRequestBuilder.build(),
+                captureCallback,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
             cameraCaptureSessionMbr!!.setRepeatingRequest(
                 captureRequestBuilder.build(),
                 null,
@@ -2851,6 +2867,7 @@ class CameraObj private constructor(
     // (손떨림 방지 설정)
     fun setCameraStabilization(
         stabilizationOn: Boolean,
+        captureCallback: CameraCaptureSession.CaptureCallback?,
         onComplete: () -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
@@ -3044,7 +3061,12 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr!!.stopRepeating()
             }
 
-            // todo capture 하여 콜백 후 repeat
+            cameraCaptureSessionMbr!!.capture(
+                captureRequestBuilder.build(),
+                captureCallback,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
             cameraCaptureSessionMbr!!.setRepeatingRequest(
                 captureRequestBuilder.build(),
                 null,

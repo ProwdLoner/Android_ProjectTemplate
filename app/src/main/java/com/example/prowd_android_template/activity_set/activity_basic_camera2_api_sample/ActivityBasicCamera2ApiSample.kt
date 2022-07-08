@@ -202,6 +202,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
+                        null,
                         onComplete = {})
 
                     // (카메라 서페이스 설정)
@@ -216,6 +217,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 forPreview = true,
                                 forAnalysisImageReader = true,
                                 forMediaRecorder = false,
+                                null,
                                 onComplete = {
 
                                 },
@@ -755,6 +757,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 // 떨림 보정
                                 cameraObjMbr.setCameraStabilization(
                                     true,
+                                    null,
                                     onComplete = {})
 
                                 // (카메라 서페이스 설정)
@@ -769,6 +772,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             forPreview = true,
                                             forAnalysisImageReader = true,
                                             forMediaRecorder = false,
+                                            null,
                                             onComplete = {
 
                                             },
@@ -860,6 +864,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
+                        null,
                         onComplete = {})
 
                     // (카메라 서페이스 설정)
@@ -874,6 +879,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 forPreview = true,
                                 forAnalysisImageReader = true,
                                 forMediaRecorder = true,
+                                null,
                                 onComplete = {
                                     // (미디어 레코딩 녹화 실행)
                                     cameraObjMbr.startMediaRecording(onComplete = {
@@ -944,6 +950,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         // 떨림 보정
                         cameraObjMbr.setCameraStabilization(
                             true,
+                            null,
                             onComplete = {})
 
                         // (카메라 서페이스 설정)
@@ -1100,6 +1107,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 떨림 보정
             cameraObjMbr.setCameraStabilization(
                 true,
+                null,
                 onComplete = {})
 
             // (카메라 서페이스 설정)
@@ -1114,6 +1122,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         forPreview = true,
                         forAnalysisImageReader = true,
                         forMediaRecorder = false,
+                        null,
                         onComplete = {
 
                         },
@@ -1134,6 +1143,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 forPreview = true,
                 forAnalysisImageReader = true,
                 forMediaRecorder = false,
+                null,
                 onComplete = {
 
                 },
