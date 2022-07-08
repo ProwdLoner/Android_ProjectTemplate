@@ -1595,8 +1595,8 @@ class CameraObj private constructor(
 
 
     // [카메라 조작 함수]
-    // (카메라 객체를 초기화하는 함수)
-    // getInstance 함수로 카메라 생성, 아래 함수로 카메라 해제
+
+    // (카메라 객체 소멸)
     // 카메라 객체 생성자와 대비되는 함수로, 생성했으면 소멸을 시켜야 함.
     fun destroyCameraObject(
         onCameraClear: () -> Unit
@@ -1699,17 +1699,17 @@ class CameraObj private constructor(
     // 4 : 해당 사이즈 미디어 리코더 서페이스를 지원하지 않음
     // 5 : 해당 사이즈 분석 이미지 리더 서페이스를 지원하지 않음
     // 6 : 미디어 레코더 오디오 녹음 설정 권한 비충족
-    // 7 : 생성된 서페이스가 존재하지 않음
-    // 8 : 서페이스 텍스쳐 생성 불가
-    // 9 : 카메라 권한이 없음
-    // 10 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
-    // 11 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
-    // 12 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
-    // 13 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
-    // 14 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
-    // 15 : 카메라 세션 생성 실패
+    // 7 : 녹화 파일 확장자가 mp4 가 아님
+    // 8 : 카메라 권한이 없음
+    // 9 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
+    // 10 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
+    // 11 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
+    // 12 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
+    // 13 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
+    // 14 : 서페이스 텍스쳐 생성 불가
+    // 15 : 생성된 서페이스가 존재하지 않음
+    // 16 : 카메라 세션 생성 실패
 
-    // 14 : 녹화 파일 확장자가 mp4 가 아님
     fun setCameraOutputSurfaces(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         captureImageReaderConfigVo: ImageReaderConfigVo?,
@@ -1825,7 +1825,7 @@ class CameraObj private constructor(
                     analysisImageReaderConfigVoMbr = null
                     captureImageReaderConfigVoMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(14)
+                    onError(7)
                     return@run
                 }
             }
@@ -3174,7 +3174,7 @@ class CameraObj private constructor(
                         var previewSurfaceList: ArrayList<Surface>? = null
 
                         if (previewConfigVoList != null) {
-                            previewSurfaceList = ArrayList<Surface>()
+                            previewSurfaceList = ArrayList()
                             for (previewConfigVo in previewConfigVoList) {
                                 val surfaceTexture =
                                     previewConfigVo.autoFitTextureView.surfaceTexture
@@ -3211,7 +3211,7 @@ class CameraObj private constructor(
                                     captureImageReader?.close()
 
                                     cameraThreadVoMbr.cameraSemaphore.release()
-                                    onError(8)
+                                    onError(14)
                                     return@openCameraDevice
                                 }
 
@@ -3236,7 +3236,7 @@ class CameraObj private constructor(
                                     previewSurfaceList.isEmpty())
                         ) { // 생성 서페이스가 하나도 존재하지 않으면,
                             cameraThreadVoMbr.cameraSemaphore.release()
-                            onError(7)
+                            onError(15)
                             return@openCameraDevice
                         }
 
@@ -3327,7 +3327,7 @@ class CameraObj private constructor(
                     }
 
                     // 프리뷰가 설정되어 있다면 리스너 비우기
-                    if (previewConfigVoListMbr!= null){
+                    if (previewConfigVoListMbr != null) {
                         for (previewConfigVo in previewConfigVoListMbr!!) {
                             previewConfigVo.autoFitTextureView.surfaceTextureListener =
                                 object : TextureView.SurfaceTextureListener {
@@ -3433,7 +3433,7 @@ class CameraObj private constructor(
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            onError(9)
+            onError(8)
             return
         }
 
@@ -3457,19 +3457,19 @@ class CameraObj private constructor(
                 override fun onError(camera: CameraDevice, error: Int) {
                     when (error) {
                         ERROR_CAMERA_DISABLED -> {
-                            onError(10)
+                            onError(9)
                         }
                         ERROR_CAMERA_IN_USE -> {
-                            onError(11)
+                            onError(10)
                         }
                         ERROR_MAX_CAMERAS_IN_USE -> {
-                            onError(12)
+                            onError(11)
                         }
                         ERROR_CAMERA_DEVICE -> {
-                            onError(13)
+                            onError(12)
                         }
                         ERROR_CAMERA_SERVICE -> {
-                            onError(14)
+                            onError(13)
                         }
                     }
                 }
@@ -3527,7 +3527,7 @@ class CameraObj private constructor(
             val outputConfigurationList = ArrayList<OutputConfiguration>()
 
             // 프리뷰 서페이스 주입
-            if (null != previewSurfaceList){
+            if (null != previewSurfaceList) {
                 for (previewSurface in previewSurfaceList) {
                     outputConfigurationList.add(OutputConfiguration(previewSurface))
                 }
@@ -3572,7 +3572,7 @@ class CameraObj private constructor(
 
                     // 세션 생성 실패
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        onError(15)
+                        onError(16)
                     }
                 }
             ))
@@ -3582,7 +3582,7 @@ class CameraObj private constructor(
             val surfaces = ArrayList<Surface>()
 
             // 프리뷰 서페이스 주입
-            if (null != previewSurfaceList){
+            if (null != previewSurfaceList) {
                 surfaces.addAll(previewSurfaceList)
             }
 
@@ -3609,7 +3609,7 @@ class CameraObj private constructor(
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        onError(15)
+                        onError(16)
                     }
                 }, cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
