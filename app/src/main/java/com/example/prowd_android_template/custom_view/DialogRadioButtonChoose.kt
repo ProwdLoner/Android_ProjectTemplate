@@ -23,6 +23,8 @@ class DialogRadioButtonChoose constructor(
 
     var checkedItemIndexMbr: Int = 0
 
+    private var isFirstCheckMbr = true
+
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,21 +58,16 @@ class DialogRadioButtonChoose constructor(
         val radioGroup = RadioGroup(context)
         radioGroup.orientation = RadioGroup.VERTICAL
 
+        val radioButtonIdList: ArrayList<Int> = ArrayList()
+
         val radioButtonList = ArrayList<RadioButton>()
         for (report in dialogInfoMbr.radioButtonContentList.withIndex()) {
             val btn = RadioButton(context)
             btn.text = report.value
             btn.id = View.generateViewId()
+            radioButtonIdList.add(btn.id)
             radioGroup.addView(btn)
             radioButtonList.add(btn)
-        }
-
-        if (dialogInfoMbr.checkedItemIdx != null) {
-            if (dialogInfoMbr.radioButtonContentList.lastIndex >= dialogInfoMbr.checkedItemIdx!!) {
-                radioGroup.check(dialogInfoMbr.checkedItemIdx!!)
-            } else {
-                radioGroup.check(dialogInfoMbr.radioButtonContentList.lastIndex)
-            }
         }
 
         radioGroup.id = View.generateViewId()
@@ -100,7 +97,28 @@ class DialogRadioButtonChoose constructor(
                 it.id == checkedId
             }
             checkedItemIndexMbr = checkedIdx
-            dialogInfoMbr.onRadioItemClicked(checkedIdx)
+            if (!isFirstCheckMbr){
+                dialogInfoMbr.onRadioItemClicked(checkedIdx)
+            }
+        }
+
+        if (dialogInfoMbr.checkedItemIdx != null) {
+            val id =
+                if (dialogInfoMbr.radioButtonContentList.lastIndex >= dialogInfoMbr.checkedItemIdx!!) {
+                    radioButtonIdList[dialogInfoMbr.checkedItemIdx!!]
+                } else {
+                    radioButtonIdList[dialogInfoMbr.radioButtonContentList.lastIndex]
+                }
+            checkedItemIndexMbr = id
+
+            radioGroup.check(id)
+            isFirstCheckMbr = false
+        } else {
+            val id = radioButtonIdList[0]
+            checkedItemIndexMbr = id
+
+            radioGroup.check(id)
+            isFirstCheckMbr = false
         }
 
         // (버튼 클릭 크기 조정)
@@ -122,7 +140,7 @@ class DialogRadioButtonChoose constructor(
         }
 
         bindingMbr.selectBtn.setOnClickListener {
-            dialogInfoMbr.onSelectBtnClicked(checkedItemIndexMbr)
+            dialogInfoMbr.onSelectBtnClicked(checkedItemIndexMbr!!)
             this.dismiss()
         }
     }

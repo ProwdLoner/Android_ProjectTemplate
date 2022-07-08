@@ -1764,19 +1764,6 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
             )
 
-            if (nowRecordingMbr) {
-                // 레코딩 중이라면 레코더 종료 후 세션 중지
-                mediaRecorderMbr?.reset()
-                nowRecordingMbr = false
-
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            } else if (nowRepeatingMbr) {
-                // 세션이 실행중이라면 중지
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            }
-
             // 프리뷰가 설정되어 있다면 리스너 비우기
             if (previewConfigVoListMbr != null) {
                 for (previewConfigVo in previewConfigVoListMbr!!) {
@@ -1801,6 +1788,19 @@ class CameraObj private constructor(
                                 Unit
                         }
                 }
+            }
+
+            if (nowRecordingMbr) {
+                // 레코딩 중이라면 레코더 종료 후 세션 중지
+                mediaRecorderMbr?.reset()
+                nowRecordingMbr = false
+
+                cameraCaptureSessionMbr?.stopRepeating()
+                nowRepeatingMbr = false
+            } else if (nowRepeatingMbr) {
+                // 세션이 실행중이라면 중지
+                cameraCaptureSessionMbr?.stopRepeating()
+                nowRepeatingMbr = false
             }
 
             // (자원 해소)
@@ -1832,12 +1832,10 @@ class CameraObj private constructor(
         }
     }
 
-    // todo 서페이스 개별 변경 함수
-    // todo : 서페이스 각자 세팅 기능 오버로딩
     // (출력 서페이스 설정 함수)
     // 서페이스 설정 검증 및 생성, 이후 CameraDevice, CameraCaptureSession 생성까지를 수행
     // 사용할 서페이스 사이즈 및 종류를 결정하는 것이 주요 기능
-    // 실행시 카메라 초기화를 먼저 실행 (이미 생성된 CameraDevice 만 놔두고 모든것을 초기화)
+    // 실행시 카메라 초기화를 실행 (이미 생성된 CameraDevice 만 놔두고 모든것을 초기화) 후 설정
 
     // onError 에러 코드 :
     // 아래 에러코드가 실행된다면 카메라가 초기화 된 상태에서 멈추며 executorOnError 가 실행됨
@@ -2335,19 +2333,6 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
             )
 
-            if (nowRecordingMbr) {
-                // 레코딩 중이라면 레코더 종료 후 세션 중지
-                mediaRecorderMbr?.reset()
-                nowRecordingMbr = false
-
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            } else if (nowRepeatingMbr) {
-                // 세션이 실행중이라면 중지
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            }
-
             // 프리뷰가 설정되어 있다면 리스너 비우기
             if (previewConfigVoListMbr != null) {
                 for (previewConfigVo in previewConfigVoListMbr!!) {
@@ -2372,6 +2357,19 @@ class CameraObj private constructor(
                                 Unit
                         }
                 }
+            }
+
+            if (nowRecordingMbr) {
+                // 레코딩 중이라면 레코더 종료 후 세션 중지
+                mediaRecorderMbr?.reset()
+                nowRecordingMbr = false
+
+                cameraCaptureSessionMbr?.stopRepeating()
+                nowRepeatingMbr = false
+            } else if (nowRepeatingMbr) {
+                // 세션이 실행중이라면 중지
+                cameraCaptureSessionMbr?.stopRepeating()
+                nowRepeatingMbr = false
             }
 
             // (자원 해소)
@@ -3493,7 +3491,74 @@ class CameraObj private constructor(
                             return@openCameraDevice
                         }
 
-                        // todo 카메라 초기화
+                        // [카메라 상태 초기화]
+                        // 이미지 리더 요청을 먼저 비우기
+                        analysisImageReaderMbr?.setOnImageAvailableListener(
+                            { it.acquireLatestImage()?.close() },
+                            cameraThreadVoMbr.analysisImageReaderHandlerThreadObj.handler
+                        )
+                        captureImageReaderMbr?.setOnImageAvailableListener(
+                            { it.acquireLatestImage()?.close() },
+                            cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
+                        )
+
+                        // 프리뷰가 설정되어 있다면 리스너 비우기
+                        if (previewConfigVoListMbr != null) {
+                            for (previewConfigVo in previewConfigVoListMbr!!) {
+                                previewConfigVo.autoFitTextureView.surfaceTextureListener =
+                                    object : TextureView.SurfaceTextureListener {
+                                        override fun onSurfaceTextureAvailable(
+                                            surface: SurfaceTexture,
+                                            width: Int,
+                                            height: Int
+                                        ) = Unit
+
+                                        override fun onSurfaceTextureSizeChanged(
+                                            surface: SurfaceTexture,
+                                            width: Int,
+                                            height: Int
+                                        ) = Unit
+
+                                        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                            true
+
+                                        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                                            Unit
+                                    }
+                            }
+                        }
+
+                        if (nowRecordingMbr) {
+                            // 레코딩 중이라면 레코더 종료 후 세션 중지
+                            mediaRecorderMbr?.reset()
+                            nowRecordingMbr = false
+
+                            cameraCaptureSessionMbr?.stopRepeating()
+                            nowRepeatingMbr = false
+                        } else if (nowRepeatingMbr) {
+                            // 세션이 실행중이라면 중지
+                            cameraCaptureSessionMbr?.stopRepeating()
+                            nowRepeatingMbr = false
+                        }
+
+                        // (자원 해소)
+                        mediaRecorderMbr?.release()
+                        mediaCodecSurfaceMbr?.release()
+                        analysisImageReaderMbr?.close()
+                        captureImageReaderMbr?.close()
+                        cameraCaptureSessionMbr?.close()
+
+                        // (멤버 변수 비우기)
+                        mediaRecorderMbr = null
+                        mediaRecorderConfigVoMbr = null
+                        analysisImageReaderMbr = null
+                        captureImageReaderMbr = null
+                        analysisImageReaderConfigVoMbr = null
+                        captureImageReaderConfigVoMbr = null
+                        cameraCaptureSessionMbr = null
+                        previewConfigVoListMbr = null
+                        previewSurfaceListMbr = null
+                        repeatRequestTargetVoMbr = null
 
                         // (카메라 세션 생성)
                         createCameraSessionAsync(
@@ -3511,8 +3576,6 @@ class CameraObj private constructor(
                                 mediaCodecSurfaceMbr = mediaCodecSurface
                                 previewConfigVoListMbr = previewConfigVoList
                                 previewSurfaceListMbr = previewSurfaceList
-
-                                // todo : 카메라 실행
 
                                 cameraThreadVoMbr.cameraSemaphore.release()
                                 onComplete()
