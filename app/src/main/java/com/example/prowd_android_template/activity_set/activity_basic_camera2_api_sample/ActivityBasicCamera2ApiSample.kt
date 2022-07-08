@@ -9,8 +9,6 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.RectF
 import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CaptureRequest
 import android.media.Image
 import android.media.ImageReader
 import android.net.Uri
@@ -206,13 +204,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         true,
                         onComplete = {})
 
-                    cameraObjMbr.setAutoFocus(
-                        true,
-                        onComplete = {})
-
-                    cameraObjMbr.setExposureTime(
-                        null,
-                        onComplete = {})
+//                    cameraObjMbr.setAutoFocus(
+//                        true,
+//                        onComplete = {})
+//
+//                    cameraObjMbr.setExposureTime(
+//                        null,
+//                        onComplete = {})
 
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
@@ -223,9 +221,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         onComplete = {
                             // (카메라 리퀘스트 설정)
                             cameraObjMbr.repeatingRequest(
-                                requestToPreview = true,
-                                requestToAnalysisImageReader = true,
-                                requestToMediaRecorder = false,
+                                forPreview = true,
+                                forAnalysisImageReader = true,
+                                forMediaRecorder = false,
                                 onComplete = {
 
                                 },
@@ -764,13 +762,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     true,
                                     onComplete = {})
 
-                                cameraObjMbr.setAutoFocus(
-                                    true,
-                                    onComplete = {})
-
-                                cameraObjMbr.setExposureTime(
-                                    null,
-                                    onComplete = {})
+//                                cameraObjMbr.setAutoFocus(
+//                                    true,
+//                                    onComplete = {})
+//
+//                                cameraObjMbr.setExposureTime(
+//                                    null,
+//                                    onComplete = {})
 
                                 // (카메라 서페이스 설정)
                                 cameraObjMbr.setCameraOutputSurfaces(
@@ -781,9 +779,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     onComplete = {
                                         // (카메라 리퀘스트 설정)
                                         cameraObjMbr.repeatingRequest(
-                                            requestToPreview = true,
-                                            requestToAnalysisImageReader = true,
-                                            requestToMediaRecorder = false,
+                                            forPreview = true,
+                                            forAnalysisImageReader = true,
+                                            forMediaRecorder = false,
                                             onComplete = {
 
                                             },
@@ -883,13 +881,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         true,
                         onComplete = {})
 
-                    cameraObjMbr.setAutoFocus(
-                        true,
-                        onComplete = {})
-
-                    cameraObjMbr.setExposureTime(
-                        null,
-                        onComplete = {})
+//                    cameraObjMbr.setAutoFocus(
+//                        true,
+//                        onComplete = {})
+//
+//                    cameraObjMbr.setExposureTime(
+//                        null,
+//                        onComplete = {})
 
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
@@ -900,9 +898,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         onComplete = {
                             // (카메라 리퀘스트 설정)
                             cameraObjMbr.repeatingRequest(
-                                requestToPreview = true,
-                                requestToAnalysisImageReader = true,
-                                requestToMediaRecorder = true,
+                                forPreview = true,
+                                forAnalysisImageReader = true,
+                                forMediaRecorder = true,
                                 onComplete = {
                                     // (미디어 레코딩 녹화 실행)
                                     cameraObjMbr.startMediaRecording(onComplete = {
@@ -975,13 +973,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             true,
                             onComplete = {})
 
-                        cameraObjMbr.setAutoFocus(
-                            true,
-                            onComplete = {})
-
-                        cameraObjMbr.setExposureTime(
-                            null,
-                            onComplete = {})
+//                        cameraObjMbr.setAutoFocus(
+//                            true,
+//                            onComplete = {})
+//
+//                        cameraObjMbr.setExposureTime(
+//                            null,
+//                            onComplete = {})
 
                         // (카메라 서페이스 설정)
                         cameraObjMbr.setCameraOutputSurfaces(
@@ -1139,13 +1137,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 true,
                 onComplete = {})
 
-            cameraObjMbr.setAutoFocus(
-                true,
-                onComplete = {})
-
-            cameraObjMbr.setExposureTime(
-                null,
-                onComplete = {})
+//            cameraObjMbr.setAutoFocus(
+//                true,
+//                onComplete = {})
+//
+//            cameraObjMbr.setExposureTime(
+//                null,
+//                onComplete = {})
 
             // (카메라 서페이스 설정)
             cameraObjMbr.setCameraOutputSurfaces(
@@ -1156,9 +1154,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 onComplete = {
                     // (카메라 리퀘스트 설정)
                     cameraObjMbr.repeatingRequest(
-                        requestToPreview = true,
-                        requestToAnalysisImageReader = true,
-                        requestToMediaRecorder = false,
+                        forPreview = true,
+                        forAnalysisImageReader = true,
+                        forMediaRecorder = false,
                         onComplete = {
 
                         },
@@ -1176,9 +1174,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // (카메라 실행)
             // todo
             cameraObjMbr.repeatingRequest(
-                requestToPreview = true,
-                requestToAnalysisImageReader = true,
-                requestToMediaRecorder = false,
+                forPreview = true,
+                forAnalysisImageReader = true,
+                forMediaRecorder = false,
                 onComplete = {
 
                 },

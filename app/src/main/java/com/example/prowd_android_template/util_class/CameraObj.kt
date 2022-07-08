@@ -85,7 +85,7 @@ class CameraObj private constructor(
     // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
     // -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
     // 기본 값은 객체 생성시 결정되어, 카메라 지원 정보에 따라 -2 or -1 or 0 의 순서대로 적용 가능한 설정을 결정
-    var currentFocusDistanceMbr: Float = -2f
+    var focusDistanceMbr: Float = -2f
         private set
 
     // 센서 노출 시간 :
@@ -93,7 +93,7 @@ class CameraObj private constructor(
     // 한 프레임에 대한 노출 시간
     // null 이라면 Auto Exposure ON
     // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
-    var currentFrameExposureTimeNsMbr: Long? = null
+    var exposureTimeNsMbr: Long? = null
         private set
 
     // (수동 조작 설정)
@@ -105,7 +105,7 @@ class CameraObj private constructor(
 
     // 카메라 현재 줌 배수
     // 1f 부터 cameraInfoVoMbr.maxZoom 까지
-    var currentCameraZoomFactorMbr: Float = 1.0f
+    var zoomFactorMbr: Float = 1.0f
         private set
 
 
@@ -125,6 +125,7 @@ class CameraObj private constructor(
     // 이미지 리더 세팅 부산물
     var captureImageReaderConfigVoMbr: ImageReaderConfigVo? = null
     private var captureImageReaderMbr: ImageReader? = null
+
     var analysisImageReaderConfigVoMbr: ImageReaderConfigVo? = null
     private var analysisImageReaderMbr: ImageReader? = null
 
@@ -137,11 +138,11 @@ class CameraObj private constructor(
     var previewConfigVoListMbr: ArrayList<PreviewConfigVo>? = null
     private var previewSurfaceListMbr: ArrayList<Surface>? = ArrayList()
 
-    // 카메라 리퀘스트 빌더
-    private var captureRequestBuilderMbr: CaptureRequest.Builder? = null
-
     // 카메라 세션 객체
     private var cameraCaptureSessionMbr: CameraCaptureSession? = null
+
+    // 반복 리퀘스트 타겟 객체
+    private var repeatRequestTargetVoMbr: RepeatRequestTargetVo? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -1073,11 +1074,11 @@ class CameraObj private constructor(
 
             // AF 초기 설정 결정
             if (fastAutoFocusSupported) {
-                resultCameraObject.currentFocusDistanceMbr = -2f
+                resultCameraObject.focusDistanceMbr = -2f
             } else if (naturalAutoFocusSupported) {
-                resultCameraObject.currentFocusDistanceMbr = -1f
+                resultCameraObject.focusDistanceMbr = -1f
             } else {
-                resultCameraObject.currentFocusDistanceMbr = 0f
+                resultCameraObject.focusDistanceMbr = 0f
             }
 
             // area af 가능 여부
@@ -1605,6 +1606,139 @@ class CameraObj private constructor(
         }
     }
 
+    // todo : 핀치 크기에 따라 델타 값 차등 적용
+    // todo : AE, AF 적용 (하나 클릭 감지, 빨리 클릭시 af로 돌아오기, 오래 클릭시 해당 값으로 고정 - 이 상태에서 다른데 클릭시 고정 풀기)
+    // todo : 할수있다면 더블 클릭 줌인
+    // (뷰 핀치 동작에 따른 줌 변경 리스너 주입 함수)
+    // 뷰를 주입하면 해당 뷰를 핀칭할 때에 줌을 변경할수 있도록 리스너를 주입
+    // 뷰를 여러번 넣으면 각각의 뷰에 핀칭을 할 때마다 줌을 변경
+    // delta : 단위 핀치 이벤트에 따른 줌 변화량 = 높을수록 민감
+    var beforePinchSpacingMbr: Float? = null
+    var pinchBeforeMbr: Boolean = false
+    var clickStartTimeMsMbr: Long? = null
+    var longClickedBeforeMbr = false
+    val longClickTimeMsMbr = 500
+    fun setCameraPinchZoomTouchListener(
+        view: View,
+        delta: Float = 0.05f
+    ) {
+        view.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event!!.action) {
+                    MotionEvent.ACTION_DOWN -> {}
+                    MotionEvent.ACTION_UP -> {
+                        // 형식 맞추기 코드
+                        v!!.performClick()
+
+                        // 손가락을 떼면 기존 핀치 너비 비우기
+                        beforePinchSpacingMbr = null
+                    }
+                    else -> {}
+                }
+
+                when (event.pointerCount) {
+                    2 -> { // 핀치를 위한 더블 터치일 경우
+                        // 두손가락을 대고있는 매 순간 실행
+
+                        // 현재 핀치 넓이 구하기
+                        val currentFingerSpacing: Float
+                        val x = event.getX(0) - event.getX(1)
+                        val y = event.getY(0) - event.getY(1)
+                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+
+                        if (beforePinchSpacingMbr != null) {
+                            if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
+                                val zoom =
+                                    if ((zoomFactorMbr + delta) > cameraInfoVoMbr.maxZoom) {
+                                        cameraInfoVoMbr.maxZoom
+                                    } else {
+                                        zoomFactorMbr + delta
+                                    }
+                                setZoomFactor(
+                                    zoom,
+                                    onComplete = {})
+                            } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
+                                val zoom =
+                                    if ((zoomFactorMbr - delta) < 1.0f) {
+                                        1.0f
+                                    } else {
+                                        zoomFactorMbr - delta
+                                    }
+                                setZoomFactor(
+                                    zoom,
+                                    onComplete = {})
+                            }
+                        }
+
+                        // 핀치 너비를 갱신
+                        beforePinchSpacingMbr = currentFingerSpacing
+
+                        pinchBeforeMbr = true
+                        clickStartTimeMsMbr = null
+                        longClickedBeforeMbr = false
+
+                        return true
+                    }
+                    1 -> { // 한손가락을 대고있는 매 순간 실행
+
+                        // long click 탐지
+                        if (!pinchBeforeMbr) {
+                            if (clickStartTimeMsMbr == null) {
+                                clickStartTimeMsMbr = SystemClock.elapsedRealtime()
+                                longClickedBeforeMbr = false
+                            } else {
+                                longClickedBeforeMbr =
+                                    if (SystemClock.elapsedRealtime() - clickStartTimeMsMbr!! >= longClickTimeMsMbr) {
+                                        if (!longClickedBeforeMbr) {
+                                            // longClick 으로 전환되는 순간
+
+                                            Log.e(
+                                                "lc",
+                                                "x : ${event.getX(0)}, y : ${event.getY(0)}"
+                                            )
+                                        }
+                                        true
+                                    } else {
+                                        false
+                                    }
+                            }
+                        }
+
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                pinchBeforeMbr = false
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                if (!pinchBeforeMbr && !longClickedBeforeMbr) {
+                                    // 핀치도, 롱 클릭도 아닌 단순 클릭
+
+                                    Log.e("oc", "x : ${event.getX(0)}, y : ${event.getY(0)}")
+                                }
+
+                                pinchBeforeMbr = false
+                                longClickedBeforeMbr = false
+                                clickStartTimeMsMbr = null
+                            }
+
+                            MotionEvent.ACTION_CANCEL -> {
+                                pinchBeforeMbr = false
+                                longClickedBeforeMbr = false
+                                clickStartTimeMsMbr = null
+                            }
+                            else -> {}
+                        }
+
+                        return true
+                    }
+                    else -> {
+                        Log.e("tc", "tc")
+                        return true
+                    }
+                }
+            }
+        })
+    }
+
 
     // [카메라 조작 함수]
 
@@ -1683,10 +1817,10 @@ class CameraObj private constructor(
             analysisImageReaderConfigVoMbr = null
             captureImageReaderConfigVoMbr = null
             cameraCaptureSessionMbr = null
-            captureRequestBuilderMbr = null
             previewConfigVoListMbr = null
             previewSurfaceListMbr = null
             cameraDeviceMbr = null
+            repeatRequestTargetVoMbr = null
 
             requestForDeleteSharedCameraIdThreadVoOnStaticMemory(cameraInfoVoMbr.cameraId)
 
@@ -2253,9 +2387,9 @@ class CameraObj private constructor(
             analysisImageReaderConfigVoMbr = null
             captureImageReaderConfigVoMbr = null
             cameraCaptureSessionMbr = null
-            captureRequestBuilderMbr = null
             previewConfigVoListMbr = null
             previewSurfaceListMbr = null
+            repeatRequestTargetVoMbr = null
 
             cameraThreadVoMbr.cameraSemaphore.release()
 
@@ -2265,7 +2399,7 @@ class CameraObj private constructor(
 
 
     // (반복 리퀘스트 실행)
-    // onPreview, onImageReader, onMediaRecorder -> 어느 서페이스를 사용할지를 결정
+    // forPreview, forAnalysisImageReader, forMediaRecorder -> 어느 서페이스를 사용할지를 결정
     // onError 에러 코드 :
     // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
     // 2 : 서페이스가 하나도 생성되지 않은 경우
@@ -2273,9 +2407,9 @@ class CameraObj private constructor(
     // 4 : analysisImageReader 설정이지만 analysisImageReader 서페이스가 없을 때
     // 5 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
     fun repeatingRequest(
-        requestToPreview: Boolean,
-        requestToAnalysisImageReader: Boolean,
-        requestToMediaRecorder: Boolean,
+        forPreview: Boolean,
+        forAnalysisImageReader: Boolean,
+        forMediaRecorder: Boolean,
         onComplete: () -> Unit,
         onError: (Int) -> Unit
     ) {
@@ -2299,7 +2433,7 @@ class CameraObj private constructor(
                 return@run
             }
 
-            if (requestToPreview) {
+            if (forPreview) {
                 if (previewSurfaceListMbr == null ||
                     previewSurfaceListMbr!!.isEmpty()
                 ) {
@@ -2309,7 +2443,7 @@ class CameraObj private constructor(
                 }
             }
 
-            if (requestToAnalysisImageReader) {
+            if (forAnalysisImageReader) {
                 if (analysisImageReaderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onError(4)
@@ -2317,7 +2451,7 @@ class CameraObj private constructor(
                 }
             }
 
-            if (requestToMediaRecorder) {
+            if (forMediaRecorder) {
                 if (mediaCodecSurfaceMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onError(5)
@@ -2327,15 +2461,15 @@ class CameraObj private constructor(
 
             // [모드 설정]
             // todo wb
-            // 3A 설정중인지 여부
-            val threeAutoSet = (currentFocusDistanceMbr == -2f ||
-                    currentFocusDistanceMbr == -1f) &&
-                    currentFrameExposureTimeNsMbr == null
+            // 3A(Auto Focus, Auto Exposure, Auto WhiteBalance) 설정중인지 여부
+            val threeAutoSet = (focusDistanceMbr == -2f ||
+                    focusDistanceMbr == -1f) &&
+                    exposureTimeNsMbr == null
 
             val requestTemplate = if (!threeAutoSet) { // 3A 중 하나라도 수동 수치가 적용중일 때
                 CameraDevice.TEMPLATE_MANUAL
             } else { // 3A 모두 자동 설정일 때
-                if (requestToMediaRecorder) { // 레코딩 설정시
+                if (forMediaRecorder) { // 레코딩 설정시
                     CameraDevice.TEMPLATE_RECORD
                 } else { // 레코딩 설정이 아닐시
                     CameraDevice.TEMPLATE_PREVIEW
@@ -2348,19 +2482,19 @@ class CameraObj private constructor(
 
 
             // [타겟 서페이스 설정]
-            if (requestToPreview) { // 프리뷰 사용 설정
+            if (forPreview) { // 프리뷰 사용 설정
                 // 프리뷰 서페이스 타겟 추가
                 for (previewSurface in previewSurfaceListMbr!!) {
                     captureRequestBuilder.addTarget(previewSurface)
                 }
             }
 
-            if (requestToAnalysisImageReader) { // 이미지 리더 사용 설정
+            if (forAnalysisImageReader) { // 이미지 리더 사용 설정
                 // 이미지 리더 서페이스 타겟 추가
                 captureRequestBuilder.addTarget(analysisImageReaderMbr!!.surface)
             }
 
-            if (requestToMediaRecorder) { // 미디어 레코더 사용 설정
+            if (forMediaRecorder) { // 미디어 레코더 사용 설정
                 // 미디어 레코더 서페이스 타겟 추가
                 captureRequestBuilder.addTarget(mediaCodecSurfaceMbr!!)
             }
@@ -2374,19 +2508,19 @@ class CameraObj private constructor(
                 )
             } else { // 3A 수동 설정 모드 적용
                 // (포커스 거리 설정)
-                if (currentFocusDistanceMbr == -1f) {
+                if (focusDistanceMbr == -1f) {
                     // 자연스런 오토 포커스 설정
                     captureRequestBuilder.set(
                         CaptureRequest.CONTROL_AF_MODE,
                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
                     )
-                } else if (currentFocusDistanceMbr == -2f) {
+                } else if (focusDistanceMbr == -2f) {
                     // 빠른 오토 포커스 설정
                     captureRequestBuilder.set(
                         CaptureRequest.CONTROL_AF_MODE,
                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                     )
-                } else if (currentFocusDistanceMbr >= 0f) {
+                } else if (focusDistanceMbr >= 0f) {
                     // 포커스 수동 거리 설정
                     captureRequestBuilder.set(
                         CaptureRequest.CONTROL_AF_MODE,
@@ -2394,12 +2528,12 @@ class CameraObj private constructor(
                     )
                     captureRequestBuilder.set(
                         CaptureRequest.LENS_FOCUS_DISTANCE,
-                        currentFocusDistanceMbr
+                        focusDistanceMbr
                     )
                 }
 
                 // (Exposure 설정)
-                if (currentFrameExposureTimeNsMbr == null) {
+                if (exposureTimeNsMbr == null) {
                     // AE 설정
                     captureRequestBuilder.set(
                         CaptureRequest.CONTROL_AE_MODE,
@@ -2414,20 +2548,20 @@ class CameraObj private constructor(
 
                     captureRequestBuilder.set(
                         CaptureRequest.SENSOR_EXPOSURE_TIME,
-                        currentFrameExposureTimeNsMbr
+                        exposureTimeNsMbr
                     )
                 }
             }
 
             // (수동 설정)
             // (오브젝트 내부 줌 정보를 설정)
-            val zoom = if (cameraInfoVoMbr.maxZoom < currentCameraZoomFactorMbr) {
+            val zoom = if (cameraInfoVoMbr.maxZoom < zoomFactorMbr) {
                 // 가용 줌 최대치에 설정을 맞추기
                 cameraInfoVoMbr.maxZoom
-            } else if (currentCameraZoomFactorMbr < 1f) {
+            } else if (zoomFactorMbr < 1f) {
                 1f
             } else {
-                currentCameraZoomFactorMbr
+                zoomFactorMbr
             }
 
             // 센서 사이즈 중심점
@@ -2499,6 +2633,12 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 
+            repeatRequestTargetVoMbr = RepeatRequestTargetVo(
+                forPreview,
+                forAnalysisImageReader,
+                forMediaRecorder
+            )
+
             nowRepeatingMbr = true
 
             cameraThreadVoMbr.cameraSemaphore.release()
@@ -2507,163 +2647,624 @@ class CameraObj private constructor(
     }
 
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // [카메라 설정 조작 함수]
+    // 카메라 내부 멤버변수 설정 조작 함수
+    // 설정이 조작되면 다음 리퀘스트에 반영이 되며, 만약 리퀘스트 반복 실행중이라면 변경사항 즉시 적용
 
-
-    // (CameraSession 을 대기 상태로 만드는 함수)
-    // 현재 세션이 repeating 이라면 이를 중단함.
-    // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
-    fun pauseCameraSession(
-        onCameraPause: () -> Unit
+    // todo 설정 적용 시점을 알수있는 콜백 사용
+    // (카메라 줌 비율을 변경하는 함수)
+    // 카메라가 실행중 상태라면 즉시 반영
+    // onZoomSettingComplete : 반환값 = 적용된 현재 줌 펙터 값
+    fun setZoomFactor(
+        zoomFactor: Float,
+        onComplete: (Float) -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            if (nowRepeatingMbr) {
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
+            val zoom = if (cameraInfoVoMbr.maxZoom < zoomFactor) {
+                // 가용 줌 최대치에 설정을 맞추기
+                cameraInfoVoMbr.maxZoom
+            } else if (zoomFactorMbr < 1f) {
+                1f
+            } else {
+                zoomFactor
             }
 
-            cameraThreadVoMbr.cameraSemaphore.release()
+            zoomFactorMbr = zoom
 
-            onCameraPause()
+            if (!nowRepeatingMbr) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onComplete(zoomFactorMbr)
+            }
+
+            // [모드 설정]
+            // todo wb
+            // 3A(Auto Focus, Auto Exposure, Auto WhiteBalance) 설정중인지 여부
+            val threeAutoSet = (focusDistanceMbr == -2f ||
+                    focusDistanceMbr == -1f) &&
+                    exposureTimeNsMbr == null
+
+            val requestTemplate = if (!threeAutoSet) { // 3A 중 하나라도 수동 수치가 적용중일 때
+                CameraDevice.TEMPLATE_MANUAL
+            } else { // 3A 모두 자동 설정일 때
+                if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                    CameraDevice.TEMPLATE_RECORD
+                } else { // 레코딩 설정이 아닐시
+                    CameraDevice.TEMPLATE_PREVIEW
+                }
+            }
+
+            // [리퀘스트 빌더 생성]
+            val captureRequestBuilder =
+                cameraDeviceMbr!!.createCaptureRequest(requestTemplate)
+
+
+            // [타겟 서페이스 설정]
+            if (repeatRequestTargetVoMbr!!.forPreview) { // 프리뷰 사용 설정
+                // 프리뷰 서페이스 타겟 추가
+                for (previewSurface in previewSurfaceListMbr!!) {
+                    captureRequestBuilder.addTarget(previewSurface)
+                }
+            }
+
+            if (repeatRequestTargetVoMbr!!.forAnalysisImageReader) { // 이미지 리더 사용 설정
+                // 이미지 리더 서페이스 타겟 추가
+                captureRequestBuilder.addTarget(analysisImageReaderMbr!!.surface)
+            }
+
+            if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 미디어 레코더 사용 설정
+                // 미디어 레코더 서페이스 타겟 추가
+                captureRequestBuilder.addTarget(mediaCodecSurfaceMbr!!)
+            }
+
+            // [리퀘스트 설정]
+            // (3A 설정)
+            if (threeAutoSet) { // 3A 자동 설정 모드 적용
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AWB_MODE,
+                    CaptureRequest.CONTROL_AWB_MODE_AUTO
+                )
+            } else { // 3A 수동 설정 모드 적용
+                // (포커스 거리 설정)
+                if (focusDistanceMbr == -1f) {
+                    // 자연스런 오토 포커스 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                    )
+                } else if (focusDistanceMbr == -2f) {
+                    // 빠른 오토 포커스 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                    )
+                } else if (focusDistanceMbr >= 0f) {
+                    // 포커스 수동 거리 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_FOCUS_DISTANCE,
+                        focusDistanceMbr
+                    )
+                }
+
+                // (Exposure 설정)
+                if (exposureTimeNsMbr == null) {
+                    // AE 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON
+                    )
+                } else {
+                    // 수동 노출 시간 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_OFF
+                    )
+
+                    captureRequestBuilder.set(
+                        CaptureRequest.SENSOR_EXPOSURE_TIME,
+                        exposureTimeNsMbr
+                    )
+                }
+            }
+
+            // (수동 설정)
+            // 센서 사이즈 중심점
+            val centerX =
+                cameraInfoVoMbr.sensorSize.width() / 2
+            val centerY =
+                cameraInfoVoMbr.sensorSize.height() / 2
+
+            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
+            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
+            val deltaX =
+                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoom).toInt()
+            val deltaY =
+                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoom).toInt()
+
+            val mCropRegion = Rect().apply {
+                set(
+                    centerX - deltaX,
+                    centerY - deltaY,
+                    centerX + deltaX,
+                    centerY + deltaY
+                )
+            }
+
+            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+
+            // (카메라 떨림 보정 여부 반영)
+            when (cameraStabilizationSetMbr) {
+                0 -> { // 떨림 보정 off
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                1 -> { // 기계적 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                2 -> { // 소프트웨어 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                }
+            }
+
+            cameraCaptureSessionMbr!!.stopRepeating()
+
+            // todo capture 하여 콜백 후 repeat
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                captureRequestBuilder.build(),
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
+            nowRepeatingMbr = true
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+            onComplete(zoomFactorMbr)
         }
     }
 
-    // todo : 핀치 크기에 따라 델타 값 차등 적용
-    // todo : AE, AF 적용 (하나 클릭 감지, 빨리 클릭시 af로 돌아오기, 오래 클릭시 해당 값으로 고정 - 이 상태에서 다른데 클릭시 고정 풀기)
-    // todo : 할수있다면 더블 클릭 줌인
-    // (뷰 핀치 동작에 따른 줌 변경 리스너 주입 함수)
-    // 뷰를 주입하면 해당 뷰를 핀칭할 때에 줌을 변경할수 있도록 리스너를 주입
-    // 뷰를 여러번 넣으면 각각의 뷰에 핀칭을 할 때마다 줌을 변경
-    // delta : 단위 핀치 이벤트에 따른 줌 변화량 = 높을수록 민감
-    var beforePinchSpacingMbr: Float? = null
-    var pinchBeforeMbr: Boolean = false
-    var clickStartTimeMsMbr: Long? = null
-    var longClickedBeforeMbr = false
-    val longClickTimeMsMbr = 500
-    fun setCameraPinchZoomTouchListener(
-        view: View,
-        delta: Float = 0.05f
+
+    // (손떨림 방지 설정)
+    fun setCameraStabilization(
+        stabilizationOn: Boolean,
+        onComplete: () -> Unit
     ) {
-        view.setOnTouchListener(object : View.OnTouchListener {
-            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-                when (event!!.action) {
-                    MotionEvent.ACTION_DOWN -> {}
-                    MotionEvent.ACTION_UP -> {
-                        // 형식 맞추기 코드
-                        v!!.performClick()
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
 
-                        // 손가락을 떼면 기존 핀치 너비 비우기
-                        beforePinchSpacingMbr = null
-                    }
-                    else -> {}
+            val stabilization = if (stabilizationOn) {
+                if (cameraInfoVoMbr.isOpticalStabilizationAvailable) { // 기계 보정 사용 가능
+                    1
+                } else if (cameraInfoVoMbr.isVideoStabilizationAvailable) {// 소프트 웨어 보정 사용 가능
+                    2
+                } else {
+                    0
                 }
+            } else {
+                0
+            }
 
-                when (event.pointerCount) {
-                    2 -> { // 핀치를 위한 더블 터치일 경우
-                        // 두손가락을 대고있는 매 순간 실행
+            cameraStabilizationSetMbr = stabilization
 
-                        // 현재 핀치 넓이 구하기
-                        val currentFingerSpacing: Float
-                        val x = event.getX(0) - event.getX(1)
-                        val y = event.getY(0) - event.getY(1)
-                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+            // 세션이 현재 실행중이 아니라면 여기서 멈추기
+            if (!nowRepeatingMbr) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onComplete()
+                return@run
+            }
 
-                        if (beforePinchSpacingMbr != null) {
-                            if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
-                                val zoom =
-                                    if ((currentCameraZoomFactorMbr + delta) > cameraInfoVoMbr.maxZoom) {
-                                        cameraInfoVoMbr.maxZoom
-                                    } else {
-                                        currentCameraZoomFactorMbr + delta
-                                    }
-                                setZoomFactor(
-                                    zoom,
-                                    onComplete = {})
-                            } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
-                                val zoom =
-                                    if ((currentCameraZoomFactorMbr - delta) < 1.0f) {
-                                        1.0f
-                                    } else {
-                                        currentCameraZoomFactorMbr - delta
-                                    }
-                                setZoomFactor(
-                                    zoom,
-                                    onComplete = {})
-                            }
-                        }
+            // [모드 설정]
+            // todo wb
+            // 3A(Auto Focus, Auto Exposure, Auto WhiteBalance) 설정중인지 여부
+            val threeAutoSet = (focusDistanceMbr == -2f ||
+                    focusDistanceMbr == -1f) &&
+                    exposureTimeNsMbr == null
 
-                        // 핀치 너비를 갱신
-                        beforePinchSpacingMbr = currentFingerSpacing
-
-                        pinchBeforeMbr = true
-                        clickStartTimeMsMbr = null
-                        longClickedBeforeMbr = false
-
-                        return true
-                    }
-                    1 -> { // 한손가락을 대고있는 매 순간 실행
-
-                        // long click 탐지
-                        if (!pinchBeforeMbr) {
-                            if (clickStartTimeMsMbr == null) {
-                                clickStartTimeMsMbr = SystemClock.elapsedRealtime()
-                                longClickedBeforeMbr = false
-                            } else {
-                                longClickedBeforeMbr =
-                                    if (SystemClock.elapsedRealtime() - clickStartTimeMsMbr!! >= longClickTimeMsMbr) {
-                                        if (!longClickedBeforeMbr) {
-                                            // longClick 으로 전환되는 순간
-
-                                            Log.e(
-                                                "lc",
-                                                "x : ${event.getX(0)}, y : ${event.getY(0)}"
-                                            )
-                                        }
-                                        true
-                                    } else {
-                                        false
-                                    }
-                            }
-                        }
-
-                        when (event.action) {
-                            MotionEvent.ACTION_DOWN -> {
-                                pinchBeforeMbr = false
-                            }
-                            MotionEvent.ACTION_UP -> {
-                                if (!pinchBeforeMbr && !longClickedBeforeMbr) {
-                                    // 핀치도, 롱 클릭도 아닌 단순 클릭
-
-                                    Log.e("oc", "x : ${event.getX(0)}, y : ${event.getY(0)}")
-                                }
-
-                                pinchBeforeMbr = false
-                                longClickedBeforeMbr = false
-                                clickStartTimeMsMbr = null
-                            }
-
-                            MotionEvent.ACTION_CANCEL -> {
-                                pinchBeforeMbr = false
-                                longClickedBeforeMbr = false
-                                clickStartTimeMsMbr = null
-                            }
-                            else -> {}
-                        }
-
-                        return true
-                    }
-                    else -> {
-                        Log.e("tc", "tc")
-                        return true
-                    }
+            val requestTemplate = if (!threeAutoSet) { // 3A 중 하나라도 수동 수치가 적용중일 때
+                CameraDevice.TEMPLATE_MANUAL
+            } else { // 3A 모두 자동 설정일 때
+                if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                    CameraDevice.TEMPLATE_RECORD
+                } else { // 레코딩 설정이 아닐시
+                    CameraDevice.TEMPLATE_PREVIEW
                 }
             }
-        })
+
+            // [리퀘스트 빌더 생성]
+            val captureRequestBuilder =
+                cameraDeviceMbr!!.createCaptureRequest(requestTemplate)
+
+
+            // [타겟 서페이스 설정]
+            if (repeatRequestTargetVoMbr!!.forPreview) { // 프리뷰 사용 설정
+                // 프리뷰 서페이스 타겟 추가
+                for (previewSurface in previewSurfaceListMbr!!) {
+                    captureRequestBuilder.addTarget(previewSurface)
+                }
+            }
+
+            if (repeatRequestTargetVoMbr!!.forAnalysisImageReader) { // 이미지 리더 사용 설정
+                // 이미지 리더 서페이스 타겟 추가
+                captureRequestBuilder.addTarget(analysisImageReaderMbr!!.surface)
+            }
+
+            if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 미디어 레코더 사용 설정
+                // 미디어 레코더 서페이스 타겟 추가
+                captureRequestBuilder.addTarget(mediaCodecSurfaceMbr!!)
+            }
+
+            // [리퀘스트 설정]
+            // (3A 설정)
+            if (threeAutoSet) { // 3A 자동 설정 모드 적용
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AWB_MODE,
+                    CaptureRequest.CONTROL_AWB_MODE_AUTO
+                )
+            } else { // 3A 수동 설정 모드 적용
+                // (포커스 거리 설정)
+                if (focusDistanceMbr == -1f) {
+                    // 자연스런 오토 포커스 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                    )
+                } else if (focusDistanceMbr == -2f) {
+                    // 빠른 오토 포커스 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                    )
+                } else if (focusDistanceMbr >= 0f) {
+                    // 포커스 수동 거리 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_FOCUS_DISTANCE,
+                        focusDistanceMbr
+                    )
+                }
+
+                // (Exposure 설정)
+                if (exposureTimeNsMbr == null) {
+                    // AE 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON
+                    )
+                } else {
+                    // 수동 노출 시간 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_OFF
+                    )
+
+                    captureRequestBuilder.set(
+                        CaptureRequest.SENSOR_EXPOSURE_TIME,
+                        exposureTimeNsMbr
+                    )
+                }
+            }
+
+            // (수동 설정)
+            // (오브젝트 내부 줌 정보를 설정)
+            val zoom = if (cameraInfoVoMbr.maxZoom < zoomFactorMbr) {
+                // 가용 줌 최대치에 설정을 맞추기
+                cameraInfoVoMbr.maxZoom
+            } else if (zoomFactorMbr < 1f) {
+                1f
+            } else {
+                zoomFactorMbr
+            }
+
+            // 센서 사이즈 중심점
+            val centerX =
+                cameraInfoVoMbr.sensorSize.width() / 2
+            val centerY =
+                cameraInfoVoMbr.sensorSize.height() / 2
+
+            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
+            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
+            val deltaX =
+                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoom).toInt()
+            val deltaY =
+                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoom).toInt()
+
+            val mCropRegion = Rect().apply {
+                set(
+                    centerX - deltaX,
+                    centerY - deltaY,
+                    centerX + deltaX,
+                    centerY + deltaY
+                )
+            }
+
+            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+
+            // (카메라 떨림 보정 여부 반영)
+            when (cameraStabilizationSetMbr) {
+                0 -> { // 떨림 보정 off
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                1 -> { // 기계적 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                2 -> { // 소프트웨어 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                }
+            }
+
+            if (nowRepeatingMbr) {
+                cameraCaptureSessionMbr!!.stopRepeating()
+            }
+
+            // todo capture 하여 콜백 후 repeat
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                captureRequestBuilder.build(),
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
+            repeatRequestTargetVoMbr = RepeatRequestTargetVo(
+                repeatRequestTargetVoMbr!!.forPreview,
+                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
+                repeatRequestTargetVoMbr!!.forMediaRecorder
+            )
+
+            nowRepeatingMbr = true
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+            onComplete()
+        }
     }
 
-    // [미디어 레코더 변경 함수 모음]
+//    // (포커스 거리 설정)
+//    // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
+//    // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
+//    fun setFixedFocusDistance(
+//        focusDistance: Float,
+//        onComplete: () -> Unit
+//    ) {
+//        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+//            cameraThreadVoMbr.cameraSemaphore.acquire()
+//
+//            if (focusDistance < 0f) {
+//                // 오토 포커스 설정은 setAutoFocus 에서
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            focusDistanceMbr = focusDistance
+//
+//            if (focusDistance > cameraInfoVoMbr.supportedMinimumFocusDistance) {
+//                focusDistanceMbr = cameraInfoVoMbr.supportedMinimumFocusDistance
+//            }
+//
+//            // 리퀘스트 빌더가 생성되지 않은 경우
+//            if (captureRequestBuilderMbr == null) {
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            captureRequestBuilderMbr!!.set(
+//                CaptureRequest.CONTROL_AF_MODE,
+//                CaptureRequest.CONTROL_AF_MODE_OFF
+//            )
+//            captureRequestBuilderMbr!!.set(
+//                CaptureRequest.LENS_FOCUS_DISTANCE,
+//                focusDistanceMbr
+//            )
+//
+//            // 세션이 현재 실행중이 아니라면 여기서 멈추기
+//            if (!nowRepeatingMbr) {
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            // 세션이 현재 실행중이라면 바로 적용하기
+//            cameraCaptureSessionMbr!!.setRepeatingRequest(
+//                captureRequestBuilderMbr!!.build(),
+//                null,
+//                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+//            )
+//
+//            cameraThreadVoMbr.cameraSemaphore.release()
+//            onComplete()
+//        }
+//    }
+//
+//    // (오토 포커스 설정)
+//    // fastAutoFocus true 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+//    // fastAutoFocus false 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+//    // 이 함수는 전체 기본 오토 포커스로, 포커스 범위 설정은 setFocusArea 에서
+//    fun setAutoFocus(
+//        fastAutoFocus: Boolean,
+//        onComplete: () -> Unit
+//    ) {
+//        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+//            cameraThreadVoMbr.cameraSemaphore.acquire()
+//
+//            if (!cameraInfoVoMbr.fastAutoFocusSupported && !cameraInfoVoMbr.naturalAutoFocusSupported) {
+//                // 오토 포커스 지원이 안되면
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            if (fastAutoFocus) {
+//                focusDistanceMbr = if (cameraInfoVoMbr.fastAutoFocusSupported) {
+//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
+//                    -2f
+//                } else {
+//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
+//                    -1f
+//                }
+//            } else {
+//                focusDistanceMbr = if (cameraInfoVoMbr.naturalAutoFocusSupported) {
+//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
+//                    -1f
+//                } else {
+//                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
+//                    -2f
+//                }
+//            }
+//
+//            // 리퀘스트 빌더가 생성되지 않은 경우
+//            if (captureRequestBuilderMbr == null) {
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            if (focusDistanceMbr == -1f) {
+//                captureRequestBuilderMbr!!.set(
+//                    CaptureRequest.CONTROL_AF_MODE,
+//                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+//                )
+//            } else if (focusDistanceMbr == -2f) {
+//                captureRequestBuilderMbr!!.set(
+//                    CaptureRequest.CONTROL_AF_MODE,
+//                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+//                )
+//            }
+//
+//            // 세션이 현재 실행중이 아니라면 여기서 멈추기
+//            if (!nowRepeatingMbr) {
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            // 세션이 현재 실행중이라면 바로 적용하기
+//            cameraCaptureSessionMbr!!.setRepeatingRequest(
+//                captureRequestBuilderMbr!!.build(),
+//                null,
+//                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+//            )
+//
+//            cameraThreadVoMbr.cameraSemaphore.release()
+//            onComplete()
+//        }
+//    }
+//
+//    // (Exposure 설정)
+//    // exposureNanoSec : 나노초 == 초/1000000000
+//    //     음수라면 Auto Exposure ON
+//    // ex : 1000000000 / 80
+//    fun setExposureTime(
+//        exposureNanoSec: Long?,
+//        onComplete: () -> Unit
+//    ) {
+//        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+//            cameraThreadVoMbr.cameraSemaphore.acquire()
+//
+//            if (!cameraInfoVoMbr.autoExposureSupported) {
+//                // 오토 Exposure 지원이 안되면
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            exposureTimeNsMbr = if (exposureNanoSec == null || exposureNanoSec < 0) {
+//                null
+//            } else {
+//                exposureNanoSec
+//            }
+//
+//            // 리퀘스트 빌더가 생성되지 않은 경우
+//            if (captureRequestBuilderMbr == null) {
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            if (exposureTimeNsMbr == null) {
+//                captureRequestBuilderMbr!!.set(
+//                    CaptureRequest.CONTROL_AE_MODE,
+//                    CaptureRequest.CONTROL_AE_MODE_ON
+//                )
+//            } else {
+//                captureRequestBuilderMbr!!.set(
+//                    CaptureRequest.CONTROL_AE_MODE,
+//                    CaptureRequest.CONTROL_AE_MODE_OFF
+//                )
+//
+//                captureRequestBuilderMbr!!.set(
+//                    CaptureRequest.SENSOR_EXPOSURE_TIME,
+//                    exposureTimeNsMbr
+//                )
+//            }
+//
+//            // 세션이 현재 실행중이 아니라면 여기서 멈추기
+//            if (!nowRepeatingMbr) {
+//                cameraThreadVoMbr.cameraSemaphore.release()
+//                onComplete()
+//                return@run
+//            }
+//
+//            // 세션이 현재 실행중이라면 바로 적용하기
+//            cameraCaptureSessionMbr!!.setRepeatingRequest(
+//                captureRequestBuilderMbr!!.build(),
+//                null,
+//                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+//            )
+//
+//            cameraThreadVoMbr.cameraSemaphore.release()
+//            onComplete()
+//        }
+//    }
+
+
+    // [미디어 레코더 조작 함수]
     // prepare 는 서페이스 설정시 자동 실행
     // stop 은 cameraObject 를 stop 시킬 때, 혹은 setSurface 의 초기화 로직에서 자동으로 실행됨
     // 이외에 start, pause, resume 은 내부적으로 전혀 손대지 않기에 아래 함수로 사용자가 적절히 사용할 것.
@@ -2769,395 +3370,24 @@ class CameraObj private constructor(
     }
 
 
-    // todo 설정 적용 시점을 알수있는 콜백 사용
-    // [카메라 상태 변경 함수 모음]
-    // CameraObj 객체 안의 상태 멤버변수를 조절하며 실제 세션 설정에 반영하는 함수
-    // CameraObj 객체가 객체화 된 이후 바로 실행 가능
-    // 객체화된 직후라면 멤버변수에 저장되어 다음 실행시 적용됨
-    // 리퀘스트 빌더가 생성되었다면 set,
-    // 이미 실행중이라면 set 이후 세션에 바로 반영합
-
-    // (카메라 줌 비율을 변경하는 함수)
-    // 카메라가 실행중 상태라면 즉시 반영
-    // onZoomSettingComplete : 반환값 = 적용된 현재 줌 펙터 값
-    fun setZoomFactor(
-        zoomFactor: Float,
-        onComplete: (Float) -> Unit
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // (CameraSession 을 대기 상태로 만드는 함수)
+    // 현재 세션이 repeating 이라면 이를 중단함.
+    // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
+    fun pauseCameraSession(
+        onCameraPause: () -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            val zoom = if (cameraInfoVoMbr.maxZoom < zoomFactor) {
-                // 가용 줌 최대치에 설정을 맞추기
-                cameraInfoVoMbr.maxZoom
-            } else if (currentCameraZoomFactorMbr < 1f) {
-                1f
-            } else {
-                zoomFactor
+            if (nowRepeatingMbr) {
+                cameraCaptureSessionMbr?.stopRepeating()
+                nowRepeatingMbr = false
             }
-
-            currentCameraZoomFactorMbr = zoom
-
-            if (captureRequestBuilderMbr == null) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(currentCameraZoomFactorMbr)
-            }
-
-            val centerX =
-                cameraInfoVoMbr.sensorSize.width() / 2
-            val centerY =
-                cameraInfoVoMbr.sensorSize.height() / 2
-            val deltaX =
-                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / currentCameraZoomFactorMbr).toInt()
-            val deltaY =
-                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / currentCameraZoomFactorMbr).toInt()
-
-            val mCropRegion = Rect().apply {
-                set(
-                    centerX - deltaX,
-                    centerY - deltaY,
-                    centerX + deltaX,
-                    centerY + deltaY
-                )
-            }
-
-            captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
-
-            if (!nowRepeatingMbr) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(currentCameraZoomFactorMbr)
-            }
-
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                null,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-            nowRepeatingMbr = true
 
             cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete(currentCameraZoomFactorMbr)
-        }
-    }
 
-    // (손떨림 방지 설정)
-    fun setCameraStabilization(
-        stabilizationOn: Boolean,
-        onComplete: () -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (stabilizationOn) { // 보정 기능 실행 설정
-                // 보정 기능이 하나도 제공되지 않는 경우
-                if (!cameraInfoVoMbr.isVideoStabilizationAvailable &&
-                    !cameraInfoVoMbr.isOpticalStabilizationAvailable
-                ) {
-                    cameraStabilizationSetMbr = 0
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onComplete()
-                    return@run
-                }
-
-                // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
-                cameraStabilizationSetMbr =
-                    if (cameraInfoVoMbr.isOpticalStabilizationAvailable) { // 기계 보정 사용 가능
-                        1
-                    } else if (cameraInfoVoMbr.isVideoStabilizationAvailable) {// 소프트 웨어 보정 사용 가능
-                        2
-                    } else {
-                        0
-                    }
-
-                // 리퀘스트 빌더가 생성되지 않은 경우
-                if (captureRequestBuilderMbr == null) {
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onComplete()
-                    return@run
-                }
-
-                when (cameraStabilizationSetMbr) {
-                    0 -> { // 보정 안함
-                        captureRequestBuilderMbr!!.set(
-                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                        )
-                        captureRequestBuilderMbr!!.set(
-                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                        )
-                    }
-                    1 -> { // 기계 보정
-                        captureRequestBuilderMbr!!.set(
-                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-                        )
-                        captureRequestBuilderMbr!!.set(
-                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                        )
-                    }
-                    2 -> { // 소프트 웨어 보정
-                        captureRequestBuilderMbr!!.set(
-                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                        )
-                        captureRequestBuilderMbr!!.set(
-                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                        )
-                    }
-                }
-
-                // 세션이 현재 실행중이 아니라면 여기서 멈추기
-                if (!nowRepeatingMbr) {
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onComplete()
-                    return@run
-                }
-
-                // 세션이 현재 실행중이라면 바로 적용하기
-                cameraCaptureSessionMbr!!.setRepeatingRequest(
-                    captureRequestBuilderMbr!!.build(),
-                    null,
-                    cameraThreadVoMbr.cameraHandlerThreadObj.handler
-                )
-
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-            } else { // 보정 기능 중지 설정
-                cameraStabilizationSetMbr = 0
-
-                if (captureRequestBuilderMbr == null) {
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onComplete()
-                    return@run
-                }
-
-                // 모든 보정 중지
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                )
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                )
-
-                if (!nowRepeatingMbr) {
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onComplete()
-                    return@run
-                }
-
-                cameraCaptureSessionMbr!!.setRepeatingRequest(
-                    captureRequestBuilderMbr!!.build(),
-                    null,
-                    cameraThreadVoMbr.cameraHandlerThreadObj.handler
-                )
-
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-            }
-        }
-    }
-
-    // (포커스 거리 설정)
-    // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
-    // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
-    fun setFixedFocusDistance(
-        focusDistance: Float,
-        onComplete: () -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (focusDistance < 0f) {
-                // 오토 포커스 설정은 setAutoFocus 에서
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            currentFocusDistanceMbr = focusDistance
-
-            if (focusDistance > cameraInfoVoMbr.supportedMinimumFocusDistance) {
-                currentFocusDistanceMbr = cameraInfoVoMbr.supportedMinimumFocusDistance
-            }
-
-            // 리퀘스트 빌더가 생성되지 않은 경우
-            if (captureRequestBuilderMbr == null) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            captureRequestBuilderMbr!!.set(
-                CaptureRequest.CONTROL_AF_MODE,
-                CaptureRequest.CONTROL_AF_MODE_OFF
-            )
-            captureRequestBuilderMbr!!.set(
-                CaptureRequest.LENS_FOCUS_DISTANCE,
-                currentFocusDistanceMbr
-            )
-
-            // 세션이 현재 실행중이 아니라면 여기서 멈추기
-            if (!nowRepeatingMbr) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            // 세션이 현재 실행중이라면 바로 적용하기
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                null,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-
-            cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete()
-        }
-    }
-
-    // (오토 포커스 설정)
-    // fastAutoFocus true 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-    // fastAutoFocus false 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-    // 이 함수는 전체 기본 오토 포커스로, 포커스 범위 설정은 setFocusArea 에서
-    fun setAutoFocus(
-        fastAutoFocus: Boolean,
-        onComplete: () -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (!cameraInfoVoMbr.fastAutoFocusSupported && !cameraInfoVoMbr.naturalAutoFocusSupported) {
-                // 오토 포커스 지원이 안되면
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            if (fastAutoFocus) {
-                currentFocusDistanceMbr = if (cameraInfoVoMbr.fastAutoFocusSupported) {
-                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
-                    -2f
-                } else {
-                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
-                    -1f
-                }
-            } else {
-                currentFocusDistanceMbr = if (cameraInfoVoMbr.naturalAutoFocusSupported) {
-                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO 를 사용 가능할 때
-                    -1f
-                } else {
-                    // CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE 를 사용 가능할 때
-                    -2f
-                }
-            }
-
-            // 리퀘스트 빌더가 생성되지 않은 경우
-            if (captureRequestBuilderMbr == null) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            if (currentFocusDistanceMbr == -1f) {
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                )
-            } else if (currentFocusDistanceMbr == -2f) {
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                )
-            }
-
-            // 세션이 현재 실행중이 아니라면 여기서 멈추기
-            if (!nowRepeatingMbr) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            // 세션이 현재 실행중이라면 바로 적용하기
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                null,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-
-            cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete()
-        }
-    }
-
-    // (Exposure 설정)
-    // exposureNanoSec : 나노초 == 초/1000000000
-    //     음수라면 Auto Exposure ON
-    // ex : 1000000000 / 80
-    fun setExposureTime(
-        exposureNanoSec: Long?,
-        onComplete: () -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (!cameraInfoVoMbr.autoExposureSupported) {
-                // 오토 Exposure 지원이 안되면
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            currentFrameExposureTimeNsMbr = if (exposureNanoSec == null || exposureNanoSec < 0) {
-                null
-            } else {
-                exposureNanoSec
-            }
-
-            // 리퀘스트 빌더가 생성되지 않은 경우
-            if (captureRequestBuilderMbr == null) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            if (currentFrameExposureTimeNsMbr == null) {
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_ON
-                )
-            } else {
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_OFF
-                )
-
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    currentFrameExposureTimeNsMbr
-                )
-            }
-
-            // 세션이 현재 실행중이 아니라면 여기서 멈추기
-            if (!nowRepeatingMbr) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete()
-                return@run
-            }
-
-            // 세션이 현재 실행중이라면 바로 적용하기
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                null,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-
-            cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete()
+            onCameraPause()
         }
     }
 
@@ -3252,6 +3482,8 @@ class CameraObj private constructor(
                             return@openCameraDevice
                         }
 
+                        // todo 카메라 초기화
+
                         // (카메라 세션 생성)
                         createCameraSessionAsync(
                             previewSurfaceList,
@@ -3259,7 +3491,6 @@ class CameraObj private constructor(
                             captureImageReader,
                             mediaCodecSurface,
                             onComplete = {
-                                // todo
                                 analysisImageReaderConfigVoMbr = analysisImageReaderConfigVo
                                 analysisImageReaderMbr = analysisImageReader
                                 captureImageReaderConfigVoMbr = captureImageReaderConfigVo
@@ -3269,6 +3500,8 @@ class CameraObj private constructor(
                                 mediaCodecSurfaceMbr = mediaCodecSurface
                                 previewConfigVoListMbr = previewConfigVoList
                                 previewSurfaceListMbr = previewSurfaceList
+
+                                // todo : 카메라 실행
 
                                 cameraThreadVoMbr.cameraSemaphore.release()
                                 onComplete()
@@ -3380,10 +3613,10 @@ class CameraObj private constructor(
                     analysisImageReaderConfigVoMbr = null
                     captureImageReaderConfigVoMbr = null
                     cameraCaptureSessionMbr = null
-                    captureRequestBuilderMbr = null
                     previewConfigVoListMbr = null
                     previewSurfaceListMbr = null
                     cameraDeviceMbr = null
+                    repeatRequestTargetVoMbr = null
 
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onCameraDisconnectedMbr()
@@ -3701,5 +3934,11 @@ class CameraObj private constructor(
         // 카메라 최대 줌 배수
         // maxZoom 이 1.0 이라는 것은 줌이 불가능하다는 의미
         var maxZoom: Float
+    )
+
+    data class RepeatRequestTargetVo(
+        val forPreview: Boolean,
+        val forAnalysisImageReader: Boolean,
+        val forMediaRecorder: Boolean
     )
 }
