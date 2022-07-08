@@ -131,8 +131,8 @@ class CameraObj private constructor(
     private var mediaCodecSurfaceMbr: Surface? = null
 
     // 프리뷰 세팅 부산물
-    val previewConfigVoListMbr: ArrayList<PreviewConfigVo> = ArrayList()
-    private val previewSurfaceListMbr: ArrayList<Surface> = ArrayList()
+    var previewConfigVoListMbr: ArrayList<PreviewConfigVo>? = null
+    private var previewSurfaceListMbr: ArrayList<Surface>? = ArrayList()
 
     // 카메라 리퀘스트 빌더
     private var captureRequestBuilderMbr: CaptureRequest.Builder? = null
@@ -1630,27 +1630,29 @@ class CameraObj private constructor(
             }
 
             // 프리뷰가 설정되어 있다면 리스너 비우기
-            for (previewConfigVo in previewConfigVoListMbr) {
-                previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                    object : TextureView.SurfaceTextureListener {
-                        override fun onSurfaceTextureAvailable(
-                            surface: SurfaceTexture,
-                            width: Int,
-                            height: Int
-                        ) = Unit
+            if (previewConfigVoListMbr != null) {
+                for (previewConfigVo in previewConfigVoListMbr!!) {
+                    previewConfigVo.autoFitTextureView.surfaceTextureListener =
+                        object : TextureView.SurfaceTextureListener {
+                            override fun onSurfaceTextureAvailable(
+                                surface: SurfaceTexture,
+                                width: Int,
+                                height: Int
+                            ) = Unit
 
-                        override fun onSurfaceTextureSizeChanged(
-                            surface: SurfaceTexture,
-                            width: Int,
-                            height: Int
-                        ) = Unit
+                            override fun onSurfaceTextureSizeChanged(
+                                surface: SurfaceTexture,
+                                width: Int,
+                                height: Int
+                            ) = Unit
 
-                        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                            true
+                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                true
 
-                        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                            Unit
-                    }
+                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                                Unit
+                        }
+                }
             }
 
             // (자원 해소)
@@ -1670,8 +1672,8 @@ class CameraObj private constructor(
             captureImageReaderConfigVoMbr = null
             cameraCaptureSessionMbr = null
             captureRequestBuilderMbr = null
-            previewConfigVoListMbr.clear()
-            previewSurfaceListMbr.clear()
+            previewConfigVoListMbr = null
+            previewSurfaceListMbr = null
             cameraDeviceMbr = null
 
             requestForDeleteSharedCameraIdThreadVoOnStaticMemory(cameraInfoVoMbr.cameraId)
@@ -1681,23 +1683,6 @@ class CameraObj private constructor(
             onCameraClear()
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     // todo 서페이스 개별 변경 함수
     // todo : 서페이스 각자 세팅 기능 오버로딩
@@ -1709,20 +1694,22 @@ class CameraObj private constructor(
     // onError 에러 코드 :
     // 아래 에러코드가 실행된다면 카메라가 초기화 된 상태에서 멈추며 executorOnError 가 실행됨
     // 1 : 출력 서페이스가 하나도 입력되어 있지 않음
-    // 2 : 해당 사이즈 이미지 리더를 지원하지 않음
-    // 3 : 해당 사이즈 미디어 리코더를 지원하지 않음
-    // 4 : 해당 사이즈 프리뷰를 지원하지 않음
-    // 5 : 미디어 레코더 오디오 녹음 설정 권한 비충족
-    // 6 : 생성된 서페이스가 존재하지 않음
-    // 7 : 카메라 권한이 없음
-    // 8 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
-    // 9 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
-    // 10 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
-    // 11 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
-    // 12 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
-    // 13 : 카메라 세션 생성 실패
+    // 2 : 해당 사이즈 프리뷰 서페이스를 지원하지 않음
+    // 3 : 해당 사이즈 캡쳐 이미지 리더 서페이스를 지원하지 않음
+    // 4 : 해당 사이즈 미디어 리코더 서페이스를 지원하지 않음
+    // 5 : 해당 사이즈 분석 이미지 리더 서페이스를 지원하지 않음
+    // 6 : 미디어 레코더 오디오 녹음 설정 권한 비충족
+    // 7 : 생성된 서페이스가 존재하지 않음
+    // 8 : 서페이스 텍스쳐 생성 불가
+    // 9 : 카메라 권한이 없음
+    // 10 : CameraDevice.StateCallback.ERROR_CAMERA_DISABLED (권한 등으로 인해 사용이 불가능)
+    // 11 : CameraDevice.StateCallback.ERROR_CAMERA_IN_USE (해당 카메라가 이미 사용중)
+    // 12 : CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE (시스템에서 허용한 카메라 동시 사용을 초과)
+    // 13 : CameraDevice.StateCallback.ERROR_CAMERA_DEVICE (카메라 디바이스 자체적인 문제)
+    // 14 : CameraDevice.StateCallback.ERROR_CAMERA_SERVICE (안드로이드 시스템 문제)
+    // 15 : 카메라 세션 생성 실패
+
     // 14 : 녹화 파일 확장자가 mp4 가 아님
-    // 15 : 프리뷰 서페이스가 비어있음
     fun setCameraOutputSurfaces(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         captureImageReaderConfigVo: ImageReaderConfigVo?,
@@ -1736,10 +1723,11 @@ class CameraObj private constructor(
 
             // [조건 검증]
             // (서페이스 설정 파라미터 개수 검사)
-            if ((analysisImageReaderConfigVo == null &&
-                        mediaRecorderConfigVo == null &&
-                        (previewConfigVoList == null ||
-                                previewConfigVoList.isEmpty()))
+            if (((previewConfigVoList == null ||
+                        previewConfigVoList.isEmpty())) &&
+                captureImageReaderConfigVo == null &&
+                mediaRecorderConfigVo == null &&
+                analysisImageReaderConfigVo == null
             ) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onError(1)
@@ -1747,6 +1735,60 @@ class CameraObj private constructor(
             }
 
             // (서페이스 사이즈 검사)
+            // 프리뷰 리스트 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
+            if (previewConfigVoList != null && previewConfigVoList.isNotEmpty()) {
+                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.previewInfoList
+
+                // 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
+                if (cameraSizes.isEmpty()
+                ) {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(2)
+                    return@run
+                } else {
+                    for (previewConfig in previewConfigVoList) {
+                        if (cameraSizes.indexOfFirst {
+                                it.size.width == previewConfig.cameraOrientSurfaceSize.width &&
+                                        it.size.height == previewConfig.cameraOrientSurfaceSize.height
+                            } == -1) {
+                            cameraThreadVoMbr.cameraSemaphore.release()
+                            onError(2)
+                            return@run
+                        }
+                    }
+                }
+            }
+
+            if (captureImageReaderConfigVo != null) {
+                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
+
+                // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
+                if (cameraSizes.isEmpty() || cameraSizes.indexOfFirst {
+                        it.size.width == captureImageReaderConfigVo.cameraOrientSurfaceSize.width &&
+                                it.size.height == captureImageReaderConfigVo.cameraOrientSurfaceSize.height
+                    } == -1
+                ) {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(3)
+                    return@run
+                }
+            }
+
+            if (mediaRecorderConfigVo != null) {
+                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
+
+                // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
+                if (cameraSizes.isEmpty() || cameraSizes.indexOfFirst {
+                        it.size.width == mediaRecorderConfigVo.cameraOrientSurfaceSize.width &&
+                                it.size.height == mediaRecorderConfigVo.cameraOrientSurfaceSize.height
+                    } == -1
+                ) {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(4)
+                    return@run
+                }
+            }
+
             if (analysisImageReaderConfigVo != null) {
                 val cameraSizes = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
 
@@ -1757,156 +1799,22 @@ class CameraObj private constructor(
                     } == -1
                 ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(2)
+                    onError(5)
                     return@run
                 }
             }
 
-            // 프리뷰 리스트 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
-            if (previewConfigVoList != null && previewConfigVoList.isNotEmpty()) {
-                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.previewInfoList
-
-                // 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
-                if (cameraSizes.isEmpty()
-                ) {
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(4)
-                    return@run
-                } else {
-                    for (previewConfig in previewConfigVoList) {
-                        if (cameraSizes.indexOfFirst {
-                                it.size.width == previewConfig.cameraOrientSurfaceSize.width &&
-                                        it.size.height == previewConfig.cameraOrientSurfaceSize.height
-                            } == -1) {
-                            cameraThreadVoMbr.cameraSemaphore.release()
-                            onError(4)
-                            return@run
-                        }
-                    }
-                }
-            }
-
-
-            // [카메라 상태 초기화]
-            // 이미지 리더 요청을 먼저 비우기
-            analysisImageReaderMbr?.setOnImageAvailableListener(
-                { it.acquireLatestImage()?.close() },
-                cameraThreadVoMbr.analysisImageReaderHandlerThreadObj.handler
-            )
-
-            captureImageReaderMbr?.setOnImageAvailableListener(
-                { it.acquireLatestImage()?.close() },
-                cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
-            )
-
-            if (nowRecordingMbr) {
-                // 레코딩 중이라면 레코더 종료 후 세션 중지
-                mediaRecorderMbr?.reset()
-                nowRecordingMbr = false
-
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            } else if (nowRepeatingMbr) {
-                // 세션이 실행중이라면 중지
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            }
-
-            // 프리뷰가 설정되어 있다면 리스너 비우기
-            for (previewConfigVo in previewConfigVoListMbr) {
-                previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                    object : TextureView.SurfaceTextureListener {
-                        override fun onSurfaceTextureAvailable(
-                            surface: SurfaceTexture,
-                            width: Int,
-                            height: Int
-                        ) = Unit
-
-                        override fun onSurfaceTextureSizeChanged(
-                            surface: SurfaceTexture,
-                            width: Int,
-                            height: Int
-                        ) = Unit
-
-                        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                            true
-
-                        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                            Unit
-                    }
-            }
-
-            // (자원 해소)
-            mediaRecorderMbr?.release()
-            mediaCodecSurfaceMbr?.release()
-            analysisImageReaderMbr?.close()
-            captureImageReaderMbr?.close()
-            cameraCaptureSessionMbr?.close()
-
-            // (멤버 변수 비우기)
-            mediaRecorderMbr = null
-            mediaRecorderConfigVoMbr = null
-            analysisImageReaderMbr = null
-            captureImageReaderMbr = null
-            analysisImageReaderConfigVoMbr = null
-            captureImageReaderConfigVoMbr = null
-            cameraCaptureSessionMbr = null
-            captureRequestBuilderMbr = null
-            previewConfigVoListMbr.clear()
-            previewSurfaceListMbr.clear()
-
-
-            // [서페이스 설정 검증 및 준비]
-            // (이미지 리더 서페이스 준비)
-            if (analysisImageReaderConfigVo != null) {
-                analysisImageReaderConfigVoMbr = analysisImageReaderConfigVo
-
-                analysisImageReaderMbr = ImageReader.newInstance(
-                    analysisImageReaderConfigVo.cameraOrientSurfaceSize.width,
-                    analysisImageReaderConfigVo.cameraOrientSurfaceSize.height,
-                    ImageFormat.YUV_420_888,
-                    2
-                ).apply {
-                    setOnImageAvailableListener(
-                        analysisImageReaderConfigVo.imageReaderCallback,
-                        cameraThreadVoMbr.analysisImageReaderHandlerThreadObj.handler
-                    )
-                }
-            }
-
-            if (captureImageReaderConfigVo != null) {
-                captureImageReaderConfigVoMbr = captureImageReaderConfigVo
-
-                captureImageReaderMbr = ImageReader.newInstance(
-                    captureImageReaderConfigVo.cameraOrientSurfaceSize.width,
-                    captureImageReaderConfigVo.cameraOrientSurfaceSize.height,
-                    ImageFormat.YUV_420_888,
-                    2
-                ).apply {
-                    setOnImageAvailableListener(
-                        captureImageReaderConfigVo.imageReaderCallback,
-                        cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
-                    )
-                }
-            }
-
-            // (미디어 레코더 서페이스 준비)
+            // (미디어 레코더 설정 검증)
             if (mediaRecorderConfigVo != null) {
-                // 오디오 권한 검증
-                // 녹음 설정을 했는데 권한이 없을 때, 에러
+                // 미디어 레코더, 오디오 녹화 설정을 했는데 권한이 없을 때
                 if (mediaRecorderConfigVo.audioRecordingBitrate != null &&
                     ActivityCompat.checkSelfPermission(
                         parentActivityMbr,
                         Manifest.permission.RECORD_AUDIO
                     ) != PackageManager.PERMISSION_GRANTED
                 ) {
-                    // 전 알고리즘까지 초기화
-                    analysisImageReaderMbr = null
-                    captureImageReaderMbr = null
-                    analysisImageReaderConfigVoMbr = null
-                    captureImageReaderConfigVoMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(5)
+                    onError(6)
                     return@run
                 }
 
@@ -1920,13 +1828,49 @@ class CameraObj private constructor(
                     onError(14)
                     return@run
                 }
+            }
 
-                mediaRecorderConfigVoMbr = mediaRecorderConfigVo
 
-                mediaCodecSurfaceMbr = MediaCodec.createPersistentInputSurface()
+            // [서페이스 준비]
+            // (이미지 리더 서페이스 준비)
+            val analysisImageReader = if (analysisImageReaderConfigVo != null) {
+                ImageReader.newInstance(
+                    analysisImageReaderConfigVo.cameraOrientSurfaceSize.width,
+                    analysisImageReaderConfigVo.cameraOrientSurfaceSize.height,
+                    ImageFormat.YUV_420_888,
+                    2
+                ).apply {
+                    setOnImageAvailableListener(
+                        analysisImageReaderConfigVo.imageReaderCallback,
+                        cameraThreadVoMbr.analysisImageReaderHandlerThreadObj.handler
+                    )
+                }
+            } else {
+                null
+            }
 
+            val captureImageReader = if (captureImageReaderConfigVo != null) {
+                ImageReader.newInstance(
+                    captureImageReaderConfigVo.cameraOrientSurfaceSize.width,
+                    captureImageReaderConfigVo.cameraOrientSurfaceSize.height,
+                    ImageFormat.YUV_420_888,
+                    2
+                ).apply {
+                    setOnImageAvailableListener(
+                        captureImageReaderConfigVo.imageReaderCallback,
+                        cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
+                    )
+                }
+            } else {
+                null
+            }
+
+            // (미디어 레코더 서페이스 준비)
+            var mediaCodecSurface: Surface? = null
+            var mediaRecorder: MediaRecorder? = null
+            if (mediaRecorderConfigVo != null) {
                 // 미디어 레코더 생성
-                mediaRecorderMbr =
+                mediaRecorder =
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         MediaRecorder(parentActivityMbr)
                     } else {
@@ -1936,12 +1880,12 @@ class CameraObj private constructor(
                 // (미디어 레코더 설정)
                 // 서페이스 소스 설정
                 if (mediaRecorderConfigVo.audioRecordingBitrate != null) {
-                    mediaRecorderMbr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
+                    mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
                 }
-                mediaRecorderMbr!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
 
                 // 파일 포멧 설정
-                mediaRecorderMbr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
 
                 // 파일 경로 설정
                 // 만일 같은 파일이 이전에 비휘발 메모리에 존재하면 새로써짐
@@ -1949,7 +1893,7 @@ class CameraObj private constructor(
                     mediaRecorderConfigVo.mediaRecordingMp4File.delete()
                 }
                 mediaRecorderConfigVo.mediaRecordingMp4File.createNewFile()
-                mediaRecorderMbr!!.setOutputFile(mediaRecorderConfigVo.mediaRecordingMp4File.absolutePath)
+                mediaRecorder.setOutputFile(mediaRecorderConfigVo.mediaRecordingMp4File.absolutePath)
 
                 // 데이터 저장 프레임 설정
                 // 비디오 FPS
@@ -1966,7 +1910,7 @@ class CameraObj private constructor(
                     mediaRecorderConfigVo.videoRecordingFps = maxMediaRecorderFps
                 }
 
-                mediaRecorderMbr!!.setVideoFrameRate(mediaRecorderConfigVo.videoRecordingFps)
+                mediaRecorder.setVideoFrameRate(mediaRecorderConfigVo.videoRecordingFps)
 
                 // 영상 데이터 저장 퀄리티 설정
                 // todo 최소 타겟 디바이스에서 에러 발생 안하는 최대 값
@@ -1977,7 +1921,7 @@ class CameraObj private constructor(
                     mediaRecorderConfigVo.videoRecordingBitrate = maxVideoBitrate
                 }
 
-                mediaRecorderMbr!!.setVideoEncodingBitRate(mediaRecorderConfigVo.videoRecordingBitrate)
+                mediaRecorder.setVideoEncodingBitRate(mediaRecorderConfigVo.videoRecordingBitrate)
 
                 // 음성 데이터 저장 퀄리티 설정
                 if (mediaRecorderConfigVo.audioRecordingBitrate != null) {
@@ -1990,23 +1934,23 @@ class CameraObj private constructor(
                         mediaRecorderConfigVo.audioRecordingBitrate = maxAudioBitrate
                     }
 
-                    mediaRecorderMbr!!.setAudioEncodingBitRate(mediaRecorderConfigVo.audioRecordingBitrate!!)
+                    mediaRecorder.setAudioEncodingBitRate(mediaRecorderConfigVo.audioRecordingBitrate!!)
                 }
 
                 // 서페이스 사이즈 설정
-                mediaRecorderMbr!!.setVideoSize(
+                mediaRecorder.setVideoSize(
                     mediaRecorderConfigVo.cameraOrientSurfaceSize.width,
                     mediaRecorderConfigVo.cameraOrientSurfaceSize.height
                 )
 
                 // 인코딩 타입 설정
                 if (mediaRecorderConfigVo.useH265Codec) {
-                    mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.HEVC)
+                    mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.HEVC)
                 } else {
-                    mediaRecorderMbr!!.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                    mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
                 }
                 if (mediaRecorderConfigVo.audioRecordingBitrate != null) {
-                    mediaRecorderMbr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                    mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                 }
 
                 // 서페이스 방향 설정
@@ -2030,25 +1974,25 @@ class CameraObj private constructor(
 
                 when (cameraInfoVoMbr.sensorOrientation) {
                     90 ->
-                        mediaRecorderMbr!!.setOrientationHint(
+                        mediaRecorder.setOrientationHint(
                             defaultOrientation.get(deviceOrientation)
                         )
                     270 ->
-                        mediaRecorderMbr!!.setOrientationHint(
+                        mediaRecorder.setOrientationHint(
                             inverseOrientation.get(deviceOrientation)
                         )
                 }
 
-                mediaRecorderMbr!!.setInputSurface(mediaCodecSurfaceMbr!!)
-                mediaRecorderMbr!!.prepare()
+                // 미디어 레코더 서페이스 생성
+                mediaCodecSurface = MediaCodec.createPersistentInputSurface()
+                mediaRecorder.setInputSurface(mediaCodecSurface)
+                mediaRecorder.prepare()
             }
 
             // (프리뷰 서페이스 준비)
             if (previewConfigVoList != null &&
                 previewConfigVoList.isNotEmpty()
             ) {
-                previewConfigVoListMbr.addAll(previewConfigVoList)
-
                 val previewListSize = previewConfigVoList.size
                 var checkedPreviewCount = 0
                 val checkedPreviewCountSemaphore = Semaphore(1)
@@ -2119,6 +2063,14 @@ class CameraObj private constructor(
                                 checkedPreviewCountSemaphore.release()
 
                                 onSurfacesAllChecked(
+                                    analysisImageReaderConfigVo,
+                                    analysisImageReader,
+                                    captureImageReaderConfigVo,
+                                    captureImageReader,
+                                    mediaRecorderConfigVo,
+                                    mediaRecorder,
+                                    mediaCodecSurface,
+                                    previewConfigVoList,
                                     onComplete,
                                     onError
                                 )
@@ -2164,6 +2116,14 @@ class CameraObj private constructor(
                                             checkedPreviewCountSemaphore.release()
 
                                             onSurfacesAllChecked(
+                                                analysisImageReaderConfigVo,
+                                                analysisImageReader,
+                                                captureImageReaderConfigVo,
+                                                captureImageReader,
+                                                mediaRecorderConfigVo,
+                                                mediaRecorder,
+                                                mediaCodecSurface,
+                                                previewConfigVoList,
                                                 onComplete,
                                                 onError
                                             )
@@ -2197,12 +2157,24 @@ class CameraObj private constructor(
                 }
             } else {
                 onSurfacesAllChecked(
+                    analysisImageReaderConfigVo,
+                    analysisImageReader,
+                    captureImageReaderConfigVo,
+                    captureImageReader,
+                    mediaRecorderConfigVo,
+                    mediaRecorder,
+                    mediaCodecSurface,
+                    previewConfigVoList,
                     onComplete,
-                    onError
+                    onError,
                 )
             }
         }
     }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     // (카메라 리퀘스트 빌더 설정 함수)
     // 리퀘스트 모드 (ex : CameraDevice.TEMPLATE_PREVIEW) 및 리퀘스트로 사용할 서페이스 결정
@@ -2235,7 +2207,8 @@ class CameraObj private constructor(
                 return@run
             }
 
-            if (previewConfigVoListMbr.isEmpty() &&
+            if ((previewSurfaceListMbr == null ||
+                        previewSurfaceListMbr!!.isEmpty()) &&
                 analysisImageReaderMbr == null &&
                 captureImageReaderMbr == null &&
                 mediaRecorderMbr == null
@@ -2253,14 +2226,16 @@ class CameraObj private constructor(
 
             // [타겟 서페이스 설정]
             if (onPreview) { // 프리뷰 사용 설정
-                if (previewConfigVoListMbr.isEmpty()) { // 프리뷰 사용 설정인데 프리뷰 서페이스가 없을 때
+                if ((previewSurfaceListMbr == null ||
+                            previewSurfaceListMbr!!.isEmpty())
+                ) { // 프리뷰 사용 설정인데 프리뷰 서페이스가 없을 때
                     captureRequestBuilderMbr = null
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onError(3)
                     return@run
                 } else {
                     // 프리뷰 서페이스 타겟 추가
-                    for (previewSurface in previewSurfaceListMbr) {
+                    for (previewSurface in previewSurfaceListMbr!!) {
                         captureRequestBuilderMbr!!.addTarget(previewSurface)
                     }
                 }
@@ -2514,27 +2489,29 @@ class CameraObj private constructor(
             }
 
             // 프리뷰가 설정되어 있다면 리스너 비우기
-            for (previewConfigVo in previewConfigVoListMbr) {
-                previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                    object : TextureView.SurfaceTextureListener {
-                        override fun onSurfaceTextureAvailable(
-                            surface: SurfaceTexture,
-                            width: Int,
-                            height: Int
-                        ) = Unit
+            if (previewConfigVoListMbr != null) {
+                for (previewConfigVo in previewConfigVoListMbr!!) {
+                    previewConfigVo.autoFitTextureView.surfaceTextureListener =
+                        object : TextureView.SurfaceTextureListener {
+                            override fun onSurfaceTextureAvailable(
+                                surface: SurfaceTexture,
+                                width: Int,
+                                height: Int
+                            ) = Unit
 
-                        override fun onSurfaceTextureSizeChanged(
-                            surface: SurfaceTexture,
-                            width: Int,
-                            height: Int
-                        ) = Unit
+                            override fun onSurfaceTextureSizeChanged(
+                                surface: SurfaceTexture,
+                                width: Int,
+                                height: Int
+                            ) = Unit
 
-                        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                            true
+                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                true
 
-                        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                            Unit
-                    }
+                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                                Unit
+                        }
+                }
             }
 
             // (자원 해소)
@@ -2553,8 +2530,8 @@ class CameraObj private constructor(
             captureImageReaderConfigVoMbr = null
             cameraCaptureSessionMbr = null
             captureRequestBuilderMbr = null
-            previewConfigVoListMbr.clear()
-            previewSurfaceListMbr.clear()
+            previewConfigVoListMbr = null
+            previewSurfaceListMbr = null
 
             cameraThreadVoMbr.cameraSemaphore.release()
 
@@ -3177,102 +3154,261 @@ class CameraObj private constructor(
     // <비공개 메소드 공간>
     // (startCamera 함수 서페이스 준비가 끝난 시점의 처리 함수)
     private fun onSurfacesAllChecked(
-        onSurfaceAllReady: () -> Unit,
+        analysisImageReaderConfigVo: ImageReaderConfigVo?,
+        analysisImageReader: ImageReader?,
+        captureImageReaderConfigVo: ImageReaderConfigVo?,
+        captureImageReader: ImageReader?,
+        mediaRecorderConfigVo: MediaRecorderConfigVo?,
+        mediaRecorder: MediaRecorder?,
+        mediaCodecSurface: Surface?,
+        previewConfigVoList: ArrayList<PreviewConfigVo>?,
+        onComplete: () -> Unit,
         onError: (Int) -> Unit
     ) {
-        if (previewConfigVoListMbr.isEmpty() &&
-            analysisImageReaderMbr == null &&
-            captureImageReaderMbr == null &&
-            mediaRecorderMbr == null
-        ) { // 생성 서페이스가 하나도 존재하지 않으면,
-            cameraThreadVoMbr.cameraSemaphore.release()
-            onError(6)
-            return
-        }
-
         // (카메라 디바이스 열기)
         // openCamera 를 executor 에서 하지 않으면 화면 일그러짐 현상이 일어날 수 있음
         executorServiceMbr.execute {
             openCameraDevice(
                 onCameraDeviceReady = { // 카메라 디바이스가 준비된 시점
                     cameraThreadVoMbr.cameraHandlerThreadObj.run {
-                        for (previewConfigVo in previewConfigVoListMbr) {
-                            val surfaceTexture = previewConfigVo.autoFitTextureView.surfaceTexture
+                        var previewSurfaceList: ArrayList<Surface>? = null
 
-                            if (surfaceTexture == null) { // 프리뷰 설정이 존재할 때 서페이스 텍스쳐가 반환되지 않은 경우
-                                // 준비 서페이스 초기화
-                                // 프리뷰가 설정되어 있다면 리스너 비우기
-                                for (previewConfigVo1 in previewConfigVoListMbr) {
-                                    previewConfigVo1.autoFitTextureView.surfaceTextureListener =
-                                        object : TextureView.SurfaceTextureListener {
-                                            override fun onSurfaceTextureAvailable(
-                                                surface: SurfaceTexture,
-                                                width: Int,
-                                                height: Int
-                                            ) = Unit
+                        if (previewConfigVoList != null) {
+                            previewSurfaceList = ArrayList<Surface>()
+                            for (previewConfigVo in previewConfigVoList) {
+                                val surfaceTexture =
+                                    previewConfigVo.autoFitTextureView.surfaceTexture
 
-                                            override fun onSurfaceTextureSizeChanged(
-                                                surface: SurfaceTexture,
-                                                width: Int,
-                                                height: Int
-                                            ) = Unit
+                                if (surfaceTexture == null) { // 프리뷰 설정이 존재할 때 서페이스 텍스쳐가 반환되지 않은 경우
+                                    for (previewConfigVo1 in previewConfigVoList) {
+                                        previewConfigVo1.autoFitTextureView.surfaceTextureListener =
+                                            object : TextureView.SurfaceTextureListener {
+                                                override fun onSurfaceTextureAvailable(
+                                                    surface: SurfaceTexture,
+                                                    width: Int,
+                                                    height: Int
+                                                ) = Unit
 
-                                            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                                true
+                                                override fun onSurfaceTextureSizeChanged(
+                                                    surface: SurfaceTexture,
+                                                    width: Int,
+                                                    height: Int
+                                                ) = Unit
 
-                                            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                                Unit
-                                        }
+                                                override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                                    true
+
+                                                override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                                                    Unit
+                                            }
+                                    }
+
+                                    // (자원 해소)
+                                    mediaRecorder?.reset()
+                                    mediaRecorder?.release()
+                                    mediaCodecSurface?.release()
+                                    analysisImageReader?.close()
+                                    captureImageReader?.close()
+
+                                    cameraThreadVoMbr.cameraSemaphore.release()
+                                    onError(8)
+                                    return@openCameraDevice
                                 }
 
-                                // (자원 해소)
-                                mediaRecorderMbr?.release()
-                                mediaCodecSurfaceMbr?.release()
-                                analysisImageReaderMbr?.close()
-                                captureImageReaderMbr?.close()
+                                surfaceTexture.setDefaultBufferSize(
+                                    previewConfigVo.cameraOrientSurfaceSize.width,
+                                    previewConfigVo.cameraOrientSurfaceSize.height
+                                )
 
-                                // (멤버 변수 비우기)
-                                mediaRecorderMbr = null
-                                mediaRecorderConfigVoMbr = null
-                                analysisImageReaderMbr = null
-                                captureImageReaderMbr = null
-                                analysisImageReaderConfigVoMbr = null
-                                captureImageReaderConfigVoMbr = null
-                                previewConfigVoListMbr.clear()
-                                previewSurfaceListMbr.clear()
-
-                                cameraThreadVoMbr.cameraSemaphore.release()
-                                onError(15)
-                                return@openCameraDevice
+                                previewSurfaceList.add(Surface(surfaceTexture))
                             }
+                        }
 
-                            surfaceTexture.setDefaultBufferSize(
-                                previewConfigVo.cameraOrientSurfaceSize.width,
-                                previewConfigVo.cameraOrientSurfaceSize.height
-                            )
-
-                            previewSurfaceListMbr.add(Surface(surfaceTexture))
+                        if (analysisImageReaderConfigVo == null &&
+                            analysisImageReader == null &&
+                            captureImageReaderConfigVo == null &&
+                            captureImageReader == null &&
+                            mediaRecorderConfigVo == null &&
+                            mediaRecorder == null &&
+                            mediaCodecSurface == null &&
+                            previewConfigVoList == null &&
+                            (previewSurfaceList == null ||
+                                    previewSurfaceList.isEmpty())
+                        ) { // 생성 서페이스가 하나도 존재하지 않으면,
+                            cameraThreadVoMbr.cameraSemaphore.release()
+                            onError(7)
+                            return@openCameraDevice
                         }
 
                         // (카메라 세션 생성)
                         createCameraSessionAsync(
-                            onCaptureSessionCreated = {
+                            previewSurfaceList,
+                            analysisImageReader,
+                            captureImageReader,
+                            mediaCodecSurface,
+                            onComplete = {
+                                // todo
+                                analysisImageReaderConfigVoMbr = analysisImageReaderConfigVo
+                                analysisImageReaderMbr = analysisImageReader
+                                captureImageReaderConfigVoMbr = captureImageReaderConfigVo
+                                captureImageReaderMbr = captureImageReader
+                                mediaRecorderConfigVoMbr = mediaRecorderConfigVo
+                                mediaRecorderMbr = mediaRecorder
+                                mediaCodecSurfaceMbr = mediaCodecSurface
+                                previewConfigVoListMbr = previewConfigVoList
+                                previewSurfaceListMbr = previewSurfaceList
+
                                 cameraThreadVoMbr.cameraSemaphore.release()
-                                onSurfaceAllReady()
+                                onComplete()
                             },
-                            onErrorAndClearSurface = { errorCode ->
+                            onError = { errorCode ->
+                                if (null != previewConfigVoList) {
+                                    for (previewConfigVo1 in previewConfigVoList) {
+                                        previewConfigVo1.autoFitTextureView.surfaceTextureListener =
+                                            object : TextureView.SurfaceTextureListener {
+                                                override fun onSurfaceTextureAvailable(
+                                                    surface: SurfaceTexture,
+                                                    width: Int,
+                                                    height: Int
+                                                ) = Unit
+
+                                                override fun onSurfaceTextureSizeChanged(
+                                                    surface: SurfaceTexture,
+                                                    width: Int,
+                                                    height: Int
+                                                ) = Unit
+
+                                                override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                                    true
+
+                                                override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                                                    Unit
+                                            }
+                                    }
+                                }
+
+                                // (자원 해소)
+                                mediaRecorder?.reset()
+                                mediaRecorder?.release()
+                                mediaCodecSurface?.release()
+                                analysisImageReader?.close()
+                                captureImageReader?.close()
+
                                 cameraThreadVoMbr.cameraSemaphore.release()
                                 onError(errorCode)
                             }
                         )
                     }
                 },
-                onCameraDisconnectedAndClearCamera = {
-                    // (카메라 상태 초기화)
+                onCameraDisconnected = {
+                    // todo
+                    // [카메라 상태 초기화]
+                    // 이미지 리더 요청을 먼저 비우기
+                    analysisImageReaderMbr?.setOnImageAvailableListener(
+                        { it.acquireLatestImage()?.close() },
+                        cameraThreadVoMbr.analysisImageReaderHandlerThreadObj.handler
+                    )
+                    captureImageReaderMbr?.setOnImageAvailableListener(
+                        { it.acquireLatestImage()?.close() },
+                        cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
+                    )
+
+                    if (nowRecordingMbr) {
+                        // 레코딩 중이라면 레코더 종료 후 세션 중지
+                        mediaRecorderMbr?.reset()
+                        nowRecordingMbr = false
+
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        nowRepeatingMbr = false
+                    } else if (nowRepeatingMbr) {
+                        // 세션이 실행중이라면 중지
+                        cameraCaptureSessionMbr?.stopRepeating()
+                        nowRepeatingMbr = false
+                    }
+
+                    // 프리뷰가 설정되어 있다면 리스너 비우기
+                    if (previewConfigVoListMbr!= null){
+                        for (previewConfigVo in previewConfigVoListMbr!!) {
+                            previewConfigVo.autoFitTextureView.surfaceTextureListener =
+                                object : TextureView.SurfaceTextureListener {
+                                    override fun onSurfaceTextureAvailable(
+                                        surface: SurfaceTexture,
+                                        width: Int,
+                                        height: Int
+                                    ) = Unit
+
+                                    override fun onSurfaceTextureSizeChanged(
+                                        surface: SurfaceTexture,
+                                        width: Int,
+                                        height: Int
+                                    ) = Unit
+
+                                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                        true
+
+                                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                                        Unit
+                                }
+                        }
+                    }
+
+                    // (자원 해소)
+                    mediaRecorderMbr?.release()
+                    mediaCodecSurfaceMbr?.release()
+                    analysisImageReaderMbr?.close()
+                    captureImageReaderMbr?.close()
+                    cameraCaptureSessionMbr?.close()
+                    cameraDeviceMbr?.close()
+
+                    // (멤버 변수 비우기)
+                    mediaRecorderMbr = null
+                    mediaRecorderConfigVoMbr = null
+                    analysisImageReaderMbr = null
+                    captureImageReaderMbr = null
+                    analysisImageReaderConfigVoMbr = null
+                    captureImageReaderConfigVoMbr = null
+                    cameraCaptureSessionMbr = null
+                    captureRequestBuilderMbr = null
+                    previewConfigVoListMbr = null
+                    previewSurfaceListMbr = null
+                    cameraDeviceMbr = null
+
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onCameraDisconnectedMbr()
                 },
-                onErrorAndClearSurface = { errorCode ->
+                onError = { errorCode ->
+                    if (null != previewConfigVoList) {
+                        for (previewConfigVo1 in previewConfigVoList) {
+                            previewConfigVo1.autoFitTextureView.surfaceTextureListener =
+                                object : TextureView.SurfaceTextureListener {
+                                    override fun onSurfaceTextureAvailable(
+                                        surface: SurfaceTexture,
+                                        width: Int,
+                                        height: Int
+                                    ) = Unit
+
+                                    override fun onSurfaceTextureSizeChanged(
+                                        surface: SurfaceTexture,
+                                        width: Int,
+                                        height: Int
+                                    ) = Unit
+
+                                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
+                                        true
+
+                                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
+                                        Unit
+                                }
+                        }
+                    }
+
+                    // (자원 해소)
+                    mediaRecorder?.reset()
+                    mediaRecorder?.release()
+                    mediaCodecSurface?.release()
+                    analysisImageReader?.close()
+                    captureImageReader?.close()
+
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onError(errorCode)
                 }
@@ -3283,8 +3419,8 @@ class CameraObj private constructor(
     // 카메라 디바이스 생성
     private fun openCameraDevice(
         onCameraDeviceReady: () -> Unit,
-        onCameraDisconnectedAndClearCamera: () -> Unit,
-        onErrorAndClearSurface: (Int) -> Unit
+        onCameraDisconnected: () -> Unit,
+        onError: (Int) -> Unit
     ) {
         if (cameraDeviceMbr != null) {
             onCameraDeviceReady()
@@ -3297,48 +3433,7 @@ class CameraObj private constructor(
                 Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // 준비 서페이스 초기화
-            // 프리뷰가 설정되어 있다면 리스너 비우기
-            for (previewConfigVo in previewConfigVoListMbr) {
-                previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                    object : TextureView.SurfaceTextureListener {
-                        override fun onSurfaceTextureAvailable(
-                            surface: SurfaceTexture,
-                            width: Int,
-                            height: Int
-                        ) = Unit
-
-                        override fun onSurfaceTextureSizeChanged(
-                            surface: SurfaceTexture,
-                            width: Int,
-                            height: Int
-                        ) = Unit
-
-                        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                            true
-
-                        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                            Unit
-                    }
-            }
-
-            // (자원 해소)
-            mediaRecorderMbr?.release()
-            mediaCodecSurfaceMbr?.release()
-            analysisImageReaderMbr?.close()
-            captureImageReaderMbr?.close()
-
-            // (멤버 변수 비우기)
-            mediaRecorderMbr = null
-            mediaRecorderConfigVoMbr = null
-            analysisImageReaderMbr = null
-            captureImageReaderMbr = null
-            analysisImageReaderConfigVoMbr = null
-            captureImageReaderConfigVoMbr = null
-            previewConfigVoListMbr.clear()
-            previewSurfaceListMbr.clear()
-
-            onErrorAndClearSurface(7)
+            onError(9)
             return
         }
 
@@ -3355,163 +3450,26 @@ class CameraObj private constructor(
 
                 // 카메라 디바이스 연결 끊김 : 물리적 연결 종료, 혹은 권한이 높은 다른 앱에서 해당 카메라를 캐치한 경우
                 override fun onDisconnected(camera: CameraDevice) {
-                    // [카메라 상태 초기화]
-                    // 이미지 리더 요청을 먼저 비우기
-                    analysisImageReaderMbr?.setOnImageAvailableListener(
-                        { it.acquireLatestImage()?.close() },
-                        cameraThreadVoMbr.analysisImageReaderHandlerThreadObj.handler
-                    )
-                    captureImageReaderMbr?.setOnImageAvailableListener(
-                        { it.acquireLatestImage()?.close() },
-                        cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
-                    )
-
-                    if (nowRecordingMbr) {
-                        // 레코딩 중이라면 레코더 종료 후 세션 중지
-                        mediaRecorderMbr?.reset()
-                        nowRecordingMbr = false
-
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        nowRepeatingMbr = false
-                    } else if (nowRepeatingMbr) {
-                        // 세션이 실행중이라면 중지
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        nowRepeatingMbr = false
-                    }
-
-                    // 프리뷰가 설정되어 있다면 리스너 비우기
-                    for (previewConfigVo in previewConfigVoListMbr) {
-                        previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                            object : TextureView.SurfaceTextureListener {
-                                override fun onSurfaceTextureAvailable(
-                                    surface: SurfaceTexture,
-                                    width: Int,
-                                    height: Int
-                                ) = Unit
-
-                                override fun onSurfaceTextureSizeChanged(
-                                    surface: SurfaceTexture,
-                                    width: Int,
-                                    height: Int
-                                ) = Unit
-
-                                override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                    true
-
-                                override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                    Unit
-                            }
-                    }
-
-                    // (자원 해소)
-                    mediaRecorderMbr?.release()
-                    mediaCodecSurfaceMbr?.release()
-                    analysisImageReaderMbr?.close()
-                    captureImageReaderMbr?.close()
-                    cameraCaptureSessionMbr?.close()
-                    camera.close()
-
-                    // (멤버 변수 비우기)
-                    mediaRecorderMbr = null
-                    mediaRecorderConfigVoMbr = null
-                    analysisImageReaderMbr = null
-                    captureImageReaderMbr = null
-                    analysisImageReaderConfigVoMbr = null
-                    captureImageReaderConfigVoMbr = null
-                    cameraCaptureSessionMbr = null
-                    captureRequestBuilderMbr = null
-                    previewConfigVoListMbr.clear()
-                    previewSurfaceListMbr.clear()
-                    cameraDeviceMbr = null
-
-                    onCameraDisconnectedAndClearCamera()
+                    cameraDeviceMbr = camera
+                    onCameraDisconnected()
                 }
 
                 override fun onError(camera: CameraDevice, error: Int) {
-                    // [카메라 상태 초기화]
-                    // 이미지 리더 요청을 먼저 비우기
-                    analysisImageReaderMbr?.setOnImageAvailableListener(
-                        { it.acquireLatestImage()?.close() },
-                        cameraThreadVoMbr.analysisImageReaderHandlerThreadObj.handler
-                    )
-                    captureImageReaderMbr?.setOnImageAvailableListener(
-                        { it.acquireLatestImage()?.close() },
-                        cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
-                    )
-
-                    if (nowRecordingMbr) {
-                        // 레코딩 중이라면 레코더 종료 후 세션 중지
-                        mediaRecorderMbr?.reset()
-                        nowRecordingMbr = false
-
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        nowRepeatingMbr = false
-                    } else if (nowRepeatingMbr) {
-                        // 세션이 실행중이라면 중지
-                        cameraCaptureSessionMbr?.stopRepeating()
-                        nowRepeatingMbr = false
-                    }
-
-                    // 프리뷰가 설정되어 있다면 리스너 비우기
-                    for (previewConfigVo in previewConfigVoListMbr) {
-                        previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                            object : TextureView.SurfaceTextureListener {
-                                override fun onSurfaceTextureAvailable(
-                                    surface: SurfaceTexture,
-                                    width: Int,
-                                    height: Int
-                                ) = Unit
-
-                                override fun onSurfaceTextureSizeChanged(
-                                    surface: SurfaceTexture,
-                                    width: Int,
-                                    height: Int
-                                ) = Unit
-
-                                override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                    true
-
-                                override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                    Unit
-                            }
-                    }
-
-                    // (자원 해소)
-                    mediaRecorderMbr?.release()
-                    mediaCodecSurfaceMbr?.release()
-                    analysisImageReaderMbr?.close()
-                    captureImageReaderMbr?.close()
-                    cameraCaptureSessionMbr?.close()
-                    camera.close()
-
-                    // (멤버 변수 비우기)
-                    mediaRecorderMbr = null
-                    mediaRecorderConfigVoMbr = null
-                    analysisImageReaderMbr = null
-                    captureImageReaderMbr = null
-                    analysisImageReaderConfigVoMbr = null
-                    captureImageReaderConfigVoMbr = null
-                    cameraCaptureSessionMbr = null
-                    captureRequestBuilderMbr = null
-                    previewConfigVoListMbr.clear()
-                    previewSurfaceListMbr.clear()
-                    cameraDeviceMbr = null
-
                     when (error) {
                         ERROR_CAMERA_DISABLED -> {
-                            onErrorAndClearSurface(8)
+                            onError(10)
                         }
                         ERROR_CAMERA_IN_USE -> {
-                            onErrorAndClearSurface(9)
+                            onError(11)
                         }
                         ERROR_MAX_CAMERAS_IN_USE -> {
-                            onErrorAndClearSurface(10)
+                            onError(12)
                         }
                         ERROR_CAMERA_DEVICE -> {
-                            onErrorAndClearSurface(11)
+                            onError(13)
                         }
                         ERROR_CAMERA_SERVICE -> {
-                            onErrorAndClearSurface(12)
+                            onError(14)
                         }
                     }
                 }
@@ -3556,8 +3514,12 @@ class CameraObj private constructor(
     }
 
     private fun createCameraSessionAsync(
-        onCaptureSessionCreated: () -> Unit,
-        onErrorAndClearSurface: (Int) -> Unit
+        previewSurfaceList: ArrayList<Surface>?,
+        analysisImageReader: ImageReader?,
+        captureImageReader: ImageReader?,
+        mediaCodecSurface: Surface?,
+        onComplete: () -> Unit,
+        onError: (Int) -> Unit
     ) {
         // api 28 이상 / 미만의 요청 방식이 다름
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) { // api 28 이상
@@ -3565,31 +3527,33 @@ class CameraObj private constructor(
             val outputConfigurationList = ArrayList<OutputConfiguration>()
 
             // 프리뷰 서페이스 주입
-            for (previewSurface in previewSurfaceListMbr) {
-                outputConfigurationList.add(OutputConfiguration(previewSurface))
+            if (null != previewSurfaceList){
+                for (previewSurface in previewSurfaceList) {
+                    outputConfigurationList.add(OutputConfiguration(previewSurface))
+                }
             }
 
             // 이미지 리더 서페이스 주입
-            if (null != analysisImageReaderMbr) {
+            if (null != analysisImageReader) {
                 outputConfigurationList.add(
                     OutputConfiguration(
-                        analysisImageReaderMbr!!.surface
+                        analysisImageReader.surface
                     )
                 )
             }
-            if (null != captureImageReaderMbr) {
+            if (null != captureImageReader) {
                 outputConfigurationList.add(
                     OutputConfiguration(
-                        captureImageReaderMbr!!.surface
+                        captureImageReader.surface
                     )
                 )
             }
 
             // 미디어 리코더 서페이스 주입
-            if (null != mediaRecorderMbr) {
+            if (null != mediaCodecSurface) {
                 outputConfigurationList.add(
                     OutputConfiguration(
-                        mediaCodecSurfaceMbr!!
+                        mediaCodecSurface
                     )
                 )
             }
@@ -3603,55 +3567,12 @@ class CameraObj private constructor(
                     override fun onConfigured(session: CameraCaptureSession) {
                         cameraCaptureSessionMbr = session
 
-                        onCaptureSessionCreated()
+                        onComplete()
                     }
 
                     // 세션 생성 실패
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        // 준비 서페이스 초기화
-                        // 프리뷰가 설정되어 있다면 리스너 비우기
-                        for (previewConfigVo in previewConfigVoListMbr) {
-                            previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                                object : TextureView.SurfaceTextureListener {
-                                    override fun onSurfaceTextureAvailable(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
-
-                                    override fun onSurfaceTextureSizeChanged(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
-
-                                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                        true
-
-                                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                        Unit
-                                }
-                        }
-
-                        // (자원 해소)
-                        mediaRecorderMbr?.release()
-                        mediaCodecSurfaceMbr?.release()
-                        analysisImageReaderMbr?.close()
-                        captureImageReaderMbr?.close()
-                        session.close()
-
-                        // (멤버 변수 비우기)
-                        mediaRecorderMbr = null
-                        mediaRecorderConfigVoMbr = null
-                        analysisImageReaderMbr = null
-                        captureImageReaderMbr = null
-                        analysisImageReaderConfigVoMbr = null
-                        captureImageReaderConfigVoMbr = null
-                        previewConfigVoListMbr.clear()
-                        previewSurfaceListMbr.clear()
-                        cameraCaptureSessionMbr = null
-
-                        onErrorAndClearSurface(13)
+                        onError(15)
                     }
                 }
             ))
@@ -3661,22 +3582,21 @@ class CameraObj private constructor(
             val surfaces = ArrayList<Surface>()
 
             // 프리뷰 서페이스 주입
-            surfaces.addAll(previewSurfaceListMbr)
+            if (null != previewSurfaceList){
+                surfaces.addAll(previewSurfaceList)
+            }
 
             // 이미지 리더 서페이스 주입
-            if (null != analysisImageReaderMbr) {
-                val surface = analysisImageReaderMbr!!.surface
-                surfaces.add(surface)
+            if (null != analysisImageReader) {
+                surfaces.add(analysisImageReader.surface)
             }
-            if (null != captureImageReaderMbr) {
-                val surface = captureImageReaderMbr!!.surface
-                surfaces.add(surface)
+            if (null != captureImageReader) {
+                surfaces.add(captureImageReader.surface)
             }
 
             // 비디오 리코더 서페이스 주입
-            if (null != mediaRecorderMbr) {
-                val surface = mediaCodecSurfaceMbr!!
-                surfaces.add(surface)
+            if (null != mediaCodecSurface) {
+                surfaces.add(mediaCodecSurface)
             }
 
             cameraDeviceMbr?.createCaptureSession(
@@ -3685,54 +3605,11 @@ class CameraObj private constructor(
                     override fun onConfigured(session: CameraCaptureSession) {
                         cameraCaptureSessionMbr = session
 
-                        onCaptureSessionCreated()
+                        onComplete()
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        // 준비 서페이스 초기화
-                        // 프리뷰가 설정되어 있다면 리스너 비우기
-                        for (previewConfigVo in previewConfigVoListMbr) {
-                            previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                                object : TextureView.SurfaceTextureListener {
-                                    override fun onSurfaceTextureAvailable(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
-
-                                    override fun onSurfaceTextureSizeChanged(
-                                        surface: SurfaceTexture,
-                                        width: Int,
-                                        height: Int
-                                    ) = Unit
-
-                                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                        true
-
-                                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                        Unit
-                                }
-                        }
-
-                        // (자원 해소)
-                        mediaRecorderMbr?.release()
-                        mediaCodecSurfaceMbr?.release()
-                        analysisImageReaderMbr?.close()
-                        captureImageReaderMbr?.close()
-                        session.close()
-
-                        // (멤버 변수 비우기)
-                        mediaRecorderMbr = null
-                        mediaRecorderConfigVoMbr = null
-                        analysisImageReaderMbr = null
-                        captureImageReaderMbr = null
-                        analysisImageReaderConfigVoMbr = null
-                        captureImageReaderConfigVoMbr = null
-                        previewConfigVoListMbr.clear()
-                        previewSurfaceListMbr.clear()
-                        cameraCaptureSessionMbr = null
-
-                        onErrorAndClearSurface(13)
+                        onError(15)
                     }
                 }, cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
