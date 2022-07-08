@@ -76,28 +76,31 @@ class CameraObj private constructor(
 
 
     // [카메라 설정 정보]
+    // (3A 설정)
     // todo focusDistance 변수와 설정 함수 생성
     //   -1 의 af 일때 region 을 설정시 해당 위치, null 이라면 전체 위치
-    // (현 설정 포커스 거리)
+    // 포커스 거리 :
     // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
     // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
     // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
     // -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-    var currentFocusDistanceMbr: Float = 0f
+    // 기본 값은 객체 생성시 결정되어, 카메라 지원 정보에 따라 -2 or -1 or 0 의 순서대로 적용 가능한 설정을 결정
+    var currentFocusDistanceMbr: Float = -2f
         private set
 
-    // (현 설정 센서 노출 시간 : 나노초 == 초/1000000000)
+    // 센서 노출 시간 :
+    // 나노초 == 초/1000000000
     // 한 프레임에 대한 노출 시간
     // null 이라면 Auto Exposure ON
     // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
     var currentFrameExposureTimeNsMbr: Long? = null
         private set
 
-    // 떨림 보정 기능 적용 여부 :
-    // cameraInfoVoMbr.isOpticalStabilizationAvailable 가 true 라면 이를 적용,
-    // 아니라면 cameraInfoVoMbr.isVideoStabilizationAvailable 를 적용,
-    // 둘 다 지원 불가라면 보정 불가
-    var isCameraStabilizationSetMbr: Boolean = false
+    // (수동 조작 설정)
+    // 떨림 보정 기능 적용 여부
+    // 0 : 적용 안함, 1 : 기계적 떨림 보정, 2 : 소프트웨어 떨림 보정
+    // 기계적 떨림 보정 적용을 해보고, 안되면 소프트웨어 떨림 보정 적용
+    var cameraStabilizationSetMbr: Int = 0
         private set
 
     // 카메라 현재 줌 배수
@@ -1068,6 +1071,15 @@ class CameraObj private constructor(
                     afAvailableModes.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
             }
 
+            // AF 초기 설정 결정
+            if (fastAutoFocusSupported) {
+                resultCameraObject.currentFocusDistanceMbr = -2f
+            } else if (naturalAutoFocusSupported) {
+                resultCameraObject.currentFocusDistanceMbr = -1f
+            } else {
+                resultCameraObject.currentFocusDistanceMbr = 0f
+            }
+
             // area af 가능 여부
             val maxRegionAf =
                 cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF)
@@ -1896,10 +1908,11 @@ class CameraObj private constructor(
                 mediaRecorder.setOutputFile(mediaRecorderConfigVo.mediaRecordingMp4File.absolutePath)
 
                 // 데이터 저장 프레임 설정
-                val maxMediaRecorderFps = cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList[cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList.indexOfFirst {
-                    it.size.width == mediaRecorderConfigVo.cameraOrientSurfaceSize.width &&
-                            it.size.height == mediaRecorderConfigVo.cameraOrientSurfaceSize.height
-                }].fps
+                val maxMediaRecorderFps =
+                    cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList[cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList.indexOfFirst {
+                        it.size.width == mediaRecorderConfigVo.cameraOrientSurfaceSize.width &&
+                                it.size.height == mediaRecorderConfigVo.cameraOrientSurfaceSize.height
+                    }].fps
 
                 if (mediaRecorderConfigVo.videoRecordingFps > maxMediaRecorderFps) {
                     mediaRecorderConfigVo.videoRecordingFps = maxMediaRecorderFps
@@ -2167,293 +2180,9 @@ class CameraObj private constructor(
         }
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    // (카메라 리퀘스트 빌더 설정 함수)
-    // 리퀘스트 모드 (ex : CameraDevice.TEMPLATE_PREVIEW) 및 리퀘스트로 사용할 서페이스 결정
-    // onPreview, onImageReader, onMediaRecorder -> 어느 서페이스를 사용할지를 결정
-    // onCameraRequestSettingTime 콜백으로 빌더를 빌려와 원하는 리퀘스트를 세팅 가능
-    // 현 세션이 실행중이라면 이 설정으로 실행됨
-
-    // onError 에러 코드 :
-    // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
-    // 2 : 서페이스가 하나도 생성되지 않은 경우
-    // 3 : preview 설정이지만 preview 서페이스가 없을 때
-    // 4 : imageReader 설정이지만 imageReader 서페이스가 없을 때
-    // 5 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
-    fun setCameraRequest(
-        onPreview: Boolean,
-        onImageReader: Boolean,
-        onMediaRecorder: Boolean,
-        cameraRequestMode: Int,
-        onCameraRequestSettingTime: ((CaptureRequest.Builder) -> Unit),
-        onComplete: () -> Unit,
-        onError: (Int) -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            // [조건 검증]
-            if (cameraDeviceMbr == null) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onError(1)
-                return@run
-            }
-
-            if ((previewSurfaceListMbr == null ||
-                        previewSurfaceListMbr!!.isEmpty()) &&
-                analysisImageReaderMbr == null &&
-                captureImageReaderMbr == null &&
-                mediaRecorderMbr == null
-            ) { // 생성 서페이스가 하나도 존재하지 않으면,
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onError(2)
-                return@run
-            }
-
-
-            // [리퀘스트 빌더 생성]
-            captureRequestBuilderMbr =
-                cameraDeviceMbr!!.createCaptureRequest(cameraRequestMode)
-
-
-            // [타겟 서페이스 설정]
-            if (onPreview) { // 프리뷰 사용 설정
-                if ((previewSurfaceListMbr == null ||
-                            previewSurfaceListMbr!!.isEmpty())
-                ) { // 프리뷰 사용 설정인데 프리뷰 서페이스가 없을 때
-                    captureRequestBuilderMbr = null
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(3)
-                    return@run
-                } else {
-                    // 프리뷰 서페이스 타겟 추가
-                    for (previewSurface in previewSurfaceListMbr!!) {
-                        captureRequestBuilderMbr!!.addTarget(previewSurface)
-                    }
-                }
-            }
-
-            if (onImageReader) { // 이미지 리더 사용 설정
-                if (analysisImageReaderMbr == null) { // 이미지 리더 사용 설정인데 이미지 리더 서페이스가 없을 때
-                    captureRequestBuilderMbr = null
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(4)
-                    return@run
-                } else {
-                    // 이미지 리더 서페이스 타겟 추가
-                    captureRequestBuilderMbr!!.addTarget(analysisImageReaderMbr!!.surface)
-                }
-            }
-
-            if (onMediaRecorder) { // 미디어 레코더 사용 설정
-                if (mediaRecorderMbr == null) { // 미디어 레코더 사용 설정인데 미디어 레코더 서페이스가 없을 때
-                    captureRequestBuilderMbr = null
-                    cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(5)
-                    return@run
-                } else {
-                    // 미디어 레코더 서페이스 타겟 추가
-                    captureRequestBuilderMbr!!.addTarget(mediaCodecSurfaceMbr!!)
-                }
-            }
-
-
-            // [사용자에게 설정 정보를 받아오는 공간 제공]
-            onCameraRequestSettingTime(captureRequestBuilderMbr!!)
-
-            // [카메라 오브젝트 내부 정보를 최종적으로 채택]
-            // todo : 이 최종 영역 설정을 점차 늘리고, 위의 커스텀 설정 공간은 최종적으로 없애버릴 것
-            // (포커스 거리 설정)
-            if (currentFocusDistanceMbr == -1f) {
-                // 자연스런 오토 포커스 설정
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                )
-            } else if (currentFocusDistanceMbr == -2f) {
-                // 빠른 오토 포커스 설정
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                )
-            } else if (currentFocusDistanceMbr >= 0f) {
-                // 포커스 수동 거리 설정
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_OFF
-                )
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.LENS_FOCUS_DISTANCE,
-                    currentFocusDistanceMbr
-                )
-            }
-
-            // (Exposure 설정)
-            if (currentFrameExposureTimeNsMbr == null) {
-                // AE 설정
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_ON
-                )
-            } else {
-                // 수동 노출 시간 설정
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_OFF
-                )
-
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    currentFrameExposureTimeNsMbr
-                )
-            }
-
-            // (오브젝트 내부 줌 정보를 설정)
-            val zoom = if (cameraInfoVoMbr.maxZoom < currentCameraZoomFactorMbr) {
-                // 가용 줌 최대치에 설정을 맞추기
-                cameraInfoVoMbr.maxZoom
-            } else if (currentCameraZoomFactorMbr < 1f) {
-                1f
-            } else {
-                currentCameraZoomFactorMbr
-            }
-
-            // 센서 사이즈 중심점
-            val centerX =
-                cameraInfoVoMbr.sensorSize.width() / 2
-            val centerY =
-                cameraInfoVoMbr.sensorSize.height() / 2
-
-            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
-            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
-            val deltaX =
-                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoom).toInt()
-            val deltaY =
-                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoom).toInt()
-
-            val mCropRegion = Rect().apply {
-                set(
-                    centerX - deltaX,
-                    centerY - deltaY,
-                    centerX + deltaX,
-                    centerY + deltaY
-                )
-            }
-
-            captureRequestBuilderMbr!!.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
-
-            // (카메라 떨림 보정 여부 반영)
-            if (isCameraStabilizationSetMbr) { // 떨림 보정 on
-                // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
-                if (cameraInfoVoMbr.isOpticalStabilizationAvailable) { // 기계 보정 사용 가능
-                    captureRequestBuilderMbr!!.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-                    )
-                    captureRequestBuilderMbr!!.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                    )
-                } else if (cameraInfoVoMbr.isVideoStabilizationAvailable) { // 소프트웨어 보정 사용 가능
-                    captureRequestBuilderMbr!!.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                    )
-                    captureRequestBuilderMbr!!.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                    )
-                }
-            } else { // 떨림 보정 off
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                    CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                )
-                captureRequestBuilderMbr!!.set(
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                )
-            }
-
-
-            // [기존 세션이 실행중이라면 곧바로 설정 적용]
-            if (nowRepeatingMbr) {
-                cameraCaptureSessionMbr!!.setRepeatingRequest(
-                    captureRequestBuilderMbr!!.build(),
-                    null,
-                    cameraThreadVoMbr.cameraHandlerThreadObj.handler
-                )
-            }
-
-            cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete()
-        }
-    }
-
-    // todo : captureCallback 을 전역 변수로
-    // (카메라 리퀘스트 반복 실행 함수)
-    // 설정된 리퀘스트를 무한 반복하여 실행하는 함수
-    // onError 에러 코드 :
-    // 1 : 카메라 세션이 생성되지 않음
-    // 2 : 카메라 리퀘스트 빌더가 생성되지 않음
-    fun startRepeatingCameraRequest(
-        captureCallback: CameraCaptureSession.CaptureCallback?,
-        onComplete: () -> Unit,
-        onError: (Int) -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (cameraCaptureSessionMbr == null) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onError(1)
-                return@run
-            }
-
-            if (captureRequestBuilderMbr == null) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onError(2)
-                return@run
-            }
-
-            cameraCaptureSessionMbr!!.setRepeatingRequest(
-                captureRequestBuilderMbr!!.build(),
-                captureCallback,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-            nowRepeatingMbr = true
-
-            cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete()
-        }
-    }
-
-    // (CameraSession 을 대기 상태로 만드는 함수)
-    // 현재 세션이 repeating 이라면 이를 중단함.
-    // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
-    fun pauseCameraSession(
-        onCameraPause: () -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (nowRepeatingMbr) {
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            }
-
-            cameraThreadVoMbr.cameraSemaphore.release()
-
-            onCameraPause()
-        }
-    }
-
     // (카메라 세션을 멈추는 함수)
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
-    fun stopCameraObject(
+    fun unsetCameraOutputSurfaces(
         onCameraStop: () -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
@@ -2531,6 +2260,273 @@ class CameraObj private constructor(
             cameraThreadVoMbr.cameraSemaphore.release()
 
             onCameraStop()
+        }
+    }
+
+
+    // (반복 리퀘스트 실행)
+    // onPreview, onImageReader, onMediaRecorder -> 어느 서페이스를 사용할지를 결정
+    // onError 에러 코드 :
+    // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
+    // 2 : 서페이스가 하나도 생성되지 않은 경우
+    // 3 : preview 설정이지만 preview 서페이스가 없을 때
+    // 4 : analysisImageReader 설정이지만 analysisImageReader 서페이스가 없을 때
+    // 5 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
+    fun repeatingRequest(
+        requestToPreview: Boolean,
+        requestToAnalysisImageReader: Boolean,
+        requestToMediaRecorder: Boolean,
+        onComplete: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+
+            // [조건 검증]
+            if (cameraDeviceMbr == null) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onError(1)
+                return@run
+            }
+
+            if ((previewSurfaceListMbr == null ||
+                        previewSurfaceListMbr!!.isEmpty()) &&
+                analysisImageReaderMbr == null &&
+                mediaCodecSurfaceMbr == null
+            ) { // 리피팅용 서페이스가 하나도 존재하지 않으면,
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onError(2)
+                return@run
+            }
+
+            if (requestToPreview) {
+                if (previewSurfaceListMbr == null ||
+                    previewSurfaceListMbr!!.isEmpty()
+                ) {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(3)
+                    return@run
+                }
+            }
+
+            if (requestToAnalysisImageReader) {
+                if (analysisImageReaderMbr == null) {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(4)
+                    return@run
+                }
+            }
+
+            if (requestToMediaRecorder) {
+                if (mediaCodecSurfaceMbr == null) {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(5)
+                    return@run
+                }
+            }
+
+            // [모드 설정]
+            // todo wb
+            // 3A 설정중인지 여부
+            val threeAutoSet = (currentFocusDistanceMbr == -2f ||
+                    currentFocusDistanceMbr == -1f) &&
+                    currentFrameExposureTimeNsMbr == null
+
+            val requestTemplate = if (!threeAutoSet) { // 3A 중 하나라도 수동 수치가 적용중일 때
+                CameraDevice.TEMPLATE_MANUAL
+            } else { // 3A 모두 자동 설정일 때
+                if (requestToMediaRecorder) { // 레코딩 설정시
+                    CameraDevice.TEMPLATE_RECORD
+                } else { // 레코딩 설정이 아닐시
+                    CameraDevice.TEMPLATE_PREVIEW
+                }
+            }
+
+            // [리퀘스트 빌더 생성]
+            val captureRequestBuilder =
+                cameraDeviceMbr!!.createCaptureRequest(requestTemplate)
+
+
+            // [타겟 서페이스 설정]
+            if (requestToPreview) { // 프리뷰 사용 설정
+                // 프리뷰 서페이스 타겟 추가
+                for (previewSurface in previewSurfaceListMbr!!) {
+                    captureRequestBuilder.addTarget(previewSurface)
+                }
+            }
+
+            if (requestToAnalysisImageReader) { // 이미지 리더 사용 설정
+                // 이미지 리더 서페이스 타겟 추가
+                captureRequestBuilder.addTarget(analysisImageReaderMbr!!.surface)
+            }
+
+            if (requestToMediaRecorder) { // 미디어 레코더 사용 설정
+                // 미디어 레코더 서페이스 타겟 추가
+                captureRequestBuilder.addTarget(mediaCodecSurfaceMbr!!)
+            }
+
+            // [리퀘스트 설정]
+            // (3A 설정)
+            if (threeAutoSet) { // 3A 자동 설정 모드 적용
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AWB_MODE,
+                    CaptureRequest.CONTROL_AWB_MODE_AUTO
+                )
+            } else { // 3A 수동 설정 모드 적용
+                // (포커스 거리 설정)
+                if (currentFocusDistanceMbr == -1f) {
+                    // 자연스런 오토 포커스 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                    )
+                } else if (currentFocusDistanceMbr == -2f) {
+                    // 빠른 오토 포커스 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                    )
+                } else if (currentFocusDistanceMbr >= 0f) {
+                    // 포커스 수동 거리 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_FOCUS_DISTANCE,
+                        currentFocusDistanceMbr
+                    )
+                }
+
+                // (Exposure 설정)
+                if (currentFrameExposureTimeNsMbr == null) {
+                    // AE 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON
+                    )
+                } else {
+                    // 수동 노출 시간 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_OFF
+                    )
+
+                    captureRequestBuilder.set(
+                        CaptureRequest.SENSOR_EXPOSURE_TIME,
+                        currentFrameExposureTimeNsMbr
+                    )
+                }
+            }
+
+            // (수동 설정)
+            // (오브젝트 내부 줌 정보를 설정)
+            val zoom = if (cameraInfoVoMbr.maxZoom < currentCameraZoomFactorMbr) {
+                // 가용 줌 최대치에 설정을 맞추기
+                cameraInfoVoMbr.maxZoom
+            } else if (currentCameraZoomFactorMbr < 1f) {
+                1f
+            } else {
+                currentCameraZoomFactorMbr
+            }
+
+            // 센서 사이즈 중심점
+            val centerX =
+                cameraInfoVoMbr.sensorSize.width() / 2
+            val centerY =
+                cameraInfoVoMbr.sensorSize.height() / 2
+
+            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
+            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
+            val deltaX =
+                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoom).toInt()
+            val deltaY =
+                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoom).toInt()
+
+            val mCropRegion = Rect().apply {
+                set(
+                    centerX - deltaX,
+                    centerY - deltaY,
+                    centerX + deltaX,
+                    centerY + deltaY
+                )
+            }
+
+            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+
+            // (카메라 떨림 보정 여부 반영)
+            when (cameraStabilizationSetMbr) {
+                0 -> { // 떨림 보정 off
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                1 -> { // 기계적 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                2 -> { // 소프트웨어 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                }
+            }
+
+            if (nowRepeatingMbr) {
+                cameraCaptureSessionMbr!!.stopRepeating()
+            }
+
+            // todo capture 하여 콜백 후 repeat
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                captureRequestBuilder.build(),
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
+            nowRepeatingMbr = true
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+            onComplete()
+        }
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    // (CameraSession 을 대기 상태로 만드는 함수)
+    // 현재 세션이 repeating 이라면 이를 중단함.
+    // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
+    fun pauseCameraSession(
+        onCameraPause: () -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+
+            if (nowRepeatingMbr) {
+                cameraCaptureSessionMbr?.stopRepeating()
+                nowRepeatingMbr = false
+            }
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+
+            onCameraPause()
         }
     }
 
@@ -2857,12 +2853,21 @@ class CameraObj private constructor(
                 if (!cameraInfoVoMbr.isVideoStabilizationAvailable &&
                     !cameraInfoVoMbr.isOpticalStabilizationAvailable
                 ) {
-                    isCameraStabilizationSetMbr = false
+                    cameraStabilizationSetMbr = 0
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onComplete()
                     return@run
                 }
-                isCameraStabilizationSetMbr = true
+
+                // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
+                cameraStabilizationSetMbr =
+                    if (cameraInfoVoMbr.isOpticalStabilizationAvailable) { // 기계 보정 사용 가능
+                        1
+                    } else if (cameraInfoVoMbr.isVideoStabilizationAvailable) {// 소프트 웨어 보정 사용 가능
+                        2
+                    } else {
+                        0
+                    }
 
                 // 리퀘스트 빌더가 생성되지 않은 경우
                 if (captureRequestBuilderMbr == null) {
@@ -2871,25 +2876,37 @@ class CameraObj private constructor(
                     return@run
                 }
 
-                // 기계 보정이 가능하면 사용하고, 아니라면 소프트웨어 보정을 적용
-                if (cameraInfoVoMbr.isOpticalStabilizationAvailable) { // 기계 보정 사용 가능
-                    captureRequestBuilderMbr!!.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-                    )
-                    captureRequestBuilderMbr!!.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                    )
-                } else if (cameraInfoVoMbr.isVideoStabilizationAvailable) { // 소프트 웨어 보정 사용 가능
-                    captureRequestBuilderMbr!!.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                    )
-                    captureRequestBuilderMbr!!.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                    )
+                when (cameraStabilizationSetMbr) {
+                    0 -> { // 보정 안함
+                        captureRequestBuilderMbr!!.set(
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                        )
+                        captureRequestBuilderMbr!!.set(
+                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                        )
+                    }
+                    1 -> { // 기계 보정
+                        captureRequestBuilderMbr!!.set(
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                        )
+                        captureRequestBuilderMbr!!.set(
+                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                        )
+                    }
+                    2 -> { // 소프트 웨어 보정
+                        captureRequestBuilderMbr!!.set(
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                        )
+                        captureRequestBuilderMbr!!.set(
+                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                        )
+                    }
                 }
 
                 // 세션이 현재 실행중이 아니라면 여기서 멈추기
@@ -2909,7 +2926,7 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
             } else { // 보정 기능 중지 설정
-                isCameraStabilizationSetMbr = false
+                cameraStabilizationSetMbr = 0
 
                 if (captureRequestBuilderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()

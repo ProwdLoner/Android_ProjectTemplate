@@ -160,7 +160,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
 
             // (카메라를 서페이스 까지 초기화)
-            cameraObjMbr.stopCameraObject(
+            cameraObjMbr.unsetCameraOutputSurfaces(
                 onCameraStop = {
                     // 기존 저장 폴더 삭제
                     videoFile.delete()
@@ -222,20 +222,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         analysisImageReaderConfigVo,
                         onComplete = {
                             // (카메라 리퀘스트 설정)
-                            cameraObjMbr.setCameraRequest(
-                                onPreview = true,
-                                onImageReader = true,
-                                onMediaRecorder = false,
-                                CameraDevice.TEMPLATE_PREVIEW,
-                                onCameraRequestSettingTime = {
-                                    // todo : 멤버변수로
-                                    it.set(
-                                        CaptureRequest.CONTROL_AWB_MODE,
-                                        CaptureRequest.CONTROL_AWB_MODE_AUTO
-                                    )
-                                },
+                            cameraObjMbr.repeatingRequest(
+                                requestToPreview = true,
+                                requestToAnalysisImageReader = true,
+                                requestToMediaRecorder = false,
                                 onComplete = {
-                                    // todo : 비동기라서 start 를 안할시 실행 안될 위험이 있음
+
                                 },
                                 onError = {
 
@@ -788,24 +780,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     analysisImageReaderConfigVo,
                                     onComplete = {
                                         // (카메라 리퀘스트 설정)
-                                        cameraObjMbr.setCameraRequest(
-                                            onPreview = true,
-                                            onImageReader = true,
-                                            onMediaRecorder = false,
-                                            CameraDevice.TEMPLATE_PREVIEW,
-                                            onCameraRequestSettingTime = {
-                                                // todo : 멤버변수로
-                                                it.set(
-                                                    CaptureRequest.CONTROL_AWB_MODE,
-                                                    CaptureRequest.CONTROL_AWB_MODE_AUTO
-                                                )
-                                            },
+                                        cameraObjMbr.repeatingRequest(
+                                            requestToPreview = true,
+                                            requestToAnalysisImageReader = true,
+                                            requestToMediaRecorder = false,
                                             onComplete = {
-                                                // (카메라 실행)
-                                                cameraObjMbr.startRepeatingCameraRequest(
-                                                    null,
-                                                    onComplete = {},
-                                                    onError = {})
+
                                             },
                                             onError = {
 
@@ -843,7 +823,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             if (!(cameraObjMbr.nowRecordingMbr)) { // 현재 레코딩 중이 아닐 때
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
-                cameraObjMbr.stopCameraObject {
+                cameraObjMbr.unsetCameraOutputSurfaces {
                     // 지원 사이즈 탐지
                     val chosenPreviewSurfaceSize =
                         cameraObjMbr.getNearestSupportedCameraOutputSize(
@@ -919,40 +899,20 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         analysisImageReaderConfigVo,
                         onComplete = {
                             // (카메라 리퀘스트 설정)
-                            cameraObjMbr.setCameraRequest(
-                                onPreview = true,
-                                onImageReader = true,
-                                onMediaRecorder = true,
-                                CameraDevice.TEMPLATE_RECORD,
-                                onCameraRequestSettingTime = {
-                                    // todo : 멤버변수로
-                                    it.set(
-                                        CaptureRequest.CONTROL_AWB_MODE,
-                                        CaptureRequest.CONTROL_AWB_MODE_AUTO
-                                    )
-                                },
+                            cameraObjMbr.repeatingRequest(
+                                requestToPreview = true,
+                                requestToAnalysisImageReader = true,
+                                requestToMediaRecorder = true,
                                 onComplete = {
-                                    // (카메라 실행)
-                                    cameraObjMbr.startRepeatingCameraRequest(
-                                        null,
-                                        onComplete = {
-                                            // (미디어 레코딩 녹화 실행)
-                                            cameraObjMbr.startMediaRecording(onComplete = {
-                                                runOnUiThread {
-                                                    bindingMbr.btn1.isEnabled = true
-                                                }
-                                            })
-                                        },
-                                        onError = {
-                                            runOnUiThread {
-                                                bindingMbr.btn1.isEnabled = true
-                                            }
-                                        })
+                                    // (미디어 레코딩 녹화 실행)
+                                    cameraObjMbr.startMediaRecording(onComplete = {
+                                        runOnUiThread {
+                                            bindingMbr.btn1.isEnabled = true
+                                        }
+                                    })
                                 },
                                 onError = {
-                                    runOnUiThread {
-                                        bindingMbr.btn1.isEnabled = true
-                                    }
+
                                 }
                             )
                         },
@@ -972,7 +932,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
 
                 // 카메라 초기화
-                cameraObjMbr.stopCameraObject(
+                cameraObjMbr.unsetCameraOutputSurfaces(
                     onCameraStop = {
                         // 미디어 레코드를 제외한 카메라 세션 준비
                         // 지원 사이즈 탐지
@@ -1030,50 +990,30 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             null,
                             analysisImageReaderConfigVo,
                             onComplete = {
-                                // (카메라 리퀘스트 설정)
-                                cameraObjMbr.setCameraRequest(
-                                    onPreview = true,
-                                    onImageReader = true,
-                                    onMediaRecorder = false,
-                                    CameraDevice.TEMPLATE_PREVIEW,
-                                    onCameraRequestSettingTime = {
-                                        // todo : 멤버변수로
-                                        it.set(
-                                            CaptureRequest.CONTROL_AWB_MODE,
-                                            CaptureRequest.CONTROL_AWB_MODE_AUTO
-                                        )
-                                    },
-                                    onComplete = {
-                                        runOnUiThread {
-                                            bindingMbr.btn1.isEnabled = true
+                                runOnUiThread {
+                                    bindingMbr.btn1.isEnabled = true
 
-                                            // (결과물 감상)
-                                            val mediaPlayerIntent = Intent()
-                                            mediaPlayerIntent.action = Intent.ACTION_VIEW
-                                            mediaPlayerIntent.setDataAndType(
-                                                FileProvider.getUriForFile(
-                                                    this@ActivityBasicCamera2ApiSample,
-                                                    "${BuildConfig.APPLICATION_ID}.provider",
-                                                    videoFile
-                                                ), MimeTypeMap.getSingleton()
-                                                    .getMimeTypeFromExtension(videoFile.extension)
-                                            )
-                                            mediaPlayerIntent.flags =
-                                                Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                                                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    // (결과물 감상)
+                                    val mediaPlayerIntent = Intent()
+                                    mediaPlayerIntent.action = Intent.ACTION_VIEW
+                                    mediaPlayerIntent.setDataAndType(
+                                        FileProvider.getUriForFile(
+                                            this@ActivityBasicCamera2ApiSample,
+                                            "${BuildConfig.APPLICATION_ID}.provider",
+                                            videoFile
+                                        ), MimeTypeMap.getSingleton()
+                                            .getMimeTypeFromExtension(videoFile.extension)
+                                    )
+                                    mediaPlayerIntent.flags =
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                                Intent.FLAG_ACTIVITY_CLEAR_TOP
 
-                                            resultLauncherCallbackMbr = {
-                                                videoFile.delete()
-                                            }
-                                            resultLauncherMbr.launch(mediaPlayerIntent)
-                                        }
-                                    },
-                                    onError = {
-                                        runOnUiThread {
-                                            bindingMbr.btn1.isEnabled = true
-                                        }
+                                    resultLauncherCallbackMbr = {
+                                        videoFile.delete()
+                                        finish()
                                     }
-                                )
+                                    resultLauncherMbr.launch(mediaPlayerIntent)
+                                }
                             },
                             onError = {
                                 runOnUiThread {
@@ -1215,24 +1155,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 analysisImageReaderConfigVo,
                 onComplete = {
                     // (카메라 리퀘스트 설정)
-                    cameraObjMbr.setCameraRequest(
-                        onPreview = true,
-                        onImageReader = true,
-                        onMediaRecorder = false,
-                        CameraDevice.TEMPLATE_PREVIEW,
-                        onCameraRequestSettingTime = {
-                            // todo : 멤버변수로
-                            it.set(
-                                CaptureRequest.CONTROL_AWB_MODE,
-                                CaptureRequest.CONTROL_AWB_MODE_AUTO
-                            )
-                        },
+                    cameraObjMbr.repeatingRequest(
+                        requestToPreview = true,
+                        requestToAnalysisImageReader = true,
+                        requestToMediaRecorder = false,
                         onComplete = {
-                            // (카메라 실행)
-                            cameraObjMbr.startRepeatingCameraRequest(
-                                null,
-                                onComplete = {},
-                                onError = {})
+
                         },
                         onError = {
 
@@ -1246,10 +1174,18 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         } else { // onPause 에서 카메라가 pause 된 시점
             // (카메라 실행)
-            cameraObjMbr.startRepeatingCameraRequest(
-                null,
-                onComplete = {},
-                onError = {})
+            // todo
+            cameraObjMbr.repeatingRequest(
+                requestToPreview = true,
+                requestToAnalysisImageReader = true,
+                requestToMediaRecorder = false,
+                onComplete = {
+
+                },
+                onError = {
+
+                }
+            )
         }
     }
 
