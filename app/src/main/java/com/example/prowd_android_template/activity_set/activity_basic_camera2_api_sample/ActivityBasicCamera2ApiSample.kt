@@ -204,14 +204,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         true,
                         onComplete = {})
 
-//                    cameraObjMbr.setAutoFocus(
-//                        true,
-//                        onComplete = {})
-//
-//                    cameraObjMbr.setExposureTime(
-//                        null,
-//                        onComplete = {})
-
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
                         previewConfigVo,
@@ -688,9 +680,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     checkedItemIdx = checkedIdx,
                     cancelBtnTxt = null,
                     onRadioItemClicked = {
+                    },
+                    onCancelBtnClicked = {
                         viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
                         viewModelMbr.imageProcessingPauseMbr = false
-
+                    },
+                    onSelectBtnClicked = {
                         val checkedCameraId = cameraInfoList[it].cameraId
 
                         if (checkedCameraId != viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId) {
@@ -762,14 +757,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     true,
                                     onComplete = {})
 
-//                                cameraObjMbr.setAutoFocus(
-//                                    true,
-//                                    onComplete = {})
-//
-//                                cameraObjMbr.setExposureTime(
-//                                    null,
-//                                    onComplete = {})
-
                                 // (카메라 서페이스 설정)
                                 cameraObjMbr.setCameraOutputSurfaces(
                                     previewConfigVo,
@@ -796,12 +783,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 )
                             }
                         }
-                    },
-                    onCancelBtnClicked = {
-                        viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
-                        viewModelMbr.imageProcessingPauseMbr = false
-                    },
-                    onSelectBtnClicked = {
                         viewModelMbr.radioButtonDialogInfoLiveDataMbr.value = null
                         viewModelMbr.imageProcessingPauseMbr = false
                     },
@@ -880,14 +861,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     cameraObjMbr.setCameraStabilization(
                         true,
                         onComplete = {})
-
-//                    cameraObjMbr.setAutoFocus(
-//                        true,
-//                        onComplete = {})
-//
-//                    cameraObjMbr.setExposureTime(
-//                        null,
-//                        onComplete = {})
 
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
@@ -972,14 +945,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         cameraObjMbr.setCameraStabilization(
                             true,
                             onComplete = {})
-
-//                        cameraObjMbr.setAutoFocus(
-//                            true,
-//                            onComplete = {})
-//
-//                        cameraObjMbr.setExposureTime(
-//                            null,
-//                            onComplete = {})
 
                         // (카메라 서페이스 설정)
                         cameraObjMbr.setCameraOutputSurfaces(
@@ -1136,14 +1101,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             cameraObjMbr.setCameraStabilization(
                 true,
                 onComplete = {})
-
-//            cameraObjMbr.setAutoFocus(
-//                true,
-//                onComplete = {})
-//
-//            cameraObjMbr.setExposureTime(
-//                null,
-//                onComplete = {})
 
             // (카메라 서페이스 설정)
             cameraObjMbr.setCameraOutputSurfaces(
