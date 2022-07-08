@@ -2402,6 +2402,7 @@ class CameraObj private constructor(
 
     // (반복 리퀘스트 실행)
     // forPreview, forAnalysisImageReader, forMediaRecorder -> 어느 서페이스를 사용할지를 결정
+    // 타겟 서페이스 종류에 따라 TEMPLATE_RECORD(forMediaRecorder) 혹은 TEMPLATE_PREVIEW(not forMediaRecorder) 세션 사용
     // captureCallback -> 리퀘스트가 적용된 시점의 콜백
     // onError 에러 코드 :
     // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
@@ -2409,7 +2410,7 @@ class CameraObj private constructor(
     // 3 : preview 설정이지만 preview 서페이스가 없을 때
     // 4 : analysisImageReader 설정이지만 analysisImageReader 서페이스가 없을 때
     // 5 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
-    fun repeatingRequest(
+    fun repeatingRequestOnTemplate(
         forPreview: Boolean,
         forAnalysisImageReader: Boolean,
         forMediaRecorder: Boolean,
@@ -2470,14 +2471,10 @@ class CameraObj private constructor(
                     focusDistanceMbr == -1f) &&
                     exposureTimeNsMbr == null
 
-            val requestTemplate = if (!threeAutoSet) { // 3A 중 하나라도 수동 수치가 적용중일 때
-                CameraDevice.TEMPLATE_MANUAL
-            } else { // 3A 모두 자동 설정일 때
-                if (forMediaRecorder) { // 레코딩 설정시
-                    CameraDevice.TEMPLATE_RECORD
-                } else { // 레코딩 설정이 아닐시
-                    CameraDevice.TEMPLATE_PREVIEW
-                }
+            val requestTemplate = if (forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
             }
 
             // [리퀘스트 빌더 생성]
@@ -2695,14 +2692,10 @@ class CameraObj private constructor(
                     focusDistanceMbr == -1f) &&
                     exposureTimeNsMbr == null
 
-            val requestTemplate = if (!threeAutoSet) { // 3A 중 하나라도 수동 수치가 적용중일 때
-                CameraDevice.TEMPLATE_MANUAL
-            } else { // 3A 모두 자동 설정일 때
-                if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
-                    CameraDevice.TEMPLATE_RECORD
-                } else { // 레코딩 설정이 아닐시
-                    CameraDevice.TEMPLATE_PREVIEW
-                }
+            val requestTemplate = if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
             }
 
             // [리퀘스트 빌더 생성]
@@ -2901,14 +2894,10 @@ class CameraObj private constructor(
                     focusDistanceMbr == -1f) &&
                     exposureTimeNsMbr == null
 
-            val requestTemplate = if (!threeAutoSet) { // 3A 중 하나라도 수동 수치가 적용중일 때
-                CameraDevice.TEMPLATE_MANUAL
-            } else { // 3A 모두 자동 설정일 때
-                if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
-                    CameraDevice.TEMPLATE_RECORD
-                } else { // 레코딩 설정이 아닐시
-                    CameraDevice.TEMPLATE_PREVIEW
-                }
+            val requestTemplate = if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
             }
 
             // [리퀘스트 빌더 생성]
