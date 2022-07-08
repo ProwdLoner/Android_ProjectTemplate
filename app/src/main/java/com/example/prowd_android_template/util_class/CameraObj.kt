@@ -1866,8 +1866,8 @@ class CameraObj private constructor(
             }
 
             // (미디어 레코더 서페이스 준비)
-            var mediaCodecSurface: Surface? = null
             var mediaRecorder: MediaRecorder? = null
+            var mediaCodecSurface: Surface? = null
             if (mediaRecorderConfigVo != null) {
                 // 미디어 레코더 생성
                 mediaRecorder =
@@ -1896,15 +1896,10 @@ class CameraObj private constructor(
                 mediaRecorder.setOutputFile(mediaRecorderConfigVo.mediaRecordingMp4File.absolutePath)
 
                 // 데이터 저장 프레임 설정
-                // 비디오 FPS
-//                val spf = (streamConfigurationMapMbr.getOutputMinFrameDuration(
-//                    MediaRecorder::class.java,
-//                    mediaRecorderConfigVo.cameraOrientSurfaceSize
-//                ) / 1_000_000_000.0)
-//                val maxMediaRecorderFps = if (spf > 0) (1.0 / spf).toInt() else 0
-
-                // todo
-                val maxMediaRecorderFps = 30
+                val maxMediaRecorderFps = cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList[cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList.indexOfFirst {
+                    it.size.width == mediaRecorderConfigVo.cameraOrientSurfaceSize.width &&
+                            it.size.height == mediaRecorderConfigVo.cameraOrientSurfaceSize.height
+                }].fps
 
                 if (mediaRecorderConfigVo.videoRecordingFps > maxMediaRecorderFps) {
                     mediaRecorderConfigVo.videoRecordingFps = maxMediaRecorderFps
