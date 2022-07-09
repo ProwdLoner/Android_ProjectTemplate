@@ -2625,15 +2625,15 @@ class CameraObj private constructor(
                 cameraCaptureSessionMbr!!.stopRepeating()
             }
 
-            cameraCaptureSessionMbr!!.capture(
-                captureRequestBuilder.build(),
-                captureCallback,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-
             cameraCaptureSessionMbr!!.setRepeatingRequest(
                 captureRequestBuilder.build(),
                 null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
+            cameraCaptureSessionMbr!!.capture(
+                captureRequestBuilder.build(),
+                captureCallback,
                 cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 

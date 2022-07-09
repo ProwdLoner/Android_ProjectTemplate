@@ -8,7 +8,10 @@ import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.RectF
+import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.TotalCaptureResult
 import android.media.Image
 import android.media.ImageReader
 import android.net.Uri
@@ -19,6 +22,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -194,7 +198,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         CameraObj.ImageReaderConfigVo(
                             chosenAnalysisImageReaderSurfaceSize,
                             imageReaderCallback = { reader ->
-                                processImage(reader)
+                                analyzeImage(reader)
                             }
                         )
 
@@ -748,7 +752,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                     CameraObj.ImageReaderConfigVo(
                                         chosenImageReaderSurfaceSize,
                                         imageReaderCallback = { reader ->
-                                            processImage(reader)
+                                            analyzeImage(reader)
                                         }
                                     )
 
@@ -837,7 +841,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         CameraObj.ImageReaderConfigVo(
                             chosenImageReaderSurfaceSize,
                             imageReaderCallback = { reader ->
-                                processImage(reader)
+                                analyzeImage(reader)
                             }
                         )
 
@@ -942,7 +946,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             CameraObj.ImageReaderConfigVo(
                                 chosenImageReaderSurfaceSize,
                                 imageReaderCallback = { reader ->
-                                    processImage(reader)
+                                    analyzeImage(reader)
                                 }
                             )
 
@@ -1098,7 +1102,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 CameraObj.ImageReaderConfigVo(
                     chosenImageReaderSurfaceSize,
                     imageReaderCallback = { reader ->
-                        processImage(reader)
+                        analyzeImage(reader)
                     }
                 )
 
@@ -1122,7 +1126,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         forPreview = true,
                         forAnalysisImageReader = true,
                         forMediaRecorder = false,
-                        null,
+                        object :CameraCaptureSession.CaptureCallback(){
+                            override fun onCaptureCompleted(
+                                session: CameraCaptureSession,
+                                request: CaptureRequest,
+                                result: TotalCaptureResult
+                            ) {
+                                super.onCaptureCompleted(session, request, result)
+                                Log.e("req", "comp")
+                            }
+                                                                      },
                         onComplete = {
 
                         },
@@ -1160,7 +1173,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (카메라 이미지 실시간 처리 콜백)
     // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
-    private fun processImage(reader: ImageReader) {
+    private fun analyzeImage(reader: ImageReader) {
         try {
             // (1. Image 객체 정보 추출)
             // reader 객체로 받은 image 객체의 이미지 정보가 처리되어 close 될 때까지는 동기적으로 처리
