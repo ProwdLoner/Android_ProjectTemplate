@@ -2685,72 +2685,57 @@ class CameraObj private constructor(
     }
 
 
-//    // (Exposure 설정)
-//    // exposureNanoSec : 나노초 == 초/1000000000
-//    //     음수라면 Auto Exposure ON
-//    // ex : 1000000000 / 80
-//    fun setExposureTime(
-//        exposureNanoSec: Long?,
-//        onComplete: () -> Unit
-//    ) {
-//        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-//            cameraThreadVoMbr.cameraSemaphore.acquire()
-//
-//            if (!cameraInfoVoMbr.autoExposureSupported) {
-//                // 오토 Exposure 지원이 안되면
-//                cameraThreadVoMbr.cameraSemaphore.release()
-//                onComplete()
-//                return@run
-//            }
-//
-//            exposureTimeNsMbr = if (exposureNanoSec == null || exposureNanoSec < 0) {
-//                null
-//            } else {
-//                exposureNanoSec
-//            }
-//
-//            // 리퀘스트 빌더가 생성되지 않은 경우
-//            if (captureRequestBuilderMbr == null) {
-//                cameraThreadVoMbr.cameraSemaphore.release()
-//                onComplete()
-//                return@run
-//            }
-//
-//            if (exposureTimeNsMbr == null) {
-//                captureRequestBuilderMbr!!.set(
-//                    CaptureRequest.CONTROL_AE_MODE,
-//                    CaptureRequest.CONTROL_AE_MODE_ON
-//                )
-//            } else {
-//                captureRequestBuilderMbr!!.set(
-//                    CaptureRequest.CONTROL_AE_MODE,
-//                    CaptureRequest.CONTROL_AE_MODE_OFF
-//                )
-//
-//                captureRequestBuilderMbr!!.set(
-//                    CaptureRequest.SENSOR_EXPOSURE_TIME,
-//                    exposureTimeNsMbr
-//                )
-//            }
-//
-//            // 세션이 현재 실행중이 아니라면 여기서 멈추기
-//            if (!nowRepeatingMbr) {
-//                cameraThreadVoMbr.cameraSemaphore.release()
-//                onComplete()
-//                return@run
-//            }
-//
-//            // 세션이 현재 실행중이라면 바로 적용하기
-//            cameraCaptureSessionMbr!!.setRepeatingRequest(
-//                captureRequestBuilderMbr!!.build(),
-//                null,
-//                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-//            )
-//
-//            cameraThreadVoMbr.cameraSemaphore.release()
-//            onComplete()
-//        }
-//    }
+    // (Exposure 설정)
+    // exposureNanoSec : 나노초 == 초/1000000000
+    //     음수라면 Auto Exposure ON
+    // ex : 1000000000 / 80
+
+    // onError 에러 코드 :
+    // 1 : 오토 Exposure 지원이 불가
+    // 1 : exposureNanoSec 파라미터 에러
+    fun setExposureTime(
+        exposureNanoSec: Long?,
+        onComplete: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+
+            exposureTimeNsMbr = if (exposureNanoSec == null) {
+                if (!cameraInfoVoMbr.autoExposureSupported) {
+                    // 오토 Exposure 지원이 안되면
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(1)
+                    return@run
+                } else {
+                    null
+                }
+            } else {
+                if (exposureNanoSec < 0) {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(2)
+                    return@run
+                } else {
+                    exposureNanoSec
+                }
+            }
+
+            if (cameraStatusCodeMbr != 2) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onComplete()
+            }
+
+            // [카메라 실행]
+            repeatingCameraMemberConfig(
+                repeatRequestTargetVoMbr!!.forPreview,
+                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
+                repeatRequestTargetVoMbr!!.forMediaRecorder
+            )
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+            onComplete()
+        }
+    }
 
 
     // [미디어 레코더 조작 함수]
