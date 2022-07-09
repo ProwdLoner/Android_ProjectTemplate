@@ -221,7 +221,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 forPreview = true,
                                 forAnalysisImageReader = true,
                                 forMediaRecorder = false,
-                                null,
                                 onComplete = {
 
                                 },
@@ -237,7 +236,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
             )
         } else {
-            cameraObjMbr.pauseCameraSession(onCameraPause = {})
+            cameraObjMbr.stopRepeatingRequest(onCameraPause = {})
         }
 
         super.onPause()
@@ -776,7 +775,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                             forPreview = true,
                                             forAnalysisImageReader = true,
                                             forMediaRecorder = false,
-                                            null,
                                             onComplete = {
 
                                             },
@@ -883,7 +881,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 forPreview = true,
                                 forAnalysisImageReader = true,
                                 forMediaRecorder = true,
-                                null,
                                 onComplete = {
                                     // (미디어 레코딩 녹화 실행)
                                     cameraObjMbr.startMediaRecording(onComplete = {
@@ -1126,16 +1123,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         forPreview = true,
                         forAnalysisImageReader = true,
                         forMediaRecorder = false,
-                        object :CameraCaptureSession.CaptureCallback(){
-                            override fun onCaptureCompleted(
-                                session: CameraCaptureSession,
-                                request: CaptureRequest,
-                                result: TotalCaptureResult
-                            ) {
-                                super.onCaptureCompleted(session, request, result)
-                                Log.e("req", "comp")
-                            }
-                                                                      },
                         onComplete = {
 
                         },
@@ -1156,7 +1143,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 forPreview = true,
                 forAnalysisImageReader = true,
                 forMediaRecorder = false,
-                null,
                 onComplete = {
 
                 },

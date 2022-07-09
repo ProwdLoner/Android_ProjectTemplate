@@ -2401,7 +2401,6 @@ class CameraObj private constructor(
     // (반복 리퀘스트 실행)
     // forPreview, forAnalysisImageReader, forMediaRecorder -> 어느 서페이스를 사용할지를 결정
     // 타겟 서페이스 종류에 따라 TEMPLATE_RECORD(forMediaRecorder) 혹은 TEMPLATE_PREVIEW(not forMediaRecorder) 세션 사용
-    // captureCallback -> 리퀘스트가 적용된 시점의 콜백
     // onError 에러 코드 :
     // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
     // 2 : 서페이스가 하나도 생성되지 않은 경우
@@ -2412,7 +2411,6 @@ class CameraObj private constructor(
         forPreview: Boolean,
         forAnalysisImageReader: Boolean,
         forMediaRecorder: Boolean,
-        captureCallback: CameraCaptureSession.CaptureCallback?,
         onComplete: () -> Unit,
         onError: (Int) -> Unit
     ) {
@@ -2631,12 +2629,6 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 
-            cameraCaptureSessionMbr!!.capture(
-                captureRequestBuilder.build(),
-                captureCallback,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-
             repeatRequestTargetVoMbr = RepeatRequestTargetVo(
                 forPreview,
                 forAnalysisImageReader,
@@ -2647,6 +2639,28 @@ class CameraObj private constructor(
 
             cameraThreadVoMbr.cameraSemaphore.release()
             onComplete()
+        }
+    }
+
+    // (CameraSession 을 대기 상태로 만드는 함수)
+    // 현재 세션이 repeating 이라면 이를 중단함.
+    // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
+    fun stopRepeatingRequest(
+        onCameraPause: () -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+
+            if (nowRepeatingMbr) {
+                cameraCaptureSessionMbr?.stopRepeating()
+                nowRepeatingMbr = false
+            }
+
+            repeatRequestTargetVoMbr = null
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+
+            onCameraPause()
         }
     }
 
@@ -3375,28 +3389,6 @@ class CameraObj private constructor(
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete(1)
             }
-        }
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // (CameraSession 을 대기 상태로 만드는 함수)
-    // 현재 세션이 repeating 이라면 이를 중단함.
-    // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
-    fun pauseCameraSession(
-        onCameraPause: () -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (nowRepeatingMbr) {
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            }
-
-            cameraThreadVoMbr.cameraSemaphore.release()
-
-            onCameraPause()
         }
     }
 
