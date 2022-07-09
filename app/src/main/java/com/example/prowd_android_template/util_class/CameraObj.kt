@@ -110,13 +110,22 @@ class CameraObj private constructor(
 
 
     // [카메라 상태 정보]
-    // 카메라가 현재 리퀘스트 반복 처리중인지
-    var nowRepeatingMbr: Boolean = false
-        private set
+    // 카메라 현 상태 코드
+    // 각 상태 코드별 절차 순서를 나타냄
+    // 큰 숫자의 코드는 작은 숫자 프로세싱이 완료되어야 전환이 가능
+    // -1 : 카메라 객체 파괴
+    // 0 : 카메라 객체 초기 상태
+    // 1 : surface output 세팅 완료
+    // 2 : request repeating
+    var cameraStatusCodeMbr: Int = 0
 
-    // 카메라가 현재 미디어 레코딩 중인지
-    var nowRecordingMbr = false
-        private set
+    // 미디어 레코더 현 상태 코드
+    // 0 : media recorder surface set 이전
+    // 1 : media recorder surface set (cameraStatusCodeMbr == 1 and mediaRecorderConfig)
+    // 2 : media recorder ready (cameraStatusCodeMbr == 2 and requestForMediaRecorder)
+    // 3 : media recording (cameraStatusCodeMbr == 2 and startRecording)
+    // 4 : media recorder pause (cameraStatusCodeMbr == 2 and pauseRecording)
+    var mediaRecorderStatusCodeMbr: Int = 0
 
 
     // [카메라 API 생산 데이터]
@@ -1743,6 +1752,8 @@ class CameraObj private constructor(
     // [카메라 조작 함수]
 
     // (카메라 객체 소멸)
+    // camera status : n -> -1
+    // media status : n -> 0
     // 카메라 객체 생성자와 대비되는 함수로, 생성했으면 소멸을 시켜야 함.
     fun destroyCameraObject(
         onCameraClear: () -> Unit
@@ -1788,17 +1799,16 @@ class CameraObj private constructor(
                 }
             }
 
-            if (nowRecordingMbr) {
-                // 레코딩 중이라면 레코더 종료 후 세션 중지
+            if (mediaRecorderStatusCodeMbr != 0) {
                 mediaRecorderMbr?.reset()
-                nowRecordingMbr = false
+                mediaRecorderStatusCodeMbr = 0
 
                 cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            } else if (nowRepeatingMbr) {
+                cameraStatusCodeMbr = 1
+            } else if (cameraStatusCodeMbr == 2) {
                 // 세션이 실행중이라면 중지
                 cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
+                cameraStatusCodeMbr = 1
             }
 
             // (자원 해소)
@@ -1822,6 +1832,8 @@ class CameraObj private constructor(
             cameraDeviceMbr = null
             repeatRequestTargetVoMbr = null
 
+            cameraStatusCodeMbr = -1
+
             requestForDeleteSharedCameraIdThreadVoOnStaticMemory(cameraInfoVoMbr.cameraId)
 
             cameraThreadVoMbr.cameraSemaphore.release()
@@ -1830,7 +1842,10 @@ class CameraObj private constructor(
         }
     }
 
+    // todo -1 일때 에러
     // (출력 서페이스 설정 함수)
+    // camera status : 0 -> 1, n -> 0 -> 1
+    // media status : 0 -> 1, n -> 0 -> 1
     // 서페이스 설정 검증 및 생성, 이후 CameraDevice, CameraCaptureSession 생성까지를 수행
     // 사용할 서페이스 사이즈 및 종류를 결정하는 것이 주요 기능
     // 실행시 카메라 초기화를 실행 (이미 생성된 CameraDevice 만 놔두고 모든것을 초기화) 후 설정
@@ -2312,7 +2327,9 @@ class CameraObj private constructor(
         }
     }
 
-    // (카메라 세션을 멈추는 함수)
+    // (카메라 서페이스 까지 초기화)
+    // camera status : n -> 0
+    // media status : n -> 0
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
     fun unsetCameraOutputSurfaces(
         onCameraStop: () -> Unit
@@ -2357,17 +2374,17 @@ class CameraObj private constructor(
                 }
             }
 
-            if (nowRecordingMbr) {
+            if (mediaRecorderStatusCodeMbr != 0) {
                 // 레코딩 중이라면 레코더 종료 후 세션 중지
                 mediaRecorderMbr?.reset()
-                nowRecordingMbr = false
+                mediaRecorderStatusCodeMbr = 0
 
                 cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
-            } else if (nowRepeatingMbr) {
+                cameraStatusCodeMbr = 1
+            } else if (cameraStatusCodeMbr == 2) {
                 // 세션이 실행중이라면 중지
                 cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
+                cameraStatusCodeMbr = 1
             }
 
             // (자원 해소)
@@ -2389,6 +2406,8 @@ class CameraObj private constructor(
             previewSurfaceListMbr = null
             repeatRequestTargetVoMbr = null
 
+            cameraStatusCodeMbr = 0
+
             cameraThreadVoMbr.cameraSemaphore.release()
 
             onCameraStop()
@@ -2397,6 +2416,8 @@ class CameraObj private constructor(
 
 
     // (반복 리퀘스트 실행)
+    // camera status : 1 -> 2, 2 -> 2
+    // media status : 1 -> 2, n(2, 3, 4) -> n
     // forPreview, forAnalysisImageReader, forMediaRecorder -> 어느 서페이스를 사용할지를 결정
     // 타겟 서페이스 종류에 따라 TEMPLATE_RECORD(forMediaRecorder) 혹은 TEMPLATE_PREVIEW(not forMediaRecorder) 세션 사용
     // onError 에러 코드 :
@@ -2617,10 +2638,6 @@ class CameraObj private constructor(
                 }
             }
 
-            if (nowRepeatingMbr) {
-                cameraCaptureSessionMbr!!.stopRepeating()
-            }
-
             cameraCaptureSessionMbr!!.setRepeatingRequest(
                 captureRequestBuilder.build(),
                 null,
@@ -2633,7 +2650,10 @@ class CameraObj private constructor(
                 forMediaRecorder
             )
 
-            nowRepeatingMbr = true
+            if (forMediaRecorder && mediaRecorderStatusCodeMbr == 1) {
+                mediaRecorderStatusCodeMbr = 2
+            }
+            cameraStatusCodeMbr = 2
 
             cameraThreadVoMbr.cameraSemaphore.release()
             onComplete()
@@ -2641,20 +2661,32 @@ class CameraObj private constructor(
     }
 
     // (CameraSession 을 대기 상태로 만드는 함수)
+    // camera status : 2 -> 1
+    // media status : 3 -> 4, n -> n
     // 현재 세션이 repeating 이라면 이를 중단함.
-    // 기존 설정을 모두 유지하는 중이라 다시 runCameraRequest 을 하면 기존 설정으로 실행됨
+    // 현재 미디어 레코딩 중이라면 이를 일시중지함.
+
+    // onError 에러 코드 :
+    // 1 : 카메라가 현재 실행 상태가 아님
     fun stopRepeatingRequest(
-        onCameraPause: () -> Unit
+        onCameraPause: () -> Unit,
+        onError: (Int) -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (nowRepeatingMbr) {
-                cameraCaptureSessionMbr?.stopRepeating()
-                nowRepeatingMbr = false
+            if (cameraStatusCodeMbr != 2) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onError(1)
             }
 
+            if (mediaRecorderStatusCodeMbr == 3) {
+                mediaRecorderMbr?.pause()
+                mediaRecorderStatusCodeMbr = 4
+            }
+
+            cameraCaptureSessionMbr?.stopRepeating()
             repeatRequestTargetVoMbr = null
+            cameraStatusCodeMbr = 1
 
             cameraThreadVoMbr.cameraSemaphore.release()
 
@@ -2688,7 +2720,7 @@ class CameraObj private constructor(
 
             zoomFactorMbr = zoom
 
-            if (!nowRepeatingMbr) {
+            if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
             }
@@ -2877,7 +2909,7 @@ class CameraObj private constructor(
             cameraStabilizationSetMbr = stabilization
 
             // 세션이 현재 실행중이 아니라면 여기서 멈추기
-            if (!nowRepeatingMbr) {
+            if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
                 return@run
@@ -3261,100 +3293,74 @@ class CameraObj private constructor(
     // 고로 단순히 pause 후 연속 녹화를 하려면 외부에서 camera pause 이전에 mediaRecorder pause 를 먼저 해주는 것을 추천
 
     // (미디어 레코딩 시작)
-    // 결과 코드 :
-    // 0 : 정상 동작
-    // 1 : 미디어 레코딩 서페이스가 없음
+    // 에러 코드 :
+    // 1 : 레코딩 준비 상태가 아님
     // 2 : 현재 카메라가 동작중이 아님
     fun startMediaRecording(
-        onComplete: (Int) -> Unit
+        onComplete: () -> Unit,
+        onError: (Int) -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            if (null == mediaRecorderMbr) { // 미디어 레코딩 서페이스 설정을 하지 않았을 때
+            if (mediaRecorderStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(1)
-                return@run
-            }
-
-            if (!nowRepeatingMbr) { // 카메라 실행 중이 아닐 때
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(2)
-                return@run
-            }
-
-            if (nowRecordingMbr) { // 이미 녹화 중일 때
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(0)
+                onError(1)
                 return@run
             }
 
             mediaRecorderMbr!!.start()
 
-            nowRecordingMbr = true
+            mediaRecorderStatusCodeMbr = 3
 
             cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete(0)
-        }
-    }
-
-    // (미디어 레코딩 재시작)
-    // 결과 코드 :
-    // 0 : 정상 동작
-    // 1 : 미디어 레코딩 서페이스가 없음
-    // 2 : 현재 카메라가 동작중이 아님
-    fun resumeMediaRecording(
-        onComplete: (Int) -> Unit
-    ) {
-        cameraThreadVoMbr.cameraHandlerThreadObj.run {
-            cameraThreadVoMbr.cameraSemaphore.acquire()
-
-            if (null == mediaRecorderMbr) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(1)
-                return@run
-            }
-
-            if (!nowRepeatingMbr) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(2)
-                return@run
-            }
-
-            if (nowRecordingMbr) {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(0)
-                return@run
-            }
-
-            mediaRecorderMbr!!.resume()
-
-            nowRecordingMbr = true
-
-            cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete(0)
+            onComplete()
         }
     }
 
     // (미디어 레코딩 일시정지)
     // 결과 코드 :
-    // 0 : 정상 동작
     // 1 : 미디어 레코딩 중이 아님
     fun pauseMediaRecording(
-        onComplete: (Int) -> Unit
+        onComplete: () -> Unit,
+        onError: (Int) -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
-            if (nowRecordingMbr) {
-                mediaRecorderMbr?.pause()
-                nowRecordingMbr = false
+            if (mediaRecorderStatusCodeMbr != 3) {
                 cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(0)
-            } else {
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(1)
+                onError(1)
+                return
             }
+
+            mediaRecorderMbr?.pause()
+            mediaRecorderStatusCodeMbr = 4
+            cameraThreadVoMbr.cameraSemaphore.release()
+            onComplete()
+        }
+    }
+
+    // (미디어 레코딩 재시작)
+    // 결과 코드 :
+    // 1 : 현제 미디어 레코딩 일시중지 중이 아님
+    fun resumeMediaRecording(
+        onComplete: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+
+            if (mediaRecorderStatusCodeMbr != 4) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onError(1)
+                return
+            }
+
+            mediaRecorderMbr?.resume()
+            mediaRecorderStatusCodeMbr = 3
+            cameraThreadVoMbr.cameraSemaphore.release()
+            onComplete()
         }
     }
 
@@ -3486,17 +3492,17 @@ class CameraObj private constructor(
                             }
                         }
 
-                        if (nowRecordingMbr) {
+                        if (mediaRecorderStatusCodeMbr != 0) {
                             // 레코딩 중이라면 레코더 종료 후 세션 중지
                             mediaRecorderMbr?.reset()
-                            nowRecordingMbr = false
+                            mediaRecorderStatusCodeMbr = 0
 
                             cameraCaptureSessionMbr?.stopRepeating()
-                            nowRepeatingMbr = false
-                        } else if (nowRepeatingMbr) {
+                            cameraStatusCodeMbr = 1
+                        } else if (cameraStatusCodeMbr == 2) {
                             // 세션이 실행중이라면 중지
                             cameraCaptureSessionMbr?.stopRepeating()
-                            nowRepeatingMbr = false
+                            cameraStatusCodeMbr = 1
                         }
 
                         // (자원 해소)
@@ -3534,6 +3540,12 @@ class CameraObj private constructor(
                                 mediaCodecSurfaceMbr = mediaCodecSurface
                                 previewConfigVoListMbr = previewConfigVoList
                                 previewSurfaceListMbr = previewSurfaceList
+
+                                if (mediaRecorderConfigVoMbr != null) {
+                                    mediaRecorderStatusCodeMbr = 1
+                                }
+
+                                cameraStatusCodeMbr = 1
 
                                 cameraThreadVoMbr.cameraSemaphore.release()
                                 onComplete()
@@ -3590,17 +3602,17 @@ class CameraObj private constructor(
                         cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
                     )
 
-                    if (nowRecordingMbr) {
+                    if (mediaRecorderStatusCodeMbr != 0) {
                         // 레코딩 중이라면 레코더 종료 후 세션 중지
                         mediaRecorderMbr?.reset()
-                        nowRecordingMbr = false
+                        mediaRecorderStatusCodeMbr = 0
 
                         cameraCaptureSessionMbr?.stopRepeating()
-                        nowRepeatingMbr = false
-                    } else if (nowRepeatingMbr) {
+                        cameraStatusCodeMbr = 1
+                    } else if (cameraStatusCodeMbr == 2) {
                         // 세션이 실행중이라면 중지
                         cameraCaptureSessionMbr?.stopRepeating()
-                        nowRepeatingMbr = false
+                        cameraStatusCodeMbr = 1
                     }
 
                     // 프리뷰가 설정되어 있다면 리스너 비우기
@@ -3649,6 +3661,8 @@ class CameraObj private constructor(
                     previewSurfaceListMbr = null
                     cameraDeviceMbr = null
                     repeatRequestTargetVoMbr = null
+
+                    cameraStatusCodeMbr = 0
 
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onCameraDisconnectedMbr()

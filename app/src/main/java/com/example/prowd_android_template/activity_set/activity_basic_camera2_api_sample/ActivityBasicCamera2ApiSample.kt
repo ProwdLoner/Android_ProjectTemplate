@@ -157,7 +157,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
-        if (cameraObjMbr.nowRecordingMbr) { // 레코딩 중이라면 기존 레코딩 세션을 제거 후 프리뷰 세션으로 전환
+        if (cameraObjMbr.mediaRecorderStatusCodeMbr == 3 ||
+            cameraObjMbr.mediaRecorderStatusCodeMbr == 4
+        ) { // 레코딩 중이라면 기존 레코딩 세션을 제거 후 프리뷰 세션으로 전환
             // 기존 저장 폴더 백업
             val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
 
@@ -235,7 +237,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
             )
         } else {
-            cameraObjMbr.stopRepeatingRequest(onCameraPause = {})
+            cameraObjMbr.stopRepeatingRequest(onCameraPause = {}, onError = {})
         }
 
         super.onPause()
@@ -694,11 +696,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                         if (checkedCameraId != viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId) {
                             // 기존 저장 폴더 백업
-                            val videoFile = if (cameraObjMbr.nowRecordingMbr) {
-                                cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
-                            } else {
-                                null
-                            }
+                            val videoFile =
+                                if (cameraObjMbr.mediaRecorderStatusCodeMbr == 3 || cameraObjMbr.mediaRecorderStatusCodeMbr == 4) {
+                                    cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+                                } else {
+                                    null
+                                }
 
                             cameraObjMbr.destroyCameraObject {
                                 videoFile?.delete()
@@ -803,7 +806,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 처리 완료까지 중복 클릭 방지
             bindingMbr.btn1.isEnabled = false
 
-            if (!(cameraObjMbr.nowRecordingMbr)) { // 현재 레코딩 중이 아닐 때
+            if (cameraObjMbr.mediaRecorderStatusCodeMbr != 3 && cameraObjMbr.mediaRecorderStatusCodeMbr != 4) { // 현재 레코딩 중이 아닐 때
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
                 cameraObjMbr.unsetCameraOutputSurfaces {
@@ -884,7 +887,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         runOnUiThread {
                                             bindingMbr.btn1.isEnabled = true
                                         }
-                                    })
+                                    }, onError = {})
                                 },
                                 onError = {
 
@@ -1164,7 +1167,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             val imageObj: Image = reader.acquireLatestImage() ?: return
 
             // 조기 종료 플래그
-            if (!cameraObjMbr.nowRepeatingMbr || // repeating 상태가 아닐 경우
+            if (cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
                 viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
                 isDestroyed // 액티비티 자체가 종료
             ) {
@@ -1208,7 +1211,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 // 조기 종료 확인
                 asyncImageProcessingOnProgressSemaphoreMbr.acquire()
                 if (asyncImageProcessingOnProgressMbr || // 현재 비동기 이미지 프로세싱 중일 때
-                    !cameraObjMbr.nowRepeatingMbr || // repeating 상태가 아닐 경우
+                    cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
                     viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
                     isDestroyed // 액티비티 자체가 종료
                 ) {
