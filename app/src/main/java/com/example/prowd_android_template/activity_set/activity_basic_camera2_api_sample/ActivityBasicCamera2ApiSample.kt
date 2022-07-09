@@ -206,7 +206,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
-                        null,
                         onComplete = {})
 
                     // (카메라 서페이스 설정)
@@ -760,7 +759,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 // 떨림 보정
                                 cameraObjMbr.setCameraStabilization(
                                     true,
-                                    null,
                                     onComplete = {})
 
                                 // (카메라 서페이스 설정)
@@ -866,7 +864,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
-                        null,
                         onComplete = {})
 
                     // (카메라 서페이스 설정)
@@ -951,7 +948,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         // 떨림 보정
                         cameraObjMbr.setCameraStabilization(
                             true,
-                            null,
                             onComplete = {})
 
                         // (카메라 서페이스 설정)
@@ -1108,7 +1104,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 떨림 보정
             cameraObjMbr.setCameraStabilization(
                 true,
-                null,
                 onComplete = {})
 
             // (카메라 서페이스 설정)

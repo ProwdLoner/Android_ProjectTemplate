@@ -1656,7 +1656,6 @@ class CameraObj private constructor(
                                     }
                                 setZoomFactor(
                                     zoom,
-                                    null,
                                     onComplete = {})
                             } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
                                 val zoom =
@@ -1667,7 +1666,6 @@ class CameraObj private constructor(
                                     }
                                 setZoomFactor(
                                     zoom,
-                                    null,
                                     onComplete = {})
                             }
                         }
@@ -2669,14 +2667,12 @@ class CameraObj private constructor(
     // 카메라 내부 멤버변수 설정 조작 함수
     // 설정이 조작되면 다음 리퀘스트에 반영이 되며, 만약 리퀘스트 반복 실행중이라면 변경사항 즉시 적용
 
-    // todo 설정 적용 시점을 알수있는 콜백 사용
     // (카메라 줌 비율을 변경하는 함수)
     // 카메라가 실행중 상태라면 즉시 반영
     // onZoomSettingComplete : 반환값 = 적용된 현재 줌 펙터 값
     fun setZoomFactor(
         zoomFactor: Float,
-        captureCallback: CameraCaptureSession.CaptureCallback?,
-        onComplete: (Float) -> Unit
+        onComplete: () -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
@@ -2684,7 +2680,7 @@ class CameraObj private constructor(
             val zoom = if (cameraInfoVoMbr.maxZoom < zoomFactor) {
                 // 가용 줌 최대치에 설정을 맞추기
                 cameraInfoVoMbr.maxZoom
-            } else if (zoomFactorMbr < 1f) {
+            } else if (zoomFactor < 1f) {
                 1f
             } else {
                 zoomFactor
@@ -2694,7 +2690,7 @@ class CameraObj private constructor(
 
             if (!nowRepeatingMbr) {
                 cameraThreadVoMbr.cameraSemaphore.release()
-                onComplete(zoomFactorMbr)
+                onComplete()
             }
 
             // [모드 설정]
@@ -2797,9 +2793,9 @@ class CameraObj private constructor(
             // 센서 사이즈에서 중심을 기반 크롭 박스 설정
             // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
             val deltaX =
-                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoom).toInt()
+                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoomFactorMbr).toInt()
             val deltaY =
-                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoom).toInt()
+                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoomFactorMbr).toInt()
 
             val mCropRegion = Rect().apply {
                 set(
@@ -2846,25 +2842,14 @@ class CameraObj private constructor(
                 }
             }
 
-            cameraCaptureSessionMbr!!.stopRepeating()
-
-            // todo capture 하여 콜백 후 repeat
-            cameraCaptureSessionMbr!!.capture(
-                captureRequestBuilder.build(),
-                captureCallback,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-
             cameraCaptureSessionMbr!!.setRepeatingRequest(
                 captureRequestBuilder.build(),
                 null,
                 cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 
-            nowRepeatingMbr = true
-
             cameraThreadVoMbr.cameraSemaphore.release()
-            onComplete(zoomFactorMbr)
+            onComplete()
         }
     }
 
@@ -2872,7 +2857,6 @@ class CameraObj private constructor(
     // (손떨림 방지 설정)
     fun setCameraStabilization(
         stabilizationOn: Boolean,
-        captureCallback: CameraCaptureSession.CaptureCallback?,
         onComplete: () -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
@@ -3058,29 +3042,11 @@ class CameraObj private constructor(
                 }
             }
 
-            if (nowRepeatingMbr) {
-                cameraCaptureSessionMbr!!.stopRepeating()
-            }
-
-            cameraCaptureSessionMbr!!.capture(
-                captureRequestBuilder.build(),
-                captureCallback,
-                cameraThreadVoMbr.cameraHandlerThreadObj.handler
-            )
-
             cameraCaptureSessionMbr!!.setRepeatingRequest(
                 captureRequestBuilder.build(),
                 null,
                 cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
-
-            repeatRequestTargetVoMbr = RepeatRequestTargetVo(
-                repeatRequestTargetVoMbr!!.forPreview,
-                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
-                repeatRequestTargetVoMbr!!.forMediaRecorder
-            )
-
-            nowRepeatingMbr = true
 
             cameraThreadVoMbr.cameraSemaphore.release()
             onComplete()
