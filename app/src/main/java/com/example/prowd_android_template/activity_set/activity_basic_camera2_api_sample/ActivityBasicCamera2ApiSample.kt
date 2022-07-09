@@ -8,10 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.RectF
-import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.TotalCaptureResult
 import android.media.Image
 import android.media.ImageReader
 import android.net.Uri
@@ -22,7 +19,6 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View

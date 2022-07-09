@@ -2885,7 +2885,6 @@ class CameraObj private constructor(
         }
     }
 
-
     // (손떨림 방지 설정)
     fun setCameraStabilization(
         stabilizationOn: Boolean,
@@ -3028,6 +3027,206 @@ class CameraObj private constructor(
                 ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoom).toInt()
             val deltaY =
                 ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoom).toInt()
+
+            val mCropRegion = Rect().apply {
+                set(
+                    centerX - deltaX,
+                    centerY - deltaY,
+                    centerX + deltaX,
+                    centerY + deltaY
+                )
+            }
+
+            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+
+            // (카메라 떨림 보정 여부 반영)
+            when (cameraStabilizationSetMbr) {
+                0 -> { // 떨림 보정 off
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                1 -> { // 기계적 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                2 -> { // 소프트웨어 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                }
+            }
+
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                captureRequestBuilder.build(),
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+            onComplete()
+        }
+    }
+
+    // (포커스 거리 설정)
+    // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
+    // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
+    // -1 은 자연스런 오토 포커스, -2 는 빠른 오토 포커스
+    // onError 에러 코드 :
+    // 1 : focusDistance 파라미터 에러
+    fun setFocusDistance(
+        focusDistance: Float,
+        onComplete: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+
+
+            if (focusDistance > cameraInfoVoMbr.supportedMinimumFocusDistance) {
+                focusDistanceMbr = cameraInfoVoMbr.supportedMinimumFocusDistance
+            }
+
+            focusDistanceMbr = if (focusDistance >= 0f) {
+                if (focusDistance <= cameraInfoVoMbr.supportedMinimumFocusDistance) {
+                    focusDistance
+                } else {
+                    cameraInfoVoMbr.supportedMinimumFocusDistance
+                }
+            } else {
+                if (focusDistance == -1f || focusDistance == -2f) {
+                    focusDistance
+                } else {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(1)
+                    return@run
+                }
+            }
+
+            if (cameraStatusCodeMbr != 2) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onComplete()
+            }
+
+            // [모드 설정]
+            // todo wb
+            // 3A(Auto Focus, Auto Exposure, Auto WhiteBalance) 설정중인지 여부
+            val threeAutoSet = (focusDistanceMbr == -2f ||
+                    focusDistanceMbr == -1f) &&
+                    exposureTimeNsMbr == null
+
+            val requestTemplate = if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
+            }
+
+            // [리퀘스트 빌더 생성]
+            val captureRequestBuilder =
+                cameraDeviceMbr!!.createCaptureRequest(requestTemplate)
+
+
+            // [타겟 서페이스 설정]
+            if (repeatRequestTargetVoMbr!!.forPreview) { // 프리뷰 사용 설정
+                // 프리뷰 서페이스 타겟 추가
+                for (previewSurface in previewSurfaceListMbr!!) {
+                    captureRequestBuilder.addTarget(previewSurface)
+                }
+            }
+
+            if (repeatRequestTargetVoMbr!!.forAnalysisImageReader) { // 이미지 리더 사용 설정
+                // 이미지 리더 서페이스 타겟 추가
+                captureRequestBuilder.addTarget(analysisImageReaderMbr!!.surface)
+            }
+
+            if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 미디어 레코더 사용 설정
+                // 미디어 레코더 서페이스 타겟 추가
+                captureRequestBuilder.addTarget(mediaCodecSurfaceMbr!!)
+            }
+
+            // [리퀘스트 설정]
+            // (3A 설정)
+            if (threeAutoSet) { // 3A 자동 설정 모드 적용
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AWB_MODE,
+                    CaptureRequest.CONTROL_AWB_MODE_AUTO
+                )
+            } else { // 3A 수동 설정 모드 적용
+                // (포커스 거리 설정)
+                if (focusDistanceMbr == -1f) {
+                    // 자연스런 오토 포커스 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                    )
+                } else if (focusDistanceMbr == -2f) {
+                    // 빠른 오토 포커스 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                    )
+                } else if (focusDistanceMbr >= 0f) {
+                    // 포커스 수동 거리 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_FOCUS_DISTANCE,
+                        focusDistanceMbr
+                    )
+                }
+
+                // (Exposure 설정)
+                if (exposureTimeNsMbr == null) {
+                    // AE 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_ON
+                    )
+                } else {
+                    // 수동 노출 시간 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AE_MODE,
+                        CaptureRequest.CONTROL_AE_MODE_OFF
+                    )
+
+                    captureRequestBuilder.set(
+                        CaptureRequest.SENSOR_EXPOSURE_TIME,
+                        exposureTimeNsMbr
+                    )
+                }
+            }
+
+            // (수동 설정)
+            // 센서 사이즈 중심점
+            val centerX =
+                cameraInfoVoMbr.sensorSize.width() / 2
+            val centerY =
+                cameraInfoVoMbr.sensorSize.height() / 2
+
+            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
+            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
+            val deltaX =
+                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoomFactorMbr).toInt()
+            val deltaY =
+                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoomFactorMbr).toInt()
 
             val mCropRegion = Rect().apply {
                 set(
