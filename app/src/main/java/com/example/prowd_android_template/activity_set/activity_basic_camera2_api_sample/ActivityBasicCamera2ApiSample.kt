@@ -261,7 +261,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         radioBtnDialogMbr?.dismiss()
 
         // 카메라 해소
-        cameraObjMbr.destroyCameraObject(onCameraClear = {})
+        cameraObjMbr.destroyCameraObject(onComplete = {})
 
         // 랜더 스크립트 객체 해소
         scriptCCropMbr.destroy()
