@@ -19,6 +19,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -603,28 +604,34 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // 초기 뷰 설정
-    var ep : Long? = 1000000000 / 120
     private fun viewSetting() {
 //        bindingMbr.root.setOnClickListener {
-//            ep = cameraObjMbr.exposureTimeNsMbr
-//
-//            val nep : Long? = if (ep == (1000000000 / 120).toLong()){
-//                1000000000 / 100
-//            }else if (ep == (1000000000 / 100).toLong()){
-//                1000000000 / 80
-//            }else if (ep == (1000000000 / 80).toLong()){
-//                1000000000 / 60
-//            }else if (ep == (1000000000 / 60).toLong()){
-//                1000000000 / 40
-//            }else if (ep == (1000000000 / 40).toLong()){
-//                1000000000 / 20
-//            }else if (ep == (1000000000 / 20).toLong()){
-//                null
-//            }else {
-//                (1000000000 / 120).toLong()
+//            val nep : Int? = when (cameraObjMbr.whiteBalanceColorTemperatureMbr) {
+//                1 -> {
+//                    20
+//                }
+//                20 -> {
+//                    40
+//                }
+//                40 -> {
+//                    60
+//                }
+//                60 -> {
+//                    80
+//                }
+//                80 -> {
+//                    100
+//                }
+//                100 -> {
+//                    null
+//                }
+//                else -> {
+//                    1
+//                }
 //            }
 //
-//            cameraObjMbr.setExposureTime(
+//            Log.e("d", nep.toString())
+//            cameraObjMbr.setWhiteBalanceColorTemperature(
 //                nep,
 //                onComplete = {
 //

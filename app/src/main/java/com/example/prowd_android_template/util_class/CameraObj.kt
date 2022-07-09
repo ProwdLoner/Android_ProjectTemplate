@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.*
 import android.hardware.camera2.*
 import android.hardware.camera2.params.OutputConfiguration
+import android.hardware.camera2.params.RggbChannelVector
 import android.hardware.camera2.params.SessionConfiguration
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.ImageReader
@@ -14,6 +15,7 @@ import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.SystemClock
+import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.MotionEvent
@@ -29,6 +31,7 @@ import java.util.concurrent.Semaphore
 import kotlin.math.abs
 import kotlin.math.sqrt
 
+
 // <Camera 객체>
 // 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체 (생성시 카메라 아이디를 주입)
 // 생성시엔 생성 함수 getInstance 를 사용하고, 카메라 사용이 필요 없어지면 destroyCameraObject 를 사용할것
@@ -41,14 +44,16 @@ import kotlin.math.sqrt
 
 // todo : auto 설정일 때 focus distance 등의 현재 수치 가져오기
 // todo : capture request 검증
+// todo : repeatingRequest on manual 제공
 // todo : af, ae, awb, iso area 설정
 // todo : 터치 exposure, whitebalance, focus 등 (핀치 줌을 참고)
-// todo : whitebalance, iso 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
+// todo : iso 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 //    https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 // todo : 디바이스 방향 관련 부분 다시 살피기
 // todo : 최고 화질시 녹화 확인
 // todo : 분석용 이미지 리더와 캡쳐용 나누기 : 캡쳐용은 캡쳐시 한순간만...
 // todo : ui thread 사용 부분 개선(최소화 및 회전으로 인한 불안정 해결)
+// todo : 녹화 미디어 플레이어 템플릿 사용 - 플레이어 제공 사이즈와 상호검증
 
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
@@ -91,6 +96,11 @@ class CameraObj private constructor(
     // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
     var exposureTimeNsMbr: Long? = null
         private set
+
+    // 화이트 밸런스 색온도
+    // null 일시 Auto WhiteBalance ON
+    // 화이트 밸런스는 1 ~ 100 사이의 정수값
+    var whiteBalanceColorTemperatureMbr: Int? = null
 
     // (수동 조작 설정)
     // 떨림 보정 기능 적용 여부
@@ -2638,7 +2648,6 @@ class CameraObj private constructor(
         }
     }
 
-
     // (Exposure 설정)
     // exposureNanoSec : 나노초 == 초/1000000000
     //     음수라면 Auto Exposure ON
@@ -2673,6 +2682,58 @@ class CameraObj private constructor(
                     exposureNanoSec
                 }
             }
+
+            if (cameraStatusCodeMbr != 2) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onComplete()
+            }
+
+            // [카메라 실행]
+            repeatingCameraMemberConfig(
+                repeatRequestTargetVoMbr!!.forPreview,
+                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
+                repeatRequestTargetVoMbr!!.forMediaRecorder
+            )
+
+            cameraThreadVoMbr.cameraSemaphore.release()
+            onComplete()
+        }
+    }
+
+    // (WhiteBalance Color Temperature 설정)
+    // null 이라면 AWB, 1~100 사이의 값 설정
+
+    // onError 에러 코드 :
+    // 1 : 오토 WhiteBalance 지원이 불가
+    // 1 : colorTemperature 파라미터 에러
+    fun setWhiteBalanceColorTemperature(
+        colorTemperature: Int?,
+        onComplete: () -> Unit,
+        onError: (Int) -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+
+            whiteBalanceColorTemperatureMbr = if (colorTemperature == null) {
+                if (!cameraInfoVoMbr.autoWhiteBalanceSupported) {
+                    // 오토 WhiteBalance 지원이 안되면
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(1)
+                    return@run
+                } else {
+                    null
+                }
+            } else {
+                if (colorTemperature < 1 || colorTemperature > 100) {
+                    cameraThreadVoMbr.cameraSemaphore.release()
+                    onError(2)
+                    return@run
+                } else {
+                    colorTemperature
+                }
+            }
+
+            Log.e("wb", whiteBalanceColorTemperatureMbr.toString())
 
             if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
@@ -3181,19 +3242,13 @@ class CameraObj private constructor(
         }
     }
 
-    // todo
+    // (카메라 상태 멤버변수에 따라 반복 리퀘스트를 실행하는 함수)
     private fun repeatingCameraMemberConfig(
         forPreview: Boolean,
         forAnalysisImageReader: Boolean,
         forMediaRecorder: Boolean
     ) {
         // [모드 설정]
-        // todo wb
-        // 3A(Auto Focus, Auto Exposure, Auto WhiteBalance) 설정중인지 여부
-        val threeAutoSet = (focusDistanceMbr == -2f ||
-                focusDistanceMbr == -1f) &&
-                exposureTimeNsMbr == null
-
         val requestTemplate = if (forMediaRecorder) { // 레코딩 설정시
             CameraDevice.TEMPLATE_RECORD
         } else { // 레코딩 설정이 아닐시
@@ -3225,56 +3280,73 @@ class CameraObj private constructor(
 
         // [리퀘스트 설정]
         // (3A 설정)
-        if (threeAutoSet) { // 3A 자동 설정 모드 적용
+        // (포커스 거리 설정)
+        if (focusDistanceMbr == -1f) {
+            // 자연스런 오토 포커스 설정
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_AF_MODE,
+                CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+            )
+        } else if (focusDistanceMbr == -2f) {
+            // 빠른 오토 포커스 설정
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_AF_MODE,
+                CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+            )
+        } else if (focusDistanceMbr >= 0f) {
+            // 포커스 수동 거리 설정
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_AF_MODE,
+                CaptureRequest.CONTROL_AF_MODE_OFF
+            )
+            captureRequestBuilder.set(
+                CaptureRequest.LENS_FOCUS_DISTANCE,
+                focusDistanceMbr
+            )
+        }
+
+        // (Exposure 설정)
+        if (exposureTimeNsMbr == null) {
+            // AE 설정
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_AE_MODE,
+                CaptureRequest.CONTROL_AE_MODE_ON
+            )
+        } else {
+            // 수동 노출 시간 설정
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_AE_MODE,
+                CaptureRequest.CONTROL_AE_MODE_OFF
+            )
+
+            captureRequestBuilder.set(
+                CaptureRequest.SENSOR_EXPOSURE_TIME,
+                exposureTimeNsMbr
+            )
+        }
+
+        // (WhiteBalance 설정)
+        // todo : 수동 설정 방법 새로 찾기 및 멤버변수 변경
+        if (whiteBalanceColorTemperatureMbr == null) {
+            // AWH 설정
             captureRequestBuilder.set(
                 CaptureRequest.CONTROL_AWB_MODE,
                 CaptureRequest.CONTROL_AWB_MODE_AUTO
             )
-        } else { // 3A 수동 설정 모드 적용
-            // (포커스 거리 설정)
-            if (focusDistanceMbr == -1f) {
-                // 자연스런 오토 포커스 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                )
-            } else if (focusDistanceMbr == -2f) {
-                // 빠른 오토 포커스 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                )
-            } else if (focusDistanceMbr >= 0f) {
-                // 포커스 수동 거리 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_OFF
-                )
-                captureRequestBuilder.set(
-                    CaptureRequest.LENS_FOCUS_DISTANCE,
-                    focusDistanceMbr
-                )
-            }
-
-            // (Exposure 설정)
-            if (exposureTimeNsMbr == null) {
-                // AE 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_ON
-                )
-            } else {
-                // 수동 노출 시간 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_OFF
-                )
-
-                captureRequestBuilder.set(
-                    CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    exposureTimeNsMbr
-                )
-            }
+        } else {
+            // 색온도 설정
+            captureRequestBuilder.set(
+                CaptureRequest.CONTROL_AWB_MODE,
+                CaptureRequest.CONTROL_AWB_MODE_OFF
+            )
+            captureRequestBuilder.set(
+                CaptureRequest.COLOR_CORRECTION_MODE,
+                CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
+            )
+            captureRequestBuilder.set(
+                CaptureRequest.COLOR_CORRECTION_GAINS,
+                getTemperatureVector(whiteBalanceColorTemperatureMbr!!)
+            )
         }
 
         // (수동 설정)
@@ -3341,6 +3413,45 @@ class CameraObj private constructor(
             null,
             cameraThreadVoMbr.cameraHandlerThreadObj.handler
         )
+    }
+
+    // todo 더 좋은 방식
+    private fun getTemperatureVector(whiteBalance: Int): RggbChannelVector {
+        val temperature = (whiteBalance / 100).toFloat()
+        var red: Float
+        var green: Float
+        var blue: Float
+
+        //Calculate red
+        if (temperature <= 66) red = 255f else {
+            red = temperature - 60
+            red = (329.698727446 * Math.pow(red.toDouble(), -0.1332047592)).toFloat()
+            if (red < 0) red = 0f
+            if (red > 255) red = 255f
+        }
+
+
+        //Calculate green
+        if (temperature <= 66) {
+            green = temperature
+            green = (99.4708025861 * Math.log(green.toDouble()) - 161.1195681661).toFloat()
+            if (green < 0) green = 0f
+            if (green > 255) green = 255f
+        } else {
+            green = temperature - 60
+            green = (288.1221695283 * Math.pow(green.toDouble(), -0.0755148492)).toFloat()
+            if (green < 0) green = 0f
+            if (green > 255) green = 255f
+        }
+
+        //calculate blue
+        if (temperature >= 66) blue = 255f else if (temperature <= 19) blue = 0f else {
+            blue = temperature - 10
+            blue = (138.5177312231 * Math.log(blue.toDouble()) - 305.0447927307).toFloat()
+            if (blue < 0) blue = 0f
+            if (blue > 255) blue = 255f
+        }
+        return RggbChannelVector(red / 255 * 2, green / 255, green / 255, blue / 255 * 2)
     }
 
 
