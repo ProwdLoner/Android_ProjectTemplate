@@ -48,6 +48,7 @@ import kotlin.math.sqrt
 // todo : 디바이스 방향 관련 부분 다시 살피기
 // todo : 최고 화질시 녹화 확인
 // todo : 분석용 이미지 리더와 캡쳐용 나누기 : 캡쳐용은 캡쳐시 한순간만...
+// todo : ui thread 사용 부분 개선(최소화 및 회전으로 인한 불안정 해결)
 
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
@@ -1707,6 +1708,11 @@ class CameraObj private constructor(
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
+            if (cameraStatusCodeMbr == -1) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onComplete()
+            }
+
             // [카메라 상태 초기화]
             // 이미지 리더 요청을 먼저 비우기
             analysisImageReaderMbr?.setOnImageAvailableListener(
@@ -1786,16 +1792,16 @@ class CameraObj private constructor(
         }
     }
 
-    // todo -1 일때 에러
     // (출력 서페이스 설정 함수)
-    // camera status : 0 -> 1, n -> 0 -> 1
-    // media status : 0 -> 1, n -> 0 -> 1
+    // camera status : 0 -> 1
+    // media status : 0 -> 1, 0 -> 0
     // 서페이스 설정 검증 및 생성, 이후 CameraDevice, CameraCaptureSession 생성까지를 수행
     // 사용할 서페이스 사이즈 및 종류를 결정하는 것이 주요 기능
     // 실행시 카메라 초기화를 실행 (이미 생성된 CameraDevice 만 놔두고 모든것을 초기화) 후 설정
 
     // onError 에러 코드 :
     // 아래 에러코드가 실행된다면 카메라가 초기화 된 상태에서 멈추며 executorOnError 가 실행됨
+    // 0 : cameraStatusCodeMbr 가 0 이 아님
     // 1 : 출력 서페이스가 하나도 입력되어 있지 않음
     // 2 : 해당 사이즈 프리뷰 서페이스를 지원하지 않음
     // 3 : 해당 사이즈 캡쳐 이미지 리더 서페이스를 지원하지 않음
@@ -1825,6 +1831,13 @@ class CameraObj private constructor(
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // [조건 검증]
+            // (camera 상태 검증)
+            if (cameraStatusCodeMbr != 0) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onError(0)
+                return@run
+            }
+
             // (서페이스 설정 파라미터 개수 검사)
             if (((previewConfigVoList == null ||
                         previewConfigVoList.isEmpty())) &&
@@ -2273,14 +2286,19 @@ class CameraObj private constructor(
     }
 
     // (카메라 서페이스 까지 초기화)
-    // camera status : n -> 0
+    // camera status : -1 -> -1, n -> 0
     // media status : n -> 0
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
     fun unsetCameraOutputSurfaces(
-        onCameraStop: () -> Unit
+        onComplete: () -> Unit
     ) {
         cameraThreadVoMbr.cameraHandlerThreadObj.run {
             cameraThreadVoMbr.cameraSemaphore.acquire()
+
+            if (cameraStatusCodeMbr == -1 || cameraStatusCodeMbr == 0) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onComplete()
+            }
 
             // [카메라 상태 초기화]
             // 이미지 리더 요청을 먼저 비우기
@@ -2355,7 +2373,7 @@ class CameraObj private constructor(
 
             cameraThreadVoMbr.cameraSemaphore.release()
 
-            onCameraStop()
+            onComplete()
         }
     }
 
@@ -2366,11 +2384,10 @@ class CameraObj private constructor(
     // forPreview, forAnalysisImageReader, forMediaRecorder -> 어느 서페이스를 사용할지를 결정
     // 타겟 서페이스 종류에 따라 TEMPLATE_RECORD(forMediaRecorder) 혹은 TEMPLATE_PREVIEW(not forMediaRecorder) 세션 사용
     // onError 에러 코드 :
-    // 1 : CameraDevice 객체가 아직 생성되지 않은 경우
-    // 2 : 서페이스가 하나도 생성되지 않은 경우
-    // 3 : preview 설정이지만 preview 서페이스가 없을 때
-    // 4 : analysisImageReader 설정이지만 analysisImageReader 서페이스가 없을 때
-    // 5 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
+    // 1 : cameraStatusCodeMbr 가 1 도 아니고, 2도 아닐 때
+    // 2 : preview 설정이지만 preview 서페이스가 없을 때
+    // 3 : analysisImageReader 설정이지만 analysisImageReader 서페이스가 없을 때
+    // 4 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
     fun repeatingRequestOnTemplate(
         forPreview: Boolean,
         forAnalysisImageReader: Boolean,
@@ -2382,19 +2399,11 @@ class CameraObj private constructor(
             cameraThreadVoMbr.cameraSemaphore.acquire()
 
             // [조건 검증]
-            if (cameraDeviceMbr == null) {
+            if (cameraStatusCodeMbr != 1 &&
+                cameraStatusCodeMbr != 2
+            ) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onError(1)
-                return@run
-            }
-
-            if ((previewSurfaceListMbr == null ||
-                        previewSurfaceListMbr!!.isEmpty()) &&
-                analysisImageReaderMbr == null &&
-                mediaCodecSurfaceMbr == null
-            ) { // 리피팅용 서페이스가 하나도 존재하지 않으면,
-                cameraThreadVoMbr.cameraSemaphore.release()
-                onError(2)
                 return@run
             }
 
@@ -2403,7 +2412,7 @@ class CameraObj private constructor(
                     previewSurfaceListMbr!!.isEmpty()
                 ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(3)
+                    onError(2)
                     return@run
                 }
             }
@@ -2411,7 +2420,7 @@ class CameraObj private constructor(
             if (forAnalysisImageReader) {
                 if (analysisImageReaderMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(4)
+                    onError(3)
                     return@run
                 }
             }
@@ -2419,7 +2428,7 @@ class CameraObj private constructor(
             if (forMediaRecorder) {
                 if (mediaCodecSurfaceMbr == null) {
                     cameraThreadVoMbr.cameraSemaphore.release()
-                    onError(5)
+                    onError(4)
                     return@run
                 }
             }
@@ -2840,9 +2849,7 @@ class CameraObj private constructor(
                         }
                     }
 
-                    // todo 스레
                     cameraThreadVoMbr.cameraHandlerThreadObj.runInHandlerThread {
-
                         if (analysisImageReaderConfigVo == null &&
                             analysisImageReader == null &&
                             captureImageReaderConfigVo == null &&
@@ -2858,75 +2865,6 @@ class CameraObj private constructor(
                             onError(15)
                             return@runInHandlerThread
                         }
-
-                        // [카메라 상태 초기화]
-                        // 이미지 리더 요청을 먼저 비우기
-                        analysisImageReaderMbr?.setOnImageAvailableListener(
-                            { it.acquireLatestImage()?.close() },
-                            cameraThreadVoMbr.analysisImageReaderHandlerThreadObj.handler
-                        )
-                        captureImageReaderMbr?.setOnImageAvailableListener(
-                            { it.acquireLatestImage()?.close() },
-                            cameraThreadVoMbr.captureImageReaderHandlerThreadObj.handler
-                        )
-
-                        // 프리뷰가 설정되어 있다면 리스너 비우기
-                        if (previewConfigVoListMbr != null) {
-                            for (previewConfigVo in previewConfigVoListMbr!!) {
-                                previewConfigVo.autoFitTextureView.surfaceTextureListener =
-                                    object : TextureView.SurfaceTextureListener {
-                                        override fun onSurfaceTextureAvailable(
-                                            surface: SurfaceTexture,
-                                            width: Int,
-                                            height: Int
-                                        ) = Unit
-
-                                        override fun onSurfaceTextureSizeChanged(
-                                            surface: SurfaceTexture,
-                                            width: Int,
-                                            height: Int
-                                        ) = Unit
-
-                                        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean =
-                                            true
-
-                                        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) =
-                                            Unit
-                                    }
-                            }
-                        }
-
-                        if (mediaRecorderStatusCodeMbr != 0) {
-                            // 레코딩 중이라면 레코더 종료 후 세션 중지
-                            mediaRecorderMbr?.reset()
-                            mediaRecorderStatusCodeMbr = 0
-
-                            cameraCaptureSessionMbr?.stopRepeating()
-                            cameraStatusCodeMbr = 1
-                        } else if (cameraStatusCodeMbr == 2) {
-                            // 세션이 실행중이라면 중지
-                            cameraCaptureSessionMbr?.stopRepeating()
-                            cameraStatusCodeMbr = 1
-                        }
-
-                        // (자원 해소)
-                        mediaRecorderMbr?.release()
-                        mediaCodecSurfaceMbr?.release()
-                        analysisImageReaderMbr?.close()
-                        captureImageReaderMbr?.close()
-                        cameraCaptureSessionMbr?.close()
-
-                        // (멤버 변수 비우기)
-                        mediaRecorderMbr = null
-                        mediaRecorderConfigVoMbr = null
-                        analysisImageReaderMbr = null
-                        captureImageReaderMbr = null
-                        analysisImageReaderConfigVoMbr = null
-                        captureImageReaderConfigVoMbr = null
-                        cameraCaptureSessionMbr = null
-                        previewConfigVoListMbr = null
-                        previewSurfaceListMbr = null
-                        repeatRequestTargetVoMbr = null
 
                         // (카메라 세션 생성)
                         createCameraSessionAsync(

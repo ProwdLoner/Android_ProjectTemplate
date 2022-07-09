@@ -161,7 +161,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // (카메라를 서페이스 까지 초기화)
             cameraObjMbr.unsetCameraOutputSurfaces(
-                onCameraStop = {
+                onComplete = {
                     // 기존 저장 폴더 삭제
                     videoFile.delete()
 
@@ -940,7 +940,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 // 카메라 초기화
                 cameraObjMbr.unsetCameraOutputSurfaces(
-                    onCameraStop = {
+                    onComplete = {
                         // 미디어 레코드를 제외한 카메라 세션 준비
                         // 지원 사이즈 탐지
                         val chosenPreviewSurfaceSize =
