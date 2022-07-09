@@ -204,7 +204,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
-                        onComplete = {})
+                        onComplete = {},
+                    onError = {})
 
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
@@ -602,7 +603,37 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // 초기 뷰 설정
+    var fd = -2f
     private fun viewSetting() {
+        bindingMbr.root.setOnClickListener {
+            fd = cameraObjMbr.focusDistanceMbr
+
+            val nfd = if (fd == -2f){
+                0f
+            }else if (fd == 0f){
+                2f
+            }else if (fd == 2f){
+                5f
+            }else if (fd == 5f){
+                7f
+            }else if (fd == 7f){
+                10f
+            }else if (fd == 10f){
+                -1f
+            }else {
+                -2f
+            }
+
+            cameraObjMbr.setFocusDistance(
+                nfd,
+                onComplete = {
+
+                }, onError = {
+
+                }
+            )
+        }
+
         // (디버그 이미지 뷰 전환 기능)
         bindingMbr.debugYuvToRgbImg.setOnClickListener {
             bindingMbr.debugYuvToRgbImg.visibility = View.GONE
@@ -758,7 +789,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 // 떨림 보정
                                 cameraObjMbr.setCameraStabilization(
                                     true,
-                                    onComplete = {})
+                                    onComplete = {},
+                                    onError = {})
 
                                 // (카메라 서페이스 설정)
                                 cameraObjMbr.setCameraOutputSurfaces(
@@ -863,7 +895,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // 떨림 보정
                     cameraObjMbr.setCameraStabilization(
                         true,
-                        onComplete = {})
+                        onComplete = {},
+                        onError = {})
 
                     // (카메라 서페이스 설정)
                     cameraObjMbr.setCameraOutputSurfaces(
@@ -947,7 +980,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         // 떨림 보정
                         cameraObjMbr.setCameraStabilization(
                             true,
-                            onComplete = {})
+                            onComplete = {},
+                            onError = {})
 
                         // (카메라 서페이스 설정)
                         cameraObjMbr.setCameraOutputSurfaces(
@@ -1103,7 +1137,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 떨림 보정
             cameraObjMbr.setCameraStabilization(
                 true,
-                onComplete = {})
+                onComplete = {},
+                onError = {})
 
             // (카메라 서페이스 설정)
             cameraObjMbr.setCameraOutputSurfaces(
