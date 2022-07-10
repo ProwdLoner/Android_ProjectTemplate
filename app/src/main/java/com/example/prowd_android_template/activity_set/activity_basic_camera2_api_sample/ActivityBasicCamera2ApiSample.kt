@@ -1100,7 +1100,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     private fun onCameraPermissionChecked(isOnCreate: Boolean) {
-        Log.e("d", CameraObj.getAllSupportedCameraModeSet(this).toString())
         if (isOnCreate) { // 처음 카메라 설정 시점
             // (카메라 실행)
             // 지원 사이즈 탐지

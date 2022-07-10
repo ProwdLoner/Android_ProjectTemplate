@@ -15,13 +15,9 @@ import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.SystemClock
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
-import android.view.MotionEvent
-import android.view.Surface
-import android.view.TextureView
-import android.view.View
+import android.view.*
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
 import com.example.prowd_android_template.util_object.CustomUtil
@@ -32,31 +28,26 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 
-// <Camera 객체>
-// 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체 (생성시 카메라 아이디를 주입)
-// 생성시엔 생성 함수 getInstance 를 사용하고, 카메라 사용이 필요 없어지면 destroyCameraObject 를 사용할것
-// Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더는 2개, 미디어 리코더는 1개만 설정 가능
-// 이미지 리더 중 한개는 캡쳐용, 다른 하나는 분석용으로, 분석용은 상시 실행이 가능하지만 캡쳐용은 캡쳐 시점 일순간만 실행됨
-//     (평소엔 캡쳐용 서페이스는 설정을 해두어도 침묵해있다가, 캡쳐용 사용 함수를 하면 분석용 서페이스를 잠시 중단하고 캡쳐 순간 실행됨)
-// 내부 제공 함수들은 대다수 Ui 스레드와 별도의 카메라 스레드에서 비동기 동작을 수행합니다.
-// 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
-// 연산량이 많은 작업은 카메라 스레드에서 처리하되, 프리뷰와 같이 UI를 사용하는 작업은 Ui 스레드를 적절히 사용하여야 함
-
 // todo : auto 설정일 때 focus distance 등의 현재 수치 가져오기
-// todo : capture request 검증
-// todo : repeatingRequest on manual 제공
+// todo : repeatingRequest / capture on manual 제공
 // todo : af, ae, awb, iso area 설정
 // todo : 터치 exposure, whitebalance, focus 등 (핀치 줌을 참고)
 // todo : iso 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 //    https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 // todo : 디바이스 방향 관련 부분 다시 살피기
-// todo : 최고 화질시 녹화 확인
-// todo : 분석용 이미지 리더와 캡쳐용 나누기 : 캡쳐용은 캡쳐시 한순간만...
 // todo : ui thread 사용 부분 개선(최소화 및 회전으로 인한 불안정 해결)
 // todo : whitebalace 템플릿 사용
-
+// todo : 최고 화질시 녹화 확인
 // todo : 녹화 미디어 플레이어 템플릿 사용 - 플레이어 제공 사이즈와 상호검증
 
+// <Camera 객체>
+// 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체 (생성시 카메라 아이디를 주입)
+// 생성시엔 생성 함수 getInstance 를 사용하고, 카메라 사용이 필요 없어지면 destroyCameraObject 를 사용할것
+// Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더는 2개, 미디어 리코더는 1개만 설정 가능
+// 이미지 리더 중 한개는 캡쳐용, 다른 하나는 분석용으로, 분석용은 반복 리퀘스트가 가능하지만 캡쳐용은 캡쳐 시점 일순간만 실행됨
+// 내부 제공 함수들은 대다수 Ui 스레드와 별도의 카메라 스레드에서 비동기 동작을 수행합니다.
+// 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
+// 연산량이 많은 작업은 카메라 스레드에서 처리하되, 프리뷰와 같이 UI를 사용하는 작업은 Ui 스레드를 적절히 사용하여 내부 처리
 class CameraObj private constructor(
     private val parentActivityMbr: Activity,
     private val cameraManagerMbr: CameraManager,
@@ -80,8 +71,6 @@ class CameraObj private constructor(
 
     // [카메라 설정 정보]
     // (3A 설정)
-    // todo focusDistance 변수와 설정 함수 생성
-    //   -1 의 af 일때 region 을 설정시 해당 위치, null 이라면 전체 위치
     // 포커스 거리 :
     // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
     // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
@@ -314,7 +303,6 @@ class CameraObj private constructor(
             return resultSet
         }
 
-        // todo : 검사
         // (특정 모드가 가능한 가용 카메라 정보 리스트 반환)
         // 카메라 지원 모드
         // 1 : preview - preview 가 존재
@@ -2472,14 +2460,13 @@ class CameraObj private constructor(
         }
     }
 
-    // todo 서페이스 3개 한정시키기
     // (출력 서페이스 설정 함수)
     // camera status : 0 -> 1
     // media status : 0 -> 1, 0 -> 0
     // 서페이스 설정 검증 및 생성, 이후 CameraDevice, CameraCaptureSession 생성까지를 수행
     // 사용할 서페이스 사이즈 및 종류를 결정하는 것이 주요 기능
     // 실행시 카메라 초기화를 실행 (이미 생성된 CameraDevice 만 놔두고 모든것을 초기화) 후 설정
-
+    // 주의 : 디바이스에 따라 서페이스 갯수에 따라 에러가 발생할 가능성이 있음.
     // onError 에러 코드 :
     // 아래 에러코드가 실행된다면 카메라가 초기화 된 상태에서 멈추며 executorOnError 가 실행됨
     // 0 : cameraStatusCodeMbr 가 0 이 아님
@@ -2499,7 +2486,6 @@ class CameraObj private constructor(
     // 14 : 서페이스 텍스쳐 생성 불가
     // 15 : 생성된 서페이스가 존재하지 않음
     // 16 : 카메라 세션 생성 실패
-
     fun setCameraOutputSurfaces(
         previewConfigVoList: ArrayList<PreviewConfigVo>?,
         captureImageReaderConfigVo: ImageReaderConfigVo?,
@@ -2970,6 +2956,7 @@ class CameraObj private constructor(
     // camera status : -1 -> -1, n -> 0
     // media status : n -> 0
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
+    // 미디어 레코딩 결과물 파일을 얻기 위해선 먼저 이를 실행해야함
     fun unsetCameraOutputSurfaces(
         onComplete: () -> Unit
     ) {
@@ -3058,7 +3045,6 @@ class CameraObj private constructor(
         }
     }
 
-
     // (반복 리퀘스트 실행)
     // camera status : 1 -> 2, 2 -> 2
     // media status : 1 -> 2, n(2, 3, 4) -> n
@@ -3114,8 +3100,27 @@ class CameraObj private constructor(
                 }
             }
 
+            // [모드 설정]
+            val requestTemplate = if (forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
+            }
+
             // [카메라 실행]
-            repeatingCameraMemberConfig(forPreview, forAnalysisImageReader, forMediaRecorder)
+            val request = getCameraMemberConfigRequest(
+                requestTemplate,
+                forPreview,
+                false,
+                forMediaRecorder,
+                forAnalysisImageReader
+            )
+
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                request,
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
 
             repeatRequestTargetVoMbr = RepeatRequestTargetVo(
                 forPreview,
@@ -3202,174 +3207,16 @@ class CameraObj private constructor(
             }
 
             // [리퀘스트 빌더 생성]
-            val captureRequestBuilder =
-                cameraDeviceMbr!!.createCaptureRequest(requestTemplate)
-
-
-            // [타겟 서페이스 설정]
-            captureRequestBuilder.addTarget(captureImageReaderMbr!!.surface)
-
-            // [리퀘스트 설정]
-            // (3A 설정)
-            // (포커스 거리 설정)
-            if (focusDistanceMbr == -1f) {
-                // 자연스런 오토 포커스 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                )
-            } else if (focusDistanceMbr == -2f) {
-                // 빠른 오토 포커스 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                )
-            } else if (focusDistanceMbr >= 0f) {
-                // 포커스 수동 거리 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_OFF
-                )
-                captureRequestBuilder.set(
-                    CaptureRequest.LENS_FOCUS_DISTANCE,
-                    focusDistanceMbr
-                )
-            }
-
-            // (Exposure 설정)
-            if (exposureTimeNsMbr == null) {
-                // AE 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_ON
-                )
-            } else {
-                // 수동 노출 시간 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_OFF
-                )
-
-                captureRequestBuilder.set(
-                    CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    exposureTimeNsMbr
-                )
-            }
-
-            // (WhiteBalance 설정)
-            if (whiteBalanceColorTemperatureMbr == null) {
-                // AWH 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AWB_MODE,
-                    CaptureRequest.CONTROL_AWB_MODE_AUTO
-                )
-            } else {
-                // 색온도 설정
-                captureRequestBuilder.set(
-                    CaptureRequest.CONTROL_AWB_MODE,
-                    CaptureRequest.CONTROL_AWB_MODE_OFF
-                )
-                captureRequestBuilder.set(
-                    CaptureRequest.COLOR_CORRECTION_MODE,
-                    CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
-                )
-                captureRequestBuilder.set(
-                    CaptureRequest.COLOR_CORRECTION_GAINS,
-                    getTemperatureVector(whiteBalanceColorTemperatureMbr!!)
-                )
-            }
-
-            // (수동 설정)
-            // 센서 사이즈 중심점
-            val centerX =
-                cameraInfoVoMbr.sensorSize.width() / 2
-            val centerY =
-                cameraInfoVoMbr.sensorSize.height() / 2
-
-            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
-            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
-            val deltaX =
-                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoomFactorMbr).toInt()
-            val deltaY =
-                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoomFactorMbr).toInt()
-
-            val mCropRegion = Rect().apply {
-                set(
-                    centerX - deltaX,
-                    centerY - deltaY,
-                    centerX + deltaX,
-                    centerY + deltaY
-                )
-            }
-
-            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
-
-            // (카메라 떨림 보정 여부 반영)
-            when (cameraStabilizationSetMbr) {
-                0 -> { // 떨림 보정 off
-                    captureRequestBuilder.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                    )
-                    captureRequestBuilder.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                    )
-                }
-                1 -> { // 기계적 떨림 보정
-                    captureRequestBuilder.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
-                    )
-                    captureRequestBuilder.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
-                    )
-                }
-                2 -> { // 소프트웨어 떨림 보정
-                    captureRequestBuilder.set(
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
-                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
-                    )
-                    captureRequestBuilder.set(
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
-                    )
-                }
-            }
-
-            val orientation = SparseIntArray().apply {
-                append(
-                    Surface.ROTATION_0,
-                    90
-                )
-                append(
-                    Surface.ROTATION_90,
-                    0
-                )
-                append(
-                    Surface.ROTATION_180,
-                    270
-                )
-                append(
-                    Surface.ROTATION_270,
-                    180
-                )
-            }
-
-            captureRequestBuilder.set(
-                CaptureRequest.JPEG_ORIENTATION,
-                (orientation.get(
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        parentActivityMbr.display!!.rotation
-                    } else {
-                        parentActivityMbr.windowManager.defaultDisplay.rotation
-                    }
-                ) + cameraInfoVoMbr.sensorOrientation + 270) % 360
+            val request = getCameraMemberConfigRequest(
+                requestTemplate,
+                forPreview = false,
+                forCaptureImageReader = true,
+                forMediaRecorder = false,
+                forAnalysisImageReader = false
             )
 
             cameraCaptureSessionMbr!!.capture(
-                captureRequestBuilder.build(),
+                request,
                 captureCallback,
                 cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
@@ -3409,11 +3256,26 @@ class CameraObj private constructor(
                 onComplete()
             }
 
+            // [모드 설정]
+            val requestTemplate = if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
+            }
+
             // [카메라 실행]
-            repeatingCameraMemberConfig(
+            val request = getCameraMemberConfigRequest(
+                requestTemplate,
                 repeatRequestTargetVoMbr!!.forPreview,
-                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
-                repeatRequestTargetVoMbr!!.forMediaRecorder
+                false,
+                repeatRequestTargetVoMbr!!.forMediaRecorder,
+                repeatRequestTargetVoMbr!!.forAnalysisImageReader
+            )
+
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                request,
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 
             cameraThreadVoMbr.cameraSemaphore.release()
@@ -3455,11 +3317,26 @@ class CameraObj private constructor(
                 return@run
             }
 
+            // [모드 설정]
+            val requestTemplate = if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
+            }
+
             // [카메라 실행]
-            repeatingCameraMemberConfig(
+            val request = getCameraMemberConfigRequest(
+                requestTemplate,
                 repeatRequestTargetVoMbr!!.forPreview,
-                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
-                repeatRequestTargetVoMbr!!.forMediaRecorder
+                false,
+                repeatRequestTargetVoMbr!!.forMediaRecorder,
+                repeatRequestTargetVoMbr!!.forAnalysisImageReader
+            )
+
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                request,
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 
             cameraThreadVoMbr.cameraSemaphore.release()
@@ -3518,11 +3395,26 @@ class CameraObj private constructor(
                 onComplete()
             }
 
+            // [모드 설정]
+            val requestTemplate = if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
+            }
+
             // [카메라 실행]
-            repeatingCameraMemberConfig(
+            val request = getCameraMemberConfigRequest(
+                requestTemplate,
                 repeatRequestTargetVoMbr!!.forPreview,
-                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
-                repeatRequestTargetVoMbr!!.forMediaRecorder
+                false,
+                repeatRequestTargetVoMbr!!.forMediaRecorder,
+                repeatRequestTargetVoMbr!!.forAnalysisImageReader
+            )
+
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                request,
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 
             cameraThreadVoMbr.cameraSemaphore.release()
@@ -3570,11 +3462,26 @@ class CameraObj private constructor(
                 onComplete()
             }
 
+            // [모드 설정]
+            val requestTemplate = if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
+            }
+
             // [카메라 실행]
-            repeatingCameraMemberConfig(
+            val request = getCameraMemberConfigRequest(
+                requestTemplate,
                 repeatRequestTargetVoMbr!!.forPreview,
-                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
-                repeatRequestTargetVoMbr!!.forMediaRecorder
+                false,
+                repeatRequestTargetVoMbr!!.forMediaRecorder,
+                repeatRequestTargetVoMbr!!.forAnalysisImageReader
+            )
+
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                request,
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 
             cameraThreadVoMbr.cameraSemaphore.release()
@@ -3616,18 +3523,31 @@ class CameraObj private constructor(
                 }
             }
 
-            Log.e("wb", whiteBalanceColorTemperatureMbr.toString())
-
             if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
             }
 
+            // [모드 설정]
+            val requestTemplate = if (repeatRequestTargetVoMbr!!.forMediaRecorder) { // 레코딩 설정시
+                CameraDevice.TEMPLATE_RECORD
+            } else { // 레코딩 설정이 아닐시
+                CameraDevice.TEMPLATE_PREVIEW
+            }
+
             // [카메라 실행]
-            repeatingCameraMemberConfig(
+            val request = getCameraMemberConfigRequest(
+                requestTemplate,
                 repeatRequestTargetVoMbr!!.forPreview,
-                repeatRequestTargetVoMbr!!.forAnalysisImageReader,
-                repeatRequestTargetVoMbr!!.forMediaRecorder
+                false,
+                repeatRequestTargetVoMbr!!.forMediaRecorder,
+                repeatRequestTargetVoMbr!!.forAnalysisImageReader
+            )
+
+            cameraCaptureSessionMbr!!.setRepeatingRequest(
+                request,
+                null,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
             )
 
             cameraThreadVoMbr.cameraSemaphore.release()
@@ -4125,23 +4045,17 @@ class CameraObj private constructor(
         }
     }
 
-    // (카메라 상태 멤버변수에 따라 반복 리퀘스트를 실행하는 함수)
-    private fun repeatingCameraMemberConfig(
+    // (카메라 상태 멤버변수에 따라 캡쳐 리퀘스트를 생성하는 함수)
+    private fun getCameraMemberConfigRequest(
+        requestTemplate: Int,
         forPreview: Boolean,
+        forCaptureImageReader: Boolean,
+        forMediaRecorder: Boolean,
         forAnalysisImageReader: Boolean,
-        forMediaRecorder: Boolean
-    ) {
-        // [모드 설정]
-        val requestTemplate = if (forMediaRecorder) { // 레코딩 설정시
-            CameraDevice.TEMPLATE_RECORD
-        } else { // 레코딩 설정이 아닐시
-            CameraDevice.TEMPLATE_PREVIEW
-        }
-
+    ): CaptureRequest {
         // [리퀘스트 빌더 생성]
-        val captureRequestBuilder =
+        val captureRequestBuilder: CaptureRequest.Builder =
             cameraDeviceMbr!!.createCaptureRequest(requestTemplate)
-
 
         // [타겟 서페이스 설정]
         if (forPreview) { // 프리뷰 사용 설정
@@ -4151,14 +4065,50 @@ class CameraObj private constructor(
             }
         }
 
-        if (forAnalysisImageReader) { // 이미지 리더 사용 설정
+        if (forCaptureImageReader) { // 이미지 리더 사용 설정
             // 이미지 리더 서페이스 타겟 추가
-            captureRequestBuilder.addTarget(analysisImageReaderMbr!!.surface)
+            captureRequestBuilder.addTarget(captureImageReaderMbr!!.surface)
+
+            // todo : front 시에 캡쳐 방향 틀림
+            val orientation = SparseIntArray().apply {
+                append(
+                    Surface.ROTATION_0,
+                    90
+                )
+                append(
+                    Surface.ROTATION_90,
+                    0
+                )
+                append(
+                    Surface.ROTATION_180,
+                    270
+                )
+                append(
+                    Surface.ROTATION_270,
+                    180
+                )
+            }
+
+            val rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                parentActivityMbr.display!!.rotation
+            } else {
+                parentActivityMbr.windowManager.defaultDisplay.rotation
+            }
+
+            captureRequestBuilder.set(
+                CaptureRequest.JPEG_ORIENTATION,
+                (orientation.get(rotation) + cameraInfoVoMbr.sensorOrientation + 270) % 360
+            )
         }
 
         if (forMediaRecorder) { // 미디어 레코더 사용 설정
             // 미디어 레코더 서페이스 타겟 추가
             captureRequestBuilder.addTarget(mediaCodecSurfaceMbr!!)
+        }
+
+        if (forAnalysisImageReader) { // 이미지 리더 사용 설정
+            // 이미지 리더 서페이스 타겟 추가
+            captureRequestBuilder.addTarget(analysisImageReaderMbr!!.surface)
         }
 
         // [리퀘스트 설정]
@@ -4290,13 +4240,12 @@ class CameraObj private constructor(
             }
         }
 
-        cameraCaptureSessionMbr!!.setRepeatingRequest(
-            captureRequestBuilder.build(),
-            null,
-            cameraThreadVoMbr.cameraHandlerThreadObj.handler
-        )
+        return captureRequestBuilder.build()
     }
 
+    // (WhiteBalance ColorTemperature 세팅 벡터 반환 함수)
+    // factor 는 0 ~ 100 범위에서 선택
+    // 0은 파란계열 차가운 느낌, 100은 노랑계열 따뜻한 느낌
     private fun getTemperatureVector(factor: Int): RggbChannelVector {
         return RggbChannelVector(
             0.635f + 0.0208333f * factor,
@@ -4309,6 +4258,7 @@ class CameraObj private constructor(
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (서페이스 설정 객체)
     data class PreviewConfigVo(
         val cameraOrientSurfaceSize: Size,
         val autoFitTextureView: AutoFitTextureView
@@ -4330,11 +4280,8 @@ class CameraObj private constructor(
         var audioRecordingBitrate: Int?
     )
 
-    data class SizeSpecInfoVo(
-        val size: Size,
-        val fps: Int
-    )
-
+    // (카메라 정보 객체)
+    // 카메라 제공 사이즈 정보
     // capture image reader format : JPEG 을 사용
     // analysis image reader format : YUV 420 888 을 사용
     data class CameraSurfacesSizeListInfoVo(
@@ -4346,6 +4293,12 @@ class CameraObj private constructor(
         val highSpeedInfoList: ArrayList<SizeSpecInfoVo>
     )
 
+    data class SizeSpecInfoVo(
+        val size: Size,
+        val fps: Int
+    )
+
+    // 카메라 정보
     data class CameraInfoVo(
         // 카메라 아이디
         val cameraId: String,
@@ -4383,6 +4336,8 @@ class CameraObj private constructor(
         var maxZoom: Float
     )
 
+    // (카메라 상태 정보 객체)
+    // 현재 리퀘스트 반복의 타겟
     data class RepeatRequestTargetVo(
         val forPreview: Boolean,
         val forAnalysisImageReader: Boolean,
