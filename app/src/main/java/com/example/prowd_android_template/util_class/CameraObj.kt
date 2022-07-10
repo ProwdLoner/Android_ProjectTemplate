@@ -166,16 +166,31 @@ class CameraObj private constructor(
     // <스태틱 공간>
     companion object {
         // <공개 메소드 공간>
+
         // (모든 가용 카메라 지원 모드 반환)
-        // 카메라 지원 모드
-        // 1 : Capture - preview, imageReader 동일 서페이스 비율이 제공
-        // 2 : MediaRecord - preview, imageReader, mediaRecorder 동일 서페이스 비율이 제공
-        // 3 : HighSpeed - highSpeed(촬영 + 녹화) 서페이스 제공
+        // preview, captureImageReader, analysisImageReader, mediaRecorder, highSpeed 제공 사이즈 비율 동일성 파악
+        // 카메라 지원 모드 :
+        // 1 : preview - preview 가 존재
+        // 2 : capture - captureImageReader 가 존재
+        // 3 : mediaRecord - mediaRecorder 가 존재
+        // 4 : analysis - analysisImageReader 가 존재
+        // 5 : highSpeed - highSpeed 가 존재
+        // 6 : preview and capture - 동일 서페이스 비율 제공
+        // 7 : preview and mediaRecord - 동일 서페이스 비율 제공
+        // 8 : preview and analysis - 동일 서페이스 비율 제공
+        // 9 : capture and mediaRecord - 동일 서페이스 비율 제공
+        // 10 : capture and analysis - 동일 서페이스 비율 제공
+        // 11 : mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
+        // 13 : preview and capture and analysis - 동일 서페이스 비율 제공
+        // 14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
         fun getAllSupportedCameraModeSet(parentActivity: Activity): HashSet<Int> {
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
-            val modeSet = HashSet<Int>()
+            val resultSet = HashSet<Int>()
 
             for (cameraId in cameraManager.cameraIdList) {
                 val characteristics = cameraManager.getCameraCharacteristics(cameraId)
@@ -184,61 +199,140 @@ class CameraObj private constructor(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
                 )!!
 
+                // (지원 사이즈 리스트 가져오기)
                 val previewSizeList = ArrayList<Size>()
                 previewSizeList.addAll(cameraConfig.getOutputSizes(SurfaceTexture::class.java))
 
-                val imageReaderSizeList = ArrayList<Size>()
-                imageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+                val captureImageReaderSizeList = ArrayList<Size>()
+                captureImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.JPEG))
 
                 val mediaRecorderSizeList = ArrayList<Size>()
                 mediaRecorderSizeList.addAll(cameraConfig.getOutputSizes(MediaRecorder::class.java))
 
+                val analysisImageReaderSizeList = ArrayList<Size>()
+                analysisImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+
                 val highSpeedSizeList = ArrayList<Size>()
                 highSpeedSizeList.addAll(cameraConfig.highSpeedVideoSizes)
 
-                val mediaRecordingModeAvailable: Boolean = sizeListSameWhRatioExists(
-                    mediaRecorderSizeList, imageReaderSizeList, previewSizeList
-                )
+                // (지원 모드 비교)
+                if (previewSizeList.isNotEmpty()) {
+                    resultSet.add(1)
+                }
 
-                val capturingModeAvailable: Boolean = if (mediaRecordingModeAvailable) {
-                    true
-                } else {
-                    sizeListSameWhRatioExists(
-                        imageReaderSizeList, previewSizeList
+                if (captureImageReaderSizeList.isNotEmpty()) {
+                    resultSet.add(2)
+                }
+
+                if (mediaRecorderSizeList.isNotEmpty()) {
+                    resultSet.add(3)
+                }
+
+                if (analysisImageReaderSizeList.isNotEmpty()) {
+                    resultSet.add(4)
+                }
+
+                if (highSpeedSizeList.isNotEmpty()) {
+                    resultSet.add(5)
+                }
+
+                if (sizeListSameWhRatioExists(previewSizeList, captureImageReaderSizeList)) {
+                    resultSet.add(6)
+                }
+
+                if (sizeListSameWhRatioExists(previewSizeList, mediaRecorderSizeList)) {
+                    resultSet.add(7)
+                }
+
+                if (sizeListSameWhRatioExists(previewSizeList, analysisImageReaderSizeList)) {
+                    resultSet.add(8)
+                }
+
+                if (sizeListSameWhRatioExists(captureImageReaderSizeList, mediaRecorderSizeList)) {
+                    resultSet.add(9)
+                }
+
+                if (sizeListSameWhRatioExists(
+                        captureImageReaderSizeList,
+                        analysisImageReaderSizeList
                     )
-                }
-
-                val highSpeedModeAvailable: Boolean = highSpeedSizeList.isNotEmpty()
-
-                if (mediaRecordingModeAvailable) {
-                    modeSet.add(2)
-                }
-
-                if (capturingModeAvailable) {
-                    modeSet.add(1)
-                }
-
-                if (highSpeedModeAvailable) {
-                    modeSet.add(3)
-                }
-
-                if (modeSet.contains(1) &&
-                    modeSet.contains(2) &&
-                    modeSet.contains(3)
                 ) {
-                    // mode 가 전부 충족 되었으므로 조기 종료
-                    return modeSet
+                    resultSet.add(10)
+                }
+
+                if (sizeListSameWhRatioExists(mediaRecorderSizeList, analysisImageReaderSizeList)) {
+                    resultSet.add(11)
+                }
+
+                if (sizeListSameWhRatioExists(
+                        previewSizeList,
+                        captureImageReaderSizeList,
+                        mediaRecorderSizeList
+                    )
+                ) {
+                    resultSet.add(12)
+                }
+
+                if (sizeListSameWhRatioExists(
+                        previewSizeList,
+                        captureImageReaderSizeList,
+                        analysisImageReaderSizeList
+                    )
+                ) {
+                    resultSet.add(13)
+                }
+
+                if (sizeListSameWhRatioExists(
+                        previewSizeList,
+                        mediaRecorderSizeList,
+                        analysisImageReaderSizeList
+                    )
+                ) {
+                    resultSet.add(14)
+                }
+
+                if (sizeListSameWhRatioExists(
+                        captureImageReaderSizeList,
+                        mediaRecorderSizeList,
+                        analysisImageReaderSizeList
+                    )
+                ) {
+                    resultSet.add(15)
+                }
+
+                if (sizeListSameWhRatioExists(
+                        previewSizeList,
+                        captureImageReaderSizeList,
+                        mediaRecorderSizeList,
+                        analysisImageReaderSizeList
+                    )
+                ) {
+                    resultSet.add(16)
                 }
             }
 
-            return modeSet
+            return resultSet
         }
 
+        // todo : 검사
         // (특정 모드가 가능한 가용 카메라 정보 리스트 반환)
         // 카메라 지원 모드
-        // 1 : Capture - preview, imageReader 동일 서페이스 비율이 제공
-        // 2 : MediaRecord - preview, imageReader, mediaRecorder 동일 서페이스 비율이 제공
-        // 3 : HighSpeed - highSpeed 서페이스 제공
+        // 1 : preview - preview 가 존재
+        // 2 : capture - captureImageReader 가 존재
+        // 3 : mediaRecord - mediaRecorder 가 존재
+        // 4 : analysis - analysisImageReader 가 존재
+        // 5 : highSpeed - highSpeed 가 존재
+        // 6 : preview and capture - 동일 서페이스 비율 제공
+        // 7 : preview and mediaRecord - 동일 서페이스 비율 제공
+        // 8 : preview and analysis - 동일 서페이스 비율 제공
+        // 9 : capture and mediaRecord - 동일 서페이스 비율 제공
+        // 10 : capture and analysis - 동일 서페이스 비율 제공
+        // 11 : mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
+        // 13 : preview and capture and analysis - 동일 서페이스 비율 제공
+        // 14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
         fun getSupportedCameraInfoListForMode(
             parentActivity: Activity,
             mode: Int
@@ -255,43 +349,129 @@ class CameraObj private constructor(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
                 )!!
 
+                // (카메라 제공 사이즈)
                 val previewSizeList = ArrayList<Size>()
                 previewSizeList.addAll(cameraConfig.getOutputSizes(SurfaceTexture::class.java))
 
-                val imageReaderSizeList = ArrayList<Size>()
-                imageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+                val captureImageReaderSizeList = ArrayList<Size>()
+                captureImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.JPEG))
 
                 val mediaRecorderSizeList = ArrayList<Size>()
                 mediaRecorderSizeList.addAll(cameraConfig.getOutputSizes(MediaRecorder::class.java))
 
+                val analysisImageReaderSizeList = ArrayList<Size>()
+                analysisImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+
                 val highSpeedSizeList = ArrayList<Size>()
                 highSpeedSizeList.addAll(cameraConfig.highSpeedVideoSizes)
 
-                val mediaRecordingModeAvailable: Boolean = sizeListSameWhRatioExists(
-                    mediaRecorderSizeList, imageReaderSizeList, previewSizeList
+                // (지원 모드 비교)
+                val mode1 = previewSizeList.isNotEmpty()
+                val mode2 = captureImageReaderSizeList.isNotEmpty()
+                val mode3 = mediaRecorderSizeList.isNotEmpty()
+                val mode4 = analysisImageReaderSizeList.isNotEmpty()
+                val mode5 = highSpeedSizeList.isNotEmpty()
+                val mode6 = sizeListSameWhRatioExists(previewSizeList, captureImageReaderSizeList)
+                val mode7 = sizeListSameWhRatioExists(previewSizeList, mediaRecorderSizeList)
+                val mode8 = sizeListSameWhRatioExists(previewSizeList, analysisImageReaderSizeList)
+                val mode9 =
+                    sizeListSameWhRatioExists(captureImageReaderSizeList, mediaRecorderSizeList)
+                val mode10 = sizeListSameWhRatioExists(
+                    captureImageReaderSizeList,
+                    analysisImageReaderSizeList
+                )
+                val mode11 =
+                    sizeListSameWhRatioExists(mediaRecorderSizeList, analysisImageReaderSizeList)
+                val mode12 = sizeListSameWhRatioExists(
+                    previewSizeList,
+                    captureImageReaderSizeList,
+                    mediaRecorderSizeList
+                )
+                val mode13 = sizeListSameWhRatioExists(
+                    previewSizeList,
+                    captureImageReaderSizeList,
+                    analysisImageReaderSizeList
+                )
+                val mode14 = sizeListSameWhRatioExists(
+                    previewSizeList,
+                    mediaRecorderSizeList,
+                    analysisImageReaderSizeList
+                )
+                val mode15 = sizeListSameWhRatioExists(
+                    captureImageReaderSizeList,
+                    mediaRecorderSizeList,
+                    analysisImageReaderSizeList
+                )
+                val mode16 = sizeListSameWhRatioExists(
+                    previewSizeList,
+                    captureImageReaderSizeList,
+                    mediaRecorderSizeList,
+                    analysisImageReaderSizeList
                 )
 
-                val capturingModeAvailable: Boolean = if (mediaRecordingModeAvailable) {
-                    true
-                } else {
-                    sizeListSameWhRatioExists(
-                        imageReaderSizeList, previewSizeList
-                    )
-                }
-
-                val highSpeedModeAvailable: Boolean = highSpeedSizeList.isNotEmpty()
-
-                // 가용 모드 확인
+                // (가용 모드 확인)
                 if (mode == 1) { // capture mode 가용
-                    if (!capturingModeAvailable) {
+                    if (!mode1) {
                         continue
                     }
                 } else if (mode == 2) { // record mode 가용
-                    if (!mediaRecordingModeAvailable) {
+                    if (!mode2) {
                         continue
                     }
                 } else if (mode == 3) { // high speed mode 가용
-                    if (!highSpeedModeAvailable) {
+                    if (!mode3) {
+                        continue
+                    }
+                } else if (mode == 4) { // high speed mode 가용
+                    if (!mode4) {
+                        continue
+                    }
+                } else if (mode == 5) { // high speed mode 가용
+                    if (!mode5) {
+                        continue
+                    }
+                } else if (mode == 6) { // high speed mode 가용
+                    if (!mode6) {
+                        continue
+                    }
+                } else if (mode == 7) { // high speed mode 가용
+                    if (!mode7) {
+                        continue
+                    }
+                } else if (mode == 8) { // high speed mode 가용
+                    if (!mode8) {
+                        continue
+                    }
+                } else if (mode == 9) { // high speed mode 가용
+                    if (!mode9) {
+                        continue
+                    }
+                } else if (mode == 10) { // high speed mode 가용
+                    if (!mode10) {
+                        continue
+                    }
+                } else if (mode == 11) { // high speed mode 가용
+                    if (!mode11) {
+                        continue
+                    }
+                } else if (mode == 12) { // high speed mode 가용
+                    if (!mode12) {
+                        continue
+                    }
+                } else if (mode == 13) { // high speed mode 가용
+                    if (!mode13) {
+                        continue
+                    }
+                } else if (mode == 14) { // high speed mode 가용
+                    if (!mode14) {
+                        continue
+                    }
+                } else if (mode == 15) { // high speed mode 가용
+                    if (!mode15) {
+                        continue
+                    }
+                } else if (mode == 16) { // high speed mode 가용
+                    if (!mode16) {
                         continue
                     }
                 } else { // 그외 모드
@@ -299,6 +479,7 @@ class CameraObj private constructor(
                     continue
                 }
 
+                // (모드 검증이 통과한 카메라 정보 추가)
                 val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
 
                 val sensorOrientation: Int? =
@@ -386,7 +567,6 @@ class CameraObj private constructor(
                     }
 
                 if (sensorOrientation != null && sensorSize != null) {
-
                     supportedCameraInfoList.add(
                         CameraInfoVo(
                             cameraId,
@@ -535,17 +715,29 @@ class CameraObj private constructor(
         // (특정 카메라의 특정 모드 지원에 대한 중복되지 않는 단위 사이즈 반환)
         // 단위 사이즈란, 정수에서 더이상 나누어 떨어지지 않는 사이즈로, 사이즈 width, height 최대공약수로 나눈 값
         // 카메라 방향 기준으로, 3:2, 1:1 등의 비율을 나타냄
-        // 1 : Capture - preview, imageReader 동일 서페이스 비율이 제공
-        // 2 : MediaRecord - preview, imageReader, mediaRecorder 동일 서페이스 비율이 제공
-        // 3 : HighSpeed - highSpeed 서페이스 제공
-        // mode 가 null 이라면 모든 값을 반환하고, 위 정해진 값이 아니라면 아무 값도 반환하지 않음
+        // 카메라 지원 모드
+        // 1 : preview - preview 가 존재
+        // 2 : capture - captureImageReader 가 존재
+        // 3 : mediaRecord - mediaRecorder 가 존재
+        // 4 : analysis - analysisImageReader 가 존재
+        // 5 : highSpeed - highSpeed 가 존재
+        // 6 : preview and capture - 동일 서페이스 비율 제공
+        // 7 : preview and mediaRecord - 동일 서페이스 비율 제공
+        // 8 : preview and analysis - 동일 서페이스 비율 제공
+        // 9 : capture and mediaRecord - 동일 서페이스 비율 제공
+        // 10 : capture and analysis - 동일 서페이스 비율 제공
+        // 11 : mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
+        // 13 : preview and capture and analysis - 동일 서페이스 비율 제공
+        // 14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
+        // 지원 모드 파라미터가 잘못되었다면 null 반환
         fun getSupportedSurfaceUnitSize(
             parentActivity: Activity,
             cameraId: String,
-            mode: Int?
-        ): HashSet<Size> {
-            val resultSet = HashSet<Size>()
-
+            mode: Int
+        ): HashSet<Size>? {
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
@@ -555,124 +747,327 @@ class CameraObj private constructor(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
             )!!
 
+            // (카메라 제공 사이즈)
             val previewSizeList = ArrayList<Size>()
             previewSizeList.addAll(cameraConfig.getOutputSizes(SurfaceTexture::class.java))
 
-            val imageReaderSizeList = ArrayList<Size>()
-            imageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+            val captureImageReaderSizeList = ArrayList<Size>()
+            captureImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.JPEG))
 
             val mediaRecorderSizeList = ArrayList<Size>()
             mediaRecorderSizeList.addAll(cameraConfig.getOutputSizes(MediaRecorder::class.java))
 
+            val analysisImageReaderSizeList = ArrayList<Size>()
+            analysisImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+
             val highSpeedSizeList = ArrayList<Size>()
             highSpeedSizeList.addAll(cameraConfig.highSpeedVideoSizes)
 
-            if (mode != null) {
-                when (mode) {
-                    3 -> { // HighSpeed
-                        for (sizeInfo in highSpeedSizeList) {
-                            val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                            resultSet.add(
-                                Size(
-                                    sizeInfo.width / gcd,
-                                    sizeInfo.height / gcd
-                                )
+            val resultSet = HashSet<Size>()
+            when (mode) {
+                1 -> {
+                    for (sizeInfo in previewSizeList) {
+                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
+                        resultSet.add(
+                            Size(
+                                sizeInfo.width / gcd,
+                                sizeInfo.height / gcd
                             )
-                        }
-                    }
-
-                    1 -> { // Capture
-                        // imageReader 와 preview 사이즈 리스트 중 서로 동일한 비율만 추려냄
-                        for (imageReaderSizeInfo in imageReaderSizeList) {
-                            val gcd =
-                                CustomUtil.getGcd(
-                                    imageReaderSizeInfo.width,
-                                    imageReaderSizeInfo.height
-                                )
-                            val unitSize = Size(
-                                imageReaderSizeInfo.width / gcd,
-                                imageReaderSizeInfo.height / gcd
-                            )
-
-                            if (previewSizeList.indexOfFirst {
-                                    it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                                } != -1) {
-                                resultSet.add(unitSize)
-                            }
-                        }
-                    }
-                    2 -> { // MediaRecord
-                        // imageReader 와 preview, mediaRecorder 사이즈 리스트 중 서로 동일한 비율만 추려냄
-                        for (mediaRecorderSizeInfo in mediaRecorderSizeList) {
-                            val gcd =
-                                CustomUtil.getGcd(
-                                    mediaRecorderSizeInfo.width,
-                                    mediaRecorderSizeInfo.height
-                                )
-                            val unitSize = Size(
-                                mediaRecorderSizeInfo.width / gcd,
-                                mediaRecorderSizeInfo.height / gcd
-                            )
-
-                            if (previewSizeList.indexOfFirst {
-                                    it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                                } != -1 &&
-                                imageReaderSizeList.indexOfFirst {
-                                    it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                                } != -1) {
-                                resultSet.add(unitSize)
-                            }
-                        }
+                        )
                     }
                 }
-            } else { // mode null 설정
-                // 모든걸 집어넣기!
-                for (sizeInfo in mediaRecorderSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                    val unitSize = Size(
-                        sizeInfo.width / gcd,
-                        sizeInfo.height / gcd
-                    )
-                    resultSet.add(unitSize)
+                2 -> {
+                    for (sizeInfo in captureImageReaderSizeList) {
+                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
+                        resultSet.add(
+                            Size(
+                                sizeInfo.width / gcd,
+                                sizeInfo.height / gcd
+                            )
+                        )
+                    }
                 }
-
-                for (sizeInfo in imageReaderSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                    val unitSize = Size(
-                        sizeInfo.width / gcd,
-                        sizeInfo.height / gcd
-                    )
-                    resultSet.add(unitSize)
+                3 -> {
+                    for (sizeInfo in mediaRecorderSizeList) {
+                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
+                        resultSet.add(
+                            Size(
+                                sizeInfo.width / gcd,
+                                sizeInfo.height / gcd
+                            )
+                        )
+                    }
                 }
-
-                for (sizeInfo in previewSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                    val unitSize = Size(
-                        sizeInfo.width / gcd,
-                        sizeInfo.height / gcd
-                    )
-                    resultSet.add(unitSize)
+                4 -> {
+                    for (sizeInfo in analysisImageReaderSizeList) {
+                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
+                        resultSet.add(
+                            Size(
+                                sizeInfo.width / gcd,
+                                sizeInfo.height / gcd
+                            )
+                        )
+                    }
                 }
+                5 -> {
+                    for (sizeInfo in highSpeedSizeList) {
+                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
+                        resultSet.add(
+                            Size(
+                                sizeInfo.width / gcd,
+                                sizeInfo.height / gcd
+                            )
+                        )
+                    }
+                }
+                6 -> {
+                    for (sizeInfo in previewSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
 
-                for (sizeInfo in highSpeedSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                    val unitSize = Size(
-                        sizeInfo.width / gcd,
-                        sizeInfo.height / gcd
-                    )
-                    resultSet.add(unitSize)
+                        if (captureImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                7 -> {
+                    for (sizeInfo in previewSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (mediaRecorderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                8 -> {
+                    for (sizeInfo in previewSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (analysisImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                9 -> {
+                    for (sizeInfo in captureImageReaderSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (mediaRecorderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                10 -> {
+                    for (sizeInfo in captureImageReaderSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (analysisImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                11 -> {
+                    for (sizeInfo in mediaRecorderSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (analysisImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                12 -> {
+                    for (sizeInfo in previewSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (captureImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1 &&
+                            mediaRecorderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                13 -> {
+                    for (sizeInfo in previewSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (captureImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1 &&
+                            analysisImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                14 -> {
+                    for (sizeInfo in previewSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (mediaRecorderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1 &&
+                            analysisImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                15 -> {
+                    for (sizeInfo in captureImageReaderSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (mediaRecorderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1 &&
+                            analysisImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                16 -> {
+                    for (sizeInfo in previewSizeList) {
+                        val gcd =
+                            CustomUtil.getGcd(
+                                sizeInfo.width,
+                                sizeInfo.height
+                            )
+                        val unitSize = Size(
+                            sizeInfo.width / gcd,
+                            sizeInfo.height / gcd
+                        )
+
+                        if (captureImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() ==
+                                        unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1 &&
+                            mediaRecorderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1 &&
+                            analysisImageReaderSizeList.indexOfFirst {
+                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                            } != -1) {
+                            resultSet.add(unitSize)
+                        }
+                    }
+                }
+                else -> {
+                    return null
                 }
             }
-
             return resultSet
         }
 
         // (카메라와 현 디바이스의 Width, height 개념이 동일한지)
-        // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨₩
+        // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨
+        // 해당 카메라의 sensorOrientation 가 null 이라서 카메라 방향을 알수 없으면 null 반환
         fun cameraSensorOrientationAndDeviceAreSameWh(
             parentActivity: Activity,
             cameraId: String
@@ -721,11 +1116,16 @@ class CameraObj private constructor(
             }
         }
 
+        // (원하는 Area 와 Ratio 에 가장 유사한 사이즈 반환 함수)
         // surfaceType
         // 1 : preview
-        // 2 : imageReader
+        // 2 : capture imageReader
         // 3 : mediaRecorder
-        // 4 : high speed
+        // 4 : analysis imageReader
+        // 5 : high speed
+        // preferredArea : 원하는 넓이
+        // cameraOrientPreferredWHRatio : 원하는 width * height 비율(width, height 개념은 카메라 방향 기준)
+        // surfaceType 를 잘못 입력하면 null 반환
         fun getNearestSupportedCameraOutputSize(
             parentActivity: Activity,
             cameraId: String,
@@ -745,11 +1145,14 @@ class CameraObj private constructor(
             val previewSizeList = ArrayList<Size>()
             previewSizeList.addAll(cameraConfig.getOutputSizes(SurfaceTexture::class.java))
 
-            val imageReaderSizeList = ArrayList<Size>()
-            imageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+            val captureImageReaderSizeList = ArrayList<Size>()
+            captureImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.JPEG))
 
             val mediaRecorderSizeList = ArrayList<Size>()
             mediaRecorderSizeList.addAll(cameraConfig.getOutputSizes(MediaRecorder::class.java))
+
+            val analysisImageReaderSizeList = ArrayList<Size>()
+            analysisImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
 
             val highSpeedSizeList = ArrayList<Size>()
             highSpeedSizeList.addAll(cameraConfig.highSpeedVideoSizes)
@@ -759,12 +1162,15 @@ class CameraObj private constructor(
                     previewSizeList
                 }
                 2 -> {
-                    imageReaderSizeList
+                    captureImageReaderSizeList
                 }
                 3 -> {
                     mediaRecorderSizeList
                 }
                 4 -> {
+                    analysisImageReaderSizeList
+                }
+                5 -> {
                     highSpeedSizeList
                 }
                 else -> {
@@ -822,7 +1228,8 @@ class CameraObj private constructor(
             }
         }
 
-        // (모든 가용 사이즈를 반환)
+        // (모든 가용 사이즈 정보를 반환)
+        // 해당 카메라에서 가용한 모든 사이즈, FPS 정보를 반환
         fun getSupportedAllCameraSizeInfo(
             parentActivity: Activity,
             cameraId: String
@@ -849,15 +1256,15 @@ class CameraObj private constructor(
                 )
             }
 
-            val imageReaderInfoList = ArrayList<SizeSpecInfoVo>()
-            cameraConfig.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+            val captureImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
+            cameraConfig.getOutputSizes(ImageFormat.JPEG).forEach { size ->
                 val secondsPerFrame =
                     cameraConfig.getOutputMinFrameDuration(
-                        ImageFormat.YUV_420_888,
+                        ImageFormat.JPEG,
                         size
                     ) / 1_000_000_000.0
                 val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                imageReaderInfoList.add(
+                captureImageReaderInfoList.add(
                     SizeSpecInfoVo(
                         size, fps
                     )
@@ -873,6 +1280,21 @@ class CameraObj private constructor(
                     ) / 1_000_000_000.0
                 val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
                 mediaRecorderInfoList.add(
+                    SizeSpecInfoVo(
+                        size, fps
+                    )
+                )
+            }
+
+            val analysisImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
+            cameraConfig.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+                val secondsPerFrame =
+                    cameraConfig.getOutputMinFrameDuration(
+                        ImageFormat.YUV_420_888,
+                        size
+                    ) / 1_000_000_000.0
+                val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                analysisImageReaderInfoList.add(
                     SizeSpecInfoVo(
                         size, fps
                     )
@@ -899,12 +1321,17 @@ class CameraObj private constructor(
                 whRatioSet.add(whRatio)
             }
 
-            for (sizeInfo in imageReaderInfoList) {
+            for (sizeInfo in captureImageReaderInfoList) {
                 val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
                 whRatioSet.add(whRatio)
             }
 
             for (sizeInfo in mediaRecorderInfoList) {
+                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
+                whRatioSet.add(whRatio)
+            }
+
+            for (sizeInfo in analysisImageReaderInfoList) {
                 val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
                 whRatioSet.add(whRatio)
             }
@@ -917,8 +1344,9 @@ class CameraObj private constructor(
             return CameraSurfacesSizeListInfoVo(
                 whRatioSet,
                 previewInfoList,
-                imageReaderInfoList,
+                captureImageReaderInfoList,
                 mediaRecorderInfoList,
+                analysisImageReaderInfoList,
                 highSpeedInfoList
             )
         }
@@ -994,20 +1422,20 @@ class CameraObj private constructor(
                 }
             }
 
-            val imageReaderInfoList = ArrayList<SizeSpecInfoVo>()
+            val captureImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
                 )
             ) {
-                streamConfigurationMap.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+                streamConfigurationMap.getOutputSizes(ImageFormat.JPEG).forEach { size ->
                     val secondsPerFrame =
                         streamConfigurationMap.getOutputMinFrameDuration(
                             ImageFormat.YUV_420_888,
                             size
                         ) / 1_000_000_000.0
                     val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                    imageReaderInfoList.add(
+                    captureImageReaderInfoList.add(
                         SizeSpecInfoVo(
                             size, fps
                         )
@@ -1036,6 +1464,27 @@ class CameraObj private constructor(
                 }
             }
 
+            val analysisImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                )
+            ) {
+                streamConfigurationMap.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+                    val secondsPerFrame =
+                        streamConfigurationMap.getOutputMinFrameDuration(
+                            ImageFormat.YUV_420_888,
+                            size
+                        ) / 1_000_000_000.0
+                    val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                    analysisImageReaderInfoList.add(
+                        SizeSpecInfoVo(
+                            size, fps
+                        )
+                    )
+                }
+            }
+
             val highSpeedInfoList = ArrayList<SizeSpecInfoVo>()
             if (capabilities.contains(
                     CameraCharacteristics
@@ -1056,8 +1505,9 @@ class CameraObj private constructor(
 
             // 출력 지원 사이즈가 하나도 없다면 null 반환
             if (previewInfoList.isEmpty() &&
-                imageReaderInfoList.isEmpty() &&
+                captureImageReaderInfoList.isEmpty() &&
                 mediaRecorderInfoList.isEmpty() &&
+                analysisImageReaderInfoList.isEmpty() &&
                 highSpeedInfoList.isEmpty()
             ) {
                 return null
@@ -1183,12 +1633,17 @@ class CameraObj private constructor(
                 whRatioSet.add(whRatio)
             }
 
-            for (sizeInfo in imageReaderInfoList) {
+            for (sizeInfo in captureImageReaderInfoList) {
                 val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
                 whRatioSet.add(whRatio)
             }
 
             for (sizeInfo in mediaRecorderInfoList) {
+                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
+                whRatioSet.add(whRatio)
+            }
+
+            for (sizeInfo in analysisImageReaderInfoList) {
                 val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
                 whRatioSet.add(whRatio)
             }
@@ -1202,8 +1657,9 @@ class CameraObj private constructor(
             resultCameraObject.cameraSurfacesSizeListInfoVoMbr = CameraSurfacesSizeListInfoVo(
                 whRatioSet,
                 previewInfoList,
-                imageReaderInfoList,
+                captureImageReaderInfoList,
                 mediaRecorderInfoList,
+                analysisImageReaderInfoList,
                 highSpeedInfoList
             )
 
@@ -1225,6 +1681,11 @@ class CameraObj private constructor(
 
             for (sizeListIdx in 0..sizeLists.lastIndex) {
                 val sizeList = sizeLists[sizeListIdx]
+
+                if (sizeList.isEmpty()) {
+                    // 리스트 하나라도 비어있다면 동일성 존재 여부가 깨진 것으로 간주
+                    return false
+                }
 
                 if (sizeListIdx == 0) {
                     // 첫번째 리스트이므로 비교할 것도 없이 비교용 비율을 넣어두기
@@ -1261,6 +1722,7 @@ class CameraObj private constructor(
         // (전역에서 해당 카메라 아이디에 공유되는 스레드 객체를 반환)
         // 카메라 관련 함수 실행시 사용될 스레드와 세마포어
         // 카메라라는 자원은 하나이므로 하나의 카메라를 조작할 때에는 하나의 스레드에서 싱크를 맞춰야 하기에 이를 스태틱 공간에 생성하여 사용
+        // 한 카메라에 대해 하나의 스레드와 세마포어를 생성후 사용
         private val cameraIdThreadVoList: ArrayList<CameraIdThreadVo> = ArrayList()
         private val cameraIdThreadVoListSemaphore: Semaphore = Semaphore(1)
 
@@ -1326,137 +1788,338 @@ class CameraObj private constructor(
     // (특정 카메라의 특정 모드 지원에 대한 중복되지 않는 단위 사이즈 반환)
     // 단위 사이즈란, 정수에서 더이상 나누어 떨어지지 않는 사이즈로, 사이즈 width, height 최대공약수로 나눈 값
     // 카메라 방향 기준으로, 3:2, 1:1 등의 비율을 나타냄
-    // 1 : Capture - preview, imageReader 동일 서페이스 비율이 제공
-    // 2 : MediaRecord - preview, imageReader, mediaRecorder 동일 서페이스 비율이 제공
-    // 3 : HighSpeed - highSpeed 서페이스 제공
-    // mode 가 null 이라면 모든 값을 반환하고, 위 정해진 값이 아니라면 아무 값도 반환하지 않음
+    // 카메라 지원 모드
+    // 1 : preview - preview 가 존재
+    // 2 : capture - captureImageReader 가 존재
+    // 3 : mediaRecord - mediaRecorder 가 존재
+    // 4 : analysis - analysisImageReader 가 존재
+    // 5 : highSpeed - highSpeed 가 존재
+    // 6 : preview and capture - 동일 서페이스 비율 제공
+    // 7 : preview and mediaRecord - 동일 서페이스 비율 제공
+    // 8 : preview and analysis - 동일 서페이스 비율 제공
+    // 9 : capture and mediaRecord - 동일 서페이스 비율 제공
+    // 10 : capture and analysis - 동일 서페이스 비율 제공
+    // 11 : mediaRecord and analysis - 동일 서페이스 비율 제공
+    // 12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
+    // 13 : preview and capture and analysis - 동일 서페이스 비율 제공
+    // 14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
+    // 15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
+    // 16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
+    // 지원 모드 파라미터가 잘못되었다면 null 반환
     fun getSupportedSurfaceUnitSize(
-        mode: Int?
-    ): HashSet<Size> {
+        mode: Int
+    ): HashSet<Size>? {
+        // (카메라 제공 사이즈)
+        val previewSizeList = cameraSurfacesSizeListInfoVoMbr.previewInfoList
+
+        val captureImageReaderSizeList = cameraSurfacesSizeListInfoVoMbr.captureImageReaderInfoList
+
+        val mediaRecorderSizeList = cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
+
+        val analysisImageReaderSizeList =
+            cameraSurfacesSizeListInfoVoMbr.analysisImageReaderInfoList
+
+        val highSpeedSizeList = cameraSurfacesSizeListInfoVoMbr.highSpeedInfoList
+
         val resultSet = HashSet<Size>()
-
-        if (mode != null) {
-            when (mode) {
-                3 -> { // HighSpeed
-                    val highSpeedSizeList = cameraSurfacesSizeListInfoVoMbr.highSpeedInfoList
-
-                    for (sizeInfo in highSpeedSizeList) {
-                        val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                        resultSet.add(
-                            Size(
-                                sizeInfo.size.width / gcd,
-                                sizeInfo.size.height / gcd
-                            )
+        when (mode) {
+            1 -> {
+                for (sizeInfo in previewSizeList) {
+                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
+                    resultSet.add(
+                        Size(
+                            sizeInfo.size.width / gcd,
+                            sizeInfo.size.height / gcd
                         )
-                    }
-                }
-
-                1 -> { // Capture
-                    val imageReaderSizeList = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
-
-                    val previewSizeList = cameraSurfacesSizeListInfoVoMbr.previewInfoList
-
-                    // imageReader 와 preview 사이즈 리스트 중 서로 동일한 비율만 추려냄
-                    for (imageReaderSizeInfo in imageReaderSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                imageReaderSizeInfo.size.width,
-                                imageReaderSizeInfo.size.height
-                            )
-                        val unitSize = Size(
-                            imageReaderSizeInfo.size.width / gcd,
-                            imageReaderSizeInfo.size.height / gcd
-                        )
-
-                        if (previewSizeList.indexOfFirst {
-                                it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                2 -> { // MediaRecord
-                    val mediaRecorderSizeList =
-                        cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
-
-                    val imageReaderSizeList = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
-
-                    val previewSizeList = cameraSurfacesSizeListInfoVoMbr.previewInfoList
-
-                    // imageReader 와 preview, mediaRecorder 사이즈 리스트 중 서로 동일한 비율만 추려냄
-                    for (mediaRecorderSizeInfo in mediaRecorderSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                mediaRecorderSizeInfo.size.width,
-                                mediaRecorderSizeInfo.size.height
-                            )
-                        val unitSize = Size(
-                            mediaRecorderSizeInfo.size.width / gcd,
-                            mediaRecorderSizeInfo.size.height / gcd
-                        )
-
-                        if (previewSizeList.indexOfFirst {
-                                it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1 &&
-                            imageReaderSizeList.indexOfFirst {
-                                it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
+                    )
                 }
             }
-        } else { // mode null 설정
-            // 모든걸 집어넣기!
-            val mediaRecorderSizeList = cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
-
-            val imageReaderSizeList = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
-
-            val previewSizeList = cameraSurfacesSizeListInfoVoMbr.previewInfoList
-
-            val highSpeedSizeList = cameraSurfacesSizeListInfoVoMbr.highSpeedInfoList
-
-            for (sizeInfo in mediaRecorderSizeList) {
-                val gcd =
-                    CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                val unitSize = Size(
-                    sizeInfo.size.width / gcd,
-                    sizeInfo.size.height / gcd
-                )
-                resultSet.add(unitSize)
+            2 -> {
+                for (sizeInfo in captureImageReaderSizeList) {
+                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
+                    resultSet.add(
+                        Size(
+                            sizeInfo.size.width / gcd,
+                            sizeInfo.size.height / gcd
+                        )
+                    )
+                }
             }
-
-            for (sizeInfo in imageReaderSizeList) {
-                val gcd =
-                    CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                val unitSize = Size(
-                    sizeInfo.size.width / gcd,
-                    sizeInfo.size.height / gcd
-                )
-                resultSet.add(unitSize)
+            3 -> {
+                for (sizeInfo in mediaRecorderSizeList) {
+                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
+                    resultSet.add(
+                        Size(
+                            sizeInfo.size.width / gcd,
+                            sizeInfo.size.height / gcd
+                        )
+                    )
+                }
             }
-
-            for (sizeInfo in previewSizeList) {
-                val gcd =
-                    CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                val unitSize = Size(
-                    sizeInfo.size.width / gcd,
-                    sizeInfo.size.height / gcd
-                )
-                resultSet.add(unitSize)
+            4 -> {
+                for (sizeInfo in analysisImageReaderSizeList) {
+                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
+                    resultSet.add(
+                        Size(
+                            sizeInfo.size.width / gcd,
+                            sizeInfo.size.height / gcd
+                        )
+                    )
+                }
             }
+            5 -> {
+                for (sizeInfo in highSpeedSizeList) {
+                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
+                    resultSet.add(
+                        Size(
+                            sizeInfo.size.width / gcd,
+                            sizeInfo.size.height / gcd
+                        )
+                    )
+                }
+            }
+            6 -> {
+                for (sizeInfo in previewSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
 
-            for (sizeInfo in highSpeedSizeList) {
-                val gcd =
-                    CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                val unitSize = Size(
-                    sizeInfo.size.width / gcd,
-                    sizeInfo.size.height / gcd
-                )
-                resultSet.add(unitSize)
+                    if (captureImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            7 -> {
+                for (sizeInfo in previewSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (mediaRecorderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            8 -> {
+                for (sizeInfo in previewSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (analysisImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            9 -> {
+                for (sizeInfo in captureImageReaderSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (mediaRecorderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            10 -> {
+                for (sizeInfo in captureImageReaderSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (analysisImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            11 -> {
+                for (sizeInfo in mediaRecorderSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (analysisImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            12 -> {
+                for (sizeInfo in previewSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (captureImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1 &&
+                        mediaRecorderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            13 -> {
+                for (sizeInfo in previewSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (captureImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1 &&
+                        analysisImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            14 -> {
+                for (sizeInfo in previewSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (mediaRecorderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1 &&
+                        analysisImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            15 -> {
+                for (sizeInfo in captureImageReaderSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (mediaRecorderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1 &&
+                        analysisImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            16 -> {
+                for (sizeInfo in previewSizeList) {
+                    val gcd =
+                        CustomUtil.getGcd(
+                            sizeInfo.size.width,
+                            sizeInfo.size.height
+                        )
+                    val unitSize = Size(
+                        sizeInfo.size.width / gcd,
+                        sizeInfo.size.height / gcd
+                    )
+
+                    if (captureImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() ==
+                                    unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1 &&
+                        mediaRecorderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1 &&
+                        analysisImageReaderSizeList.indexOfFirst {
+                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
+                        } != -1) {
+                        resultSet.add(unitSize)
+                    }
+                }
+            }
+            else -> {
+                return null
             }
         }
-
         return resultSet
     }
 
@@ -1499,14 +2162,16 @@ class CameraObj private constructor(
         }
     }
 
-    // (현 카메라의 제공 사이즈와 조건이 맞는 사이즈 반환)
+    // (원하는 Area 와 Ratio 에 가장 유사한 사이즈 반환 함수)
     // surfaceType
     // 1 : preview
-    // 2 : imageReader
+    // 2 : capture imageReader
     // 3 : mediaRecorder
-    // 4 : high speed
+    // 4 : analysis imageReader
+    // 5 : high speed
     // preferredArea : 원하는 넓이
     // cameraOrientPreferredWHRatio : 원하는 width * height 비율(width, height 개념은 카메라 방향 기준)
+    // surfaceType 를 잘못 입력하면 null 반환
     fun getNearestSupportedCameraOutputSize(
         surfaceType: Int,
         preferredArea: Long,
@@ -1517,12 +2182,15 @@ class CameraObj private constructor(
                 cameraSurfacesSizeListInfoVoMbr.previewInfoList
             }
             2 -> {
-                cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
+                cameraSurfacesSizeListInfoVoMbr.captureImageReaderInfoList
             }
             3 -> {
                 cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
             }
             4 -> {
+                cameraSurfacesSizeListInfoVoMbr.analysisImageReaderInfoList
+            }
+            5 -> {
                 cameraSurfacesSizeListInfoVoMbr.highSpeedInfoList
             }
             else -> {
@@ -1889,7 +2557,7 @@ class CameraObj private constructor(
             }
 
             if (captureImageReaderConfigVo != null) {
-                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
+                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.captureImageReaderInfoList
 
                 // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes.isEmpty() || cameraSizes.indexOfFirst {
@@ -1919,7 +2587,7 @@ class CameraObj private constructor(
             }
 
             if (analysisImageReaderConfigVo != null) {
-                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.imageReaderInfoList
+                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.analysisImageReaderInfoList
 
                 // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes.isEmpty() || cameraSizes.indexOfFirst {
@@ -3667,12 +4335,14 @@ class CameraObj private constructor(
         val fps: Int
     )
 
-    // image reader format : YUV 420 888 을 사용
+    // capture image reader format : JPEG 을 사용
+    // analysis image reader format : YUV 420 888 을 사용
     data class CameraSurfacesSizeListInfoVo(
         val whRatioSet: HashSet<Double>, // 지원되는 비율 셋
         val previewInfoList: ArrayList<SizeSpecInfoVo>,
-        val imageReaderInfoList: ArrayList<SizeSpecInfoVo>,
+        val captureImageReaderInfoList: ArrayList<SizeSpecInfoVo>,
         val mediaRecorderInfoList: ArrayList<SizeSpecInfoVo>,
+        val analysisImageReaderInfoList: ArrayList<SizeSpecInfoVo>,
         val highSpeedInfoList: ArrayList<SizeSpecInfoVo>
     )
 

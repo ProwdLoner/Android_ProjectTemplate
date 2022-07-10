@@ -19,6 +19,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -1099,6 +1100,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     private fun onCameraPermissionChecked(isOnCreate: Boolean) {
+        Log.e("d", CameraObj.getAllSupportedCameraModeSet(this).toString())
         if (isOnCreate) { // 처음 카메라 설정 시점
             // (카메라 실행)
             // 지원 사이즈 탐지
@@ -1419,10 +1421,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             e.printStackTrace()
         }
     }
-
-    // 최대 이미지 프로세싱 개수 (현재 처리중인 이미지 프로세싱 개수가 이것을 넘어가면 그냥 return)
-    private var asyncCaptureImageOnProgressMbr = false
-    private val asyncCaptureImageOnProgressSemaphoreMbr = Semaphore(1)
 
     // (카메라 이미지 실시간 처리 콜백)
     // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
