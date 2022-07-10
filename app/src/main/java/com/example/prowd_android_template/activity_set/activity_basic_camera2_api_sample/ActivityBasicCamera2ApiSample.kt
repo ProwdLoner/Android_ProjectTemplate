@@ -19,7 +19,6 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -46,9 +45,10 @@ import com.example.prowd_android_template.util_object.CustomUtil
 import com.example.prowd_android_template.util_object.RenderScriptUtil
 import com.xxx.yyy.ScriptC_crop
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.Semaphore
-import kotlin.collections.ArrayList
 
 // todo : 레코딩 버튼 누른 후 빠르게 회전시 멈춤 현상
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
@@ -1428,9 +1428,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
     private fun captureImage(reader: ImageReader) {
         try {
-            // (1. Image 객체 정보 추출)
-            // reader 객체로 받은 image 객체의 이미지 정보가 처리되어 close 될 때까지는 동기적으로 처리
-            // image 객체가 빨리 close 되고 나머지는 비동기 처리를 하는게 좋음
+            val file = File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.jpg")
 
             // 프레임 이미지 객체
             val imageObj: Image = reader.acquireLatestImage() ?: return
@@ -1443,122 +1441,28 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 return
             }
 
-            // 안정화를 위하여 Image 객체의 필요 데이터를 clone
-            // 이번 프레임 수집 시간 (time stamp nano sec -> milli sec)
-            val imageGainTimeMs: Long = imageObj.timestamp / 1000 / 1000
-
-            val imageWidth = imageObj.width
-            val imageHeight = imageObj.height
-            val pixelCount = imageWidth * imageHeight
-
-            // image planes 를 순회하면 yuvByteArray 채우기
-            val plane0: Image.Plane = imageObj.planes[0]
-            val plane1: Image.Plane = imageObj.planes[1]
-            val plane2: Image.Plane = imageObj.planes[2]
-
-            val rowStride0: Int = plane0.rowStride
-            val pixelStride0: Int = plane0.pixelStride
-
-            val rowStride1: Int = plane1.rowStride
-            val pixelStride1: Int = plane1.pixelStride
-
-            val rowStride2: Int = plane2.rowStride
-            val pixelStride2: Int = plane2.pixelStride
-
-            val planeBuffer0: ByteBuffer = CustomUtil.cloneByteBuffer(plane0.buffer)
-            val planeBuffer1: ByteBuffer = CustomUtil.cloneByteBuffer(plane1.buffer)
-            val planeBuffer2: ByteBuffer = CustomUtil.cloneByteBuffer(plane2.buffer)
-
+            val buffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[0].buffer)
             imageObj.close()
+            val bytes = ByteArray(buffer.remaining())
+            buffer[bytes]
+            val output = FileOutputStream(file)
+            output.write(bytes)
+            output.close()
 
-            // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
-
-            // (2. 비동기 이미지 프로세싱 시작)
-            viewModelMbr.executorServiceMbr?.execute {
-
-                // 조기 종료 확인
-                asyncCaptureImageOnProgressSemaphoreMbr.acquire()
-                if (cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
-                    viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
-                    isDestroyed // 액티비티 자체가 종료
-                ) {
-                    asyncCaptureImageOnProgressSemaphoreMbr.release()
-                    return@execute
-                }
-                asyncCaptureImageOnProgressMbr = true
-                asyncCaptureImageOnProgressSemaphoreMbr.release()
-
-                // (3. 이미지 객체에서 추출한 YUV 420 888 바이트 버퍼를 ARGB 8888 비트맵으로 변환)
-                val cameraImageFrameBitmap = yuv420888ByteBufferToArgb8888Bitmap(
-                    imageWidth,
-                    imageHeight,
-                    pixelCount,
-                    rowStride0,
-                    pixelStride0,
-                    planeBuffer0,
-                    rowStride1,
-                    pixelStride1,
-                    planeBuffer1,
-                    rowStride2,
-                    pixelStride2,
-                    planeBuffer2
-                )
-
-                // (4. 이미지를 회전)
-                // 현 디바이스 방향으로 이미지를 맞추기 위해 역시계 방향으로 몇도를 돌려야 하는지
-                val rotateCounterClockAngle: Int =
-                    when (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        display!!.rotation
-                    } else {
-                        windowManager.defaultDisplay.rotation
-                    }) {
-                        Surface.ROTATION_0 -> { // 카메라 기본 방향
-                            // if sensorOrientationMbr = 90 -> 270
-                            360 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
-                        }
-                        Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
-                            // if sensorOrientationMbr = 90 -> 0
-                            90 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
-                        }
-                        Surface.ROTATION_180 -> {
-                            // if sensorOrientationMbr = 90 -> 90
-                            180 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
-                        }
-                        Surface.ROTATION_270 -> {
-                            // if sensorOrientationMbr = 90 -> 180
-                            270 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
-                        }
-                        else -> {
-                            0
-                        }
-                    }
-
-                gpuSemaphoreMbr.acquire()
-                val rotatedCameraImageFrameBitmap =
-                    RenderScriptUtil.rotateBitmapCounterClock(
-                        renderScriptMbr,
-                        scriptCRotatorMbr,
-                        cameraImageFrameBitmap,
-                        rotateCounterClockAngle
-                    )
-                gpuSemaphoreMbr.release()
-
-                // 디버그를 위한 표시
-                runOnUiThread {
-                    if (!isDestroyed) {
-                        Glide.with(this)
-                            .load(rotatedCameraImageFrameBitmap)
-                            .transform(FitCenter())
-                            .into(bindingMbr.captureImg)
-                    }
+            runOnUiThread {
+                if (!isDestroyed) {
+                    Glide.with(this)
+                        .load(file)
+                        .transform(FitCenter())
+                        .into(bindingMbr.captureImg)
                 }
 
-                // 프로세스 한 사이클이 끝나면 반드시 count 를 내릴 것!
-                asyncCaptureImageOnProgressSemaphoreMbr.acquire()
-                asyncCaptureImageOnProgressMbr = false
-                asyncCaptureImageOnProgressSemaphoreMbr.release()
-
+                viewModelMbr.executorServiceMbr?.execute {
+                    Thread.sleep(2000)
+                    file.delete()
+                }
             }
+
         } catch (e: Exception) {
             e.printStackTrace()
         }

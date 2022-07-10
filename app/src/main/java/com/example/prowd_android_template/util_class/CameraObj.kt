@@ -1982,7 +1982,7 @@ class CameraObj private constructor(
                 ImageReader.newInstance(
                     captureImageReaderConfigVo.cameraOrientSurfaceSize.width,
                     captureImageReaderConfigVo.cameraOrientSurfaceSize.height,
-                    ImageFormat.YUV_420_888,
+                    ImageFormat.JPEG,
                     2
                 ).apply {
                     setOnImageAvailableListener(
@@ -2669,6 +2669,36 @@ class CameraObj private constructor(
                     )
                 }
             }
+
+            val orientation = SparseIntArray().apply {
+                append(
+                    Surface.ROTATION_0,
+                    90
+                )
+                append(
+                    Surface.ROTATION_90,
+                    0
+                )
+                append(
+                    Surface.ROTATION_180,
+                    270
+                )
+                append(
+                    Surface.ROTATION_270,
+                    180
+                )
+            }
+
+            captureRequestBuilder.set(
+                CaptureRequest.JPEG_ORIENTATION,
+                (orientation.get(
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        parentActivityMbr.display!!.rotation
+                    } else {
+                        parentActivityMbr.windowManager.defaultDisplay.rotation
+                    }
+                ) + cameraInfoVoMbr.sensorOrientation + 270) % 360
+            )
 
             cameraCaptureSessionMbr!!.capture(
                 captureRequestBuilder.build(),
