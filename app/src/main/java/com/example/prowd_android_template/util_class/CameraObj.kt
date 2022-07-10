@@ -1,6 +1,7 @@
 package com.example.prowd_android_template.util_class
 
 import android.Manifest
+import android.R.attr.factor
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
@@ -53,6 +54,8 @@ import kotlin.math.sqrt
 // todo : 최고 화질시 녹화 확인
 // todo : 분석용 이미지 리더와 캡쳐용 나누기 : 캡쳐용은 캡쳐시 한순간만...
 // todo : ui thread 사용 부분 개선(최소화 및 회전으로 인한 불안정 해결)
+// todo : whitebalace 템플릿 사용
+
 // todo : 녹화 미디어 플레이어 템플릿 사용 - 플레이어 제공 사이즈와 상호검증
 
 class CameraObj private constructor(
@@ -2701,7 +2704,8 @@ class CameraObj private constructor(
     }
 
     // (WhiteBalance Color Temperature 설정)
-    // null 이라면 AWB, 1~100 사이의 값 설정
+    // null 이라면 AWB, 0~100 범위의 값 설정
+    // 0이면 파란색으로 차가운 색, 100이면 노란색으로 따뜻한 색
 
     // onError 에러 코드 :
     // 1 : 오토 WhiteBalance 지원이 불가
@@ -2724,7 +2728,7 @@ class CameraObj private constructor(
                     null
                 }
             } else {
-                if (colorTemperature < 1 || colorTemperature > 100) {
+                if (colorTemperature < 0 || colorTemperature > 100) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onError(2)
                     return@run
@@ -3326,7 +3330,6 @@ class CameraObj private constructor(
         }
 
         // (WhiteBalance 설정)
-        // todo : 수동 설정 방법 새로 찾기 및 멤버변수 변경
         if (whiteBalanceColorTemperatureMbr == null) {
             // AWH 설정
             captureRequestBuilder.set(
@@ -3415,43 +3418,13 @@ class CameraObj private constructor(
         )
     }
 
-    // todo 더 좋은 방식
-    private fun getTemperatureVector(whiteBalance: Int): RggbChannelVector {
-        val temperature = (whiteBalance / 100).toFloat()
-        var red: Float
-        var green: Float
-        var blue: Float
-
-        //Calculate red
-        if (temperature <= 66) red = 255f else {
-            red = temperature - 60
-            red = (329.698727446 * Math.pow(red.toDouble(), -0.1332047592)).toFloat()
-            if (red < 0) red = 0f
-            if (red > 255) red = 255f
-        }
-
-
-        //Calculate green
-        if (temperature <= 66) {
-            green = temperature
-            green = (99.4708025861 * Math.log(green.toDouble()) - 161.1195681661).toFloat()
-            if (green < 0) green = 0f
-            if (green > 255) green = 255f
-        } else {
-            green = temperature - 60
-            green = (288.1221695283 * Math.pow(green.toDouble(), -0.0755148492)).toFloat()
-            if (green < 0) green = 0f
-            if (green > 255) green = 255f
-        }
-
-        //calculate blue
-        if (temperature >= 66) blue = 255f else if (temperature <= 19) blue = 0f else {
-            blue = temperature - 10
-            blue = (138.5177312231 * Math.log(blue.toDouble()) - 305.0447927307).toFloat()
-            if (blue < 0) blue = 0f
-            if (blue > 255) blue = 255f
-        }
-        return RggbChannelVector(red / 255 * 2, green / 255, green / 255, blue / 255 * 2)
+    private fun getTemperatureVector(factor: Int): RggbChannelVector {
+        return RggbChannelVector(
+            0.635f + 0.0208333f * factor,
+            1.0f,
+            1.0f,
+            3.7420394f + -0.0287829f * factor
+        )
     }
 
 

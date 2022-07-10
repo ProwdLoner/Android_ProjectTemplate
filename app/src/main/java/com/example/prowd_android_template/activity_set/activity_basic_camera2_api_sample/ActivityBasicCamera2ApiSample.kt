@@ -605,41 +605,41 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-//        bindingMbr.root.setOnClickListener {
-//            val nep : Int? = when (cameraObjMbr.whiteBalanceColorTemperatureMbr) {
-//                1 -> {
-//                    20
-//                }
-//                20 -> {
-//                    40
-//                }
-//                40 -> {
-//                    60
-//                }
-//                60 -> {
-//                    80
-//                }
-//                80 -> {
-//                    100
-//                }
-//                100 -> {
-//                    null
-//                }
-//                else -> {
-//                    1
-//                }
-//            }
-//
-//            Log.e("d", nep.toString())
-//            cameraObjMbr.setWhiteBalanceColorTemperature(
-//                nep,
-//                onComplete = {
-//
-//                }, onError = {
-//
-//                }
-//            )
-//        }
+        bindingMbr.root.setOnClickListener {
+            val nep : Int? = when (cameraObjMbr.whiteBalanceColorTemperatureMbr) {
+                0 -> {
+                    20
+                }
+                20 -> {
+                    40
+                }
+                40 -> {
+                    60
+                }
+                60 -> {
+                    80
+                }
+                80 -> {
+                    100
+                }
+                100 -> {
+                    null
+                }
+                else -> {
+                    0
+                }
+            }
+
+            Log.e("d", nep.toString())
+            cameraObjMbr.setWhiteBalanceColorTemperature(
+                nep,
+                onComplete = {
+
+                }, onError = {
+
+                }
+            )
+        }
 
         // (디버그 이미지 뷰 전환 기능)
         bindingMbr.debugYuvToRgbImg.setOnClickListener {
