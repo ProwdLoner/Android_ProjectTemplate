@@ -59,6 +59,14 @@
         app:layout_constraintStart_toStartOf="@id/debug_image_container"
         app:layout_constraintTop_toBottomOf="@id/debug_image_container" />
 
+    <ImageView
+        android:id="@+id/capture_img"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="5dp"
+        app:layout_constraintTop_toBottomOf="@id/debug_image_label"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <com.example.prowd_android_template.custom_view.CircleImageView
         android:id="@+id/camera_change_btn"
         android:layout_width="70dp"

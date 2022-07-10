@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.util_class
 
 import android.Manifest
-import android.R.attr.factor
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
@@ -1805,6 +1804,7 @@ class CameraObj private constructor(
         }
     }
 
+    // todo 서페이스 3개 한정시키기
     // (출력 서페이스 설정 함수)
     // camera status : 0 -> 1
     // media status : 0 -> 1, 0 -> 0
@@ -2465,7 +2465,7 @@ class CameraObj private constructor(
         }
     }
 
-    // (CameraSession 을 대기 상태로 만드는 함수)
+    // (반복 리퀘스트 중단 함수)
     // camera status : 2 -> 1
     // media status : 3 -> 4, n -> n
     // 현재 세션이 repeating 이라면 이를 중단함.
@@ -2496,6 +2496,187 @@ class CameraObj private constructor(
             cameraThreadVoMbr.cameraSemaphore.release()
 
             onCameraPause()
+        }
+    }
+
+    // todo : 수동 설정 캡쳐, 제로 셧, burst
+    //    https://developer.android.com/reference/android/hardware/camera2/CameraDevice#TEMPLATE_RECORD
+    // (캡쳐 리퀘스트 요청 함수)
+    // camera status : 1, 2
+    // 카메라 현 설정으로 캡쳐
+    // TEMPLATE_STILL_CAPTURE 으로 실행되며, 만약 녹화중이라면 TEMPLATE_VIDEO_SNAPSHOT 으로 실행
+    // 캡쳐 결과는 captureImageReader 로 반환됨
+
+    // onError 에러 코드 :
+    // 1 : 캡쳐 가능 상태가 아님
+    // 2 : 캡쳐 이미지 리더가 설정되지 않음
+    fun captureRequest(
+        captureCallback: CameraCaptureSession.CaptureCallback?,
+        onError: (Int) -> Unit
+    ) {
+        cameraThreadVoMbr.cameraHandlerThreadObj.run {
+            cameraThreadVoMbr.cameraSemaphore.acquire()
+            if (cameraStatusCodeMbr != 1 && cameraStatusCodeMbr != 2) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onError(1)
+            }
+
+            if (captureImageReaderMbr == null) {
+                cameraThreadVoMbr.cameraSemaphore.release()
+                onError(2)
+            }
+
+            // [모드 설정]
+            val requestTemplate = if (mediaRecorderStatusCodeMbr != 3) { // 미디어 레코딩 중이 아닐시
+                CameraDevice.TEMPLATE_STILL_CAPTURE
+            } else { // 미디어 레코딩 중일시
+                CameraDevice.TEMPLATE_VIDEO_SNAPSHOT
+            }
+
+            // [리퀘스트 빌더 생성]
+            val captureRequestBuilder =
+                cameraDeviceMbr!!.createCaptureRequest(requestTemplate)
+
+
+            // [타겟 서페이스 설정]
+            captureRequestBuilder.addTarget(captureImageReaderMbr!!.surface)
+
+            // [리퀘스트 설정]
+            // (3A 설정)
+            // (포커스 거리 설정)
+            if (focusDistanceMbr == -1f) {
+                // 자연스런 오토 포커스 설정
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                )
+            } else if (focusDistanceMbr == -2f) {
+                // 빠른 오토 포커스 설정
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                )
+            } else if (focusDistanceMbr >= 0f) {
+                // 포커스 수동 거리 설정
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_OFF
+                )
+                captureRequestBuilder.set(
+                    CaptureRequest.LENS_FOCUS_DISTANCE,
+                    focusDistanceMbr
+                )
+            }
+
+            // (Exposure 설정)
+            if (exposureTimeNsMbr == null) {
+                // AE 설정
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON
+                )
+            } else {
+                // 수동 노출 시간 설정
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_OFF
+                )
+
+                captureRequestBuilder.set(
+                    CaptureRequest.SENSOR_EXPOSURE_TIME,
+                    exposureTimeNsMbr
+                )
+            }
+
+            // (WhiteBalance 설정)
+            if (whiteBalanceColorTemperatureMbr == null) {
+                // AWH 설정
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AWB_MODE,
+                    CaptureRequest.CONTROL_AWB_MODE_AUTO
+                )
+            } else {
+                // 색온도 설정
+                captureRequestBuilder.set(
+                    CaptureRequest.CONTROL_AWB_MODE,
+                    CaptureRequest.CONTROL_AWB_MODE_OFF
+                )
+                captureRequestBuilder.set(
+                    CaptureRequest.COLOR_CORRECTION_MODE,
+                    CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
+                )
+                captureRequestBuilder.set(
+                    CaptureRequest.COLOR_CORRECTION_GAINS,
+                    getTemperatureVector(whiteBalanceColorTemperatureMbr!!)
+                )
+            }
+
+            // (수동 설정)
+            // 센서 사이즈 중심점
+            val centerX =
+                cameraInfoVoMbr.sensorSize.width() / 2
+            val centerY =
+                cameraInfoVoMbr.sensorSize.height() / 2
+
+            // 센서 사이즈에서 중심을 기반 크롭 박스 설정
+            // zoom 은 확대 비율로, 센서 크기에서 박스의 크기가 작을수록 줌 레벨이 올라감
+            val deltaX =
+                ((0.5f * cameraInfoVoMbr.sensorSize.width()) / zoomFactorMbr).toInt()
+            val deltaY =
+                ((0.5f * cameraInfoVoMbr.sensorSize.height()) / zoomFactorMbr).toInt()
+
+            val mCropRegion = Rect().apply {
+                set(
+                    centerX - deltaX,
+                    centerY - deltaY,
+                    centerX + deltaX,
+                    centerY + deltaY
+                )
+            }
+
+            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, mCropRegion)
+
+            // (카메라 떨림 보정 여부 반영)
+            when (cameraStabilizationSetMbr) {
+                0 -> { // 떨림 보정 off
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                1 -> { // 기계적 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF
+                    )
+                }
+                2 -> { // 소프트웨어 떨림 보정
+                    captureRequestBuilder.set(
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+                        CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON
+                    )
+                }
+            }
+
+            cameraCaptureSessionMbr!!.capture(
+                captureRequestBuilder.build(),
+                captureCallback,
+                cameraThreadVoMbr.cameraHandlerThreadObj.handler
+            )
+
+            cameraThreadVoMbr.cameraSemaphore.release()
         }
     }
 
