@@ -4318,6 +4318,29 @@ class CameraObj private constructor(
         )
     }
 
+    // todo : capture jpeg orientation front facing 에 참고
+//    private fun getJpegOrientation(
+//        c: CameraCharacteristics,
+//        deviceOrientation: Int
+//    ): Int {
+//        var deviceOrientation = deviceOrientation
+//        if (deviceOrientation == OrientationEventListener.ORIENTATION_UNKNOWN) return 0
+//        val sensorOrientation =
+//            c.get(CameraCharacteristics.SENSOR_ORIENTATION)!!
+//
+//        // Round device orientation to a multiple of 90
+//        deviceOrientation = (deviceOrientation + 45) / 90 * 90
+//
+//        // Reverse device orientation for front-facing cameras
+//        val facingFront =
+//            c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
+//        if (facingFront) deviceOrientation = -deviceOrientation
+//
+//        // Calculate desired JPEG orientation relative to camera orientation to make
+//        // the image upright relative to the device orientation
+//        return (sensorOrientation + deviceOrientation + 360) % 360
+//    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
