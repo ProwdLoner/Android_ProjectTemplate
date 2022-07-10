@@ -29,16 +29,18 @@ import kotlin.math.sqrt
 
 
 // todo : auto 설정일 때 focus distance 등의 현재 수치 가져오기
-// todo : repeatingRequest / capture on manual 제공
+// todo :( repeatingRequest / capture) on manual 제공
 // todo : af, ae, awb, iso area 설정
 // todo : 터치 exposure, whitebalance, focus 등 (핀치 줌을 참고)
 // todo : iso 내부 멤버변수로 두고 자동, 수동 모드 변경 및 수동 수치 조작 가능하게
 //    https://stackoverflow.com/questions/28293078/how-to-control-iso-manually-in-camera2-android
 // todo : 디바이스 방향 관련 부분 다시 살피기
 // todo : ui thread 사용 부분 개선(최소화 및 회전으로 인한 불안정 해결)
-// todo : whitebalace 템플릿 사용
 // todo : 최고 화질시 녹화 확인
 // todo : 녹화 미디어 플레이어 템플릿 사용 - 플레이어 제공 사이즈와 상호검증
+// todo : 캡쳐 제로 셧
+//    https://developer.android.com/reference/android/hardware/camera2/CameraDevice#TEMPLATE_RECORD
+// todo : 버스트 세션 사용
 
 // <Camera 객체>
 // 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체 (생성시 카메라 아이디를 주입)
@@ -3181,8 +3183,6 @@ class CameraObj private constructor(
         }
     }
 
-    // todo : 수동 설정 캡쳐, 제로 셧, burst
-    //    https://developer.android.com/reference/android/hardware/camera2/CameraDevice#TEMPLATE_RECORD
     // (캡쳐 리퀘스트 요청 함수)
     // camera status : 1, 2
     // 카메라 현 설정으로 캡쳐
@@ -4044,6 +4044,7 @@ class CameraObj private constructor(
                 surfaces.add(mediaCodecSurface)
             }
 
+            // todo 고속촬영
             cameraDeviceMbr?.createCaptureSession(
                 surfaces,
                 object : CameraCaptureSession.StateCallback() {
