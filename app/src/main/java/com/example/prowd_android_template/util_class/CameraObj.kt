@@ -89,8 +89,17 @@ class CameraObj private constructor(
         private set
 
     // 화이트 밸런스 색온도
-    // null 일시 Auto WhiteBalance ON
-    // 화이트 밸런스는 1 ~ 100 사이의 정수값
+    // null 이라면 Auto WhiteBalance ON
+    // 화이트 밸런스는 0 ~ 100 사이의 정수값
+    // 0이면 파란색으로 차가운 색, 100이면 노란색으로 따뜻한 색
+    // 템플릿 적용 파라미터
+    // -1 : CONTROL_AWB_MODE_CLOUDY_DAYLIGHT
+    // -2 : CONTROL_AWB_MODE_DAYLIGHT
+    // -3 : CONTROL_AWB_MODE_FLUORESCENT
+    // -4 : CONTROL_AWB_MODE_INCANDESCENT
+    // -5 : CONTROL_AWB_MODE_SHADE
+    // -6 : CONTROL_AWB_MODE_TWILIGHT
+    // -7 : CONTROL_AWB_MODE_WARM_FLUORESCENT
     var whiteBalanceColorTemperatureMbr: Int? = null
 
     // (수동 조작 설정)
@@ -3492,10 +3501,17 @@ class CameraObj private constructor(
     // (WhiteBalance Color Temperature 설정)
     // null 이라면 AWB, 0~100 범위의 값 설정
     // 0이면 파란색으로 차가운 색, 100이면 노란색으로 따뜻한 색
-
+    // 템플릿 적용 파라미터
+    // -1 : CONTROL_AWB_MODE_CLOUDY_DAYLIGHT
+    // -2 : CONTROL_AWB_MODE_DAYLIGHT
+    // -3 : CONTROL_AWB_MODE_FLUORESCENT
+    // -4 : CONTROL_AWB_MODE_INCANDESCENT
+    // -5 : CONTROL_AWB_MODE_SHADE
+    // -6 : CONTROL_AWB_MODE_TWILIGHT
+    // -7 : CONTROL_AWB_MODE_WARM_FLUORESCENT
     // onError 에러 코드 :
     // 1 : 오토 WhiteBalance 지원이 불가
-    // 1 : colorTemperature 파라미터 에러
+    // 2 : colorTemperature 파라미터 에러
     fun setWhiteBalanceColorTemperature(
         colorTemperature: Int?,
         onComplete: () -> Unit,
@@ -3514,7 +3530,7 @@ class CameraObj private constructor(
                     null
                 }
             } else {
-                if (colorTemperature < 0 || colorTemperature > 100) {
+                if (colorTemperature < -7 || colorTemperature > 100) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     onError(2)
                     return@run
@@ -4166,19 +4182,65 @@ class CameraObj private constructor(
                 CaptureRequest.CONTROL_AWB_MODE_AUTO
             )
         } else {
-            // 색온도 설정
-            captureRequestBuilder.set(
-                CaptureRequest.CONTROL_AWB_MODE,
-                CaptureRequest.CONTROL_AWB_MODE_OFF
-            )
-            captureRequestBuilder.set(
-                CaptureRequest.COLOR_CORRECTION_MODE,
-                CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
-            )
-            captureRequestBuilder.set(
-                CaptureRequest.COLOR_CORRECTION_GAINS,
-                getTemperatureVector(whiteBalanceColorTemperatureMbr!!)
-            )
+            when (whiteBalanceColorTemperatureMbr) {
+                -1 -> {
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AWB_MODE,
+                        CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT
+                    )
+                }
+                -2 -> {
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AWB_MODE,
+                        CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT
+                    )
+                }
+                -3 -> {
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AWB_MODE,
+                        CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT
+                    )
+                }
+                -4 -> {
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AWB_MODE,
+                        CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT
+                    )
+                }
+                -5 -> {
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AWB_MODE,
+                        CaptureRequest.CONTROL_AWB_MODE_SHADE
+                    )
+                }
+                -6 -> {
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AWB_MODE,
+                        CaptureRequest.CONTROL_AWB_MODE_TWILIGHT
+                    )
+                }
+                -7 -> {
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AWB_MODE,
+                        CaptureRequest.CONTROL_AWB_MODE_WARM_FLUORESCENT
+                    )
+                }
+                else -> {
+                    // 색온도 설정
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AWB_MODE,
+                        CaptureRequest.CONTROL_AWB_MODE_OFF
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.COLOR_CORRECTION_MODE,
+                        CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
+                    )
+                    captureRequestBuilder.set(
+                        CaptureRequest.COLOR_CORRECTION_GAINS,
+                        getTemperatureVector(whiteBalanceColorTemperatureMbr!!)
+                    )
+                }
+            }
         }
 
         // (수동 설정)
