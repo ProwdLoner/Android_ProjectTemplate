@@ -51,7 +51,6 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.Semaphore
 
-// todo : 레코딩 버튼 누른 후 빠르게 회전시 멈춤 현상
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <멤버 변수 공간>
