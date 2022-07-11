@@ -1307,11 +1307,15 @@ class CameraObj private constructor(
             cameraConfig.highSpeedVideoSizes.forEach { size ->
                 cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
                     val fps = fpsRange.upper
-                    highSpeedInfoList.add(
-                        SizeSpecInfoVo(
-                            size, fps
+                    if (highSpeedInfoList.indexOfFirst {
+                            it.size == size && it.fps == fps
+                        } == -1) {
+                        highSpeedInfoList.add(
+                            SizeSpecInfoVo(
+                                size, fps
+                            )
                         )
-                    )
+                    }
                 }
             }
 
@@ -1495,11 +1499,15 @@ class CameraObj private constructor(
                 streamConfigurationMap.highSpeedVideoSizes.forEach { size ->
                     streamConfigurationMap.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
                         val fps = fpsRange.upper
-                        highSpeedInfoList.add(
-                            SizeSpecInfoVo(
-                                size, fps
+                        if (highSpeedInfoList.indexOfFirst {
+                                it.size == size && it.fps == fps
+                            } == -1) {
+                            highSpeedInfoList.add(
+                                SizeSpecInfoVo(
+                                    size, fps
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
