@@ -2392,6 +2392,7 @@ class CameraObj private constructor(
             if (cameraStatusCodeMbr == -1) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
+                return
             }
 
             // [카메라 상태 초기화]
@@ -2967,7 +2968,7 @@ class CameraObj private constructor(
     }
 
     // (카메라 서페이스 까지 초기화)
-    // camera status : -1 -> -1, n -> 0
+    // camera status : -1 -> -1, 0 -> 0, n -> 0
     // media status : n -> 0
     // 카메라 디바이스를 제외한 나머지 초기화 (= 서페이스 설정하기 이전 상태로 되돌리기)
     // 미디어 레코딩 결과물 파일을 얻기 위해선 먼저 이를 실행해야함
@@ -2980,6 +2981,7 @@ class CameraObj private constructor(
             if (cameraStatusCodeMbr == -1 || cameraStatusCodeMbr == 0) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
+                return
             }
 
             // [카메라 상태 초기화]
@@ -3169,6 +3171,7 @@ class CameraObj private constructor(
             if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onError(1)
+                return
             }
 
             if (mediaRecorderStatusCodeMbr == 3) {
@@ -3204,11 +3207,13 @@ class CameraObj private constructor(
             if (cameraStatusCodeMbr != 1 && cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onError(1)
+                return
             }
 
             if (captureImageReaderMbr == null) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onError(2)
+                return
             }
 
             // [모드 설정]
@@ -3266,6 +3271,7 @@ class CameraObj private constructor(
             if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
+                return
             }
 
             // [모드 설정]
@@ -3405,6 +3411,7 @@ class CameraObj private constructor(
             if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
+                return
             }
 
             // [모드 설정]
@@ -3472,6 +3479,7 @@ class CameraObj private constructor(
             if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
+                return
             }
 
             // [모드 설정]
@@ -3545,6 +3553,7 @@ class CameraObj private constructor(
             if (cameraStatusCodeMbr != 2) {
                 cameraThreadVoMbr.cameraSemaphore.release()
                 onComplete()
+                return
             }
 
             // [모드 설정]
@@ -3674,7 +3683,11 @@ class CameraObj private constructor(
         // (카메라 디바이스 열기)
         openCameraDevice(
             onCameraDeviceReady = { // 카메라 디바이스가 준비된 시점
-                if (parentActivityMbr.isDestroyed || parentActivityMbr.isFinishing) {
+
+                // UI 스레드 생존 검증
+                if (parentActivityMbr.isDestroyed ||
+                    parentActivityMbr.isFinishing
+                ) {
                     cameraThreadVoMbr.cameraSemaphore.release()
                     return@openCameraDevice
                 }
