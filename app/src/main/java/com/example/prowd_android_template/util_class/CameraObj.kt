@@ -2471,6 +2471,7 @@ class CameraObj private constructor(
         }
     }
 
+    // todo : 검사 및 리펙토링
     // (출력 서페이스 설정 함수)
     // camera status : 0 -> 1
     // media status : 0 -> 1, 0 -> 0
