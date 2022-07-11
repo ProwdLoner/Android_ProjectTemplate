@@ -41,6 +41,8 @@ import kotlin.math.sqrt
 // todo : 캡쳐 제로 셧
 //    https://developer.android.com/reference/android/hardware/camera2/CameraDevice#TEMPLATE_RECORD
 // todo : 버스트 세션 사용
+// todo : 종료시 aborting 사용 고려
+// todo : still capture 시 stopRepeating -> abortCaptures 를 먼저 한 후  capture 를 하여 그 결과 콜백 내에서 기존 repeat 재개
 
 // <Camera 객체>
 // 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체 (생성시 카메라 아이디를 주입)
