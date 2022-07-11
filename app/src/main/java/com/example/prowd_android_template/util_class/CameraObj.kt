@@ -510,13 +510,20 @@ class CameraObj private constructor(
                     !(aeAvailableModes == null || aeAvailableModes.isEmpty() || (aeAvailableModes.size == 1
                             && aeAvailableModes[0] == CameraMetadata.CONTROL_AE_MODE_OFF))
 
-                val aeState: Int? =
+                val maxRegionAe: Int? =
                     characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE)
+
                 val autoExposureMeteringAreaSupported =
-                    aeState != null && aeState >= 1
+                    maxRegionAe != null && maxRegionAe >= 1
 
                 val awbAvailableModes: IntArray? =
                     characteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)
+
+                val maxRegionAwb: Int? =
+                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB)
+
+                val autoWhiteBalanceMeteringAreaSupported =
+                    maxRegionAwb != null && maxRegionAwb >= 1
 
                 val autoWhiteBalanceSupported =
                     !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
@@ -579,6 +586,7 @@ class CameraObj private constructor(
                             autoExposureSupported,
                             autoExposureMeteringAreaSupported,
                             autoWhiteBalanceSupported,
+                            autoWhiteBalanceMeteringAreaSupported,
                             supportedMinimumFocusDistance,
                             isOpticalStabilizationAvailable,
                             isVideoStabilizationAvailable,
@@ -643,6 +651,12 @@ class CameraObj private constructor(
                     !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
                             && awbAvailableModes[0] == CameraMetadata.CONTROL_AWB_MODE_OFF))
 
+                val maxRegionAwb: Int? =
+                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB)
+
+                val autoWhiteBalanceMeteringAreaSupported =
+                    maxRegionAwb != null && maxRegionAwb >= 1
+
                 val supportedMinimumFocusDistance =
                     characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                         ?: 0f
@@ -700,6 +714,7 @@ class CameraObj private constructor(
                             autoExposureSupported,
                             autoExposureMeteringAreaSupported,
                             autoWhiteBalanceSupported,
+                            autoWhiteBalanceMeteringAreaSupported,
                             supportedMinimumFocusDistance,
                             isOpticalStabilizationAvailable,
                             isVideoStabilizationAvailable,
@@ -1588,6 +1603,12 @@ class CameraObj private constructor(
                 !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
                         && awbAvailableModes[0] == CameraMetadata.CONTROL_AWB_MODE_OFF))
 
+            val maxRegionAwb: Int? =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB)
+
+            val autoWhiteBalanceMeteringAreaSupported =
+                maxRegionAwb != null && maxRegionAwb >= 1
+
             // max zoom 정보
             var maxZoom =
                 cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
@@ -1628,6 +1649,7 @@ class CameraObj private constructor(
                 autoExposureSupported,
                 autoExposureMeteringAreaSupported,
                 autoWhiteBalanceSupported,
+                autoWhiteBalanceMeteringAreaSupported,
                 supportedMinimumFocusDistance,
                 isOpticalStabilizationAvailable,
                 isVideoStabilizationAvailable,
@@ -4431,6 +4453,8 @@ class CameraObj private constructor(
         val autoExposureMeteringAreaSupported: Boolean,
         // Auto WhiteBalance 기능을 지원해주는지
         val autoWhiteBalanceSupported: Boolean,
+        // AutoWhiteBalanceArea 설정 가능 여부
+        val autoWhiteBalanceMeteringAreaSupported: Boolean,
         // LENS_FOCUS_DISTANCE 최소 초점 거리
         // 0f 는 가장 먼 초점 거리, 가장 가깝게 초점을 맞출 수 있는 nf 값
         // 이것이 0f 라는 것은 초점이 고정되어 있다는 뜻
