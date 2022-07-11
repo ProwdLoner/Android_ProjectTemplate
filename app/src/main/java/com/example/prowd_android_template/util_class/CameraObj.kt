@@ -3071,8 +3071,8 @@ class CameraObj private constructor(
     // 4 : mediaRecorder 설정이지만 mediaRecorder 서페이스가 없을 때
     fun repeatingRequestOnTemplate(
         forPreview: Boolean,
-        forAnalysisImageReader: Boolean,
         forMediaRecorder: Boolean,
+        forAnalysisImageReader: Boolean,
         onComplete: () -> Unit,
         onError: (Int) -> Unit
     ) {

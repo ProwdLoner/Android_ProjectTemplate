@@ -234,8 +234,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             // (카메라 리퀘스트 설정)
                             cameraObjMbr.repeatingRequestOnTemplate(
                                 forPreview = true,
-                                forAnalysisImageReader = true,
                                 forMediaRecorder = false,
+                                forAnalysisImageReader = true,
                                 onComplete = {
 
                                 },
@@ -860,8 +860,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                         // (카메라 리퀘스트 설정)
                                         cameraObjMbr.repeatingRequestOnTemplate(
                                             forPreview = true,
-                                            forAnalysisImageReader = true,
                                             forMediaRecorder = false,
+                                            forAnalysisImageReader = true,
                                             onComplete = {
 
                                             },
@@ -982,8 +982,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             // (카메라 리퀘스트 설정)
                             cameraObjMbr.repeatingRequestOnTemplate(
                                 forPreview = true,
-                                forAnalysisImageReader = false,
                                 forMediaRecorder = true,
+                                forAnalysisImageReader = false,
                                 onComplete = {
                                     // (미디어 레코딩 녹화 실행)
                                     cameraObjMbr.startMediaRecording(onComplete = {
@@ -1184,8 +1184,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     // (카메라 리퀘스트 설정)
                     cameraObjMbr.repeatingRequestOnTemplate(
                         forPreview = true,
-                        forAnalysisImageReader = true,
                         forMediaRecorder = false,
+                        forAnalysisImageReader = true,
                         onComplete = {
 
                         },
@@ -1204,8 +1204,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // todo
             cameraObjMbr.repeatingRequestOnTemplate(
                 forPreview = true,
-                forAnalysisImageReader = true,
                 forMediaRecorder = false,
+                forAnalysisImageReader = true,
                 onComplete = {
 
                 },
