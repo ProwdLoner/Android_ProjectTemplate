@@ -8,6 +8,7 @@ import android.view.ViewConfiguration
 import android.view.ScaleGestureDetector.OnScaleGestureListener
 import java.lang.Exception
 import java.lang.IllegalArgumentException
+import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnGestureListener
 
 internal class CustomGestureDetector(context: Context?, listener: OnGestureListener) {
     private var mActivePointerId = INVALID_POINTER_ID
