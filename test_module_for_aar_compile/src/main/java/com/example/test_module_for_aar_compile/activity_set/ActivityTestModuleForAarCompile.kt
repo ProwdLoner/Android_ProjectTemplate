@@ -13,6 +13,8 @@ import com.example.test_module_for_aar_compile.R
 // 결과물은, 프로젝트 폴더 - 모듈 폴더 - build - outputs - aar 안의, 모듈명-release.aar 이름으로 존재
 // 위 결과물을 사용하려는 모듈 내의 libs 폴더 안에 붙여넣고
 //  build.gradle 에 implementation fileTree(dir: 'libs', include: ['*.aar']) 이렇게 설정하여 사용하면 됨
+// Gradle 탭이 없다면, View - Tool Windows 안에 존재합니다.
+// Gradle task 가 나오지 않으면, File - Settings - Experimental - Do not build Gradle task list during Gradle sync 체크 - Apply 를 누르면 됩니다.
 class ActivityTestModuleForAarCompile : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
