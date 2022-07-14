@@ -776,6 +776,70 @@ class ActivityPermissionSample : AppCompatActivity() {
             }
         }
 
+        // 시스템 설정 변경 권한
+        bindingMbr.writeSettingPermissionSwitch.setOnClickListener {
+            if (bindingMbr.writeSettingPermissionSwitch.isChecked) { // 체크시
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                    DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "권한 요청",
+                        "권한 설정 화면으로 이동하시겠습니까?",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            // 권한 설정 페이지 이동
+                            val intent =
+                                Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+                            intent.data = Uri.parse("package:" + this.packageName)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            resultLauncherCallbackMbr = { }
+                            resultLauncherMbr.launch(intent)
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            // 뷰 상태 되돌리기
+                            bindingMbr.writeSettingPermissionSwitch.isChecked = false
+                        },
+                        onCanceled = {
+                            // 취소 불가
+                        }
+                    )
+            } else {
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                    DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "권한 요청",
+                        "권한 설정 화면으로 이동하시겠습니까?",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            // 권한 설정 페이지 이동
+                            val intent =
+                                Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+                            intent.data = Uri.parse("package:" + this.packageName)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            resultLauncherCallbackMbr = { }
+                            resultLauncherMbr.launch(intent)
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            // 뷰 상태 되돌리기
+                            bindingMbr.writeSettingPermissionSwitch.isChecked = true
+                        },
+                        onCanceled = {
+                            // 취소 불가
+                        }
+                    )
+
+            }
+        }
+
     }
 
     // 라이브 데이터 설정
@@ -887,5 +951,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                 bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
             }
         }
+
+        bindingMbr.writeSettingPermissionSwitch.isChecked = Settings.System.canWrite(this)
     }
 }
