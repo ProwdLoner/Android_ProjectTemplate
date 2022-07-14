@@ -144,7 +144,7 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
             viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
                 DialogProgressLoading.DialogInfoVO(
                     false,
-                    "다음 액티비티에 넘겨줄 이미지를 준비중입니다.",
+                    "고해상도 이미지를 준비중입니다.",
                     onCanceled = {}
                 )
 
@@ -159,7 +159,7 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
                 val tempFile = File(cacheDir, "temp.jpg")
                 tempFile.createNewFile()
                 val out = FileOutputStream(tempFile)
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
                 out.close()
 
                 val intent =
