@@ -100,45 +100,66 @@ class ActivityEasyLutSample : AppCompatActivity() {
                             )
 
                         // (데이터 준비)
-                        val filterFileList = assets.list("lut_filters_wide")!!
+                        // 숫자 타이틀에 따른 정렬 콜백
+                        val numTitleComp =
+                            Comparator { a: String,
+                                         b: String ->
+                                val num1 = a.replace("[^0-9]".toRegex(), "").toInt()
+                                val num2 = b.replace("[^0-9]".toRegex(), "").toInt()
+                                num1 - num2
+                            }
+
+                        val wideFilterFileList = assets.list("lut_filters_wide")!!
+                        wideFilterFileList.sortWith(
+                            numTitleComp
+                        )
+
+                        val haldFilterFileList = assets.list("lut_filters_hald")!!
+                        haldFilterFileList.sortWith(
+                            numTitleComp
+                        )
+
+                        val squareFilterFileList = assets.list("lut_filters_square")!!
+                        squareFilterFileList.sortWith(
+                            numTitleComp
+                        )
 
                         val adapterDataList =
-                            ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+                            ArrayList<ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO>()
 
-                        for (filterFile in filterFileList) {
+                        for (filterFile in wideFilterFileList) {
                             adapterDataList.add(
                                 ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
                                     adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                                    filterFile
+                                    filterFile.split(".")[0]
                                 )
                             )
                         }
 
-                        // 숫자 타이틀에 따른 정렬
-                        val numTitleComp =
-                            Comparator { a: ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO,
-                                         b: ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO ->
-                                val title1 =
-                                    a.title
-                                val title2 =
-                                    b.title
+                        for (filterFile in haldFilterFileList) {
+                            adapterDataList.add(
+                                ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                    filterFile.split(".")[0]
+                                )
+                            )
+                        }
 
-                                val num1 = title1.replace("[^0-9]".toRegex(), "").toInt()
-                                val num2 = title2.replace("[^0-9]".toRegex(), "").toInt()
-
-                                num1 - num2
-                            }
-
-                        @Suppress("UNCHECKED_CAST")
-                        (adapterDataList as ArrayList<ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO>).sortWith(
-                            numTitleComp
-                        )
+                        for (filterFile in squareFilterFileList) {
+                            adapterDataList.add(
+                                ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                    filterFile.split(".")[0]
+                                )
+                            )
+                        }
 
                         // 로더 제거
                         viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = ArrayList()
 
                         // 아이템 반영
-                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = adapterDataList
+                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
+                            adapterDataList as ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
 
                         // 이전에 선택되었던 필터명을 가져오기
                         val selectedFilterName = viewModelMbr.thisSpw.selectedFilterName

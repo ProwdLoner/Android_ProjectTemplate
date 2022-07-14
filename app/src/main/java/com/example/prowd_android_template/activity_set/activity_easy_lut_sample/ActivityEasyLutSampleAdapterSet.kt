@@ -1,7 +1,9 @@
 package com.example.prowd_android_template.activity_set.activity_easy_lut_sample
 
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -173,11 +175,34 @@ class ActivityEasyLutSampleAdapterSet(
 
                         parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
                             // LUT 필터 생성
-                            val filter = CustomUtil.getBitmapFromAssets(
-                                parentViewMbr,
-                                "lut_filters_wide/${entity.title}"
-                            )
-                            val filterKind = LutAlignment.Mode.SQUARE
+                            val mode = entity.title.replace(Regex("[0-9]"), "")
+
+                            val filter: Bitmap?
+                            val filterKind: LutAlignment.Mode
+
+                            when (mode) {
+                                "hald" -> {
+                                    filter = CustomUtil.getBitmapFromAssets(
+                                        parentViewMbr,
+                                        "lut_filters_hald/${entity.title}.png"
+                                    )
+                                    filterKind = LutAlignment.Mode.HALD
+                                }
+                                "square" -> {
+                                    filter = CustomUtil.getBitmapFromAssets(
+                                        parentViewMbr,
+                                        "lut_filters_square/${entity.title}.png"
+                                    )
+                                    filterKind = LutAlignment.Mode.SQUARE
+                                }
+                                else -> {
+                                    filter = CustomUtil.getBitmapFromAssets(
+                                        parentViewMbr,
+                                        "lut_filters_wide/${entity.title}.png"
+                                    )
+                                    filterKind = LutAlignment.Mode.SQUARE
+                                }
+                            }
 
                             val lutFilter = EasyLUT
                                 .fromBitmap()
