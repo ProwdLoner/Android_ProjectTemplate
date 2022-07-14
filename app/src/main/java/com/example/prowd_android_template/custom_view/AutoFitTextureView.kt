@@ -11,19 +11,13 @@ class AutoFitTextureView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyle: Int = 0
 ) : TextureView(context, attrs, defStyle) {
-
+    // <멤버 변수 공간>
     private var ratioWidth = 0
     private var ratioHeight = 0
 
-    fun setAspectRatio(width: Int, height: Int) {
-        if (width < 0 || height < 0) {
-            throw IllegalArgumentException("Size cannot be negative.")
-        }
-        ratioWidth = width
-        ratioHeight = height
-        requestLayout()
-    }
 
+    // ---------------------------------------------------------------------------------------------
+    // <오버라이딩 공간>
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         val width = MeasureSpec.getSize(widthMeasureSpec)
@@ -42,6 +36,18 @@ class AutoFitTextureView @JvmOverloads constructor(
     override fun performClick(): Boolean {
         super.performClick()
         return true
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <공개 메소드 공간>
+    fun setAspectRatio(width: Int, height: Int) {
+        if (width < 0 || height < 0) {
+            throw IllegalArgumentException("Size cannot be negative.")
+        }
+        ratioWidth = width
+        ratioHeight = height
+        requestLayout()
     }
 
 }
