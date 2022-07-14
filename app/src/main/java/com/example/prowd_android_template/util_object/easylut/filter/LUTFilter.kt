@@ -37,6 +37,7 @@ abstract class LUTFilter protected constructor(
             when (strategy) {
                 BitmapStrategy.Type.APPLY_ON_ORIGINAL_BITMAP -> this.strategy = ApplyOnOriginal()
                 BitmapStrategy.Type.CREATING_NEW_BITMAP -> this.strategy = CreatingNewBitmap()
+                else -> {}
             }
             return self()
         }
