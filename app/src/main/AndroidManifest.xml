@@ -28,6 +28,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_module_caller_sample.ActivityModuleCallerSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample"
             android:exported="false" />
         <activity

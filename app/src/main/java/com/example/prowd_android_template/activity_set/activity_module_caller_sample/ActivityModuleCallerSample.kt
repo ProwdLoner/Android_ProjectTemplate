@@ -1,28 +1,28 @@
-package com.example.prowd_android_template.activity_set.activity_etc_sample_list
+package com.example.prowd_android_template.activity_set.activity_module_caller_sample
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
-import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
-import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityEtcSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityModuleCallerSampleBinding
+import com.example.test_module.activity_set.ActivityTestModule
+import com.example.test_module.util_object.CustomUtil
 
-class ActivityEtcSampleList : AppCompatActivity() {
+// 모듈 내 액티비티 호출 샘플
+// 모듈로 작성한 액티비티를 실행시킨 후 바로 종료되는 액티비티
+// build.gradle(:app) 에, implementation project(path: ':test_module') 와 같이 모듈을 넣어주고 호출
+class ActivityModuleCallerSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityEtcSampleListBinding
+    lateinit var bindingMbr: ActivityModuleCallerSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityEtcSampleListViewModel
+    lateinit var viewModelMbr: ActivityModuleCallerSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -44,7 +44,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityEtcSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityModuleCallerSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -57,6 +57,19 @@ class ActivityEtcSampleList : AppCompatActivity() {
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
+
+        // 테스트 모듈의 함수 실행 결과 로깅
+        Log.e("function result called from test module", CustomUtil.test())
+
+        // 테스트 모듈 액티비티 실행
+        val intent =
+            Intent(
+                this,
+                ActivityTestModule::class.java
+            )
+        startActivity(intent)
+
+        finish()
     }
 
     override fun onResume() {
@@ -112,8 +125,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr =
-            ViewModelProvider(this)[ActivityEtcSampleListViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityModuleCallerSampleViewModel::class.java]
 
     }
 
@@ -129,62 +141,6 @@ class ActivityEtcSampleList : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 권한 샘플 이동 버튼
-        bindingMbr.goToPermissionSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityPermissionSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 다이얼로그 샘플 이동 버튼
-        bindingMbr.goToDialogSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityDialogSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // jni 샘플 이동 버튼
-        bindingMbr.goToJniSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityJniSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBrightnessChangeSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBrightnessChangeSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityAarModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityAarModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
 
     }
 

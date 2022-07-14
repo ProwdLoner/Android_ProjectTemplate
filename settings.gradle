@@ -15,3 +15,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Prowd_Android_Template"
 include ':app'
+include ':test_module'
+include ':test_module_for_aar_compile'

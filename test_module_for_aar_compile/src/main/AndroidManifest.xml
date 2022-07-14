@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.test_module_for_aar_compile">
+
+    <application>
+        <activity
+            android:name=".activity_set.ActivityTestModuleForAarCompile"
+            android:exported="false" />
+    </application>
+
+</manifest>
