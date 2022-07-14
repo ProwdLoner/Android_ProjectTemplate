@@ -21,6 +21,7 @@ import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnViewTa
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnScaleChangedListener;
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnSingleFlingListener;
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnViewDragListener;
+import com.example.prowd_android_template.custom_view.pv.PinchImageView.CustomGestureDetector;
 
 public class PhotoViewAttacher implements View.OnTouchListener,
         View.OnLayoutChangeListener {
