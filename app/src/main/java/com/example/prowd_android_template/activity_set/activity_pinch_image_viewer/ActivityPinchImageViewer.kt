@@ -15,6 +15,7 @@ import com.example.prowd_android_template.activity_set.activity_pinch_image_view
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
+import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityPinchImageViewSampleBinding
 import com.example.prowd_android_template.databinding.ActivityPinchImageViewerBinding
 import java.io.File
@@ -37,6 +38,9 @@ class ActivityPinchImageViewer : AppCompatActivity() {
 
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
+
+    // 라디오 버튼 다이얼로그
+    var radioBtnDialogMbr: DialogRadioButtonChoose? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -98,6 +102,7 @@ class ActivityPinchImageViewer : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+        radioBtnDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -188,6 +193,22 @@ class ActivityPinchImageViewer : AppCompatActivity() {
             } else {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
+            }
+        }
+
+        // 라디오 버튼 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonDialogInfoLiveDataMbr.observe(this) {
+            if (it != null) {
+                radioBtnDialogMbr?.dismiss()
+
+                radioBtnDialogMbr = DialogRadioButtonChoose(
+                    this,
+                    it
+                )
+                radioBtnDialogMbr?.show()
+            } else {
+                radioBtnDialogMbr?.dismiss()
+                radioBtnDialogMbr = null
             }
         }
     }

@@ -14,6 +14,7 @@ import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
+import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityMediaPlayerApiSimpleVideoSampleBinding
 
 class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
@@ -33,6 +34,9 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
 
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
+
+    // 라디오 버튼 다이얼로그
+    var radioBtnDialogMbr: DialogRadioButtonChoose? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -103,6 +107,7 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
         progressLoadingDialogMbr?.dismiss()
+        radioBtnDialogMbr?.dismiss()
 
         // 화면 회전시 재생 시간 저장
         viewModelMbr.simpleVideoMediaPlayerPositionMbr =
@@ -237,6 +242,22 @@ class ActivityMediaPlayerApiSimpleVideoSample : AppCompatActivity() {
             } else {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
+            }
+        }
+
+        // 라디오 버튼 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonDialogInfoLiveDataMbr.observe(this) {
+            if (it != null) {
+                radioBtnDialogMbr?.dismiss()
+
+                radioBtnDialogMbr = DialogRadioButtonChoose(
+                    this,
+                    it
+                )
+                radioBtnDialogMbr?.show()
+            } else {
+                radioBtnDialogMbr?.dismiss()
+                radioBtnDialogMbr = null
             }
         }
     }

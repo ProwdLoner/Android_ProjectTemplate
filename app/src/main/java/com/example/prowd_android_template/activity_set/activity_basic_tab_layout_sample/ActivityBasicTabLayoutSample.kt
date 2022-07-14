@@ -8,6 +8,7 @@ import com.example.prowd_android_template.activity_set.activity_basic_tab_layout
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
+import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityBasicTabLayoutSampleBinding
 import com.google.android.material.tabs.TabLayoutMediator
 
@@ -31,6 +32,9 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
 
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
+
+    // 라디오 버튼 다이얼로그
+    var radioBtnDialogMbr: DialogRadioButtonChoose? = null
 
     // 플래그먼트 생성 (화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것)
     // 플래그먼트는 화면 회전시 초기화 수준이 아니라 다시 생성
@@ -98,6 +102,7 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
         confirmDialogMbr?.dismiss()
+        radioBtnDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -205,6 +210,22 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
             } else {
                 confirmDialogMbr?.dismiss()
                 confirmDialogMbr = null
+            }
+        }
+
+        // 라디오 버튼 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonDialogInfoLiveDataMbr.observe(this) {
+            if (it != null) {
+                radioBtnDialogMbr?.dismiss()
+
+                radioBtnDialogMbr = DialogRadioButtonChoose(
+                    this,
+                    it
+                )
+                radioBtnDialogMbr?.show()
+            } else {
+                radioBtnDialogMbr?.dismiss()
+                radioBtnDialogMbr = null
             }
         }
     }

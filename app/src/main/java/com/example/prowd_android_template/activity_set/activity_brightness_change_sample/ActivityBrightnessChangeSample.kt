@@ -2,7 +2,6 @@ package com.example.prowd_android_template.activity_set.activity_brightness_chan
 
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
