@@ -16,28 +16,82 @@ import android.view.View
 import android.view.ViewOutlineProvider
 import java.lang.Exception
 
+// (둥근 이미지 뷰)
 class CircleImageView : AppCompatImageView {
+    // <멤버 변수 공간>
+    private var objReadyMbr = false
+    private var borderWidthMbr = 0
+    private var borderColorMbr = Color.BLACK
+    private var borderOverlayMbr = false
+    private var setupPendingMbr = false
+    private var disableCircularTransformationMbr = false
+    private var bitmapMbr: Bitmap? = null
     private val mDrawableRect = RectF()
     private val mBorderRect = RectF()
     private val mShaderMatrix = Matrix()
     private val mBitmapPaint: Paint = Paint()
     private val mBorderPaint = Paint()
     private val mCircleBackgroundPaint = Paint()
-    private var mBorderColor = DEFAULT_BORDER_COLOR
-    private var mBorderWidth = DEFAULT_BORDER_WIDTH
-    private var mCircleBackgroundColor = DEFAULT_CIRCLE_BACKGROUND_COLOR
-    private var mBitmap: Bitmap? = null
+    private var circleBackgroundColorMbr = Color.TRANSPARENT
     private var mBitmapShader: BitmapShader? = null
     private var mBitmapWidth = 0
     private var mBitmapHeight = 0
     private var mDrawableRadius = 0f
     private var mBorderRadius = 0f
     private var mColorFilter: ColorFilter? = null
-    private var mReady = false
-    private var mSetupPending = false
-    private var mBorderOverlay = false
-    private var mDisableCircularTransformation = false
 
+    var borderColor: Int
+        get() = borderColorMbr
+        set(borderColor) {
+            if (borderColor == borderColorMbr) {
+                return
+            }
+            borderColorMbr = borderColor
+            mBorderPaint.color = borderColorMbr
+            invalidate()
+        }
+    var circleBackgroundColor: Int
+        get() = circleBackgroundColorMbr
+        set(circleBackgroundColor) {
+            if (circleBackgroundColor == circleBackgroundColorMbr) {
+                return
+            }
+            circleBackgroundColorMbr = circleBackgroundColor
+            mCircleBackgroundPaint.color = circleBackgroundColor
+            invalidate()
+        }
+
+    var borderWidth: Int
+        get() = borderWidthMbr
+        set(borderWidth) {
+            if (borderWidth == borderWidthMbr) {
+                return
+            }
+            borderWidthMbr = borderWidth
+            setup()
+        }
+    var isBorderOverlay: Boolean
+        get() = borderOverlayMbr
+        set(borderOverlay) {
+            if (borderOverlay == borderOverlayMbr) {
+                return
+            }
+            borderOverlayMbr = borderOverlay
+            setup()
+        }
+    var isDisableCircularTransformation: Boolean
+        get() = disableCircularTransformationMbr
+        set(disableCircularTransformation) {
+            if (disableCircularTransformationMbr == disableCircularTransformation) {
+                return
+            }
+            disableCircularTransformationMbr = disableCircularTransformation
+            initializeBitmap()
+        }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <생성자 공간>
     constructor(context: Context?) : super(context!!) {
         init()
     }
@@ -48,38 +102,44 @@ class CircleImageView : AppCompatImageView {
         attrs,
         defStyle
     ) {
-        val a = context.obtainStyledAttributes(attrs, R.styleable.CircleImageView, defStyle, 0)
-        mBorderWidth = a.getDimensionPixelSize(
+        // 유저 설정이 존재하면 이를 멤버 상태 변수에 반영
+        val styleAttr =
+            context.obtainStyledAttributes(attrs, R.styleable.CircleImageView, defStyle, 0)
+        borderWidthMbr = styleAttr.getDimensionPixelSize(
             R.styleable.CircleImageView_civ_border_width,
-            DEFAULT_BORDER_WIDTH
+            0
         )
-        mBorderColor =
-            a.getColor(R.styleable.CircleImageView_civ_border_color, DEFAULT_BORDER_COLOR)
-        mBorderOverlay =
-            a.getBoolean(R.styleable.CircleImageView_civ_border_overlay, DEFAULT_BORDER_OVERLAY)
-        mCircleBackgroundColor =
-            a.getColor(R.styleable.CircleImageView_civ_fill_color, DEFAULT_CIRCLE_BACKGROUND_COLOR)
-        a.recycle()
+        borderColorMbr =
+            styleAttr.getColor(R.styleable.CircleImageView_civ_border_color, Color.BLACK)
+        borderOverlayMbr =
+            styleAttr.getBoolean(R.styleable.CircleImageView_civ_border_overlay, false)
+        circleBackgroundColorMbr =
+            styleAttr.getColor(R.styleable.CircleImageView_civ_fill_color, Color.TRANSPARENT)
+        styleAttr.recycle()
         init()
     }
 
     private fun init() {
-        super.setScaleType(SCALE_TYPE)
-        mReady = true
+        super.setScaleType(ScaleType.CENTER_CROP)
+        objReadyMbr = true
         outlineProvider =
             OutlineProvider()
-        if (mSetupPending) {
+        if (setupPendingMbr) {
             setup()
-            mSetupPending = false
+            setupPendingMbr = false
         }
     }
 
+
+    // ---------------------------------------------------------------------------------------------
+    // <콜백 공간>
     override fun getScaleType(): ScaleType {
-        return SCALE_TYPE
+        return ScaleType.CENTER_CROP
     }
 
     override fun setScaleType(scaleType: ScaleType) {
-        require(scaleType == SCALE_TYPE) {
+        // 스케일 타입이 CENTER_CROP 이 아니라면 에러
+        require(scaleType == ScaleType.CENTER_CROP) {
             String.format(
                 "ScaleType %s not supported.",
                 scaleType
@@ -88,18 +148,19 @@ class CircleImageView : AppCompatImageView {
     }
 
     override fun setAdjustViewBounds(adjustViewBounds: Boolean) {
+        // adjustViewBounds 가 true 라면 에러
         require(!adjustViewBounds) { "adjustViewBounds not supported." }
     }
 
     override fun onDraw(canvas: Canvas) {
-        if (mDisableCircularTransformation) {
+        if (disableCircularTransformationMbr) {
             super.onDraw(canvas)
             return
         }
-        if (mBitmap == null) {
+        if (bitmapMbr == null) {
             return
         }
-        if (mCircleBackgroundColor != Color.TRANSPARENT) {
+        if (circleBackgroundColorMbr != Color.TRANSPARENT) {
             canvas.drawCircle(
                 mDrawableRect.centerX(),
                 mDrawableRect.centerY(),
@@ -113,7 +174,7 @@ class CircleImageView : AppCompatImageView {
             mDrawableRadius,
             mBitmapPaint
         )
-        if (mBorderWidth > 0) {
+        if (borderWidthMbr > 0) {
             canvas.drawCircle(
                 mBorderRect.centerX(),
                 mBorderRect.centerY(),
@@ -137,59 +198,6 @@ class CircleImageView : AppCompatImageView {
         super.setPaddingRelative(start, top, end, bottom)
         setup()
     }
-
-    var borderColor: Int
-        get() = mBorderColor
-        set(borderColor) {
-            if (borderColor == mBorderColor) {
-                return
-            }
-            mBorderColor = borderColor
-            mBorderPaint.color = mBorderColor
-            invalidate()
-        }
-    var circleBackgroundColor: Int
-        get() = mCircleBackgroundColor
-        set(circleBackgroundColor) {
-            if (circleBackgroundColor == mCircleBackgroundColor) {
-                return
-            }
-            mCircleBackgroundColor = circleBackgroundColor
-            mCircleBackgroundPaint.color = circleBackgroundColor
-            invalidate()
-        }
-
-    fun setCircleBackgroundColorResource(@ColorRes circleBackgroundRes: Int) {
-        circleBackgroundColor = context.resources.getColor(circleBackgroundRes)
-    }
-
-    var borderWidth: Int
-        get() = mBorderWidth
-        set(borderWidth) {
-            if (borderWidth == mBorderWidth) {
-                return
-            }
-            mBorderWidth = borderWidth
-            setup()
-        }
-    var isBorderOverlay: Boolean
-        get() = mBorderOverlay
-        set(borderOverlay) {
-            if (borderOverlay == mBorderOverlay) {
-                return
-            }
-            mBorderOverlay = borderOverlay
-            setup()
-        }
-    var isDisableCircularTransformation: Boolean
-        get() = mDisableCircularTransformation
-        set(disableCircularTransformation) {
-            if (mDisableCircularTransformation == disableCircularTransformation) {
-                return
-            }
-            mDisableCircularTransformation = disableCircularTransformation
-            initializeBitmap()
-        }
 
     override fun setImageBitmap(bm: Bitmap) {
         super.setImageBitmap(bm)
@@ -224,6 +232,20 @@ class CircleImageView : AppCompatImageView {
         return mColorFilter!!
     }
 
+    override fun performClick(): Boolean {
+        return super.performClick()
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <공개 메소드 공간>
+    fun setCircleBackgroundColorResource(@ColorRes circleBackgroundRes: Int) {
+        circleBackgroundColor = context.resources.getColor(circleBackgroundRes)
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <비공개 메소드 공간>
     private fun applyColorFilter() {
         // This might be called from setColorFilter during ImageView construction
         // before member initialization has finished on API level <= 19.
@@ -238,12 +260,12 @@ class CircleImageView : AppCompatImageView {
             drawable.bitmap
         } else try {
             val bitmap: Bitmap = if (drawable is ColorDrawable) {
-                Bitmap.createBitmap(COLORDRAWABLE_DIMENSION, COLORDRAWABLE_DIMENSION, BITMAP_CONFIG)
+                Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
             } else {
                 Bitmap.createBitmap(
                     drawable.intrinsicWidth,
                     drawable.intrinsicHeight,
-                    BITMAP_CONFIG
+                    Bitmap.Config.ARGB_8888
                 )
             }
             val canvas = Canvas(bitmap)
@@ -257,7 +279,7 @@ class CircleImageView : AppCompatImageView {
     }
 
     private fun initializeBitmap() {
-        mBitmap = if (mDisableCircularTransformation) {
+        bitmapMbr = if (disableCircularTransformationMbr) {
             null
         } else {
             getBitmapFromDrawable(drawable)
@@ -266,37 +288,37 @@ class CircleImageView : AppCompatImageView {
     }
 
     private fun setup() {
-        if (!mReady) {
-            mSetupPending = true
+        if (!objReadyMbr) {
+            setupPendingMbr = true
             return
         }
         if (width == 0 && height == 0) {
             return
         }
-        if (mBitmap == null) {
+        if (bitmapMbr == null) {
             invalidate()
             return
         }
-        mBitmapShader = BitmapShader(mBitmap!!, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        mBitmapShader = BitmapShader(bitmapMbr!!, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
         mBitmapPaint.isAntiAlias = true
         mBitmapPaint.isDither = true
         mBitmapPaint.isFilterBitmap = true
         mBitmapPaint.shader = mBitmapShader
         mBorderPaint.style = Paint.Style.STROKE
         mBorderPaint.isAntiAlias = true
-        mBorderPaint.color = mBorderColor
-        mBorderPaint.strokeWidth = mBorderWidth.toFloat()
+        mBorderPaint.color = borderColorMbr
+        mBorderPaint.strokeWidth = borderWidthMbr.toFloat()
         mCircleBackgroundPaint.style = Paint.Style.FILL
         mCircleBackgroundPaint.isAntiAlias = true
-        mCircleBackgroundPaint.color = mCircleBackgroundColor
-        mBitmapHeight = mBitmap!!.height
-        mBitmapWidth = mBitmap!!.width
+        mCircleBackgroundPaint.color = circleBackgroundColorMbr
+        mBitmapHeight = bitmapMbr!!.height
+        mBitmapWidth = bitmapMbr!!.width
         mBorderRect.set(calculateBounds())
         mBorderRadius =
-            ((mBorderRect.height() - mBorderWidth) / 2.0f).coerceAtMost((mBorderRect.width() - mBorderWidth) / 2.0f)
+            ((mBorderRect.height() - borderWidthMbr) / 2.0f).coerceAtMost((mBorderRect.width() - borderWidthMbr) / 2.0f)
         mDrawableRect.set(mBorderRect)
-        if (!mBorderOverlay && mBorderWidth > 0) {
-            mDrawableRect.inset(mBorderWidth - 1.0f, mBorderWidth - 1.0f)
+        if (!borderOverlayMbr && borderWidthMbr > 0) {
+            mDrawableRect.inset(borderWidthMbr - 1.0f, borderWidthMbr - 1.0f)
         }
         mDrawableRadius = (mDrawableRect.height() / 2.0f).coerceAtMost(mDrawableRect.width() / 2.0f)
         applyColorFilter()
@@ -333,9 +355,12 @@ class CircleImageView : AppCompatImageView {
         mBitmapShader!!.setLocalMatrix(mShaderMatrix)
     }
 
+
+    // ---------------------------------------------------------------------------------------------
+    // <내부 클래스 공간>
     private inner class OutlineProvider : ViewOutlineProvider() {
         override fun getOutline(view: View, outline: Outline) {
-            if (mDisableCircularTransformation) {
+            if (disableCircularTransformationMbr) {
                 BACKGROUND.getOutline(view, outline)
             } else {
                 val bounds = Rect()
@@ -343,19 +368,5 @@ class CircleImageView : AppCompatImageView {
                 outline.setRoundRect(bounds, bounds.width() / 2.0f)
             }
         }
-    }
-
-    override fun performClick(): Boolean {
-        return super.performClick()
-    }
-
-    companion object {
-        private val SCALE_TYPE = ScaleType.CENTER_CROP
-        private val BITMAP_CONFIG = Bitmap.Config.ARGB_8888
-        private const val COLORDRAWABLE_DIMENSION = 2
-        private const val DEFAULT_BORDER_WIDTH = 0
-        private const val DEFAULT_BORDER_COLOR = Color.BLACK
-        private const val DEFAULT_CIRCLE_BACKGROUND_COLOR = Color.TRANSPARENT
-        private const val DEFAULT_BORDER_OVERLAY = false
     }
 }
