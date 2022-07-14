@@ -12,9 +12,15 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.ImageView;
 import android.widget.OverScroller;
+
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnGestureListener;
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnMatrixChangedListener;
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnOutsidePhotoTapListener;
+import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnPhotoTapListener;
+import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnViewTapListener;
+import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnScaleChangedListener;
+import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnSingleFlingListener;
+import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnViewDragListener;
 
 public class PhotoViewAttacher implements View.OnTouchListener,
         View.OnLayoutChangeListener {

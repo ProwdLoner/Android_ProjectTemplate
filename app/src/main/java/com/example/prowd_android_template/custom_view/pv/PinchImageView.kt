@@ -9,6 +9,8 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.View
 import android.widget.ImageView
 
 class PinchImageView @JvmOverloads constructor(
@@ -216,5 +218,25 @@ class PinchImageView @JvmOverloads constructor(
 
     interface OnOutsidePhotoTapListener {
         fun onOutsidePhotoTap(imageView: ImageView?)
+    }
+
+    interface OnPhotoTapListener {
+        fun onPhotoTap(view: ImageView?, x: Float, y: Float)
+    }
+
+    interface OnScaleChangedListener {
+        fun onScaleChange(scaleFactor: Float, focusX: Float, focusY: Float)
+    }
+
+    interface OnSingleFlingListener {
+        fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean
+    }
+
+    interface OnViewDragListener {
+        fun onDrag(dx: Float, dy: Float)
+    }
+
+    interface OnViewTapListener {
+        fun onViewTap(view: View?, x: Float, y: Float)
     }
 }
