@@ -34,13 +34,13 @@ public class PhotoViewAttacher {
     private static final int VERTICAL_EDGE_BOTH = 2;
     private static final int SINGLE_TOUCH = 1;
 
-    private Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
-    private int mZoomDuration = 200;
+    public Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
+    public int mZoomDuration = 200;
     private float mMinScale = 1.0f;
     private float mMidScale = 1.75f;
     private float mMaxScale = 3.0f;
 
-    private boolean mAllowParentInterceptOnEdge = true;
+    public boolean mAllowParentInterceptOnEdge = true;
     private boolean mBlockParentIntercept = false;
 
     private final ImageView mImageView;
@@ -54,22 +54,22 @@ public class PhotoViewAttacher {
     private final RectF mDisplayRect = new RectF();
     private final float[] mMatrixValues = new float[9];
 
-    private OnMatrixChangedListener mMatrixChangeListener;
-    private OnPhotoTapListener mPhotoTapListener;
-    private OnOutsidePhotoTapListener mOutsidePhotoTapListener;
-    private OnViewTapListener mViewTapListener;
-    private View.OnClickListener mOnClickListener;
-    private View.OnLongClickListener mLongClickListener;
-    private OnScaleChangedListener mScaleChangeListener;
-    private OnSingleFlingListener mSingleFlingListener;
-    private OnViewDragListener mOnViewDragListener;
+    public OnMatrixChangedListener mMatrixChangeListener;
+    public OnPhotoTapListener mPhotoTapListener;
+    public OnOutsidePhotoTapListener mOutsidePhotoTapListener;
+    public OnViewTapListener mViewTapListener;
+    public View.OnClickListener mOnClickListener;
+    public View.OnLongClickListener mLongClickListener;
+    public OnScaleChangedListener mScaleChangeListener;
+    public OnSingleFlingListener mSingleFlingListener;
+    public OnViewDragListener mOnViewDragListener;
 
     private PhotoViewAttacher.FlingRunnable mCurrentFlingRunnable;
     private int mHorizontalScrollEdge = HORIZONTAL_EDGE_BOTH;
     private int mVerticalScrollEdge = VERTICAL_EDGE_BOTH;
     private float mBaseRotation;
 
-    private boolean mZoomEnabled = true;
+    public boolean mZoomEnabled = true;
     private ImageView.ScaleType mScaleType = ImageView.ScaleType.FIT_CENTER;
 
     private final OnGestureListener onGestureListener = new OnGestureListener() {
@@ -134,7 +134,7 @@ public class PhotoViewAttacher {
             @Override
             public boolean onTouch(View v, MotionEvent ev) {
                 boolean handled = false;
-                if (mZoomEnabled && hasDrawable((ImageView) v)) {
+                if (mZoomEnabled && ((ImageView) v).getDrawable() != null) {
                     switch (ev.getAction()) {
                         case MotionEvent.ACTION_DOWN:
                             ViewParent parent = v.getParent();
@@ -276,14 +276,6 @@ public class PhotoViewAttacher {
         this.mGestureDetector.setOnDoubleTapListener(newOnDoubleTapListener);
     }
 
-    public void setOnScaleChangeListener(OnScaleChangedListener onScaleChangeListener) {
-        this.mScaleChangeListener = onScaleChangeListener;
-    }
-
-    public void setOnSingleFlingListener(OnSingleFlingListener onSingleFlingListener) {
-        this.mSingleFlingListener = onSingleFlingListener;
-    }
-
     @Deprecated
     public boolean isZoomEnabled() {
         return mZoomEnabled;
@@ -345,10 +337,6 @@ public class PhotoViewAttacher {
     }
 
 
-    public void setAllowParentInterceptOnEdge(boolean allow) {
-        mAllowParentInterceptOnEdge = allow;
-    }
-
     public void setMinimumScale(float minimumScale) {
         checkZoomLevels(minimumScale, mMidScale, mMaxScale);
         mMinScale = minimumScale;
@@ -369,34 +357,6 @@ public class PhotoViewAttacher {
         mMinScale = minimumScale;
         mMidScale = mediumScale;
         mMaxScale = maximumScale;
-    }
-
-    public void setOnLongClickListener(View.OnLongClickListener listener) {
-        mLongClickListener = listener;
-    }
-
-    public void setOnClickListener(View.OnClickListener listener) {
-        mOnClickListener = listener;
-    }
-
-    public void setOnMatrixChangeListener(OnMatrixChangedListener listener) {
-        mMatrixChangeListener = listener;
-    }
-
-    public void setOnPhotoTapListener(OnPhotoTapListener listener) {
-        mPhotoTapListener = listener;
-    }
-
-    public void setOnOutsidePhotoTapListener(OnOutsidePhotoTapListener mOutsidePhotoTapListener) {
-        this.mOutsidePhotoTapListener = mOutsidePhotoTapListener;
-    }
-
-    public void setOnViewTapListener(OnViewTapListener listener) {
-        mViewTapListener = listener;
-    }
-
-    public void setOnViewDragListener(OnViewDragListener listener) {
-        mOnViewDragListener = listener;
     }
 
     public void setScale(float scale) {
@@ -424,19 +384,21 @@ public class PhotoViewAttacher {
         }
     }
 
-    public void setZoomInterpolator(Interpolator interpolator) {
-        mInterpolator = interpolator;
-    }
+
 
     public void setScaleType(ImageView.ScaleType scaleType) {
-        if (isSupportedScaleType(scaleType) && scaleType != mScaleType) {
+        boolean isSupportedScaleType = true;
+        if (scaleType == null) {
+            isSupportedScaleType =  false;
+        }
+        if (scaleType == ImageView.ScaleType.MATRIX) {
+            throw new IllegalStateException("Matrix scale type is not supported");
+        }
+
+        if (isSupportedScaleType && scaleType != mScaleType) {
             mScaleType = scaleType;
             update();
         }
-    }
-
-    public boolean isZoomable() {
-        return mZoomEnabled;
     }
 
     public void setZoomable(boolean zoomable) {
@@ -469,10 +431,6 @@ public class PhotoViewAttacher {
 
     public Matrix getImageMatrix() {
         return mDrawMatrix;
-    }
-
-    public void setZoomTransitionDuration(int milliseconds) {
-        this.mZoomDuration = milliseconds;
     }
 
     private float getValue(Matrix matrix, int whichValue) {
@@ -661,7 +619,7 @@ public class PhotoViewAttacher {
             float deltaScale = scale / getScale();
             onGestureListener.onScale(deltaScale, mFocalX, mFocalY);
             if (t < 1f) {
-                postOnAnimation(mImageView, this);
+                mImageView.postOnAnimation(this);
             }
         }
 
@@ -727,17 +685,9 @@ public class PhotoViewAttacher {
                 checkAndDisplayMatrix();
                 mCurrentX = newX;
                 mCurrentY = newY;
-                postOnAnimation(mImageView, this);
+                mImageView.postOnAnimation(this);
             }
         }
-    }
-
-    public void postOnAnimation(View view, Runnable runnable) {
-        postOnAnimationJellyBean(view, runnable);
-    }
-
-    private void postOnAnimationJellyBean(View view, Runnable runnable) {
-        view.postOnAnimation(runnable);
     }
 
     void checkZoomLevels(float minZoom, float midZoom,
@@ -749,20 +699,6 @@ public class PhotoViewAttacher {
             throw new IllegalArgumentException(
                     "Medium zoom has to be less than Maximum zoom. Call setMaximumZoom() with a more appropriate value");
         }
-    }
-
-    boolean hasDrawable(ImageView imageView) {
-        return imageView.getDrawable() != null;
-    }
-
-    boolean isSupportedScaleType(final ImageView.ScaleType scaleType) {
-        if (scaleType == null) {
-            return false;
-        }
-        if (scaleType == ImageView.ScaleType.MATRIX) {
-            throw new IllegalStateException("Matrix scale type is not supported");
-        }
-        return true;
     }
 }
 

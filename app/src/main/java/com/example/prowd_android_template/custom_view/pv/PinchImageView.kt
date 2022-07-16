@@ -47,11 +47,11 @@ class PinchImageView @JvmOverloads constructor(
     }
 
     override fun setOnLongClickListener(l: OnLongClickListener?) {
-        attacher.setOnLongClickListener(l)
+        attacher.mLongClickListener = (l)
     }
 
     override fun setOnClickListener(l: OnClickListener?) {
-        attacher.setOnClickListener(l)
+        attacher.mOnClickListener = (l)
     }
 
     override fun setScaleType(scaleType: ScaleType) {
