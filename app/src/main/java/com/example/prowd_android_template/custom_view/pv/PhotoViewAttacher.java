@@ -36,21 +36,36 @@ public class PhotoViewAttacher {
 
     public Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
     public int mZoomDuration = 200;
-    private float mMinScale = 1.0f;
-    private float mMidScale = 1.75f;
-    private float mMaxScale = 3.0f;
+    public float mMinScale = 1.0f;
+    public float mMidScale = 1.75f;
+    public float mMaxScale = 3.0f;
 
     public boolean mAllowParentInterceptOnEdge = true;
     private boolean mBlockParentIntercept = false;
 
     private final ImageView mImageView;
 
-    private GestureDetector mGestureDetector;
+    public GestureDetector mGestureDetector;
     private CustomGestureDetector mScaleDragDetector;
 
     private final Matrix mBaseMatrix = new Matrix();
     private final Matrix mDrawMatrix = new Matrix();
     private final Matrix mSuppMatrix = new Matrix();
+    public boolean setDisplayMatrix(Matrix finalMatrix) {
+        if (finalMatrix == null) {
+            throw new IllegalArgumentException("Matrix cannot be null");
+        }
+        if (mImageView.getDrawable() == null) {
+            return false;
+        }
+        mSuppMatrix.set(finalMatrix);
+        if (checkMatrixBounds()) {
+            setImageViewMatrix(getDrawMatrix());
+        }
+        return true;
+    }
+
+
     private final RectF mDisplayRect = new RectF();
     private final float[] mMatrixValues = new float[9];
 
@@ -68,7 +83,14 @@ public class PhotoViewAttacher {
     private int mHorizontalScrollEdge = HORIZONTAL_EDGE_BOTH;
     private int mVerticalScrollEdge = VERTICAL_EDGE_BOTH;
     private float mBaseRotation;
-
+    public void setBaseRotation(final float degrees) {
+        mBaseRotation = degrees % 360;
+        update();
+        setRotationBy(mBaseRotation);
+        if (checkMatrixBounds()) {
+            setImageViewMatrix(getDrawMatrix());
+        }
+    }
     public boolean mZoomEnabled = true;
     private ImageView.ScaleType mScaleType = ImageView.ScaleType.FIT_CENTER;
 
@@ -82,7 +104,9 @@ public class PhotoViewAttacher {
                 mOnViewDragListener.onDrag(dx, dy);
             }
             mSuppMatrix.postTranslate(dx, dy);
-            checkAndDisplayMatrix();
+            if (checkMatrixBounds()) {
+                setImageViewMatrix(getDrawMatrix());
+            }
 
             ViewParent parent = mImageView.getParent();
             if (mAllowParentInterceptOnEdge && !mScaleDragDetector.isScaling() && !mBlockParentIntercept) {
@@ -123,7 +147,9 @@ public class PhotoViewAttacher {
                 }
                 mSuppMatrix.postScale(scaleFactor, scaleFactor, focusX, focusY);
                 mSuppMatrix.postTranslate(dx, dy);
-                checkAndDisplayMatrix();
+                if (checkMatrixBounds()) {
+                    setImageViewMatrix(getDrawMatrix());
+                }
             }
         }
     };
@@ -149,14 +175,16 @@ public class PhotoViewAttacher {
                         case MotionEvent.ACTION_CANCEL:
                         case MotionEvent.ACTION_UP:
                             if (getScale() < mMinScale) {
-                                RectF rect = getDisplayRect();
+                                checkMatrixBounds();
+                                RectF rect = getDisplayRect(getDrawMatrix());
                                 if (rect != null) {
                                     v.post(new PhotoViewAttacher.AnimatedZoomRunnable(getScale(), mMinScale,
                                             rect.centerX(), rect.centerY()));
                                     handled = true;
                                 }
                             } else if (getScale() > mMaxScale) {
-                                RectF rect = getDisplayRect();
+                                checkMatrixBounds();
+                                RectF rect = getDisplayRect(getDrawMatrix());
                                 if (rect != null) {
                                     v.post(new PhotoViewAttacher.AnimatedZoomRunnable(getScale(), mMaxScale,
                                             rect.centerX(), rect.centerY()));
@@ -225,7 +253,8 @@ public class PhotoViewAttacher {
                 if (mOnClickListener != null) {
                     mOnClickListener.onClick(mImageView);
                 }
-                final RectF displayRect = getDisplayRect();
+                checkMatrixBounds();
+                final RectF displayRect = getDisplayRect(getDrawMatrix());
                 final float x = e.getX(), y = e.getY();
                 if (mViewTapListener != null) {
                     mViewTapListener.onViewTap(mImageView, x, y);
@@ -256,12 +285,12 @@ public class PhotoViewAttacher {
                     float scale = getScale();
                     float x = ev.getX();
                     float y = ev.getY();
-                    if (scale < getMediumScale()) {
-                        setScale(getMediumScale(), x, y, true);
-                    } else if (scale >= getMediumScale() && scale < getMaximumScale()) {
-                        setScale(getMaximumScale(), x, y, true);
+                    if (scale < mMidScale) {
+                        setScale(mMidScale, x, y, true);
+                    } else if (scale >= mMidScale && scale < mMaxScale) {
+                        setScale(mMaxScale, x, y, true);
                     } else {
-                        setScale(getMinimumScale(), x, y, true);
+                        setScale(mMinScale, x, y, true);
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
                 }
@@ -275,59 +304,20 @@ public class PhotoViewAttacher {
         });
     }
 
-    public void setOnDoubleTapListener(GestureDetector.OnDoubleTapListener newOnDoubleTapListener) {
-        this.mGestureDetector.setOnDoubleTapListener(newOnDoubleTapListener);
-    }
 
-    @Deprecated
-    public boolean isZoomEnabled() {
-        return mZoomEnabled;
-    }
-
-    public RectF getDisplayRect() {
-        checkMatrixBounds();
-        return getDisplayRect(getDrawMatrix());
-    }
-
-    public boolean setDisplayMatrix(Matrix finalMatrix) {
-        if (finalMatrix == null) {
-            throw new IllegalArgumentException("Matrix cannot be null");
-        }
-        if (mImageView.getDrawable() == null) {
-            return false;
-        }
-        mSuppMatrix.set(finalMatrix);
-        checkAndDisplayMatrix();
-        return true;
-    }
-
-    public void setBaseRotation(final float degrees) {
-        mBaseRotation = degrees % 360;
-        update();
-        setRotationBy(mBaseRotation);
-        checkAndDisplayMatrix();
-    }
 
     public void setRotationTo(float degrees) {
         mSuppMatrix.setRotate(degrees % 360);
-        checkAndDisplayMatrix();
+        if (checkMatrixBounds()) {
+            setImageViewMatrix(getDrawMatrix());
+        }
     }
 
     public void setRotationBy(float degrees) {
         mSuppMatrix.postRotate(degrees % 360);
-        checkAndDisplayMatrix();
-    }
-
-    public float getMinimumScale() {
-        return mMinScale;
-    }
-
-    public float getMediumScale() {
-        return mMidScale;
-    }
-
-    public float getMaximumScale() {
-        return mMaxScale;
+        if (checkMatrixBounds()) {
+            setImageViewMatrix(getDrawMatrix());
+        }
     }
 
     public float getScale() {
@@ -386,10 +376,6 @@ public class PhotoViewAttacher {
         mMaxScale = maximumScale;
     }
 
-    public void setScale(float scale) {
-        setScale(scale, false);
-    }
-
     public void setScale(float scale, boolean animate) {
         setScale(scale,
                 (mImageView.getRight()) / 2f,
@@ -407,7 +393,9 @@ public class PhotoViewAttacher {
                     focalX, focalY));
         } else {
             mSuppMatrix.setScale(scale, scale, focalX, focalY);
-            checkAndDisplayMatrix();
+            if (checkMatrixBounds()) {
+                setImageViewMatrix(getDrawMatrix());
+            }
         }
     }
 
@@ -478,12 +466,6 @@ public class PhotoViewAttacher {
             if (displayRect != null) {
                 mMatrixChangeListener.onMatrixChanged(displayRect);
             }
-        }
-    }
-
-    private void checkAndDisplayMatrix() {
-        if (checkMatrixBounds()) {
-            setImageViewMatrix(getDrawMatrix());
         }
     }
 
@@ -655,7 +637,8 @@ public class PhotoViewAttacher {
 
         public void fling(int viewWidth, int viewHeight, int velocityX,
                           int velocityY) {
-            final RectF rect = getDisplayRect();
+            checkMatrixBounds();
+            final RectF rect = getDisplayRect(getDrawMatrix());
             if (rect == null) {
                 return;
             }
@@ -691,7 +674,9 @@ public class PhotoViewAttacher {
                 final int newX = mScroller.getCurrX();
                 final int newY = mScroller.getCurrY();
                 mSuppMatrix.postTranslate(mCurrentX - newX, mCurrentY - newY);
-                checkAndDisplayMatrix();
+                if (checkMatrixBounds()) {
+                    setImageViewMatrix(getDrawMatrix());
+                }
                 mCurrentX = newX;
                 mCurrentY = newY;
                 mImageView.postOnAnimation(this);
