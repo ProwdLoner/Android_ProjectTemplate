@@ -24,11 +24,6 @@ import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnViewDr
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.CustomGestureDetector;
 
 public class PhotoViewAttacher {
-    private static final float DEFAULT_MAX_SCALE = 3.0f;
-    private static final float DEFAULT_MID_SCALE = 1.75f;
-    private static final float DEFAULT_MIN_SCALE = 1.0f;
-    private static final int DEFAULT_ZOOM_DURATION = 200;
-
     private static final int HORIZONTAL_EDGE_NONE = -1;
     private static final int HORIZONTAL_EDGE_LEFT = 0;
     private static final int HORIZONTAL_EDGE_RIGHT = 1;
@@ -40,10 +35,10 @@ public class PhotoViewAttacher {
     private static final int SINGLE_TOUCH = 1;
 
     private Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
-    private int mZoomDuration = DEFAULT_ZOOM_DURATION;
-    private float mMinScale = DEFAULT_MIN_SCALE;
-    private float mMidScale = DEFAULT_MID_SCALE;
-    private float mMaxScale = DEFAULT_MAX_SCALE;
+    private int mZoomDuration = 200;
+    private float mMinScale = 1.0f;
+    private float mMidScale = 1.75f;
+    private float mMaxScale = 3.0f;
 
     private boolean mAllowParentInterceptOnEdge = true;
     private boolean mBlockParentIntercept = false;
@@ -209,7 +204,7 @@ public class PhotoViewAttacher {
             public boolean onFling(MotionEvent e1, MotionEvent e2,
                                    float velocityX, float velocityY) {
                 if (mSingleFlingListener != null) {
-                    if (getScale() > DEFAULT_MIN_SCALE) {
+                    if (getScale() > mMinScale) {
                         return false;
                     }
                     if (e1.getPointerCount() > SINGLE_TOUCH
