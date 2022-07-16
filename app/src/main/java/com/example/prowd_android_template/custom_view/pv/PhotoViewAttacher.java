@@ -105,8 +105,8 @@ public class PhotoViewAttacher {
         @Override
         public void onFling(float startX, float startY, float velocityX, float velocityY) {
             mCurrentFlingRunnable = new PhotoViewAttacher.FlingRunnable(mImageView.getContext());
-            mCurrentFlingRunnable.fling(getImageViewWidth(mImageView),
-                    getImageViewHeight(mImageView), (int) velocityX, (int) velocityY);
+            mCurrentFlingRunnable.fling(mImageView.getWidth() - mImageView.getPaddingLeft() - mImageView.getPaddingRight(),
+                    mImageView.getHeight() - mImageView.getPaddingTop() - mImageView.getPaddingBottom(), (int) velocityX, (int) velocityY);
             mImageView.post(mCurrentFlingRunnable);
         }
 
@@ -141,7 +141,10 @@ public class PhotoViewAttacher {
                             if (parent != null) {
                                 parent.requestDisallowInterceptTouchEvent(true);
                             }
-                            cancelFling();
+                            if (mCurrentFlingRunnable != null) {
+                                mCurrentFlingRunnable.cancelFling();
+                                mCurrentFlingRunnable = null;
+                            }
                             break;
                         case MotionEvent.ACTION_CANCEL:
                         case MotionEvent.ACTION_UP:
@@ -338,22 +341,46 @@ public class PhotoViewAttacher {
 
 
     public void setMinimumScale(float minimumScale) {
-        checkZoomLevels(minimumScale, mMidScale, mMaxScale);
+        if (minimumScale >= mMidScale) {
+            throw new IllegalArgumentException(
+                    "Minimum zoom has to be less than Medium zoom. Call setMinimumZoom() with a more appropriate value");
+        } else if (mMidScale >= mMaxScale) {
+            throw new IllegalArgumentException(
+                    "Medium zoom has to be less than Maximum zoom. Call setMaximumZoom() with a more appropriate value");
+        }
         mMinScale = minimumScale;
     }
 
     public void setMediumScale(float mediumScale) {
-        checkZoomLevels(mMinScale, mediumScale, mMaxScale);
+        if (mMinScale >= mediumScale) {
+            throw new IllegalArgumentException(
+                    "Minimum zoom has to be less than Medium zoom. Call setMinimumZoom() with a more appropriate value");
+        } else if (mediumScale >= mMaxScale) {
+            throw new IllegalArgumentException(
+                    "Medium zoom has to be less than Maximum zoom. Call setMaximumZoom() with a more appropriate value");
+        }
         mMidScale = mediumScale;
     }
 
     public void setMaximumScale(float maximumScale) {
-        checkZoomLevels(mMinScale, mMidScale, maximumScale);
+        if (mMinScale >= mMidScale) {
+            throw new IllegalArgumentException(
+                    "Minimum zoom has to be less than Medium zoom. Call setMinimumZoom() with a more appropriate value");
+        } else if (mMidScale >= maximumScale) {
+            throw new IllegalArgumentException(
+                    "Medium zoom has to be less than Maximum zoom. Call setMaximumZoom() with a more appropriate value");
+        }
         mMaxScale = maximumScale;
     }
 
     public void setScaleLevels(float minimumScale, float mediumScale, float maximumScale) {
-        checkZoomLevels(minimumScale, mediumScale, maximumScale);
+        if (minimumScale >= mediumScale) {
+            throw new IllegalArgumentException(
+                    "Minimum zoom has to be less than Medium zoom. Call setMinimumZoom() with a more appropriate value");
+        } else if (mediumScale >= maximumScale) {
+            throw new IllegalArgumentException(
+                    "Medium zoom has to be less than Maximum zoom. Call setMaximumZoom() with a more appropriate value");
+        }
         mMinScale = minimumScale;
         mMidScale = mediumScale;
         mMaxScale = maximumScale;
@@ -385,11 +412,10 @@ public class PhotoViewAttacher {
     }
 
 
-
     public void setScaleType(ImageView.ScaleType scaleType) {
         boolean isSupportedScaleType = true;
         if (scaleType == null) {
-            isSupportedScaleType =  false;
+            isSupportedScaleType = false;
         }
         if (scaleType == ImageView.ScaleType.MATRIX) {
             throw new IllegalStateException("Matrix scale type is not supported");
@@ -476,8 +502,8 @@ public class PhotoViewAttacher {
         if (drawable == null) {
             return;
         }
-        final float viewWidth = getImageViewWidth(mImageView);
-        final float viewHeight = getImageViewHeight(mImageView);
+        final float viewWidth = mImageView.getWidth() - mImageView.getPaddingLeft() - mImageView.getPaddingRight();
+        final float viewHeight = mImageView.getHeight() - mImageView.getPaddingTop() - mImageView.getPaddingBottom();
         final int drawableWidth = drawable.getIntrinsicWidth();
         final int drawableHeight = drawable.getIntrinsicHeight();
         mBaseMatrix.reset();
@@ -532,7 +558,7 @@ public class PhotoViewAttacher {
         }
         final float height = rect.height(), width = rect.width();
         float deltaX = 0, deltaY = 0;
-        final int viewHeight = getImageViewHeight(mImageView);
+        final int viewHeight = mImageView.getHeight() - mImageView.getPaddingTop() - mImageView.getPaddingBottom();
         if (height <= viewHeight) {
             switch (mScaleType) {
                 case FIT_START:
@@ -555,7 +581,7 @@ public class PhotoViewAttacher {
         } else {
             mVerticalScrollEdge = VERTICAL_EDGE_NONE;
         }
-        final int viewWidth = getImageViewWidth(mImageView);
+        final int viewWidth = mImageView.getWidth() - mImageView.getPaddingLeft() - mImageView.getPaddingRight();
         if (width <= viewWidth) {
             switch (mScaleType) {
                 case FIT_START:
@@ -582,23 +608,7 @@ public class PhotoViewAttacher {
         return true;
     }
 
-    private int getImageViewWidth(ImageView imageView) {
-        return imageView.getWidth() - imageView.getPaddingLeft() - imageView.getPaddingRight();
-    }
-
-    private int getImageViewHeight(ImageView imageView) {
-        return imageView.getHeight() - imageView.getPaddingTop() - imageView.getPaddingBottom();
-    }
-
-    private void cancelFling() {
-        if (mCurrentFlingRunnable != null) {
-            mCurrentFlingRunnable.cancelFling();
-            mCurrentFlingRunnable = null;
-        }
-    }
-
     private class AnimatedZoomRunnable implements Runnable {
-
         private final float mFocalX, mFocalY;
         private final long mStartTime;
         private final float mZoomStart, mZoomEnd;
@@ -632,7 +642,6 @@ public class PhotoViewAttacher {
     }
 
     private class FlingRunnable implements Runnable {
-
         private final OverScroller mScroller;
         private int mCurrentX, mCurrentY;
 
@@ -687,17 +696,6 @@ public class PhotoViewAttacher {
                 mCurrentY = newY;
                 mImageView.postOnAnimation(this);
             }
-        }
-    }
-
-    void checkZoomLevels(float minZoom, float midZoom,
-                         float maxZoom) {
-        if (minZoom >= midZoom) {
-            throw new IllegalArgumentException(
-                    "Minimum zoom has to be less than Medium zoom. Call setMinimumZoom() with a more appropriate value");
-        } else if (midZoom >= maxZoom) {
-            throw new IllegalArgumentException(
-                    "Medium zoom has to be less than Maximum zoom. Call setMaximumZoom() with a more appropriate value");
         }
     }
 }
