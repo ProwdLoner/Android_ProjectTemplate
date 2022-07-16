@@ -23,9 +23,7 @@ import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnSingle
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.OnViewDragListener;
 import com.example.prowd_android_template.custom_view.pv.PinchImageView.CustomGestureDetector;
 
-public class PhotoViewAttacher implements View.OnTouchListener,
-        View.OnLayoutChangeListener {
-
+public class PhotoViewAttacher {
     private static final float DEFAULT_MAX_SCALE = 3.0f;
     private static final float DEFAULT_MID_SCALE = 1.75f;
     private static final float DEFAULT_MIN_SCALE = 1.0f;
@@ -137,8 +135,62 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
     public PhotoViewAttacher(ImageView imageView) {
         mImageView = imageView;
-        imageView.setOnTouchListener(this);
-        imageView.addOnLayoutChangeListener(this);
+        imageView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent ev) {
+                boolean handled = false;
+                if (mZoomEnabled && hasDrawable((ImageView) v)) {
+                    switch (ev.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            ViewParent parent = v.getParent();
+                            if (parent != null) {
+                                parent.requestDisallowInterceptTouchEvent(true);
+                            }
+                            cancelFling();
+                            break;
+                        case MotionEvent.ACTION_CANCEL:
+                        case MotionEvent.ACTION_UP:
+                            if (getScale() < mMinScale) {
+                                RectF rect = getDisplayRect();
+                                if (rect != null) {
+                                    v.post(new PhotoViewAttacher.AnimatedZoomRunnable(getScale(), mMinScale,
+                                            rect.centerX(), rect.centerY()));
+                                    handled = true;
+                                }
+                            } else if (getScale() > mMaxScale) {
+                                RectF rect = getDisplayRect();
+                                if (rect != null) {
+                                    v.post(new PhotoViewAttacher.AnimatedZoomRunnable(getScale(), mMaxScale,
+                                            rect.centerX(), rect.centerY()));
+                                    handled = true;
+                                }
+                            }
+                            break;
+                    }
+                    if (mScaleDragDetector != null) {
+                        boolean wasScaling = mScaleDragDetector.isScaling();
+                        boolean wasDragging = mScaleDragDetector.isDragging();
+                        handled = mScaleDragDetector.onTouchEvent(ev);
+                        boolean didntScale = !wasScaling && !mScaleDragDetector.isScaling();
+                        boolean didntDrag = !wasDragging && !mScaleDragDetector.isDragging();
+                        mBlockParentIntercept = didntScale && didntDrag;
+                    }
+                    if (mGestureDetector != null && mGestureDetector.onTouchEvent(ev)) {
+                        handled = true;
+                    }
+
+                }
+                return handled;
+            }
+        });
+        imageView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int
+                    oldRight, int oldBottom) {
+                if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
+                    updateBaseMatrix(mImageView.getDrawable());
+                }
+            }
+        });
         if (imageView.isInEditMode()) {
             return;
         }
@@ -297,60 +349,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         return mScaleType;
     }
 
-    @Override
-    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int
-            oldRight, int oldBottom) {
-        if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
-            updateBaseMatrix(mImageView.getDrawable());
-        }
-    }
-
-    @Override
-    public boolean onTouch(View v, MotionEvent ev) {
-        boolean handled = false;
-        if (mZoomEnabled && hasDrawable((ImageView) v)) {
-            switch (ev.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    ViewParent parent = v.getParent();
-                    if (parent != null) {
-                        parent.requestDisallowInterceptTouchEvent(true);
-                    }
-                    cancelFling();
-                    break;
-                case MotionEvent.ACTION_CANCEL:
-                case MotionEvent.ACTION_UP:
-                    if (getScale() < mMinScale) {
-                        RectF rect = getDisplayRect();
-                        if (rect != null) {
-                            v.post(new PhotoViewAttacher.AnimatedZoomRunnable(getScale(), mMinScale,
-                                    rect.centerX(), rect.centerY()));
-                            handled = true;
-                        }
-                    } else if (getScale() > mMaxScale) {
-                        RectF rect = getDisplayRect();
-                        if (rect != null) {
-                            v.post(new PhotoViewAttacher.AnimatedZoomRunnable(getScale(), mMaxScale,
-                                    rect.centerX(), rect.centerY()));
-                            handled = true;
-                        }
-                    }
-                    break;
-            }
-            if (mScaleDragDetector != null) {
-                boolean wasScaling = mScaleDragDetector.isScaling();
-                boolean wasDragging = mScaleDragDetector.isDragging();
-                handled = mScaleDragDetector.onTouchEvent(ev);
-                boolean didntScale = !wasScaling && !mScaleDragDetector.isScaling();
-                boolean didntDrag = !wasDragging && !mScaleDragDetector.isDragging();
-                mBlockParentIntercept = didntScale && didntDrag;
-            }
-            if (mGestureDetector != null && mGestureDetector.onTouchEvent(ev)) {
-                handled = true;
-            }
-
-        }
-        return handled;
-    }
 
     public void setAllowParentInterceptOnEdge(boolean allow) {
         mAllowParentInterceptOnEdge = allow;
