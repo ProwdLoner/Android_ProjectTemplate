@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.prowd_android_template">
+
     <!-- (필요 디바이스 기능 설정) -->
     <!-- <uses-feature -->
     <!-- android:name="android.hardware.camera" -->
@@ -20,6 +21,8 @@
         android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
@@ -27,6 +30,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
+        <service
+            android:name=".services.ServiceTest"
+            android:enabled="true"
+            android:exported="true"/>
+
         <activity
             android:name=".activity_set.activity_basic_service_sample.ActivityBasicServiceSample"
             android:exported="false" />

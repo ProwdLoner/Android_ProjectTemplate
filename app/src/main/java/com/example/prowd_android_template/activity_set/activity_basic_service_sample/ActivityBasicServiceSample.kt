@@ -1,19 +1,18 @@
 package com.example.prowd_android_template.activity_set.activity_basic_service_sample
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.View
-import android.widget.SeekBar
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.R
-import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSampleViewModel
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityBasicServiceSampleBinding
-import com.example.prowd_android_template.databinding.ActivityBrightnessChangeSampleBinding
+import com.example.prowd_android_template.services.ServiceTest
+
 
 class ActivityBasicServiceSample : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -128,11 +127,17 @@ class ActivityBasicServiceSample : AppCompatActivity() {
     // 초기 뷰 설정
     private fun viewSetting() {
         bindingMbr.startServiceBtn.setOnClickListener {
-            // todo
+            val serviceIntent = Intent(this, ServiceTest::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            }else{
+                startService(serviceIntent)
+            }
         }
 
         bindingMbr.stopServiceBtn.setOnClickListener {
-            // todo
+            val serviceIntent = Intent(this, ServiceTest::class.java)
+            stopService(serviceIntent)
         }
 
     }
