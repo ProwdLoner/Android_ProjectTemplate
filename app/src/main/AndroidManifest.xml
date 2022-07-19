@@ -28,6 +28,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_basic_service_sample.ActivityBasicServiceSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample"
             android:exported="false" />
         <activity

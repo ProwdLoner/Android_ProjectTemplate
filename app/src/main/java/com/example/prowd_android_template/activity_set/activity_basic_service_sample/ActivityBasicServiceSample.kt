@@ -1,29 +1,27 @@
-package com.example.prowd_android_template.activity_set.activity_etc_sample_list
+package com.example.prowd_android_template.activity_set.activity_basic_service_sample
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.Settings
+import android.view.View
+import android.widget.SeekBar
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_basic_service_sample.ActivityBasicServiceSample
-import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
-import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
-import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
+import com.example.prowd_android_template.R
+import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSampleViewModel
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityEtcSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityBasicServiceSampleBinding
+import com.example.prowd_android_template.databinding.ActivityBrightnessChangeSampleBinding
 
-class ActivityEtcSampleList : AppCompatActivity() {
+class ActivityBasicServiceSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityEtcSampleListBinding
+    lateinit var bindingMbr: ActivityBasicServiceSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityEtcSampleListViewModel
+    lateinit var viewModelMbr: ActivityBasicServiceSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -35,8 +33,8 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
 
-    // 라디오 버튼 다이얼로그
-    var radioBtnDialogMbr: DialogRadioButtonChoose? = null
+    // 라디오 버튼 선택 다이얼로그
+    var radioButtonChooseDialogMbr: DialogRadioButtonChoose? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -45,7 +43,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityEtcSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityBasicServiceSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -98,7 +96,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
         confirmDialogMbr?.dismiss()
-        radioBtnDialogMbr?.dismiss()
+        radioButtonChooseDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -113,8 +111,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr =
-            ViewModelProvider(this)[ActivityEtcSampleListViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityBasicServiceSampleViewModel::class.java]
 
     }
 
@@ -130,71 +127,6 @@ class ActivityEtcSampleList : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 권한 샘플 이동 버튼
-        bindingMbr.goToPermissionSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityPermissionSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 다이얼로그 샘플 이동 버튼
-        bindingMbr.goToDialogSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityDialogSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        // jni 샘플 이동 버튼
-        bindingMbr.goToJniSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityJniSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBrightnessChangeSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBrightnessChangeSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityAarModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityAarModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBasicServiceSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicServiceSample::class.java
-                )
-            startActivity(intent)
-        }
 
     }
 
@@ -213,6 +145,16 @@ class ActivityEtcSampleList : AppCompatActivity() {
             } else {
                 progressLoadingDialogMbr?.dismiss()
                 progressLoadingDialogMbr = null
+            }
+        }
+
+        // progressSample2 진행도
+        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
+            if (it != -1) {
+                val loadingText = "로딩중 $it%"
+                progressLoadingDialogMbr?.bindingMbr?.progressMessageTxt?.text = loadingText
+                progressLoadingDialogMbr?.bindingMbr?.progressBar?.visibility = View.VISIBLE
+                progressLoadingDialogMbr?.bindingMbr?.progressBar?.progress = it
             }
         }
 
@@ -248,19 +190,19 @@ class ActivityEtcSampleList : AppCompatActivity() {
             }
         }
 
-        // 라디오 버튼 다이얼로그 출력 플래그
-        viewModelMbr.radioButtonDialogInfoLiveDataMbr.observe(this) {
+        // 라디오 버튼 선택 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                radioBtnDialogMbr?.dismiss()
+                radioButtonChooseDialogMbr?.dismiss()
 
-                radioBtnDialogMbr = DialogRadioButtonChoose(
+                radioButtonChooseDialogMbr = DialogRadioButtonChoose(
                     this,
                     it
                 )
-                radioBtnDialogMbr?.show()
+                radioButtonChooseDialogMbr?.show()
             } else {
-                radioBtnDialogMbr?.dismiss()
-                radioBtnDialogMbr = null
+                radioButtonChooseDialogMbr?.dismiss()
+                radioButtonChooseDialogMbr = null
             }
         }
     }
