@@ -127,7 +127,11 @@ class ActivityBasicServiceSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.serviceBtn.setOnClickListener {
+        bindingMbr.startServiceBtn.setOnClickListener {
+            // todo
+        }
+
+        bindingMbr.stopServiceBtn.setOnClickListener {
             // todo
         }
 
