@@ -51,12 +51,12 @@ class BackgroundServiceTest : Service() {
 
                     Thread.sleep(100)
 
-                    broadcastIntent.action = "test"
+                    broadcastIntent.action = "BackgroundServiceTest"
                     broadcastIntent.putExtra("status", count.toString())
                     sendBroadcast(broadcastIntent)
                 }
 
-                broadcastIntent.action = "test"
+                broadcastIntent.action = "BackgroundServiceTest"
                 broadcastIntent.putExtra("status", "백그라운드 서비스 종료")
                 sendBroadcast(broadcastIntent)
 

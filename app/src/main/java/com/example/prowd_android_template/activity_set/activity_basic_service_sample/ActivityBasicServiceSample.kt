@@ -64,7 +64,7 @@ class ActivityBasicServiceSample : AppCompatActivity() {
 
         // (브로드 캐스트 설정)
         val filter = IntentFilter() // 브로트캐스트 액션 필터
-        filter.addAction("test")
+        filter.addAction("BackgroundServiceTest")
         registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 bindingMbr.serviceStatusValue.text = intent?.getStringExtra("status")
@@ -141,7 +141,6 @@ class ActivityBasicServiceSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-
         bindingMbr.startServiceBtn.setOnClickListener {
             val serviceIntent = Intent(this, BackgroundServiceTest::class.java)
             serviceIntent.action = "start"
@@ -154,6 +153,7 @@ class ActivityBasicServiceSample : AppCompatActivity() {
             startService(serviceIntent)
         }
 
+        // todo
         bindingMbr.startForegroundServiceBtn.setOnClickListener {
             val serviceIntent = Intent(this, ForegroundServiceTest::class.java)
             ContextCompat.startForegroundService(this, serviceIntent)
