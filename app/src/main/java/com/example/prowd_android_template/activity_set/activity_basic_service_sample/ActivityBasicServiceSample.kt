@@ -4,9 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -151,16 +149,19 @@ class ActivityBasicServiceSample : AppCompatActivity() {
             val serviceIntent = Intent(this, BackgroundServiceTest::class.java)
             serviceIntent.action = "stop"
             startService(serviceIntent)
+            stopService(serviceIntent)
         }
 
-        // todo
         bindingMbr.startForegroundServiceBtn.setOnClickListener {
             val serviceIntent = Intent(this, ForegroundServiceTest::class.java)
+            serviceIntent.action = "start"
             ContextCompat.startForegroundService(this, serviceIntent)
         }
 
         bindingMbr.stopForegroundServiceBtn.setOnClickListener {
             val serviceIntent = Intent(this, ForegroundServiceTest::class.java)
+            serviceIntent.action = "stop"
+            startService(serviceIntent)
             stopService(serviceIntent)
         }
 

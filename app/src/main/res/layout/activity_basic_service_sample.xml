@@ -70,7 +70,7 @@
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="서비스 상태 : "
+                    android:text="백그라운드 서비스 상태 : "
                     android:textColor="#FF000000"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
