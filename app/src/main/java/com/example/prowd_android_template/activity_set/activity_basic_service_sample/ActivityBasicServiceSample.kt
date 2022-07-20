@@ -5,13 +5,14 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityBasicServiceSampleBinding
-import com.example.prowd_android_template.services.ServiceTest
+import com.example.prowd_android_template.services.ForegroundServiceTest
 
 
 class ActivityBasicServiceSample : AppCompatActivity() {
@@ -126,17 +127,13 @@ class ActivityBasicServiceSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.startServiceBtn.setOnClickListener {
-            val serviceIntent = Intent(this, ServiceTest::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            }else{
-                startService(serviceIntent)
-            }
+        bindingMbr.startForegroundServiceBtn.setOnClickListener {
+            val serviceIntent = Intent(this, ForegroundServiceTest::class.java)
+            ContextCompat.startForegroundService(this, serviceIntent)
         }
 
-        bindingMbr.stopServiceBtn.setOnClickListener {
-            val serviceIntent = Intent(this, ServiceTest::class.java)
+        bindingMbr.stopForegroundServiceBtn.setOnClickListener {
+            val serviceIntent = Intent(this, ForegroundServiceTest::class.java)
             stopService(serviceIntent)
         }
 

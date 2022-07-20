@@ -20,8 +20,7 @@
     <uses-permission
         android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
-
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="false"
@@ -31,9 +30,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <service
-            android:name=".services.ServiceTest"
+            android:name=".BackgroundServiceTest"
             android:enabled="true"
-            android:exported="true"/>
+            android:exported="true"></service>
+        <service
+            android:name=".services.ForegroundServiceTest"
+            android:enabled="true"
+            android:exported="true" />
 
         <activity
             android:name=".activity_set.activity_basic_service_sample.ActivityBasicServiceSample"
