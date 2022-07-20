@@ -30,7 +30,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <service
-            android:name=".BackgroundServiceTest"
+            android:name=".services.BackgroundServiceTest"
             android:enabled="true"
             android:exported="true"></service>
         <service

@@ -1,8 +1,12 @@
 package com.example.prowd_android_template.activity_set.activity_basic_service_sample
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -12,6 +16,7 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityBasicServiceSampleBinding
+import com.example.prowd_android_template.services.BackgroundServiceTest
 import com.example.prowd_android_template.services.ForegroundServiceTest
 
 
@@ -56,6 +61,15 @@ class ActivityBasicServiceSample : AppCompatActivity() {
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
+
+        // (브로드 캐스트 설정)
+        val filter = IntentFilter() // 브로트캐스트 액션 필터
+        filter.addAction("test")
+        registerReceiver(object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                bindingMbr.serviceStatusValue.text = intent?.getStringExtra("status")
+            }
+        }, filter)
     }
 
     override fun onResume() {
@@ -127,6 +141,19 @@ class ActivityBasicServiceSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
+
+        bindingMbr.startServiceBtn.setOnClickListener {
+            val serviceIntent = Intent(this, BackgroundServiceTest::class.java)
+            serviceIntent.action = "start"
+            startService(serviceIntent)
+        }
+
+        bindingMbr.stopServiceBtn.setOnClickListener {
+            val serviceIntent = Intent(this, BackgroundServiceTest::class.java)
+            serviceIntent.action = "stop"
+            startService(serviceIntent)
+        }
+
         bindingMbr.startForegroundServiceBtn.setOnClickListener {
             val serviceIntent = Intent(this, ForegroundServiceTest::class.java)
             ContextCompat.startForegroundService(this, serviceIntent)

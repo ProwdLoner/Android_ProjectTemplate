@@ -12,7 +12,7 @@ import com.example.prowd_android_template.activity_set.activity_basic_service_sa
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-// notification 과 동시에 사용되는 서비스
+// (notification 과 동시에 사용되는 서비스)
 // notification 이 뷰 역할을 하여 앱이 꺼지더라도 계속 실행됨
 class ForegroundServiceTest : Service() {
     // <멤버 변수 공간>
