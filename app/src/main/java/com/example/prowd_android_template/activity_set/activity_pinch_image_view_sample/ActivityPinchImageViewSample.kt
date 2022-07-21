@@ -80,12 +80,9 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
             }
         }
 
-    }
-
-    override fun onStop() {
         // 설정 변경(화면회전)을 했는지 여부를 초기화
+        // onResume 의 가장 마지막
         viewModelMbr.isChangingConfigurationsMbr = false
-        super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -133,7 +130,7 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
     private fun viewSetting() {
         // 이미지가 너무 크면 xml 에서 곧바로 설정시 에러 발생. 고로 Glide 를 사용해줌
         // (혹은 drawable 폴더 각 해상도에 맞게 각 사이즈 이미지를 분배하는 것도 좋음)
-        if (!isFinishing) {
+        if (!isFinishing && !isDestroyed) {
             Glide.with(this)
                 .load(R.drawable.img_activity_pinch_image_view_sample)
                 .transform(CenterCrop())

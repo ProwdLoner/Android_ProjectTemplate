@@ -19,7 +19,6 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -151,6 +150,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 //  데이터 로딩
             }
         }
+
+        // 설정 변경(화면회전)을 했는지 여부를 초기화
+        // onResume 의 가장 마지막
+        viewModelMbr.isChangingConfigurationsMbr = false
     }
 
     override fun onPause() {
@@ -255,12 +258,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         super.onPause()
-    }
-
-    override fun onStop() {
-        // 설정 변경(화면회전)을 했는지 여부를 초기화
-        viewModelMbr.isChangingConfigurationsMbr = false
-        super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -1237,7 +1234,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 조기 종료 플래그
             if (cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
                 viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
-                isDestroyed // 액티비티 자체가 종료
+                isDestroyed || isFinishing // 액티비티 자체가 종료
             ) {
                 imageObj.close()
                 return
@@ -1281,7 +1278,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 if (asyncImageProcessingOnProgressMbr || // 현재 비동기 이미지 프로세싱 중일 때
                     cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
                     viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
-                    isDestroyed // 액티비티 자체가 종료
+                    isDestroyed || isFinishing // 액티비티 자체가 종료
                 ) {
                     asyncImageProcessingOnProgressSemaphoreMbr.release()
                     return@execute
@@ -1307,7 +1304,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 // 디버그를 위한 표시
                 runOnUiThread {
-                    if (!isDestroyed) {
+                    if (!isDestroyed && !isFinishing) {
                         Glide.with(this)
                             .load(cameraImageFrameBitmap)
                             .transform(FitCenter())
@@ -1356,7 +1353,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 // 디버그를 위한 표시
                 runOnUiThread {
-                    if (!isDestroyed) {
+                    if (!isDestroyed && !isFinishing) {
                         Glide.with(this)
                             .load(rotatedCameraImageFrameBitmap)
                             .transform(FitCenter())
@@ -1383,7 +1380,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 // 디버그를 위한 표시
                 runOnUiThread {
-                    if (!isDestroyed) {
+                    if (!isDestroyed && !isFinishing) {
                         Glide.with(this)
                             .load(resizedBitmap)
                             .transform(FitCenter())
@@ -1416,7 +1413,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 // 디버그를 위한 표시
                 runOnUiThread {
-                    if (!isDestroyed) {
+                    if (!isDestroyed && !isFinishing) {
                         Glide.with(this)
                             .load(croppedBitmap)
                             .transform(FitCenter())
@@ -1446,7 +1443,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // 조기 종료 플래그
             if (cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
-                isDestroyed // 액티비티 자체가 종료
+                isDestroyed || isFinishing // 액티비티 자체가 종료
             ) {
                 imageObj.close()
                 return
@@ -1461,7 +1458,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             output.close()
 
             runOnUiThread {
-                if (!isDestroyed) {
+                if (!isDestroyed && !isFinishing) {
                     Glide.with(this)
                         .load(file)
                         .transform(FitCenter())

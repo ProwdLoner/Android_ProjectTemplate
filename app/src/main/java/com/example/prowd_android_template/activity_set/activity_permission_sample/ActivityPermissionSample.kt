@@ -102,12 +102,9 @@ class ActivityPermissionSample : AppCompatActivity() {
             }
         }
 
-    }
-
-    override fun onStop() {
         // 설정 변경(화면회전)을 했는지 여부를 초기화
+        // onResume 의 가장 마지막
         viewModelMbr.isChangingConfigurationsMbr = false
-        super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

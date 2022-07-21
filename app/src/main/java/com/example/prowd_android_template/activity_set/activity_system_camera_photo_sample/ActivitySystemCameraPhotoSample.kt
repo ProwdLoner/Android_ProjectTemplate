@@ -98,12 +98,9 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
             }
         }
 
-    }
-
-    override fun onStop() {
         // 설정 변경(화면회전)을 했는지 여부를 초기화
+        // onResume 의 가장 마지막
         viewModelMbr.isChangingConfigurationsMbr = false
-        super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -434,11 +431,11 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
 
         viewModelMbr.selectedPhotoUriMbr.observe(this){
             if (it == null){
-                if (!isDestroyed) {
+                if (!isDestroyed && !isFinishing) {
                     bindingMbr.fileImg.setImageResource(android.R.color.transparent)
                 }
             }else{
-                if (!isDestroyed) {
+                if (!isDestroyed && !isFinishing) {
                     Glide.with(this)
                         .load(it)
                         .transform(CenterCrop())

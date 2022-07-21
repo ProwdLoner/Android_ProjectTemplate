@@ -184,12 +184,9 @@ class ActivityEasyLutSample : AppCompatActivity() {
             }
         }
 
-    }
-
-    override fun onStop() {
         // 설정 변경(화면회전)을 했는지 여부를 초기화
+        // onResume 의 가장 마지막
         viewModelMbr.isChangingConfigurationsMbr = false
-        super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -458,11 +455,11 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
         viewModelMbr.filteredImage1LiveDataMbr.observe(this) {
             if (it == null) {
-                if (!isFinishing) {
+                if (!isFinishing && !isDestroyed) {
                     bindingMbr.image1FilteredImage.setImageResource(android.R.color.transparent)
                 }
             } else {
-                if (!isFinishing) {
+                if (!isFinishing && !isDestroyed) {
                     Glide.with(this)
                         .load(it)
                         .transform(CenterCrop())
@@ -473,11 +470,11 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
         viewModelMbr.filteredImage2LiveDataMbr.observe(this) {
             if (it == null) {
-                if (!isFinishing) {
+                if (!isFinishing && !isDestroyed) {
                     bindingMbr.image2FilteredImage.setImageResource(android.R.color.transparent)
                 }
             } else {
-                if (!isFinishing) {
+                if (!isFinishing && !isDestroyed) {
                     Glide.with(this)
                         .load(it)
                         .transform(CenterCrop())
@@ -488,11 +485,11 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
         viewModelMbr.filteredImage3LiveDataMbr.observe(this) {
             if (it == null) {
-                if (!isFinishing) {
+                if (!isFinishing && !isDestroyed) {
                     bindingMbr.image3FilteredImage.setImageResource(android.R.color.transparent)
                 }
             } else {
-                if (!isFinishing) {
+                if (!isFinishing && !isDestroyed) {
                     Glide.with(this)
                         .load(it)
                         .transform(CenterCrop())

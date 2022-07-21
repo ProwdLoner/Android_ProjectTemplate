@@ -82,12 +82,9 @@ class ActivityPinchImageViewer : AppCompatActivity() {
             }
         }
 
-    }
-
-    override fun onStop() {
         // 설정 변경(화면회전)을 했는지 여부를 초기화
+        // onResume 의 가장 마지막
         viewModelMbr.isChangingConfigurationsMbr = false
-        super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -135,7 +132,7 @@ class ActivityPinchImageViewer : AppCompatActivity() {
     private fun viewSetting() {
         val imageFilePath = intent.getStringExtra("image_file_path")!!
 
-        if (!isFinishing) {
+        if (!isFinishing && !isDestroyed) {
             Glide.with(this)
                 .load(imageFilePath)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)

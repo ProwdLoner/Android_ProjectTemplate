@@ -110,6 +110,10 @@ class ActivityInit : AppCompatActivity() {
                 doActivityInit()
             }
         }
+
+        // 설정 변경(화면회전)을 했는지 여부를 초기화
+        // onResume 의 가장 마지막
+        viewModelMbr.isChangingConfigurationsMbr = false
     }
 
     override fun onPause() {
@@ -119,12 +123,6 @@ class ActivityInit : AppCompatActivity() {
         }
 
         super.onPause()
-    }
-
-    override fun onStop() {
-        // 설정 변경(화면회전)을 했는지 여부를 초기화
-        viewModelMbr.isChangingConfigurationsMbr = false
-        super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -237,7 +235,7 @@ class ActivityInit : AppCompatActivity() {
                             if (!viewModelMbr.checkLoginSessionAsyncOnProgressedMbr) {
                                 // 메소드 실행중이 아닐 때,
 
-                                val isAutoLogin : Boolean =
+                                val isAutoLogin: Boolean =
                                     viewModelMbr.currentLoginSessionInfoSpwMbr.isAutoLogin
                                 val loginType: Int =
                                     viewModelMbr.currentLoginSessionInfoSpwMbr.loginType
@@ -514,7 +512,7 @@ class ActivityInit : AppCompatActivity() {
             viewModelMbr.checkAppVersionAsyncCompletedOnceMbr && // 앱 버전 검증이 끝났을 때
             viewModelMbr.checkLoginSessionAsyncCompletedOnceMbr && // 로그인 검증이 끝났을 때
             viewModelMbr.isCheckAppPermissionsCompletedOnceMbr && // 앱 권한 체크가 끝났을 때
-            (!viewModelMbr.isChangingConfigurationsMbr && !isFinishing)
+            (!isDestroyed && !isFinishing) // 종료되지 않았을 때
         ) {
             val intent =
                 Intent(
