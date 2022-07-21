@@ -149,26 +149,6 @@ class ActivityRecyclerViewSampleList : AppCompatActivity() {
             startActivity(intent)
         }
 
-        bindingMbr.goToMultiItemRecyclerViewSampleBtn.setOnClickListener {
-            // todo
-//            val intent =
-//                Intent(
-//                    this,
-//                    ActivityNetworkRecyclerViewSample::class.java
-//                )
-//            startActivity(intent)
-        }
-
-        bindingMbr.goToNestingRecyclerViewSampleBtn.setOnClickListener {
-            // todo
-//            val intent =
-//                Intent(
-//                    this,
-//                    ActivityNetworkRecyclerViewSample::class.java
-//                )
-//            startActivity(intent)
-        }
-
     }
 
     // 라이브 데이터 설정
