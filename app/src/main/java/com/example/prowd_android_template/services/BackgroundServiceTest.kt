@@ -9,7 +9,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 
-
 // todo
 // (백그라운드에서 실행되는 서비스)
 // 앱이 종료되면 같이 종료됩니다.
@@ -54,7 +53,6 @@ class BackgroundServiceTest : Service() {
                 onStartCommandEarlyStopRequestSemaphoreMbr.acquire()
                 onStartCommandEarlyStopRequestMbr = true
                 onStartCommandEarlyStopRequestSemaphoreMbr.release()
-                stopSelf()
             } else {
                 onStartCommandStatusMbr = 1
                 onStartCommandStatusSemaphoreMbr.release()
@@ -64,7 +62,6 @@ class BackgroundServiceTest : Service() {
             onStartCommandEarlyStopRequestSemaphoreMbr.acquire()
             onStartCommandEarlyStopRequestMbr = true
             onStartCommandEarlyStopRequestSemaphoreMbr.release()
-            stopSelf()
         }
 
         return super.onStartCommand(intent, flags, startId)
@@ -80,28 +77,26 @@ class BackgroundServiceTest : Service() {
     // (비동기 서비스 작업 실행)
     private fun startAsyncTask(intent: Intent?, flags: Int, startId: Int) {
         executorServiceMbr.execute {
-            for (count in 30 downTo 0) {
-                // 서비스 작업 샘플 의사 대기시간
-                Thread.sleep(100)
-
+            val maxCount = 30
+            for (count in maxCount downTo 0) {
+                // 조기 종료 파악
                 onStartCommandEarlyStopRequestSemaphoreMbr.acquire()
                 if (onStartCommandEarlyStopRequestMbr) { // 조기종료
                     onStartCommandEarlyStopRequestMbr = false
                     onStartCommandEarlyStopRequestSemaphoreMbr.release()
 
                     if (onStartCommandEarlyStopCallbackMbr != null) {
-                        executorServiceMbr.execute {
-                            onStartCommandEarlyStopCallbackMbr!!()
-                        }
+                        onStartCommandEarlyStopCallbackMbr!!()
 
                         onStartCommandEarlyStopCallbackMbr = null
                     } else {
                         // 조기 종료 브로드캐스트
-                        val broadcastIntent = Intent()
-                        broadcastIntent.action = "BackgroundServiceTest"
-                        broadcastIntent.putExtra("status", "백그라운드 서비스 조기 종료")
-                        sendBroadcast(broadcastIntent)
+                        val broadcastIntent1 = Intent()
+                        broadcastIntent1.action = "BackgroundServiceTest"
+                        broadcastIntent1.putExtra("status", "백그라운드 서비스 조기 종료")
+                        sendBroadcast(broadcastIntent1)
 
+                        stopSelf()
                         // 서비스 상태 코드 변경
                         onStartCommandStatusSemaphoreMbr.acquire()
                         onStartCommandStatusMbr = 0
@@ -111,11 +106,14 @@ class BackgroundServiceTest : Service() {
                 }
                 onStartCommandEarlyStopRequestSemaphoreMbr.release()
 
-                // 작업 결과 표시
+                // 진행 사항 표시
                 val broadcastIntent = Intent()
                 broadcastIntent.action = "BackgroundServiceTest"
                 broadcastIntent.putExtra("status", count.toString())
                 sendBroadcast(broadcastIntent)
+
+                // 서비스 작업 샘플 의사 대기시간
+                Thread.sleep(100)
             }
 
             // 서비스 완료 브로드 캐스트

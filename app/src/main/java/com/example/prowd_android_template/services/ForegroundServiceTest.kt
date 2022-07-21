@@ -13,27 +13,37 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+
+// todo noti 생성 함수 정리
 // (notification 과 동시에 사용되는 서비스)
 // notification 이 뷰 역할을 하여 앱이 꺼지더라도 계속 실행됨
 class ForegroundServiceTest : Service() {
     // <멤버 변수 공간>
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
-    // 서비스 작업 상태 코드
+    // onStartCommand 작업 상태 코드
     // 0 : stop
     // 1 : start
-    private var serviceActionStatusMbr = 0
-    private val serviceActionStatusMbrSemaphoreMbr = Semaphore(1)
-    private var asyncActionStopRequestMbr = false // 비동기 작업 조기 종료 리퀘스트
-    private val asyncActionStopRequestMbrSemaphoreMbr = Semaphore(1)
+    private var onStartCommandStatusMbr = 0
+    private val onStartCommandStatusSemaphoreMbr = Semaphore(1)
+
+    // onStartCommand 작업 조기 종료 리퀘스트
+    private var onStartCommandEarlyStopRequestMbr = false
+    private val onStartCommandEarlyStopRequestSemaphoreMbr = Semaphore(1)
+
+    // onStartCommand 작업 조기 종료 콜백
+    private var onStartCommandEarlyStopCallbackMbr: (() -> Unit)? = null
+
+    //(notification 설정)
+    private val serviceIdMbr = 1
+    private val titleMbr = "테스트 타이틀"
+    private val channelIdMbr = "$packageName-${getString(R.string.app_name)}"
 
 
     // ---------------------------------------------------------------------------------------------
     // <오버라이딩 공간>
     override fun onBind(intent: Intent): IBinder {
-        return object : Binder() {
-
-        }
+        return object : Binder() {}
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -41,25 +51,48 @@ class ForegroundServiceTest : Service() {
             return START_STICKY
         }
 
-        serviceActionStatusMbrSemaphoreMbr.acquire()
-        if (intent.action == "start" &&
-            serviceActionStatusMbr != 1
-        ) { // start 액션 명령 and 현 상태가 start 실행중이 아닐 때 = 조기종료 프로세스 진행중에도 스킵
-            serviceActionStatusMbr = 1
-            serviceActionStatusMbrSemaphoreMbr.release()
+        if (intent.action == "start") { // start 액션 명령
+            onStartCommandStatusSemaphoreMbr.acquire()
+            if (onStartCommandStatusMbr == 1) {// 기존에 start 명령 실행중이라면,
+                onStartCommandStatusSemaphoreMbr.release()
 
+                // 조기 종료 후 새 작업 실행 콜백 설정 (가장 최근에 요청한 콜백만 실행됨)
+                onStartCommandEarlyStopCallbackMbr = {
+                    startAsyncTask(intent, flags, startId)
+                }
+                // 기존 명령 취소
+                onStartCommandEarlyStopRequestSemaphoreMbr.acquire()
+                onStartCommandEarlyStopRequestMbr = true
+                onStartCommandEarlyStopRequestSemaphoreMbr.release()
+            } else {
+                onStartCommandStatusMbr = 1
+                onStartCommandStatusSemaphoreMbr.release()
+                startAsyncTask(intent, flags, startId)
+            }
+        } else if (intent.action == "stop") {
+            onStartCommandEarlyStopRequestSemaphoreMbr.acquire()
+            onStartCommandEarlyStopRequestMbr = true
+            onStartCommandEarlyStopRequestSemaphoreMbr.release()
+        }
+
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <공개 메소드 공간>
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <비공개 메소드 공간>
+    // (비동기 서비스 작업 실행)
+    private fun startAsyncTask(intent: Intent?, flags: Int, startId: Int) {
+        executorServiceMbr.execute {
             // (Foreground 용 Notification 생성)
-            val serviceIdMbr = 1
-
-            val title = "테스트 타이틀"
-            val content = "테스트 본문입니다."
-
-            val channelId = "$packageName-${getString(R.string.app_name)}"
-
-            // (API 26 이상의 경우 - Notification Channel 설정)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // (API 26 이상의 경우 - Notification Channel 설정)
                 val channel = NotificationChannel(
-                    channelId,
+                    channelIdMbr,
                     getString(R.string.app_name),
                     NotificationManager.IMPORTANCE_LOW
                 )
@@ -71,13 +104,13 @@ class ForegroundServiceTest : Service() {
             }
 
             // (notification 설정)
-            val notificationBuilderMbr = NotificationCompat.Builder(this, channelId)
+            val notificationBuilderMbr = NotificationCompat.Builder(this, channelIdMbr)
             // 아이콘 설정
             notificationBuilderMbr.setSmallIcon(R.mipmap.ic_launcher)
             // 타이틀 설정
-            notificationBuilderMbr.setContentTitle(title)
+            notificationBuilderMbr.setContentTitle(titleMbr)
             // 본문 설정
-            notificationBuilderMbr.setContentText(content)
+            notificationBuilderMbr.setContentText("테스트 실행중입니다.")
             // 우선순위 설정
             notificationBuilderMbr.priority = NotificationCompat.PRIORITY_DEFAULT
             // 알림 터치시 삭제여부 설정
@@ -102,62 +135,50 @@ class ForegroundServiceTest : Service() {
             }
             notificationBuilderMbr.setContentIntent(pendingIntent)
 
-            // (서비스 로직 실행)
             val maxCount = 30
-            executorServiceMbr.execute {
-                for (count in 0..maxCount) {
-                    asyncActionStopRequestMbrSemaphoreMbr.acquire()
-                    if (asyncActionStopRequestMbr) { // 조기종료
-                        asyncActionStopRequestMbr = false
-                        asyncActionStopRequestMbrSemaphoreMbr.release()
+            for (count in 0..maxCount) {
+                // 조기종료 파악
+                onStartCommandEarlyStopRequestSemaphoreMbr.acquire()
+                if (onStartCommandEarlyStopRequestMbr) { // 조기종료
+                    onStartCommandEarlyStopRequestMbr = false
+                    onStartCommandEarlyStopRequestSemaphoreMbr.release()
 
+                    if (onStartCommandEarlyStopCallbackMbr != null) {
+                        onStartCommandEarlyStopCallbackMbr!!()
+
+                        onStartCommandEarlyStopCallbackMbr = null
+                    } else {
+                        notificationBuilderMbr.setProgress(0, 0, false)
+                        notificationBuilderMbr.setContentText("테스트 조기 종료")
+                        startForeground(serviceIdMbr, notificationBuilderMbr.build())
+
+                        stopForeground(true)
                         // 서비스 상태 코드 변경
-                        serviceActionStatusMbrSemaphoreMbr.acquire()
-                        serviceActionStatusMbr = 0
-                        serviceActionStatusMbrSemaphoreMbr.release()
-                        return@execute
+                        onStartCommandStatusSemaphoreMbr.acquire()
+                        onStartCommandStatusMbr = 0
+                        onStartCommandStatusSemaphoreMbr.release()
                     }
-                    asyncActionStopRequestMbrSemaphoreMbr.release()
-
-                    // 서비스 작업 샘플 의사 대기시간
-                    Thread.sleep(100)
-
-                    // 서비스 진행
-                    notificationBuilderMbr.setProgress(maxCount, count, false)
-                    startForeground(serviceIdMbr, notificationBuilderMbr.build())
+                    return@execute
                 }
+                onStartCommandEarlyStopRequestSemaphoreMbr.release()
 
-                // 서비스 완료
-                notificationBuilderMbr.setProgress(0, 0, false)
+                // 작업 결과 표시
+                notificationBuilderMbr.setProgress(maxCount, count, false)
                 startForeground(serviceIdMbr, notificationBuilderMbr.build())
 
-                // 서비스 상태 코드 변경
-                serviceActionStatusMbrSemaphoreMbr.acquire()
-                serviceActionStatusMbr = 0
-                serviceActionStatusMbrSemaphoreMbr.release()
-
-                stopSelf()
+                // 서비스 작업 샘플 의사 대기시간
+                Thread.sleep(100)
             }
-        } else if (intent.action == "stop") {
-            serviceActionStatusMbrSemaphoreMbr.release()
-            asyncActionStopRequestMbrSemaphoreMbr.acquire()
-            asyncActionStopRequestMbr = true
-            asyncActionStopRequestMbrSemaphoreMbr.release()
+
+            // 서비스 완료
             stopForeground(true)
-        } else {
-            serviceActionStatusMbrSemaphoreMbr.release()
+
+            // 서비스 상태 코드 변경
+            onStartCommandStatusSemaphoreMbr.acquire()
+            onStartCommandStatusMbr = 0
+            onStartCommandStatusSemaphoreMbr.release()
         }
-
-        return super.onStartCommand(intent, flags, startId)
     }
-
-
-    // ---------------------------------------------------------------------------------------------
-    // <공개 메소드 공간>
-
-
-    // ---------------------------------------------------------------------------------------------
-    // <비공개 메소드 공간>
 
 
     // ---------------------------------------------------------------------------------------------
