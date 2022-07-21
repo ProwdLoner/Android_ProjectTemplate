@@ -84,11 +84,11 @@ class ActivityPermissionSample : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        // 권한 스위치 상태 변경
+        setSwitchView()
+
         // (데이터 갱신 시점 적용)
         if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            // 권한 스위치 상태 변경
-            setSwitchView()
-
             val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
             if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
@@ -844,14 +844,14 @@ class ActivityPermissionSample : AppCompatActivity() {
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
                             // 권한 설정 페이지 이동
+                            // ACTION_MANAGE_WRITE_SETTINGS 는 ActivityResultLauncher 가 통하지 않으므로,
+                            // onResume 시에 체크해서 판단하도록
                             val intent =
                                 Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
                             intent.data = Uri.parse("package:" + this.packageName)
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            resultLauncherCallbackMbr = {
-                                setSwitchView()
-                            }
-                            resultLauncherMbr.launch(intent)
+                            startActivity(intent)
+
                         },
                         onNegBtnClicked = {
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
