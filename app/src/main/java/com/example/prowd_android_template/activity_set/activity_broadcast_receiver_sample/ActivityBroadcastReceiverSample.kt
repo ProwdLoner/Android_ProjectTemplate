@@ -1,30 +1,26 @@
-package com.example.prowd_android_template.activity_set.activity_basic_service_sample
+package com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Bundle
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityBasicServiceSampleBinding
-import com.example.prowd_android_template.services.BackgroundServiceTest
-import com.example.prowd_android_template.services.ForegroundServiceTest
+import com.example.prowd_android_template.databinding.ActivityBroadcastReceiverSampleBinding
+import com.example.prowd_android_template.services.BackgroundServiceBroadcastTest
 
-
-class ActivityBasicServiceSample : AppCompatActivity() {
+class ActivityBroadcastReceiverSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityBasicServiceSampleBinding
+    lateinit var bindingMbr: ActivityBroadcastReceiverSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityBasicServiceSampleViewModel
+    lateinit var viewModelMbr: ActivityBroadcastReceiverSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -36,8 +32,8 @@ class ActivityBasicServiceSample : AppCompatActivity() {
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
 
-    // 라디오 버튼 선택 다이얼로그
-    var radioButtonChooseDialogMbr: DialogRadioButtonChoose? = null
+    // 라디오 버튼 다이얼로그
+    var radioBtnDialogMbr: DialogRadioButtonChoose? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -46,7 +42,7 @@ class ActivityBasicServiceSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityBasicServiceSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityBroadcastReceiverSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -62,10 +58,10 @@ class ActivityBasicServiceSample : AppCompatActivity() {
 
         // (브로드 캐스트 설정)
         val filter = IntentFilter() // 브로트캐스트 액션 필터
-        filter.addAction("BackgroundServiceTest")
+        filter.addAction("ActivityBroadcastReceiverSample")
         registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                bindingMbr.serviceStatusValue.text = intent?.getStringExtra("status")
+                bindingMbr.broadcastValue.text = intent?.getStringExtra("value")
             }
         }, filter)
     }
@@ -104,8 +100,8 @@ class ActivityBasicServiceSample : AppCompatActivity() {
         // 다이얼로그 객체 해소
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
-        confirmDialogMbr?.dismiss()
-        radioButtonChooseDialogMbr?.dismiss()
+        progressLoadingDialogMbr?.dismiss()
+        radioBtnDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -120,7 +116,7 @@ class ActivityBasicServiceSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityBasicServiceSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityBroadcastReceiverSampleViewModel::class.java]
 
     }
 
@@ -136,30 +132,14 @@ class ActivityBasicServiceSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.startServiceBtn.setOnClickListener {
-            val serviceIntent = Intent(this, BackgroundServiceTest::class.java)
-            serviceIntent.action = "start"
+        bindingMbr.activityBroadcast.setOnClickListener {
+            // todo
+        }
+
+        bindingMbr.serviceBroadcast.setOnClickListener {
+            val serviceIntent = Intent(this, BackgroundServiceBroadcastTest::class.java)
             startService(serviceIntent)
         }
-
-        bindingMbr.stopServiceBtn.setOnClickListener {
-            val serviceIntent = Intent(this, BackgroundServiceTest::class.java)
-            serviceIntent.action = "stop"
-            startService(serviceIntent)
-        }
-
-        bindingMbr.startForegroundServiceBtn.setOnClickListener {
-            val serviceIntent = Intent(this, ForegroundServiceTest::class.java)
-            serviceIntent.action = "start"
-            ContextCompat.startForegroundService(this, serviceIntent)
-        }
-
-        bindingMbr.stopForegroundServiceBtn.setOnClickListener {
-            val serviceIntent = Intent(this, ForegroundServiceTest::class.java)
-            serviceIntent.action = "stop"
-            startService(serviceIntent)
-        }
-
     }
 
     // 라이브 데이터 설정
@@ -177,16 +157,6 @@ class ActivityBasicServiceSample : AppCompatActivity() {
             } else {
                 progressLoadingDialogMbr?.dismiss()
                 progressLoadingDialogMbr = null
-            }
-        }
-
-        // progressSample2 진행도
-        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
-            if (it != -1) {
-                val loadingText = "로딩중 $it%"
-                progressLoadingDialogMbr?.bindingMbr?.progressMessageTxt?.text = loadingText
-                progressLoadingDialogMbr?.bindingMbr?.progressBar?.visibility = View.VISIBLE
-                progressLoadingDialogMbr?.bindingMbr?.progressBar?.progress = it
             }
         }
 
@@ -222,19 +192,19 @@ class ActivityBasicServiceSample : AppCompatActivity() {
             }
         }
 
-        // 라디오 버튼 선택 다이얼로그 출력 플래그
-        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.observe(this) {
+        // 라디오 버튼 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                radioButtonChooseDialogMbr?.dismiss()
+                radioBtnDialogMbr?.dismiss()
 
-                radioButtonChooseDialogMbr = DialogRadioButtonChoose(
+                radioBtnDialogMbr = DialogRadioButtonChoose(
                     this,
                     it
                 )
-                radioButtonChooseDialogMbr?.show()
+                radioBtnDialogMbr?.show()
             } else {
-                radioButtonChooseDialogMbr?.dismiss()
-                radioButtonChooseDialogMbr = null
+                radioBtnDialogMbr?.dismiss()
+                radioBtnDialogMbr = null
             }
         }
     }

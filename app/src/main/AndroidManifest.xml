@@ -29,15 +29,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
-        <service
-            android:name=".services.BackgroundServiceTest"
-            android:enabled="true"
-            android:exported="true"></service>
-        <service
-            android:name=".services.ForegroundServiceTest"
-            android:enabled="true"
-            android:exported="true" />
 
+        <activity
+            android:name=".activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample"
+            android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_service_sample.ActivityBasicServiceSample"
             android:exported="false" />
@@ -127,6 +122,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".services.BackgroundServiceTest"
+            android:enabled="true"
+            android:exported="true" />
+        <service
+            android:name=".services.ForegroundServiceTest"
+            android:enabled="true"
+            android:exported="true" />
+        <service
+            android:name=".services.BackgroundServiceBroadcastTest"
+            android:enabled="true"
+            android:exported="true"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample
 import com.example.prowd_android_template.activity_set.activity_basic_service_sample.ActivityBasicServiceSample
 import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample
+import com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
 import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
@@ -189,6 +190,15 @@ class ActivityEtcSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityBasicServiceSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToActivityBroadcastReceiverSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityBroadcastReceiverSample::class.java
                 )
             startActivity(intent)
         }

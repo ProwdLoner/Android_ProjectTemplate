@@ -19,8 +19,13 @@ class ForegroundServiceTest : Service() {
     // <멤버 변수 공간>
     private var executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
 
-    private var serviceActionMbr = "stop"
-    private val serviceActionMbrSemaphoreMbr = Semaphore(1)
+    // 서비스 작업 상태 코드
+    // 0 : stop
+    // 1 : start
+    private var serviceActionStatusMbr = 0
+    private val serviceActionStatusMbrSemaphoreMbr = Semaphore(1)
+    private var asyncActionStopRequestMbr = false // 비동기 작업 조기 종료 리퀘스트
+    private val asyncActionStopRequestMbrSemaphoreMbr = Semaphore(1)
 
 
     // ---------------------------------------------------------------------------------------------
@@ -36,11 +41,14 @@ class ForegroundServiceTest : Service() {
             return START_STICKY
         }
 
-        serviceActionMbrSemaphoreMbr.acquire()
-        if (intent.action == "start" && serviceActionMbr != "start") {
-            serviceActionMbr = "start"
-            serviceActionMbrSemaphoreMbr.release()
+        serviceActionStatusMbrSemaphoreMbr.acquire()
+        if (intent.action == "start" &&
+            serviceActionStatusMbr != 1
+        ) { // start 액션 명령 and 현 상태가 start 실행중이 아닐 때 = 조기종료 프로세스 진행중에도 스킵
+            serviceActionStatusMbr = 1
+            serviceActionStatusMbrSemaphoreMbr.release()
 
+            // (Foreground 용 Notification 생성)
             val serviceIdMbr = 1
 
             val title = "테스트 타이틀"
@@ -95,37 +103,49 @@ class ForegroundServiceTest : Service() {
             notificationBuilderMbr.setContentIntent(pendingIntent)
 
             // (서비스 로직 실행)
-            var count = 0
+            val maxCount = 30
             executorServiceMbr.execute {
-                while (count <= 100) {
-                    serviceActionMbrSemaphoreMbr.acquire()
-                    if (serviceActionMbr == "stop") {
-                        serviceActionMbrSemaphoreMbr.release()
-                        break
+                for (count in 0..maxCount) {
+                    asyncActionStopRequestMbrSemaphoreMbr.acquire()
+                    if (asyncActionStopRequestMbr) { // 조기종료
+                        asyncActionStopRequestMbr = false
+                        asyncActionStopRequestMbrSemaphoreMbr.release()
+
+                        // 서비스 상태 코드 변경
+                        serviceActionStatusMbrSemaphoreMbr.acquire()
+                        serviceActionStatusMbr = 0
+                        serviceActionStatusMbrSemaphoreMbr.release()
+                        return@execute
                     }
-                    serviceActionMbrSemaphoreMbr.release()
+                    asyncActionStopRequestMbrSemaphoreMbr.release()
 
-                    // notification 반영
-                    notificationBuilderMbr.setProgress(100, count, false)
+                    // 서비스 작업 샘플 의사 대기시간
+                    Thread.sleep(100)
+
+                    // 서비스 진행
+                    notificationBuilderMbr.setProgress(maxCount, count, false)
                     startForeground(serviceIdMbr, notificationBuilderMbr.build())
-
-                    count += 10
-                    Thread.sleep(1000)
                 }
 
-                // notification 반영
+                // 서비스 완료
                 notificationBuilderMbr.setProgress(0, 0, false)
                 startForeground(serviceIdMbr, notificationBuilderMbr.build())
 
-                serviceActionMbrSemaphoreMbr.acquire()
-                serviceActionMbr = "stop"
-                serviceActionMbrSemaphoreMbr.release()
+                // 서비스 상태 코드 변경
+                serviceActionStatusMbrSemaphoreMbr.acquire()
+                serviceActionStatusMbr = 0
+                serviceActionStatusMbrSemaphoreMbr.release()
+
+                stopSelf()
             }
         } else if (intent.action == "stop") {
-            serviceActionMbr = "stop"
-            serviceActionMbrSemaphoreMbr.release()
+            serviceActionStatusMbrSemaphoreMbr.release()
+            asyncActionStopRequestMbrSemaphoreMbr.acquire()
+            asyncActionStopRequestMbr = true
+            asyncActionStopRequestMbrSemaphoreMbr.release()
+            stopForeground(true)
         } else {
-            serviceActionMbrSemaphoreMbr.release()
+            serviceActionStatusMbrSemaphoreMbr.release()
         }
 
         return super.onStartCommand(intent, flags, startId)
