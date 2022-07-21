@@ -293,7 +293,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
-                                        resultLauncherCallbackMbr = { }
+                                        resultLauncherCallbackMbr = {
+                                            setSwitchView()
+                                        }
                                         resultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
@@ -328,7 +330,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
-                            resultLauncherCallbackMbr = { }
+                            resultLauncherCallbackMbr = {
+                                setSwitchView()
+                            }
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
@@ -396,7 +400,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
-                                        resultLauncherCallbackMbr = { }
+                                        resultLauncherCallbackMbr = {
+                                            setSwitchView()
+                                        }
                                         resultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
@@ -431,7 +437,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
-                            resultLauncherCallbackMbr = { }
+                            resultLauncherCallbackMbr = {
+                                setSwitchView()
+                            }
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
@@ -495,14 +503,16 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
-                                        resultLauncherCallbackMbr = { }
+                                        resultLauncherCallbackMbr = {
+                                            setSwitchView()
+                                        }
                                         resultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
                                         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
                                         // 뷰 상태 되돌리기
-                                        bindingMbr.cameraPermissionSwitch.isChecked =
+                                        bindingMbr.audioRecordPermissionSwitch.isChecked =
                                             false
                                     },
                                     onCanceled = {
@@ -530,13 +540,15 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
-                            resultLauncherCallbackMbr = { }
+                            resultLauncherCallbackMbr = {
+                                setSwitchView()
+                            }
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
                             viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
 
-                            bindingMbr.cameraPermissionSwitch.isChecked = true
+                            bindingMbr.audioRecordPermissionSwitch.isChecked = true
                         },
                         onCanceled = {
                             // 취소 불가
@@ -636,7 +648,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
-                                        resultLauncherCallbackMbr = { }
+                                        resultLauncherCallbackMbr = {
+                                            setSwitchView()
+                                        }
                                         resultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
@@ -677,7 +691,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
-                            resultLauncherCallbackMbr = { }
+                            resultLauncherCallbackMbr = {
+                                setSwitchView()
+                            }
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
@@ -752,7 +768,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
-                                        resultLauncherCallbackMbr = { }
+                                        resultLauncherCallbackMbr = {
+                                            setSwitchView()
+                                        }
                                         resultLauncherMbr.launch(intent)
                                     },
                                     onNegBtnClicked = {
@@ -799,7 +817,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                 Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
                             intent.data = Uri.parse("package:" + this.packageName)
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            resultLauncherCallbackMbr = { }
+                            resultLauncherCallbackMbr = {
+                                setSwitchView()
+                            }
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
@@ -828,7 +848,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                 Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
                             intent.data = Uri.parse("package:" + this.packageName)
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            resultLauncherCallbackMbr = { }
+                            resultLauncherCallbackMbr = {
+                                setSwitchView()
+                            }
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
