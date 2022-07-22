@@ -34,7 +34,7 @@ class ForegroundServiceTest : Service() {
     private var onStartCommandEarlyStopCallbackMbr: (() -> Unit)? = null
 
     //(notification 설정)
-    private val serviceIdMbr = 1
+    private val serviceNotificationIdMbr = 1
 
 
     // ---------------------------------------------------------------------------------------------
@@ -70,6 +70,7 @@ class ForegroundServiceTest : Service() {
             onStartCommandEarlyStopRequestSemaphoreMbr.acquire()
             onStartCommandEarlyStopRequestMbr = true
             onStartCommandEarlyStopRequestSemaphoreMbr.release()
+            stopForeground(true)
         }
 
         return super.onStartCommand(intent, flags, startId)
@@ -107,15 +108,16 @@ class ForegroundServiceTest : Service() {
         notificationBuilderMbr.setAutoCancel(true)
 
         val maxTaskCount = 30
+
         notificationBuilderMbr.setProgress(maxTaskCount, 0, false)
-        startForeground(serviceIdMbr, notificationBuilderMbr.build())
+        startForeground(serviceNotificationIdMbr, notificationBuilderMbr.build())
 
         executorServiceMbr.execute {
             for (count in 1..maxTaskCount) {
                 // 서비스 작업 샘플 의사 대기시간
                 Thread.sleep(100)
 
-                // 조기종료 파악
+                // 조기 종료 파악
                 onStartCommandEarlyStopRequestSemaphoreMbr.acquire()
                 if (onStartCommandEarlyStopRequestMbr) { // 조기종료
                     onStartCommandEarlyStopRequestMbr = false
@@ -141,19 +143,19 @@ class ForegroundServiceTest : Service() {
                 // 작업 결과 표시
                 notificationBuilderMbr.setProgress(maxTaskCount, count, false)
                 uiHandler.post {
-                    startForeground(serviceIdMbr, notificationBuilderMbr.build())
+                    startForeground(serviceNotificationIdMbr, notificationBuilderMbr.build())
                 }
-            }
-
-            // 서비스 완료
-            uiHandler.post {
-                stopForeground(true)
             }
 
             // 서비스 상태 코드 변경
             onStartCommandStatusSemaphoreMbr.acquire()
             onStartCommandStatusMbr = 0
             onStartCommandStatusSemaphoreMbr.release()
+
+            // 서비스 완료
+            uiHandler.post {
+                stopForeground(true)
+            }
         }
     }
 
