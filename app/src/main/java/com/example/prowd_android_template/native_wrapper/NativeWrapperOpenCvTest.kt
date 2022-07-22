@@ -13,10 +13,10 @@ object NativeWrapperOpenCvTest {
     ): IntArray
 
     external fun getGrayBitmap(
-        bitmap: Bitmap
-    ): Bitmap
+        inputBitmap: Bitmap, outputBitmap: Bitmap
+    )
 
     external fun getCopyBitmap(
-        bitmap: Bitmap
-    ): Bitmap
+        inputBitmap: Bitmap, outputBitmap: Bitmap
+    )
 }
