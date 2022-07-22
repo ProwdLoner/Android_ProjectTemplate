@@ -9,6 +9,7 @@ import com.example.prowd_android_template.activity_set.activity_dialog_sample.Ac
 import com.example.prowd_android_template.activity_set.activity_etc_sample_list.ActivityEtcSampleList
 import com.example.prowd_android_template.activity_set.activity_image_processing_sample_list.ActivityImageProcessingSampleList
 import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
+import com.example.prowd_android_template.activity_set.activity_jni_sample_list.ActivityJniSampleList
 import com.example.prowd_android_template.activity_set.activity_media_player_sample_list.ActivityMediaPlayerSampleList
 import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
 import com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList
@@ -179,6 +180,14 @@ class ActivityHome : AppCompatActivity() {
             startActivity(intent)
         }
 
+        bindingMbr.goToJniSampleListBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityJniSampleList::class.java
+                )
+            startActivity(intent)
+        }
         // 기타 샘플 목록 이동 버튼
         bindingMbr.goToEtcSampleListBtn.setOnClickListener {
             val intent =

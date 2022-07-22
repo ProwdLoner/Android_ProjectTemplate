@@ -30,6 +30,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_jni_sample_list.ActivityJniSampleList"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_broadcast_receiver_sample_sender.ActivityBroadcastReceiverSampleSender"
             android:exported="false" />
         <activity

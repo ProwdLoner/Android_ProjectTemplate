@@ -1,31 +1,25 @@
-package com.example.prowd_android_template.activity_set.activity_etc_sample_list
+package com.example.prowd_android_template.activity_set.activity_jni_sample_list
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_basic_notification_sample.ActivityBasicNotificationSample
-import com.example.prowd_android_template.activity_set.activity_basic_service_sample.ActivityBasicServiceSample
-import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample
-import com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
-import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
+import com.example.prowd_android_template.activity_set.activity_media_player_api_simple_video_sample.ActivityMediaPlayerApiSimpleVideoSample
+import com.example.prowd_android_template.activity_set.activity_pinch_image_view_sample.ActivityPinchImageViewSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityEtcSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityJniSampleListBinding
 
-class ActivityEtcSampleList : AppCompatActivity() {
+class ActivityJniSampleList : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityEtcSampleListBinding
+    lateinit var bindingMbr: ActivityJniSampleListBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityEtcSampleListViewModel
+    lateinit var viewModelMbr: ActivityJniSampleListViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -47,7 +41,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityEtcSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityJniSampleListBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -96,7 +90,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
         // 다이얼로그 객체 해소
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
-        confirmDialogMbr?.dismiss()
+        progressLoadingDialogMbr?.dismiss()
         radioBtnDialogMbr?.dismiss()
 
         super.onDestroy()
@@ -112,8 +106,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr =
-            ViewModelProvider(this)[ActivityEtcSampleListViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ActivityJniSampleListViewModel::class.java]
 
     }
 
@@ -129,80 +122,24 @@ class ActivityEtcSampleList : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 권한 샘플 이동 버튼
-        bindingMbr.goToPermissionSampleBtn.setOnClickListener {
+        bindingMbr.goToBasicJniSampleBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
-                    ActivityPermissionSample::class.java
+                    ActivityJniSample::class.java
                 )
             startActivity(intent)
         }
 
-        // 다이얼로그 샘플 이동 버튼
-        bindingMbr.goToDialogSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityDialogSample::class.java
-                )
-            startActivity(intent)
+        // todo
+        bindingMbr.goToBitmapAndOpencvJniSampleBtn.setOnClickListener {
+//            val intent =
+//                Intent(
+//                    this,
+//                    ActivityMediaPlayerApiSimpleVideoSample::class.java
+//                )
+//            startActivity(intent)
         }
-
-        bindingMbr.goToActivityBrightnessChangeSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBrightnessChangeSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityAarModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityAarModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBasicServiceSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicServiceSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBroadcastReceiverSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBroadcastReceiverSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBasicNotificationSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicNotificationSample::class.java
-                )
-            startActivity(intent)
-        }
-
     }
 
     // 라이브 데이터 설정
