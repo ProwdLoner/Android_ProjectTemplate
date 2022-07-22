@@ -93,3 +93,21 @@ target_link_libraries(
         ${log-lib}
         ${android-lib}
 )
+
+
+# (opencv_test)
+# JNI 래퍼
+add_library(
+        native_wrapper_opencv_test # 자바용 라이브러리 이름
+        SHARED # 종류
+        jni_libs/opencv_test/native_wrapper_opencv_test.cpp # CPP 라이브러리 파일
+)
+
+target_link_libraries(
+        native_wrapper_opencv_test
+        ${log-lib}
+        ${android-lib}
+
+        -ljnigraphics
+        lib_opencv
+)

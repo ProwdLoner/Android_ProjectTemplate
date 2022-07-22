@@ -24,6 +24,9 @@
 
 
 // [functions]
+
+
+// [jni functions]
 extern "C"
 JNIEXPORT jstring
 Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperJniStringTest_getJniString(
