@@ -30,6 +30,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Application">
         <activity
+            android:name=".activity_set.activity_bitmap_and_opencv_jni_sample.ActivityBitmapAndOpencvJniSample"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_jni_sample_list.ActivityJniSampleList"
             android:exported="false" />
         <activity

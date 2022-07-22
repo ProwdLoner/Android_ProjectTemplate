@@ -1,26 +1,26 @@
-package com.example.prowd_android_template.activity_set.activity_jni_sample_list
+package com.example.prowd_android_template.activity_set.activity_bitmap_and_opencv_jni_sample
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_bitmap_and_opencv_jni_sample.ActivityBitmapAndOpencvJniSample
-import com.example.prowd_android_template.activity_set.activity_jni_sample.ActivityJniSample
-import com.example.prowd_android_template.activity_set.activity_media_player_api_simple_video_sample.ActivityMediaPlayerApiSimpleVideoSample
-import com.example.prowd_android_template.activity_set.activity_pinch_image_view_sample.ActivityPinchImageViewSample
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.FitCenter
+import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityJniSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityBitmapAndOpencvJniSampleBinding
 
-class ActivityJniSampleList : AppCompatActivity() {
+class ActivityBitmapAndOpencvJniSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityJniSampleListBinding
+    lateinit var bindingMbr: ActivityBitmapAndOpencvJniSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityJniSampleListViewModel
+    lateinit var viewModelMbr: ActivityBitmapAndOpencvJniSampleViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -32,8 +32,8 @@ class ActivityJniSampleList : AppCompatActivity() {
     // 확인 다이얼로그
     var confirmDialogMbr: DialogConfirm? = null
 
-    // 라디오 버튼 다이얼로그
-    var radioBtnDialogMbr: DialogRadioButtonChoose? = null
+    // 라디오 버튼 선택 다이얼로그
+    var radioButtonChooseDialogMbr: DialogRadioButtonChoose? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ class ActivityJniSampleList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityJniSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityBitmapAndOpencvJniSampleBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -91,8 +91,8 @@ class ActivityJniSampleList : AppCompatActivity() {
         // 다이얼로그 객체 해소
         progressLoadingDialogMbr?.dismiss()
         binaryChooseDialogMbr?.dismiss()
-        progressLoadingDialogMbr?.dismiss()
-        radioBtnDialogMbr?.dismiss()
+        confirmDialogMbr?.dismiss()
+        radioButtonChooseDialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -107,7 +107,8 @@ class ActivityJniSampleList : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityJniSampleListViewModel::class.java]
+        viewModelMbr =
+            ViewModelProvider(this)[ActivityBitmapAndOpencvJniSampleViewModel::class.java]
 
     }
 
@@ -123,23 +124,19 @@ class ActivityJniSampleList : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        bindingMbr.goToBasicJniSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityJniSample::class.java
-                )
-            startActivity(intent)
-        }
+        Glide.with(this)
+            .load(R.drawable.img_activity_bitmap_and_opencv_jni_sample_red)
+            .into(bindingMbr.redSrcImg)
 
-        bindingMbr.goToBitmapAndOpencvJniSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBitmapAndOpencvJniSample::class.java
-                )
-            startActivity(intent)
-        }
+        Glide.with(this)
+            .load(R.drawable.img_activity_bitmap_and_opencv_jni_sample_green)
+            .into(bindingMbr.greenSrcImg)
+
+        Glide.with(this)
+            .load(R.drawable.img_activity_bitmap_and_opencv_jni_sample_blue)
+            .into(bindingMbr.blueSrcImg)
+
+        // todo
     }
 
     // 라이브 데이터 설정
@@ -157,6 +154,16 @@ class ActivityJniSampleList : AppCompatActivity() {
             } else {
                 progressLoadingDialogMbr?.dismiss()
                 progressLoadingDialogMbr = null
+            }
+        }
+
+        // progressSample2 진행도
+        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
+            if (it != -1) {
+                val loadingText = "로딩중 $it%"
+                progressLoadingDialogMbr?.bindingMbr?.progressMessageTxt?.text = loadingText
+                progressLoadingDialogMbr?.bindingMbr?.progressBar?.visibility = View.VISIBLE
+                progressLoadingDialogMbr?.bindingMbr?.progressBar?.progress = it
             }
         }
 
@@ -192,19 +199,19 @@ class ActivityJniSampleList : AppCompatActivity() {
             }
         }
 
-        // 라디오 버튼 다이얼로그 출력 플래그
-        viewModelMbr.radioButtonDialogInfoLiveDataMbr.observe(this) {
+        // 라디오 버튼 선택 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.observe(this) {
             if (it != null) {
-                radioBtnDialogMbr?.dismiss()
+                radioButtonChooseDialogMbr?.dismiss()
 
-                radioBtnDialogMbr = DialogRadioButtonChoose(
+                radioButtonChooseDialogMbr = DialogRadioButtonChoose(
                     this,
                     it
                 )
-                radioBtnDialogMbr?.show()
+                radioButtonChooseDialogMbr?.show()
             } else {
-                radioBtnDialogMbr?.dismiss()
-                radioBtnDialogMbr = null
+                radioButtonChooseDialogMbr?.dismiss()
+                radioButtonChooseDialogMbr = null
             }
         }
     }
