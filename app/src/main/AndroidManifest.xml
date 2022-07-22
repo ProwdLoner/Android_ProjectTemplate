@@ -60,9 +60,6 @@
             android:name=".activity_set.activity_etc_sample_list.ActivityEtcSampleList"
             android:exported="false" />
         <activity
-            android:name=".activity_set.activity_ffmpeg_get_video_frame_sample.ActivityFFMpegGetVideoFrameSample"
-            android:exported="false" />
-        <activity
             android:name=".activity_set.activity_media_player_api_simple_video_sample.ActivityMediaPlayerApiSimpleVideoSample"
             android:exported="false" />
         <activity

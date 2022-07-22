@@ -1,8 +1,10 @@
 package com.example.prowd_android_template.activity_set.activity_bitmap_and_opencv_jni_sample
 
+import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -137,6 +139,10 @@ class ActivityBitmapAndOpencvJniSample : AppCompatActivity() {
             .into(bindingMbr.blueSrcImg)
 
         // todo
+        val bitmap = (AppCompatResources.getDrawable(
+            this,
+            R.drawable.img_activity_bitmap_and_opencv_jni_sample_red
+        ) as BitmapDrawable).bitmap
     }
 
     // 라이브 데이터 설정

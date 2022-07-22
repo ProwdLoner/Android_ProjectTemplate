@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_easy_lut_sample.ActivityEasyLutSample
-import com.example.prowd_android_template.activity_set.activity_ffmpeg_get_video_frame_sample.ActivityFFMpegGetVideoFrameSample
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -127,15 +126,6 @@ class ActivityImageProcessingSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityEasyLutSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToFfmpegGetVideoFrameSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityFFMpegGetVideoFrameSample::class.java
                 )
             startActivity(intent)
         }

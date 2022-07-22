@@ -93,27 +93,3 @@ target_link_libraries(
         ${log-lib}
         ${android-lib}
 )
-
-
-# (ffmpeg_wrapper)
-# JNI 래퍼
-add_library(
-        native_wrapper_ffmpeg_wrapper # 자바용 라이브러리 이름
-        SHARED # 종류
-        jni_libs/ffmpeg_wrapper/native_wrapper_ffmpeg_wrapper.cpp # CPP 라이브러리 파일
-)
-
-target_link_libraries(
-        native_wrapper_ffmpeg_wrapper
-        ${log-lib}
-        ${android-lib}
-
-        lib_avcodec
-        lib_avdevice
-        lib_avfilter
-        lib_avformat
-        lib_avutil
-        lib_postproc
-        lib_swresample
-        lib_swscale
-)
