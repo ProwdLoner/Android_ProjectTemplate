@@ -1,27 +1,22 @@
-package com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample
+package com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample_sender
 
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample_sender.ActivityBroadcastReceiverSampleSender
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityBroadcastReceiverSampleBinding
-import com.example.prowd_android_template.services.BackgroundServiceBroadcastTest
+import com.example.prowd_android_template.databinding.ActivityBroadcastReceiverSampleSenderBinding
 
-class ActivityBroadcastReceiverSample : AppCompatActivity() {
+class ActivityBroadcastReceiverSampleSender : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityBroadcastReceiverSampleBinding
+    lateinit var bindingMbr: ActivityBroadcastReceiverSampleSenderBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityBroadcastReceiverSampleViewModel
+    lateinit var viewModelMbr: ActivityBroadcastReceiverSampleSenderViewModel
 
     // (다이얼로그 객체)
     // 로딩 다이얼로그
@@ -43,7 +38,7 @@ class ActivityBroadcastReceiverSample : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // (뷰 객체 바인딩)
-        bindingMbr = ActivityBroadcastReceiverSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityBroadcastReceiverSampleSenderBinding.inflate(layoutInflater)
         setContentView(bindingMbr.root)
 
         // (초기 객체 생성)
@@ -56,15 +51,6 @@ class ActivityBroadcastReceiverSample : AppCompatActivity() {
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
-
-        // (브로드 캐스트 설정)
-        val filter = IntentFilter() // 브로트캐스트 액션 필터
-        filter.addAction("ActivityBroadcastReceiverSample")
-        registerReceiver(object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                bindingMbr.broadcastValue.text = intent?.getStringExtra("value")
-            }
-        }, filter)
     }
 
     override fun onResume() {
@@ -117,7 +103,8 @@ class ActivityBroadcastReceiverSample : AppCompatActivity() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityBroadcastReceiverSampleViewModel::class.java]
+        viewModelMbr =
+            ViewModelProvider(this)[ActivityBroadcastReceiverSampleSenderViewModel::class.java]
 
     }
 
@@ -133,21 +120,18 @@ class ActivityBroadcastReceiverSample : AppCompatActivity() {
 
     // 초기 뷰 설정
     private fun viewSetting() {
-        // 다른 액티비티에서 발동시킨 브로드 캐스트 수신 테스트
-        bindingMbr.activityBroadcast.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBroadcastReceiverSampleSender::class.java
-                )
-            startActivity(intent)
+        bindingMbr.sending1.setOnClickListener {
+            val broadcastIntent = Intent()
+            broadcastIntent.action = "ActivityBroadcastReceiverSample"
+            broadcastIntent.putExtra("value", "Activity Send1")
+            sendBroadcast(broadcastIntent)
         }
 
-        // 서비스에서 발동시킨 브로드 캐스트 수신 테스트
-        bindingMbr.serviceBroadcast.setOnClickListener {
-            val serviceIntent = Intent(this, BackgroundServiceBroadcastTest::class.java)
-            serviceIntent.action = "start"
-            startService(serviceIntent)
+        bindingMbr.sending2.setOnClickListener {
+            val broadcastIntent = Intent()
+            broadcastIntent.action = "ActivityBroadcastReceiverSample"
+            broadcastIntent.putExtra("value", "Activity Send2")
+            sendBroadcast(broadcastIntent)
         }
     }
 
