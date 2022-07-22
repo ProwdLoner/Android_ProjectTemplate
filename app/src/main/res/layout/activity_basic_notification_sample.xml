@@ -34,7 +34,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="기타 샘플 목록"
+                android:text="기본 서비스 샘플"
                 android:textColor="#FF000000"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -64,111 +64,100 @@
                 android:layout_height="wrap_content">
 
                 <Button
-                    android:id="@+id/go_to_permission_sample_btn"
+                    android:id="@+id/basic_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="권한 샘플"
+                    android:text="기본 노티"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <Button
-                    android:id="@+id/go_to_dialog_sample_btn"
+                    android:id="@+id/big_text_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="다이얼로그 샘플"
+                    android:text="긴 본문 노티"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_permission_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/basic_notification_btn" />
 
                 <Button
-                    android:id="@+id/go_to_jni_sample_btn"
+                    android:id="@+id/big_picture_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="JNI 샘플"
+                    android:text="큰 사진 노티"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_dialog_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/big_text_notification_btn" />
 
                 <Button
-                    android:id="@+id/go_to_activity_brightness_change_sample_btn"
+                    android:id="@+id/inbox_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="액티비티 밝기 조절 샘플"
+                    android:text="인박스 노티"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_jni_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/big_picture_notification_btn" />
 
                 <Button
-                    android:id="@+id/go_to_activity_module_caller_sample_btn"
+                    android:id="@+id/messaging_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="모듈 호출 샘플"
+                    android:text="메시지 노티"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_brightness_change_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/inbox_notification_btn" />
 
                 <Button
-                    android:id="@+id/go_to_activity_aar_module_caller_sample_btn"
+                    android:id="@+id/media_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="AAR 모듈 호출 샘플"
+                    android:text="미디어 노티"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_module_caller_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/messaging_notification_btn" />
 
                 <Button
-                    android:id="@+id/go_to_activity_basic_service_sample_btn"
+                    android:id="@+id/inline_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="기본 서비스 샘플"
+                    android:text="인라인 노티"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_aar_module_caller_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/media_notification_btn" />
 
                 <Button
-                    android:id="@+id/go_to_activity_broadcast_receiver_sample_btn"
+                    android:id="@+id/head_up_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="브로드캐스트 리시버 샘플"
+                    android:text="헤드업 노티"
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_basic_service_sample_btn" />
-
-                <Button
-                    android:id="@+id/go_to_activity_basic_notification_sample_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="기본 노티피케이션 샘플"
-                    android:textColor="#FF000000"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_broadcast_receiver_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/inline_notification_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>

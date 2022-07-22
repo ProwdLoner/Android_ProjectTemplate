@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample
+import com.example.prowd_android_template.activity_set.activity_basic_notification_sample.ActivityBasicNotificationSample
 import com.example.prowd_android_template.activity_set.activity_basic_service_sample.ActivityBasicServiceSample
 import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample
 import com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample
@@ -199,6 +200,15 @@ class ActivityEtcSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityBroadcastReceiverSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToActivityBasicNotificationSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityBasicNotificationSample::class.java
                 )
             startActivity(intent)
         }
