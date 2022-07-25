@@ -48,8 +48,6 @@ class ActivityBrightnessChangeSample : AppCompatActivity() {
 
         // (초기 객체 생성)
         createMemberObjects()
-        // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
-        createViewModelDataObjects()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -112,23 +110,14 @@ class ActivityBrightnessChangeSample : AppCompatActivity() {
 
     }
 
-    // viewModel 저장용 데이터 초기화
-    private fun createViewModelDataObjects() {
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-            // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr =
-                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-        }
-    }
-
     // 초기 뷰 설정
     private fun viewSetting() {
         val curBrightnessValue = Settings.System.getInt(
             contentResolver, Settings.System.SCREEN_BRIGHTNESS
         ) // 0 ~ 255
 
-        bindingMbr.currentActivityBrightnessText.text = "현재 밝기 : $curBrightnessValue"
+        val brightnessTxt = "현재 밝기 : $curBrightnessValue"
+        bindingMbr.currentActivityBrightnessText.text = brightnessTxt
         bindingMbr.currentActivityBrightnessSeekBar.progress = curBrightnessValue
 
         bindingMbr.currentActivityBrightnessSeekBar.setOnSeekBarChangeListener(object :
@@ -138,7 +127,8 @@ class ActivityBrightnessChangeSample : AppCompatActivity() {
                 layoutParams.screenBrightness = (p1.toFloat() / 255f) // 0f ~ 1f
                 window.attributes = layoutParams
 
-                bindingMbr.currentActivityBrightnessText.text = "현재 밝기 : $p1"
+                val brightnessTxt1 = "현재 밝기 : $p1"
+                bindingMbr.currentActivityBrightnessText.text = brightnessTxt1
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {

@@ -61,8 +61,6 @@ class ActivityInit : AppCompatActivity() {
 
         // (초기 객체 생성)
         createMemberObjects()
-        // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
-        createViewModelDataObjects()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -165,13 +163,6 @@ class ActivityInit : AppCompatActivity() {
             packageName,
             PackageManager.GET_PERMISSIONS
         ).requestedPermissions
-    }
-
-    // viewModel 저장용 데이터 초기화
-    private fun createViewModelDataObjects() {
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-        }
     }
 
     // 초기 뷰 설정

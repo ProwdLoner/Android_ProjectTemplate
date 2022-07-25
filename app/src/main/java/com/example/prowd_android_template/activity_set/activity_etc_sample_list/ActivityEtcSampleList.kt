@@ -52,8 +52,6 @@ class ActivityEtcSampleList : AppCompatActivity() {
 
         // (초기 객체 생성)
         createMemberObjects()
-        // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
-        createViewModelDataObjects()
 
         // (초기 뷰 설정)
         viewSetting()
@@ -115,16 +113,6 @@ class ActivityEtcSampleList : AppCompatActivity() {
         viewModelMbr =
             ViewModelProvider(this)[ActivityEtcSampleListViewModel::class.java]
 
-    }
-
-    // viewModel 저장용 데이터 초기화
-    private fun createViewModelDataObjects() {
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-            // 현 액티비티 진입 유저 저장
-            viewModelMbr.currentUserSessionTokenMbr =
-                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-        }
     }
 
     // 초기 뷰 설정
