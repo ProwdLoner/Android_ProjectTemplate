@@ -31,16 +31,6 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // (뷰 바인딩)
-        bindingMbr =
-            FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding.inflate(layoutInflater)
-
-        // (부모 객체 저장)
-        parentActivityMbr = requireActivity() as ActivityBasicBottomSheetNavigationSample
-
-        // (플래그먼트 뷰모델)
-        viewModelMbr = parentActivityMbr.viewModelMbr.fragment1DataMbr
-
         // (초기 객체 생성)
         createMemberObjects()
 
@@ -86,7 +76,15 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // <비공개 메소드 공간>
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
-        // ex : 어뎁터 셋 생성
+        // (뷰 바인딩)
+        bindingMbr =
+            FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding.inflate(layoutInflater)
+
+        // (부모 객체 저장)
+        parentActivityMbr = requireActivity() as ActivityBasicBottomSheetNavigationSample
+
+        // (플래그먼트 뷰모델)
+        viewModelMbr = parentActivityMbr.viewModelMbr.fragment1DataMbr
     }
 
     // 초기 뷰 설정

@@ -32,17 +32,8 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // (뷰 바인딩)
-        bindingMbr =
-            FragmentActivityBasicBottomSheetNavigationSampleFragment2Binding.inflate(layoutInflater)
-
-        // (부모 객체 저장)
-        parentActivityMbr = requireActivity() as ActivityBasicBottomSheetNavigationSample
-
         // (초기 객체 생성)
         createMemberObjects()
-        // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
-        createViewModelDataObjects()
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
@@ -86,17 +77,15 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
     // <비공개 메소드 공간>
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
-        // ex : 어뎁터 셋 생성
-    }
+        // (뷰 바인딩)
+        bindingMbr =
+            FragmentActivityBasicBottomSheetNavigationSampleFragment2Binding.inflate(layoutInflater)
 
-    // viewModel 저장용 데이터 초기화
-    private fun createViewModelDataObjects() {
-        if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
+        // (부모 객체 저장)
+        parentActivityMbr = requireActivity() as ActivityBasicBottomSheetNavigationSample
 
-            // 현 액티비티 진입 유저 저장
-            parentActivityMbr.viewModelMbr.fragment2DataMbr.currentUserSessionTokenMbr =
-                parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-        }
+        // (플래그먼트 뷰모델)
+        viewModelMbr = parentActivityMbr.viewModelMbr.fragment2DataMbr
     }
 
     // 초기 뷰 설정

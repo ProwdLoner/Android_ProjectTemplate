@@ -1,11 +1,14 @@
 package com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.fragment2
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample
+import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.fragment1.FragmentActivityBasicTabLayoutSampleFragment1VmData
 import com.example.prowd_android_template.databinding.FragmentActivityBasicTabLayoutSample2Binding
 
 class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
@@ -14,7 +17,13 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
     lateinit var bindingMbr: FragmentActivityBasicTabLayoutSample2Binding
 
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
-    private lateinit var parentActivityMbr: ActivityBasicTabLayoutSample
+    lateinit var parentActivityMbr: ActivityBasicTabLayoutSample
+
+    // (뷰 모델 객체)
+    lateinit var viewModelMbr: FragmentActivityBasicTabLayoutSampleFragment2VmData
+
+    // (Ui 스레드 핸들러 객체) handler.post{}
+    var uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
 
 
     // ---------------------------------------------------------------------------------------------
@@ -23,17 +32,8 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // (뷰 바인딩)
-        bindingMbr =
-            FragmentActivityBasicTabLayoutSample2Binding.inflate(layoutInflater)
-
-        // (부모 객체 저장)
-        parentActivityMbr = requireActivity() as ActivityBasicTabLayoutSample
-
         // (초기 객체 생성)
         createMemberObjects()
-        // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
-        createViewModelDataObjects()
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
@@ -51,14 +51,16 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
         if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr && // 화면 회전이 아니면서,
             isVisible // 현재 보이는 상황일 때
         ) {
-            val sessionToken = parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            val sessionToken =
+                parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
             if (parentActivityMbr.viewModelMbr.fragment2DataMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
                 sessionToken != parentActivityMbr.viewModelMbr.fragment2DataMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
             ) {
                 // 진입 플래그 변경
                 parentActivityMbr.viewModelMbr.fragment2DataMbr.isDataFirstLoadingMbr = false
-                parentActivityMbr.viewModelMbr.fragment2DataMbr.currentUserSessionTokenMbr = sessionToken
+                parentActivityMbr.viewModelMbr.fragment2DataMbr.currentUserSessionTokenMbr =
+                    sessionToken
 
                 //  데이터 로딩
             }
@@ -75,16 +77,15 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
     // <비공개 메소드 공간>
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
-        // ex : 어뎁터 셋 생성
-    }
+        // (뷰 바인딩)
+        bindingMbr =
+            FragmentActivityBasicTabLayoutSample2Binding.inflate(layoutInflater)
 
-    // viewModel 저장용 데이터 초기화
-    private fun createViewModelDataObjects() {
-        if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
+        // (부모 객체 저장)
+        parentActivityMbr = requireActivity() as ActivityBasicTabLayoutSample
 
-            // 현 액티비티 진입 유저 저장
-            parentActivityMbr.viewModelMbr.fragment2DataMbr.currentUserSessionTokenMbr = parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-        }
+        // (플래그먼트 뷰모델)
+        viewModelMbr = parentActivityMbr.viewModelMbr.fragment2DataMbr
     }
 
     // 초기 뷰 설정
@@ -97,10 +98,10 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
 
     // 라이브 데이터 설정
     private fun setLiveData() {
-        parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.observe(parentActivityMbr){
-            if (null == it){
+        parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.observe(parentActivityMbr) {
+            if (null == it) {
                 bindingMbr.clickedByValueTxt.text = "클릭 없음"
-            }else{
+            } else {
                 val textMsg = "${it}번 플래그먼트"
                 bindingMbr.clickedByValueTxt.text = textMsg
             }

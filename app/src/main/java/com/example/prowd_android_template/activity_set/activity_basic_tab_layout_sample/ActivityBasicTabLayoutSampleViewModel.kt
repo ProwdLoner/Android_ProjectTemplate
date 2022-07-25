@@ -43,10 +43,18 @@ class ActivityBasicTabLayoutSampleViewModel(application: Application) :
 
     // (Fragment 화면 데이터)
     // Fragment1
-    var fragment1DataMbr = FragmentActivityBasicTabLayoutSampleFragment1VmData()
+    var fragment1DataMbr = FragmentActivityBasicTabLayoutSampleFragment1VmData(
+        application,
+        repositorySetMbr,
+        executorServiceMbr
+    )
 
     // Fragment2
-    var fragment2DataMbr = FragmentActivityBasicTabLayoutSampleFragment2VmData()
+    var fragment2DataMbr = FragmentActivityBasicTabLayoutSampleFragment2VmData(
+        application,
+        repositorySetMbr,
+        executorServiceMbr
+    )
 
 
     // ---------------------------------------------------------------------------------------------
