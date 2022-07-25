@@ -46,7 +46,6 @@ import com.example.prowd_android_template.util_object.RenderScriptUtil
 import com.xxx.yyy.ScriptC_crop
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.Semaphore
 
@@ -106,10 +105,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // (뷰 객체 바인딩)
-        bindingMbr = ActivityBasicCamera2ApiSampleBinding.inflate(layoutInflater)
-        setContentView(bindingMbr.root)
-
         // (화면을 꺼지지 않도록 하는 플래그)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -122,8 +117,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
 
+        // (뷰 객체 바인딩)
+        // 여기까지는 화면이 나오지 않으니 앞의 작업은 가벼워야함
+        setContentView(bindingMbr.root)
+
         // 액티비티 진입 필수 권한 요청
         requestActivityPermission()
+
+        // (이외 생명주기 로직)
+        onCreateLogic()
     }
 
     override fun onResume() {
@@ -475,6 +477,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
+        // 뷰 객체
+        bindingMbr = ActivityBasicCamera2ApiSampleBinding.inflate(layoutInflater)
+
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ActivityBasicCamera2ApiSampleViewModel::class.java]
 
@@ -1096,6 +1101,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 radioBtnDialogMbr = null
             }
         }
+    }
+
+    private fun onCreateLogic() {
+
     }
 
     private fun onCameraPermissionChecked(isOnCreate: Boolean) {

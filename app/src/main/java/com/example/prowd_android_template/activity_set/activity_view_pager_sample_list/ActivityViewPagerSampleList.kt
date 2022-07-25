@@ -39,10 +39,6 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // (뷰 객체 바인딩)
-        bindingMbr = ActivityViewPagerSampleListBinding.inflate(layoutInflater)
-        setContentView(bindingMbr.root)
-
         // (초기 객체 생성)
         createMemberObjects()
 
@@ -51,6 +47,13 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
+
+        // (뷰 객체 바인딩)
+        // 여기까지는 화면이 나오지 않으니 앞의 작업은 가벼워야함
+        setContentView(bindingMbr.root)
+
+        // (이외 생명주기 로직)
+        onCreateLogic()
     }
 
     override fun onResume() {
@@ -102,6 +105,9 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
     // <비공개 메소드 공간>
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
+        // 뷰 객체
+        bindingMbr = ActivityViewPagerSampleListBinding.inflate(layoutInflater)
+
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ActivityViewPagerSampleListViewModel::class.java]
 
@@ -196,5 +202,9 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
                 radioBtnDialogMbr = null
             }
         }
+    }
+
+    private fun onCreateLogic() {
+
     }
 }

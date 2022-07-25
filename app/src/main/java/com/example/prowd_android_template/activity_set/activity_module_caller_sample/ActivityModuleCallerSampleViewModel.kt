@@ -25,7 +25,8 @@ class ActivityModuleCallerSampleViewModel(application: Application) :
 
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
-    val currentLoginSessionInfoSpwMbr : CurrentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(application)
+    val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
+        CurrentLoginSessionInfoSpw(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -56,7 +57,6 @@ class ActivityModuleCallerSampleViewModel(application: Application) :
     // 라디오 버튼 다이얼로그 출력 정보
     val radioButtonDialogInfoLiveDataMbr: MutableLiveData<DialogRadioButtonChoose.DialogInfoVO?> =
         MutableLiveData(null)
-
 
 
     // ---------------------------------------------------------------------------------------------

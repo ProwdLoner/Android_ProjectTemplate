@@ -43,7 +43,7 @@ class ActivityMediaPlayerApiSimpleVideoSampleViewModel(application: Application)
 
     // 미디어 재생 객체
     var simpleVideoMediaPlayerMbr: MediaPlayer? = null
-    var simpleVideoMediaPlayerPositionMbr : Int? = null // 화면 회전시 위치 복귀용 현재 플레이 위치
+    var simpleVideoMediaPlayerPositionMbr: Int? = null // 화면 회전시 위치 복귀용 현재 플레이 위치
 
 
     // ---------------------------------------------------------------------------------------------

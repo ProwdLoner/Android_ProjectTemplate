@@ -26,7 +26,8 @@ class ActivitySystemCameraPhotoSampleViewModel(application: Application) :
 
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
-    val currentLoginSessionInfoSpwMbr : CurrentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(application)
+    val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
+        CurrentLoginSessionInfoSpw(application)
 
     // (데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
@@ -58,7 +59,7 @@ class ActivitySystemCameraPhotoSampleViewModel(application: Application) :
     val radioButtonDialogInfoLiveDataMbr: MutableLiveData<DialogRadioButtonChoose.DialogInfoVO?> =
         MutableLiveData(null)
 
-    val selectedPhotoUriMbr : MutableLiveData<Uri?> = MutableLiveData(null)
+    val selectedPhotoUriMbr: MutableLiveData<Uri?> = MutableLiveData(null)
 
 
     // ---------------------------------------------------------------------------------------------

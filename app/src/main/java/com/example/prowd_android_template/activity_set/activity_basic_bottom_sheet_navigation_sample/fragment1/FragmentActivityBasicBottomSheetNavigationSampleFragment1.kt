@@ -1,6 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +16,13 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
 
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
-    private lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
+    lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
+
+    // (뷰 모델 객체)
+    lateinit var viewModelMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData
+
+    // (Ui 스레드 핸들러 객체) handler.post{}
+    var uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
 
 
     // ---------------------------------------------------------------------------------------------
@@ -30,10 +38,11 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
         // (부모 객체 저장)
         parentActivityMbr = requireActivity() as ActivityBasicBottomSheetNavigationSample
 
+        // (플래그먼트 뷰모델)
+        viewModelMbr = parentActivityMbr.viewModelMbr.fragment1DataMbr
+
         // (초기 객체 생성)
         createMemberObjects()
-        // 뷰모델 저장 객체 생성 = 뷰모델 내에 저장되어 destroy 까지 쭉 유지되는 데이터 초기화
-        createViewModelDataObjects()
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
@@ -78,16 +87,6 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // 초기 멤버 객체 생성
     private fun createMemberObjects() {
         // ex : 어뎁터 셋 생성
-    }
-
-    // viewModel 저장용 데이터 초기화
-    private fun createViewModelDataObjects() {
-        if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr) { // 설정 변경(화면회전)이 아닐 때에 발동
-
-            // 현 액티비티 진입 유저 저장
-            parentActivityMbr.viewModelMbr.fragment1DataMbr.currentUserSessionTokenMbr =
-                parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-        }
     }
 
     // 초기 뷰 설정

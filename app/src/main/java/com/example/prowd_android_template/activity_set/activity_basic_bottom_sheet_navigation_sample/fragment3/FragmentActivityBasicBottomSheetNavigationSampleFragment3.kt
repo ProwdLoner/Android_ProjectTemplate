@@ -1,11 +1,14 @@
 package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment3
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
+import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment1.FragmentActivityBasicBottomSheetNavigationSampleFragment1VmData
 import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
 
 class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
@@ -14,7 +17,13 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
 
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
-    private lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
+    lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
+
+    // (뷰 모델 객체)
+    lateinit var viewModelMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3VmData
+
+    // (Ui 스레드 핸들러 객체) handler.post{}
+    var uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
 
 
     // ---------------------------------------------------------------------------------------------

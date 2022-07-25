@@ -12,7 +12,8 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ActivityBitmapAndOpencvJniSampleViewModel(application: Application) : AndroidViewModel(application) {
+class ActivityBitmapAndOpencvJniSampleViewModel(application: Application) :
+    AndroidViewModel(application) {
     // <멤버 변수 공간>
     private val applicationMbr = application
 
@@ -24,7 +25,8 @@ class ActivityBitmapAndOpencvJniSampleViewModel(application: Application) : Andr
 
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
-    val currentLoginSessionInfoSpwMbr : CurrentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(application)
+    val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
+        CurrentLoginSessionInfoSpw(application)
 
     // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
     var isChangingConfigurationsMbr = false
@@ -43,7 +45,7 @@ class ActivityBitmapAndOpencvJniSampleViewModel(application: Application) : Andr
     val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
         MutableLiveData(null)
 
-    val progressDialogSample2ProgressValue : MutableLiveData<Int> =
+    val progressDialogSample2ProgressValue: MutableLiveData<Int> =
         MutableLiveData(-1)
 
     // 선택 다이얼로그 출력 정보
