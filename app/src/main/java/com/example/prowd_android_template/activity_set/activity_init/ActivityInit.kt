@@ -18,7 +18,6 @@ import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityInitBinding
 import java.net.SocketTimeoutException
 
-// todo : 카운팅 중 화면 회전시 멈춤
 class ActivityInit : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
