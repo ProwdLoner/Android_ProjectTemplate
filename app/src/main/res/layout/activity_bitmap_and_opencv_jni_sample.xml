@@ -68,7 +68,6 @@
                     android:layout_width="100dp"
                     android:layout_height="100dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/img_activity_bitmap_and_opencv_jni_sample_red"
                     app:layout_constraintEnd_toStartOf="@id/green_src_img"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -89,7 +88,6 @@
                     android:id="@+id/green_src_img"
                     android:layout_width="100dp"
                     android:layout_height="100dp"
-                    android:src="@drawable/img_activity_bitmap_and_opencv_jni_sample_green"
                     android:scaleType="centerCrop"
                     app:layout_constraintEnd_toStartOf="@id/blue_src_img"
                     app:layout_constraintStart_toEndOf="@id/red_src_img"
@@ -111,7 +109,6 @@
                     android:id="@+id/blue_src_img"
                     android:layout_width="100dp"
                     android:layout_height="100dp"
-                    android:src="@drawable/img_activity_bitmap_and_opencv_jni_sample_blue"
                     android:scaleType="centerCrop"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@id/green_src_img"

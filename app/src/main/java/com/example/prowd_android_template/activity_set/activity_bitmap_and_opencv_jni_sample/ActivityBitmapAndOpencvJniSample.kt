@@ -1,13 +1,11 @@
 package com.example.prowd_android_template.activity_set.activity_bitmap_and_opencv_jni_sample
 
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.*
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
-import com.example.prowd_android_template.R
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -127,41 +125,69 @@ class ActivityBitmapAndOpencvJniSample : AppCompatActivity() {
     private fun viewSetting() {
         // (RGB 수치 파악)
         // redBitmap.config == ARGB_8888
-        val redRgb = NativeWrapperOpenCvTest.getBitmapRGB(
-            (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_red
-            ) as BitmapDrawable).bitmap
-        )
+        val redBitmap = Bitmap.createBitmap(
+            100,
+            100,
+            Bitmap.Config.ARGB_8888
+        ).apply {
+            val canvas = Canvas(this)
+            canvas.drawRGB(255, 0, 0)
+        }
+
+        Glide.with(this)
+            .load(redBitmap)
+            .into(bindingMbr.redSrcImg)
+
+        val redRgb = NativeWrapperOpenCvTest.getBitmapRGB(redBitmap)
 
         val redRgbTxt = "R : ${redRgb[0]}\nG : ${redRgb[1]}\nB : ${redRgb[2]}"
         bindingMbr.redRgbTxt.text = redRgbTxt
 
-        val greenRgb = NativeWrapperOpenCvTest.getBitmapRGB(
-            (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_green
-            ) as BitmapDrawable).bitmap
-        )
+        val greenBitmap = Bitmap.createBitmap(
+            100,
+            100,
+            Bitmap.Config.ARGB_8888
+        ).apply {
+            val canvas = Canvas(this)
+            canvas.drawRGB(0, 255, 0)
+        }
+
+        Glide.with(this)
+            .load(greenBitmap)
+            .into(bindingMbr.greenSrcImg)
+
+        val greenRgb = NativeWrapperOpenCvTest.getBitmapRGB(greenBitmap)
 
         val greenRgbTxt = "R : ${greenRgb[0]}\nG : ${greenRgb[1]}\nB : ${greenRgb[2]}"
         bindingMbr.greenRgbTxt.text = greenRgbTxt
 
-        val blueRgb = NativeWrapperOpenCvTest.getBitmapRGB(
-            (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_blue
-            ) as BitmapDrawable).bitmap
-        )
+        val blueBitmap = Bitmap.createBitmap(
+            100,
+            100,
+            Bitmap.Config.ARGB_8888
+        ).apply {
+            val canvas = Canvas(this)
+            canvas.drawRGB(0, 0, 255)
+        }
+
+        Glide.with(this)
+            .load(blueBitmap)
+            .into(bindingMbr.blueSrcImg)
+
+        val blueRgb = NativeWrapperOpenCvTest.getBitmapRGB(blueBitmap)
         val blueRgbTxt = "R : ${blueRgb[0]}\nG : ${blueRgb[1]}\nB : ${blueRgb[2]}"
         bindingMbr.blueRgbTxt.text = blueRgbTxt
 
         // (RGB 이미지 클릭 리스너 설정)
         bindingMbr.redSrcImg.setOnClickListener {
-            val redBitmap1 = (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_red
-            ) as BitmapDrawable).bitmap
+            val redBitmap1 = Bitmap.createBitmap(
+                100,
+                100,
+                Bitmap.Config.ARGB_8888
+            ).apply {
+                val canvas = Canvas(this)
+                canvas.drawRGB(255, 0, 0)
+            }
             val copyBitmap1 = redBitmap1.copy(redBitmap1.config, true)
             NativeWrapperOpenCvTest.getGrayBitmap(redBitmap1, copyBitmap1)
 
@@ -169,10 +195,14 @@ class ActivityBitmapAndOpencvJniSample : AppCompatActivity() {
                 .load(copyBitmap1)
                 .into(bindingMbr.grayImg)
 
-            val redBitmap2 = (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_red
-            ) as BitmapDrawable).bitmap
+            val redBitmap2 = Bitmap.createBitmap(
+                100,
+                100,
+                Bitmap.Config.ARGB_8888
+            ).apply {
+                val canvas = Canvas(this)
+                canvas.drawRGB(255, 0, 0)
+            }
             val copyBitmap2 = redBitmap2.copy(redBitmap2.config, true)
             NativeWrapperOpenCvTest.getCopyBitmap(redBitmap2, copyBitmap2)
 
@@ -182,10 +212,14 @@ class ActivityBitmapAndOpencvJniSample : AppCompatActivity() {
         }
 
         bindingMbr.greenSrcImg.setOnClickListener {
-            val greenBitmap1 = (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_green
-            ) as BitmapDrawable).bitmap
+            val greenBitmap1 = Bitmap.createBitmap(
+                100,
+                100,
+                Bitmap.Config.ARGB_8888
+            ).apply {
+                val canvas = Canvas(this)
+                canvas.drawRGB(0, 255, 0)
+            }
             val copyBitmap1 = greenBitmap1.copy(greenBitmap1.config, true)
             NativeWrapperOpenCvTest.getGrayBitmap(greenBitmap1, copyBitmap1)
 
@@ -193,10 +227,14 @@ class ActivityBitmapAndOpencvJniSample : AppCompatActivity() {
                 .load(copyBitmap1)
                 .into(bindingMbr.grayImg)
 
-            val greenBitmap2 = (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_green
-            ) as BitmapDrawable).bitmap
+            val greenBitmap2 = Bitmap.createBitmap(
+                100,
+                100,
+                Bitmap.Config.ARGB_8888
+            ).apply {
+                val canvas = Canvas(this)
+                canvas.drawRGB(0, 255, 0)
+            }
             val copyBitmap2 = greenBitmap2.copy(greenBitmap2.config, true)
             NativeWrapperOpenCvTest.getCopyBitmap(greenBitmap2, copyBitmap2)
 
@@ -206,10 +244,14 @@ class ActivityBitmapAndOpencvJniSample : AppCompatActivity() {
         }
 
         bindingMbr.blueSrcImg.setOnClickListener {
-            val blueBitmap1 = (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_blue
-            ) as BitmapDrawable).bitmap
+            val blueBitmap1 = Bitmap.createBitmap(
+                100,
+                100,
+                Bitmap.Config.ARGB_8888
+            ).apply {
+                val canvas = Canvas(this)
+                canvas.drawRGB(0, 0, 255)
+            }
             val copyBitmap1 = blueBitmap1.copy(blueBitmap1.config, true)
             NativeWrapperOpenCvTest.getGrayBitmap(blueBitmap1, copyBitmap1)
 
@@ -217,10 +259,14 @@ class ActivityBitmapAndOpencvJniSample : AppCompatActivity() {
                 .load(copyBitmap1)
                 .into(bindingMbr.grayImg)
 
-            val blueBitmap2 = (AppCompatResources.getDrawable(
-                this,
-                R.drawable.img_activity_bitmap_and_opencv_jni_sample_blue
-            ) as BitmapDrawable).bitmap
+            val blueBitmap2 = Bitmap.createBitmap(
+                100,
+                100,
+                Bitmap.Config.ARGB_8888
+            ).apply {
+                val canvas = Canvas(this)
+                canvas.drawRGB(0, 0, 255)
+            }
             val copyBitmap2 = blueBitmap2.copy(blueBitmap2.config, true)
             NativeWrapperOpenCvTest.getCopyBitmap(blueBitmap2, copyBitmap2)
 
