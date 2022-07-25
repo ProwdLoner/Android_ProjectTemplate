@@ -1,6 +1,6 @@
 package com.example.prowd_android_template.abstract_class
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.util.concurrent.Semaphore
@@ -9,7 +9,7 @@ import java.util.concurrent.Semaphore
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
 // 내부 동기화 처리는 되어있음. 데이터 리스트 조회, 조작 기능의 뮤텍스. 다만 조회와 조작을 동시에 실행하는 비동기 기능의 경우 외부적 뮤텍스를 적용할것
 abstract class ProwdRecyclerViewAdapter(
-    parentView: AppCompatActivity,
+    context: Context,
     targetView: RecyclerView,
     isVertical: Boolean,
     onScrollReachTheEnd: (() -> Unit)?
@@ -194,7 +194,7 @@ abstract class ProwdRecyclerViewAdapter(
     init {
         targetView.adapter = this
 
-        val scrollAdapterLayoutManager = LinearLayoutManager(parentView)
+        val scrollAdapterLayoutManager = LinearLayoutManager(context)
         if (isVertical) {
             scrollAdapterLayoutManager.orientation = LinearLayoutManager.VERTICAL
         } else {
