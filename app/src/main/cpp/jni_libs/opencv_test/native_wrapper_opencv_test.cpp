@@ -194,12 +194,12 @@ Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperOpenCvTes
         JNIEnv *env, jobject thiz, jobject inputBitmap, jobject outputBitmap) {
     // todo gray
     // (jBitmap to RGB matrix)
-    cv::Mat imgRgbMat;
-    jBitmapToGrayCvMatrix(env, inputBitmap, imgRgbMat);
+    cv::Mat imgGrayMat;
+    jBitmapToGrayCvMatrix(env, inputBitmap, imgGrayMat);
 
     // (matrix to Bitmap)
-    matrixToJbitmap(env, imgRgbMat, outputBitmap);
-    imgRgbMat.release();
+    matrixToJbitmap(env, imgGrayMat, outputBitmap);
+    imgGrayMat.release();
 }
 
 extern "C"
