@@ -192,8 +192,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_prowd_1android_1template_native_1wrapper_NativeWrapperOpenCvTest_getGrayBitmap(
         JNIEnv *env, jobject thiz, jobject inputBitmap, jobject outputBitmap) {
-    // todo gray
-    // (jBitmap to RGB matrix)
+    // (jBitmap to Gray matrix)
     cv::Mat imgGrayMat;
     jBitmapToGrayCvMatrix(env, inputBitmap, imgGrayMat);
 
