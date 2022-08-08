@@ -83,7 +83,7 @@ dependencies {
     // (모듈)
     implementation project(path: ':test_module')
 
-    
+
     // (기본 라이브러리)
     implementation 'androidx.core:core-ktx:1.8.0'
     implementation 'androidx.appcompat:appcompat:1.4.2'
