@@ -1,5 +1,6 @@
 package com.example.prowd_android_template.repository.network_retrofit2
 
+import com.google.gson.GsonBuilder
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -52,7 +53,7 @@ object RetrofitClientBuilder {
 
         // 위 설정에 따른 retrofit 객체 생성 및 반환
         return Retrofit.Builder().baseUrl(baseUrl)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().serializeNulls().create()))
             .client(okHttpClientBuilder.build()).build()
     }
 
