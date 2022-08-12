@@ -82,8 +82,8 @@ class ActivityHome : AppCompatActivity() {
         // (초기 객체 생성)
         onCreateInitObject()
 
-        // (초기 뷰 리스너 설정)
-        onCreateInitViewListener()
+        // (초기 뷰 설정)
+        onCreateInitView()
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         onCreateSetLiveData()
@@ -131,7 +131,7 @@ class ActivityHome : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         // 설정 변경(화면회전)을 했는지 여부를 반영
-        viewModelMbr.isActivityRecreated = true
+        viewModelMbr.isActivityRecreatedMbr = true
 
         super.onSaveInstanceState(outState)
     }
@@ -184,8 +184,8 @@ class ActivityHome : AppCompatActivity() {
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
     }
 
-    // (초기 뷰 리스너 설정)
-    private fun onCreateInitViewListener() {
+    // (초기 뷰 설정)
+    private fun onCreateInitView() {
         // 리사이클러 뷰 샘플 목록 이동 버튼
         bindingMbr.goToRecyclerViewSampleListBtn.setOnClickListener {
             val intent =
@@ -346,7 +346,7 @@ class ActivityHome : AppCompatActivity() {
 
     // (액티비티 진입 권한이 클리어 된 시점)
     private fun allPermissionsGranted() {
-        if (!viewModelMbr.isActivityRecreated) { // 화면 회전이 아닐때
+        if (!viewModelMbr.isActivityRecreatedMbr) { // 화면 회전이 아닐때
             if (!viewModelMbr.doItAlreadyMbr) {
                 viewModelMbr.doItAlreadyMbr = true
 
@@ -372,7 +372,7 @@ class ActivityHome : AppCompatActivity() {
         }
 
         // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
-        viewModelMbr.isActivityRecreated = false
+        viewModelMbr.isActivityRecreatedMbr = false
     }
 
 
@@ -386,7 +386,7 @@ class ActivityHome : AppCompatActivity() {
         var doItAlreadyMbr = false
 
         // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
-        var isActivityRecreated = false
+        var isActivityRecreatedMbr = false
 
         // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
         var currentUserSessionTokenMbr: String? = null
