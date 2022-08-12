@@ -80,21 +80,6 @@ target_link_libraries(
 )
 
 
-# (asset_manager_test)
-# JNI 래퍼
-add_library(
-        native_wrapper_asset_manager_test # 자바용 라이브러리 이름
-        SHARED # 종류
-        jni_libs/asset_manager_test/native_wrapper_asset_manager_test.cpp # CPP 라이브러리 파일
-)
-
-target_link_libraries(
-        native_wrapper_asset_manager_test
-        ${log-lib}
-        ${android-lib}
-)
-
-
 # (opencv_test)
 # JNI 래퍼
 add_library(
