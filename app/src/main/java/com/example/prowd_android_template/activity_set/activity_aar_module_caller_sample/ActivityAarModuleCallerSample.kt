@@ -328,7 +328,7 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
     // (뷰모델 객체)
-    // : 액티비티 ReCreate 이후에도 남아있는 데이터 묶음 = 뷰의 데이터 모델
+    // : 액티비티 reCreate 이후에도 남아있는 데이터 묶음 = 뷰의 데이터 모델
     class ViewModel(application: Application) : AndroidViewModel(application) {
         // <멤버 변수 공간>
         // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
