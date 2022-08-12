@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_dialog_sample
+package com.example.prowd_android_template.activity_set.activity_a_template
 
 import android.app.Application
 import android.app.Dialog
@@ -6,7 +6,6 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,12 +17,14 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityDialogSampleBinding
+import com.example.prowd_android_template.databinding.ActivityATemplateBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ActivityDialogSample : AppCompatActivity() {
+// 실제 어디도 연결되어 있지 않은 템플릿용 액티비티
+// 붙여놓고 사용할수 있도록 기본적인 구조가 완성
+class ActivityATemplate : AppCompatActivity() {
     // <멤버 상수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
@@ -37,7 +38,7 @@ class ActivityDialogSample : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityDialogSampleBinding
+    lateinit var bindingMbr: ActivityATemplateBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ViewModel
@@ -147,7 +148,7 @@ class ActivityDialogSample : AppCompatActivity() {
     // (초기 객체 생성)
     private fun onCreateInitObject() {
         // 뷰 객체
-        bindingMbr = ActivityDialogSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityATemplateBinding.inflate(layoutInflater)
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
@@ -180,177 +181,6 @@ class ActivityDialogSample : AppCompatActivity() {
 
     // (초기 뷰 리스너 설정)
     private fun onCreateInitViewListener() {
-        // 로딩 다이얼로그 테스트 버튼
-        bindingMbr.testLoadingDialogBtn.setOnClickListener {
-            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                DialogProgressLoading.DialogInfoVO(
-                    true,
-                    "로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중, 로딩중",
-                    onCanceled = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "progressLoadingDialogMbr? - canceled",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-                        viewModelMbr.progressDialogSample2ProgressValue.value = -1
-                    }
-                )
-        }
-
-        bindingMbr.testLoadingDialogWithProgressBarBtn.setOnClickListener {
-            if (viewModelMbr.progressDialogSample2ProgressValue.value != -1
-            ) {
-                return@setOnClickListener
-            }
-
-            viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                DialogProgressLoading.DialogInfoVO(
-                    false,
-                    "로딩중 0%",
-                    onCanceled = {}
-                )
-
-            (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.max = 100
-
-            executorServiceMbr.execute {
-                for (count in 0..100) {
-                    runOnUiThread {
-                        viewModelMbr.progressDialogSample2ProgressValue.value = count
-                    }
-
-                    Thread.sleep(100)
-                }
-
-                runOnUiThread {
-                    viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value = null
-                    viewModelMbr.progressDialogSample2ProgressValue.value = -1
-                }
-            }
-        }
-
-        // 선택 다이얼로그 테스트 버튼
-        bindingMbr.testBinaryChooseDialogBtn.setOnClickListener {
-            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                DialogBinaryChoose.DialogInfoVO(
-                    true,
-                    "선택 다이얼로그 테스트",
-                    "Yes or No?",
-                    null,
-                    null,
-                    onPosBtnClicked = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "binaryChooseDialogMbr? - pos",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-                    },
-                    onNegBtnClicked = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "binaryChooseDialogMbr? - neg",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-                    },
-                    onCanceled = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "binaryChooseDialogMbr? - canceled",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-                    }
-                )
-        }
-
-        // 확인 다이얼로그 테스트 버튼
-        bindingMbr.testConfirmDialogBtn.setOnClickListener {
-            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                DialogConfirm.DialogInfoVO(
-                    true,
-                    "확인 다이얼로그 테스트",
-                    "Check Dialog",
-                    null,
-                    onCheckBtnClicked = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "confirmDialogMbr? - check",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    },
-                    onCanceled = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "confirmDialogMbr? - canceled",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    }
-                )
-        }
-
-        // 라디오 버튼 선택 다이얼로그 테스트 버튼
-        bindingMbr.testRadioButtonChooseDialogBtn.setOnClickListener {
-            val radioButtonArray = arrayListOf("선택 1", "선택 2", "선택 3", "선택 4", "선택 5")
-
-            viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value =
-                DialogRadioButtonChoose.DialogInfoVO(
-                    true,
-                    "라디오 버튼 다이얼로그 테스트",
-                    "아래 항목 중 하나를 선택하세요.",
-                    radioButtonArray,
-                    null,
-                    null,
-                    onRadioItemClicked = {
-
-                    },
-                    onSelectBtnClicked = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "confirmDialogMbr? - ${radioButtonArray[it]}",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
-                    },
-                    onCancelBtnClicked = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "confirmDialogMbr? - canceled",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
-                    },
-                    onCanceled = {
-                        val myToast = Toast.makeText(
-                            this,
-                            "confirmDialogMbr? - canceled",
-                            Toast.LENGTH_SHORT
-                        )
-                        myToast.show()
-
-                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
-                    }
-                )
-        }
 
     }
 
