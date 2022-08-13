@@ -30,26 +30,12 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class ActivityBasicNotificationSample : AppCompatActivity() {
-    // <멤버 상수 공간>
-    // (앱 진입 필수 권한 배열)
-    // : 앱 진입에 필요한 권한 배열.
-    //     ex : Manifest.permission.INTERNET
-    private val activityPermissionArrayMbr: Array<String> = arrayOf()
-
-    // (스레드 풀)
-    val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
-
-
-    // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityBasicNotificationSampleBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ViewModel
-
-    // (repository 모델)
-    lateinit var repositorySetMbr: RepositorySet
 
     // (다이얼로그 객체)
     var dialogMbr: Dialog? = null
@@ -62,10 +48,6 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
-
-    // (SharedPreference 객체)
-    // 현 로그인 정보 접근 객체
-    lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
 
     // ---------------------------------------------------------------------------------------------
@@ -96,7 +78,7 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
         // 진입 필수 권한이 클리어 되어야 로직이 실행
         permissionRequestCallbackMbr = { permissions ->
             var isPermissionAllGranted = true
-            for (activityPermission in activityPermissionArrayMbr) {
+            for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
                 if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
                     viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
                         true,
@@ -126,7 +108,7 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
             }
         }
 
-        permissionRequestMbr.launch(activityPermissionArrayMbr)
+        permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -160,9 +142,6 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ViewModel::class.java]
 
-        // 레포지토리 객체 생성
-        repositorySetMbr = RepositorySet.getInstance(this)
-
         // 권한 요청 객체 생성
         permissionRequestMbr =
             registerForActivityResult(
@@ -180,8 +159,6 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
             resultLauncherCallbackMbr = null
         }
 
-        // 로그인 SPW 생성
-        currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
     }
 
     // (초기 뷰 설정)
@@ -567,7 +544,7 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
             // (실질적인 onResume 로직) : 권한 클리어
             // (뷰 데이터 로딩)
             // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
             if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
@@ -588,7 +565,27 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
     // <중첩 클래스 공간>
     // (뷰모델 객체)
     // : 액티비티 reCreate 이후에도 남아있는 데이터 묶음 = 뷰의 데이터 모델
+    //     뷰모델이 맡은 것은 화면 회전시에도 불변할 데이터의 저장
     class ViewModel(application: Application) : AndroidViewModel(application) {
+        // <멤버 상수 공간>
+        // (repository 모델)
+        val repositorySetMbr: RepositorySet = RepositorySet.getInstance(application)
+
+        // (스레드 풀)
+        val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
+        // (SharedPreference 객체)
+        // 현 로그인 정보 접근 객체
+        val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
+            CurrentLoginSessionInfoSpw(application)
+
+        // (앱 진입 필수 권한 배열)
+        // : 앱 진입에 필요한 권한 배열.
+        //     ex : Manifest.permission.INTERNET
+        val activityPermissionArrayMbr: Array<String> = arrayOf()
+
+
+        // ---------------------------------------------------------------------------------------------
         // <멤버 변수 공간>
         // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
         var doItAlreadyMbr = false
