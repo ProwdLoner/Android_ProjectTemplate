@@ -18,7 +18,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import com.example.prowd_android_template.activity_set.activity_home.ActivityHome
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
-import com.example.prowd_android_template.common_shared_preference_wrapper.CustomDevicePermissionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -71,12 +70,6 @@ class ActivityInit : AppCompatActivity() {
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
-
-    // 디바이스 커스텀 권한 정보 접근 객체
-    lateinit var customDevicePermissionInfoSpwMbr: CustomDevicePermissionInfoSpw
-
-    // 현 화면 정보 접근 객체
-    lateinit var thisSpwMbr: ActivityInitSpw
 
     // (데이터)
     // 카운터 객체
@@ -207,10 +200,6 @@ class ActivityInit : AppCompatActivity() {
 
         // 로그인 SPW 생성
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
-
-        customDevicePermissionInfoSpwMbr = CustomDevicePermissionInfoSpw(application)
-
-        thisSpwMbr = ActivityInitSpw(application)
     }
 
     // (초기 뷰 설정)
@@ -494,7 +483,7 @@ class ActivityInit : AppCompatActivity() {
                                 viewModelMbr.checkLoginCompletedMbr = true
                                 goToNextActivitySemaphoreMbr.release()
 
-                                checkAppPermission()
+                                goToNextActivity()
                             }
                             2 -> { // 로그인 정보 불일치
                                 // 비회원 처리
@@ -509,7 +498,7 @@ class ActivityInit : AppCompatActivity() {
                                 viewModelMbr.checkLoginCompletedMbr = true
                                 goToNextActivitySemaphoreMbr.release()
 
-                                checkAppPermission()
+                                goToNextActivity()
                             }
                             -1 -> { // 네트워크 에러
                                 // todo
@@ -538,115 +527,8 @@ class ActivityInit : AppCompatActivity() {
             viewModelMbr.checkLoginCompletedMbr = true
             goToNextActivitySemaphoreMbr.release()
 
-            checkAppPermission()
-        }
-    }
-
-    // 앱 필요 권한 승인 체크
-    private fun checkAppPermission() {
-        // 앱 초기에 권한을 물어봤는지를 확인
-        if (thisSpwMbr.isPermissionInitShownBefore) { // 이전에 권한을 물어봤으면 묻지 않음
-
-            goToNextActivitySemaphoreMbr.acquire()
-            viewModelMbr.checkAppPermissionCompletedMbr = true
-            goToNextActivitySemaphoreMbr.release()
-
             goToNextActivity()
-            return
         }
-
-        // 앱 내부 모든 필요 권한들에 대한 메시지 띄워주기
-        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-            DialogConfirm.DialogInfoVO(
-                true,
-                "앱 필요 권한 요청",
-                "이 앱을 실행하려면\n아래와 같은 권한이 필요합니다.\n" +
-                        "\n1. 푸시 권한 :\n유용한 정보를 얻을 수 있습니다.\n" +
-                        "\n2. 카메라 사용 권한 :\n사진 찍기 서비스에 사용됩니다.\n" +
-                        "\n3. 위치 정보 접근 권한 :\n위치 기반 컨텐츠 제공에 사용됩니다.\n" +
-                        "\netc..",
-                null,
-                onCheckBtnClicked = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                        null
-
-                    requestAppPermissions()
-
-                },
-                onCanceled = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                        null
-
-                    requestAppPermissions()
-
-                }
-            )
-    }
-
-    // 앱 권한 요청 실행
-    private fun requestAppPermissions() {
-        // 앱 내부 모든 필요 권한들을 묻기
-
-        // (커스텀 권한 요청)
-        // 푸시 권한 요청
-        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
-            false,
-            "푸시 권한 요청",
-            "이벤트 수신을 위해\n푸시 알람을 받으시겠습니까?",
-            null,
-            null,
-            onPosBtnClicked = {
-                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-                // 권한 상태 저장
-                customDevicePermissionInfoSpwMbr.isPushPermissionGranted = true
-
-                // 디바이스 필요 권한 배열
-                val appPermissions = packageManager.getPackageInfo(
-                    packageName,
-                    PackageManager.GET_PERMISSIONS
-                ).requestedPermissions
-
-                // 디바이스 권한 요청
-                permissionRequestCallbackMbr = {
-                    // 앱 권한 체크 플래그 변경
-                    thisSpwMbr.isPermissionInitShownBefore = true
-
-                    goToNextActivitySemaphoreMbr.acquire()
-                    viewModelMbr.checkAppPermissionCompletedMbr = true
-                    goToNextActivitySemaphoreMbr.release()
-
-                    goToNextActivity()
-                }
-                permissionRequestMbr.launch(appPermissions)
-
-            },
-            onNegBtnClicked = {
-                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-                // 권한 상태 저장
-                customDevicePermissionInfoSpwMbr.isPushPermissionGranted = false
-
-                // 디바이스 필요 권한 배열
-                val appPermissions = packageManager.getPackageInfo(
-                    packageName,
-                    PackageManager.GET_PERMISSIONS
-                ).requestedPermissions
-
-                // 디바이스 권한 요청
-                permissionRequestCallbackMbr = {
-                    // 앱 권한 체크 플래그 변경
-                    thisSpwMbr.isPermissionInitShownBefore = true
-
-                    goToNextActivitySemaphoreMbr.acquire()
-                    viewModelMbr.checkAppPermissionCompletedMbr = true
-                    goToNextActivitySemaphoreMbr.release()
-
-                    goToNextActivity()
-                }
-                permissionRequestMbr.launch(appPermissions)
-
-            },
-            onCanceled = {}
-        )
     }
 
     private fun goToNextActivity(){
@@ -654,7 +536,6 @@ class ActivityInit : AppCompatActivity() {
         if (viewModelMbr.waitToGoToNextActivityCompletedMbr && // 앱 대기 시간이 끝났을 때
             viewModelMbr.checkAppVersionCompletedMbr && // 앱 버전 검증이 끝났을 때
             viewModelMbr.checkLoginCompletedMbr && // 로그인 검증이 끝났을 때
-            viewModelMbr.checkAppPermissionCompletedMbr && // 앱 권한 체크가 끝났을 때
             (!isDestroyed && !isFinishing) // 종료되지 않았을 때
         ) {
             goToNextActivitySemaphoreMbr.release()
@@ -697,9 +578,6 @@ class ActivityInit : AppCompatActivity() {
 
         // 로그인 체크 완료 플래그
         var checkLoginCompletedMbr = false
-
-        // 앱 권한 체크 완료 플래그
-        var checkAppPermissionCompletedMbr = false
 
         // ---------------------------------------------------------------------------------------------
         // <뷰모델 라이브데이터 공간>

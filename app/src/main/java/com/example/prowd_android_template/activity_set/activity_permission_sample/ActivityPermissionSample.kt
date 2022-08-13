@@ -161,76 +161,6 @@ class ActivityPermissionSample : AppCompatActivity() {
     private fun viewSetting() {
 
         // (리스너 설정)
-        // 푸시 권한
-        bindingMbr.pushPermissionSwitch.setOnClickListener {
-            if (bindingMbr.pushPermissionSwitch.isChecked) { // 체크시
-                // 로컬 저장소에 저장
-                viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted = true
-
-                // 권한 설정 메시지
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                    DialogConfirm.DialogInfoVO(
-                        true,
-                        "푸시 권한",
-                        "푸시 권한이 승인 되었습니다.",
-                        null,
-                        onCheckBtnClicked = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                        },
-                        onCanceled = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                        }
-                    )
-            } else {
-                // 체크 해제시
-                // 권한 해제 다이얼로그
-                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
-                    DialogBinaryChoose.DialogInfoVO(
-                        false,
-                        "푸시 알림 해제",
-                        "푸시 알림을 해제하시겠습니까?",
-                        null,
-                        null,
-                        onPosBtnClicked = {
-                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                            // 로컬 저장소에 저장
-                            viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted =
-                                false
-
-                            // 권한 설정 메시지
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "푸시 권한",
-                                    "푸시 권한이 해제 되었습니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                            null
-
-                                    },
-                                    onCanceled = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
-                                            null
-
-                                    }
-                                )
-                        },
-                        onNegBtnClicked = {
-                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                            bindingMbr.pushPermissionSwitch.isChecked = true
-                        },
-                        onCanceled = {
-                            // 취소 불가
-                        }
-                    )
-            }
-        }
-
         // 외부 저장소 읽기 권한
         bindingMbr.externalStorageReadPermissionSwitch.setOnClickListener {
             if (bindingMbr.externalStorageReadPermissionSwitch.isChecked) { // 체크시
@@ -932,10 +862,6 @@ class ActivityPermissionSample : AppCompatActivity() {
     }
 
     private fun setSwitchView() {
-        // 푸시 권한 설정 여부 반영
-        bindingMbr.pushPermissionSwitch.isChecked =
-            viewModelMbr.customDevicePermissionInfoSpwMbr.isPushPermissionGranted
-
         // 외부 저장소 읽기 권한 설정 여부 반영
         bindingMbr.externalStorageReadPermissionSwitch.isChecked =
             ActivityCompat.checkSelfPermission(
