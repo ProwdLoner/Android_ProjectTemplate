@@ -1,6 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_permission_sample
 
 import android.Manifest
+import android.app.Application
+import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -12,22 +14,27 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
+import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityPermissionSampleBinding
+import com.example.prowd_android_template.repository.RepositorySet
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 // 권한 규칙 :
-// 1. 앱 전체 권한은 앱 처음 실행시 스플래시 화면에서 한번 요청하기
-// 2. 서비스 필수 권한은 해당 서비스 사용 액티비티 진입시 요청하기 (모듈단위 개발을 위해)
-// 3. 서버에 권한상태를 전할 필요는 없음.
+// 1. 서비스 필수 권한은 해당 서비스 사용 액티비티 진입시 요청하기 (모듈단위 개발을 위해)
+// 2. 서버에 권한상태를 전할 필요는 없음.
 //    1계정 여러 디바이스가 존재할수 있으니 저장할 데이터도 많아짐.
 //    카메라 권한과 같은건 서버에서 알 필요가 없고,
 //    위치 서비스를 위한 위치 권한은, 좌표값을 null 로 보내주는 방법으로 서버에서 데이터 추려오는 기준으로 사용.
 //    푸시 권한은 내부적으로 처리를 하면 됨.
-// 4. 계정만 바뀌었을 때에는 수동으로 변경하지 않는 이상 권한 변경은 없음. (기존 기기에 저장된 권한이 계속 이어짐)
+// 3. 계정만 바뀌었을 때에는 수동으로 변경하지 않는 이상 권한 변경은 없음. (기존 기기에 저장된 권한이 계속 이어짐)
 //    고로 설정 화면에서 이를 조정하는 스위치를 준비해주는 것도 좋은 방법.
 class ActivityPermissionSample : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -35,92 +42,92 @@ class ActivityPermissionSample : AppCompatActivity() {
     lateinit var bindingMbr: ActivityPermissionSampleBinding
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: ActivityPermissionSampleViewModel
+    lateinit var viewModelMbr: ViewModel
 
     // (다이얼로그 객체)
-    // 로딩 다이얼로그
-    var progressLoadingDialogMbr: DialogProgressLoading? = null
-
-    // 선택 다이얼로그
-    var binaryChooseDialogMbr: DialogBinaryChoose? = null
-
-    // 확인 다이얼로그
-    var confirmDialogMbr: DialogConfirm? = null
-
-    // 라디오 버튼 다이얼로그
-    var radioBtnDialogMbr: DialogRadioButtonChoose? = null
+    var dialogMbr: Dialog? = null
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
     var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
 
     // (ActivityResultLauncher 객체)
-    // 권한 설정 화면 이동 복귀 객체
+    // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
+    // : 액티비티 실행  = onCreate() → onStart() → onResume()
+    //     액티비티 일시정지 후 재실행 = onPause() → ... -> onResume()
+    //     액티비티 정지 후 재실행 = onPause() → onStop() -> ... -> onStart() → onResume()
+    //     액티비티 종료 = onPause() → onStop() → onDestroy()
+    //     앨티비티 화면 회전 = onPause() → onSaveInstanceState() → onStop() → onDestroy() →
+    //         onCreate(savedInstanceState) → onStart() → onResume()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // (초기 객체 생성)
-        createMemberObjects()
+        onCreateInitObject()
 
         // (초기 뷰 설정)
-        viewSetting()
+        onCreateInitView()
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
-        setLiveData()
-
-        // (뷰 객체 바인딩)
-        // 여기까지는 화면이 나오지 않으니 앞의 작업은 가벼워야함
-        setContentView(bindingMbr.root)
-
-        // (이외 생명주기 로직)
-        onCreateLogic()
+        onCreateSetLiveData()
     }
 
     override fun onResume() {
         super.onResume()
 
-        // 권한 스위치 상태 변경
-        setSwitchView()
+        // (액티비티 진입 필수 권한 확인)
+        // 진입 필수 권한이 클리어 되어야 로직이 실행
+        permissionRequestCallbackMbr = { permissions ->
+            var isPermissionAllGranted = true
+            for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
+                if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
+                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                        true,
+                        "권한 필요",
+                        "서비스를 실행하기 위해 필요한 권한이 거부되었습니다.",
+                        "뒤로가기",
+                        onCheckBtnClicked = {
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
 
-        // (데이터 갱신 시점 적용)
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+                            finish()
+                        },
+                        onCanceled = {
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
 
-            if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-                sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
-            ) {
-                // 진입 플래그 변경
-                viewModelMbr.isDataFirstLoadingMbr = false
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+                            finish()
+                        }
+                    )
 
-                //  데이터 로딩
+                    // 권한 클리어 플래그를 변경하고 break
+                    isPermissionAllGranted = false
+                    break
+                }
+            }
+
+            if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                allPermissionsGranted()
             }
         }
 
-        // 설정 변경(화면회전)을 했는지 여부를 초기화
-        // onResume 의 가장 마지막
-        viewModelMbr.isChangingConfigurationsMbr = false
+        permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-
         // 설정 변경(화면회전)을 했는지 여부를 반영
-        viewModelMbr.isChangingConfigurationsMbr = true
+        viewModelMbr.isActivityRecreatedMbr = true
+
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {
         // 다이얼로그 객체 해소
-        progressLoadingDialogMbr?.dismiss()
-        binaryChooseDialogMbr?.dismiss()
-        confirmDialogMbr?.dismiss()
-        radioBtnDialogMbr?.dismiss()
+        dialogMbr?.dismiss()
 
         super.onDestroy()
     }
@@ -132,22 +139,26 @@ class ActivityPermissionSample : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
-    // 초기 멤버 객체 생성
-    private fun createMemberObjects() {
+    // (초기 객체 생성)
+    private fun onCreateInitObject() {
         // 뷰 객체
         bindingMbr = ActivityPermissionSampleBinding.inflate(layoutInflater)
+        // 뷰 객체 바인딩
+        setContentView(bindingMbr.root)
 
         // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ActivityPermissionSampleViewModel::class.java]
+        viewModelMbr = ViewModelProvider(this)[ViewModel::class.java]
 
         // 권한 요청 객체 생성
         permissionRequestMbr =
-            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) {
                 permissionRequestCallbackMbr?.let { it1 -> it1(it) }
                 permissionRequestCallbackMbr = null
             }
 
-        // 앱 권한 설정 ActivityResultLauncher 생성
+        // ActivityResultLauncher 생성
         resultLauncherMbr = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {
@@ -157,8 +168,8 @@ class ActivityPermissionSample : AppCompatActivity() {
 
     }
 
-    // 초기 뷰 설정
-    private fun viewSetting() {
+    // (초기 뷰 설정)
+    private fun onCreateInitView() {
 
         // (리스너 설정)
         // 외부 저장소 읽기 권한
@@ -787,80 +798,132 @@ class ActivityPermissionSample : AppCompatActivity() {
 
             }
         }
-
     }
 
-    // 라이브 데이터 설정
-    private fun setLiveData() {
+    // (라이브 데이터 설정)
+    private fun onCreateSetLiveData() {
         // 로딩 다이얼로그 출력 플래그
         viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
-            if (it != null) {
-                progressLoadingDialogMbr?.dismiss()
+            if (it == null) {
+                if (dialogMbr is DialogProgressLoading) {
+                    dialogMbr?.dismiss()
+                    dialogMbr = null
+                }
+            } else {
+                dialogMbr?.dismiss()
 
-                progressLoadingDialogMbr = DialogProgressLoading(
+                dialogMbr = DialogProgressLoading(
                     this,
                     it
                 )
-                progressLoadingDialogMbr?.show()
-            } else {
-                progressLoadingDialogMbr?.dismiss()
-                progressLoadingDialogMbr = null
+                dialogMbr?.show()
+            }
+        }
+
+        // progressSample2 진행도
+        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
+            if (it != -1) {
+                val loadingText = "로딩중 $it%"
+                if (dialogMbr != null) {
+                    (dialogMbr as DialogProgressLoading).bindingMbr.progressMessageTxt.text =
+                        loadingText
+                    (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.visibility =
+                        View.VISIBLE
+                    (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.progress = it
+                }
             }
         }
 
         // 선택 다이얼로그 출력 플래그
         viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
-            if (it != null) {
-                binaryChooseDialogMbr?.dismiss()
+            if (it == null) {
+                if (dialogMbr is DialogBinaryChoose) {
+                    dialogMbr?.dismiss()
+                    dialogMbr = null
+                }
+            } else {
+                dialogMbr?.dismiss()
 
-                binaryChooseDialogMbr = DialogBinaryChoose(
+                dialogMbr = DialogBinaryChoose(
                     this,
                     it
                 )
-                binaryChooseDialogMbr?.show()
-            } else {
-                binaryChooseDialogMbr?.dismiss()
-                binaryChooseDialogMbr = null
+                dialogMbr?.show()
             }
         }
 
         // 확인 다이얼로그 출력 플래그
         viewModelMbr.confirmDialogInfoLiveDataMbr.observe(this) {
-            if (it != null) {
-                confirmDialogMbr?.dismiss()
+            if (it == null) {
+                if (dialogMbr is DialogConfirm) {
+                    dialogMbr?.dismiss()
+                    dialogMbr = null
+                }
+            } else {
+                dialogMbr?.dismiss()
 
-                confirmDialogMbr = DialogConfirm(
+                dialogMbr = DialogConfirm(
                     this,
                     it
                 )
-                confirmDialogMbr?.show()
-            } else {
-                confirmDialogMbr?.dismiss()
-                confirmDialogMbr = null
+                dialogMbr?.show()
             }
         }
 
-        // 라디오 버튼 다이얼로그 출력 플래그
-        viewModelMbr.radioButtonDialogInfoLiveDataMbr.observe(this) {
-            if (it != null) {
-                radioBtnDialogMbr?.dismiss()
+        // 라디오 버튼 선택 다이얼로그 출력 플래그
+        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.observe(this) {
+            if (it == null) {
+                if (dialogMbr is DialogRadioButtonChoose) {
+                    dialogMbr?.dismiss()
+                    dialogMbr = null
+                }
+            } else {
+                dialogMbr?.dismiss()
 
-                radioBtnDialogMbr = DialogRadioButtonChoose(
+                dialogMbr = DialogRadioButtonChoose(
                     this,
                     it
                 )
-                radioBtnDialogMbr?.show()
-            } else {
-                radioBtnDialogMbr?.dismiss()
-                radioBtnDialogMbr = null
+                dialogMbr?.show()
             }
         }
     }
 
-    private fun onCreateLogic() {
+    // (액티비티 진입 권한이 클리어 된 시점)
+    private fun allPermissionsGranted() {
+        if (!viewModelMbr.isActivityRecreatedMbr) { // 화면 회전이 아닐때
+            if (!viewModelMbr.doItAlreadyMbr) {
+                viewModelMbr.doItAlreadyMbr = true
 
+                // ---------------------------------------------------------------------------------
+                // (실질적인 onCreate 로직) : 권한 클리어 + 처음 실행
+
+            }
+
+            // -------------------------------------------------------------------------------------
+            // (실질적인 onResume 로직) : 권한 클리어
+            // (뷰 데이터 로딩)
+            // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+                // 진입 플래그 변경
+                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+
+                // 데이터 수집
+            }
+
+            // 권한 스위치 상태 변경
+            setSwitchView()
+
+        } else { // 화면 회전일 때
+
+        }
+
+        // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
+        viewModelMbr.isActivityRecreatedMbr = false
     }
 
+    // (권한에 따라 스위치 반영)
     private fun setSwitchView() {
         // 외부 저장소 읽기 권한 설정 여부 반영
         bindingMbr.externalStorageReadPermissionSwitch.isChecked =
@@ -917,5 +980,68 @@ class ActivityPermissionSample : AppCompatActivity() {
         }
 
         bindingMbr.writeSettingPermissionSwitch.isChecked = Settings.System.canWrite(this)
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <중첩 클래스 공간>
+    // (뷰모델 객체)
+    // : 액티비티 reCreate 이후에도 남아있는 데이터 묶음 = 뷰의 데이터 모델
+    //     뷰모델이 맡은 것은 화면 회전시에도 불변할 데이터의 저장
+    class ViewModel(application: Application) : AndroidViewModel(application) {
+        // <멤버 상수 공간>
+        // (repository 모델)
+        val repositorySetMbr: RepositorySet = RepositorySet.getInstance(application)
+
+        // (스레드 풀)
+        val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
+        // (SharedPreference 객체)
+        // 현 로그인 정보 접근 객체
+        val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
+            CurrentLoginSessionInfoSpw(application)
+
+        // (앱 진입 필수 권한 배열)
+        // : 앱 진입에 필요한 권한 배열.
+        //     ex : Manifest.permission.INTERNET
+        val activityPermissionArrayMbr: Array<String> = arrayOf()
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <멤버 변수 공간>
+        // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
+        var doItAlreadyMbr = false
+
+        // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
+        var isActivityRecreatedMbr = false
+
+        // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
+        var currentUserSessionTokenMbr: String? = null
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <뷰모델 라이브데이터 공간>
+        // 로딩 다이얼로그 출력 정보
+        val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
+            MutableLiveData(null)
+
+        val progressDialogSample2ProgressValue: MutableLiveData<Int> =
+            MutableLiveData(-1)
+
+        // 선택 다이얼로그 출력 정보
+        val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
+            MutableLiveData(null)
+
+        // 확인 다이얼로그 출력 정보
+        val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
+            MutableLiveData(null)
+
+        // 라디오 버튼 선택 다이얼로그 출력 정보
+        val radioButtonChooseDialogInfoLiveDataMbr: MutableLiveData<DialogRadioButtonChoose.DialogInfoVO?> =
+            MutableLiveData(null)
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
     }
 }
