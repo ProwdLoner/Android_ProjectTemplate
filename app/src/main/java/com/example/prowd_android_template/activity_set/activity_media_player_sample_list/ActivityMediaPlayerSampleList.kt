@@ -12,7 +12,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.activity_set.activity_media_player_api_simple_video_sample.ActivityMediaPlayerApiSimpleVideoSample
 import com.example.prowd_android_template.activity_set.activity_pinch_image_view_sample.ActivityPinchImageViewSample
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -186,15 +185,6 @@ class ActivityMediaPlayerSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityPinchImageViewSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToMediaPlayerApiSimpleVideoSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityMediaPlayerApiSimpleVideoSample::class.java
                 )
             startActivity(intent)
         }
