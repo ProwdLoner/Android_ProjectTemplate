@@ -4,7 +4,6 @@ import android.app.Application
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -19,7 +18,7 @@ import java.util.concurrent.ExecutorService
 class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // <멤버 변수 공간>
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
-    lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
+    private lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
 
     // (Ui 스레드 핸들러 객체) handler.post{}
     private val uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
@@ -50,7 +49,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
         onCreateViewInitView()
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
-        setLiveData()
+        onCreateViewSetLiveData()
 
         return bindingMbr.root
     }
@@ -58,29 +57,38 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        // (데이터 갱신 시점 적용)
-//        if (!parentActivityMbr.viewModelMbr.isChangingConfigurationsMbr && // 화면 회전이 아니면서,
-//            isVisible // 현재 보이는 상황일 때
-//        ) {
-//            val sessionToken =
-//                parentActivityMbr.viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-//
-//            if (parentActivityMbr.viewModelMbr.fragment1DataMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-//                sessionToken != parentActivityMbr.viewModelMbr.fragment1DataMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
-//            ) {
-//                // 진입 플래그 변경
-//                parentActivityMbr.viewModelMbr.fragment1DataMbr.isDataFirstLoadingMbr = false
-//                parentActivityMbr.viewModelMbr.fragment1DataMbr.currentUserSessionTokenMbr =
-//                    sessionToken
-//
-//                //  데이터 로딩
-//            }
-//        }
+        if (!viewModelMbr.isActivityRecreatedMbr) { // 화면 회전이 아닐때
+            if (!viewModelMbr.doItAlreadyMbr) {
+                viewModelMbr.doItAlreadyMbr = true
 
+                // ---------------------------------------------------------------------------------
+                // (실질적인 onCreate 로직) : 권한 클리어 + 처음 실행
+
+            }
+
+            // -------------------------------------------------------------------------------------
+            // (실질적인 onResume 로직) : 권한 클리어
+            // (뷰 데이터 로딩)
+            // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+                // 진입 플래그 변경
+                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+
+                // 데이터 수집
+            }
+
+        } else { // 화면 회전일 때
+
+        }
+
+        // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
+        viewModelMbr.isActivityRecreatedMbr = false
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        Log.e("dd", "efs")
+        // 설정 변경(화면회전)을 했는지 여부를 반영
+        viewModelMbr.isActivityRecreatedMbr = true
 
         super.onSaveInstanceState(outState)
     }
@@ -105,7 +113,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
         viewModelMbr = parentActivityMbr.viewModelMbr.fragment1DataMbr
     }
 
-    // 초기 뷰 설정
+    // (초기 뷰 설정)
     private fun onCreateViewInitView() {
         bindingMbr.fragmentClickBtn.setOnClickListener {
             parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.value = 1
@@ -113,8 +121,8 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
 
     }
 
-    // 라이브 데이터 설정
-    private fun setLiveData() {
+    // (라이브 데이터 설정)
+    private fun onCreateViewSetLiveData() {
         // 공유되는 부모 뷰모델 정보 반영 예시
         parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.observe(parentActivityMbr) {
             if (null == it) {
@@ -126,6 +134,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
         }
     }
 
+
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
     class FragmentViewModel(
@@ -133,17 +142,23 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
         val repositorySetMbr: RepositorySet,
         val executorServiceMbr: ExecutorService?
     ) {
-        // <멤버 변수 공간>
+        // <멤버 상수 공간>
         // (SharedPreference 객체)
         // 현 로그인 정보 접근 객체
         val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
             CurrentLoginSessionInfoSpw(application)
 
-        // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
-        var currentUserSessionTokenMbr: String? = null
 
-        // 데이터 수집 등, 첫번째에만 발동
-        var isDataFirstLoadingMbr: Boolean = true
+        // ---------------------------------------------------------------------------------------------
+        // <멤버 변수 공간>
+        // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
+        var doItAlreadyMbr = false
+
+        // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
+        var isActivityRecreatedMbr = false
+
+        // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
+        var currentUserSessionTokenMbr: String? = null
 
 
         // ---------------------------------------------------------------------------------------------
