@@ -15,6 +15,7 @@ import com.example.prowd_android_template.databinding.FragmentActivityBasicBotto
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 
+// 플래그먼트 필수 권한은 이를 사용하는 액티비티에서 처리를 할 것 = 권한 충족이 되었다고 가정
 class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // <멤버 변수 공간>
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용

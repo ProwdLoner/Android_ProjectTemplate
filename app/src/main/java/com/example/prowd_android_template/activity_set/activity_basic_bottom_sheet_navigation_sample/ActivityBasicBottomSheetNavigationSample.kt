@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.ActivityResult
@@ -173,20 +174,6 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     // (초기 뷰 설정)
     private fun onCreateInitView() {
-        // 뷰페이저 조작 금지
-        bindingMbr.screenViewPager.isUserInputEnabled = false
-        // 뷰페이저 어뎁터 연결
-        bindingMbr.screenViewPager.adapter = adapterSetMbr.screenViewPagerFragmentStateAdapter
-
-        // 뷰페이저 어뎁터 플래그먼트 세팅
-        adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
-            listOf(
-                viewModelMbr.fragment1Mbr,
-                viewModelMbr.fragment2Mbr,
-                viewModelMbr.fragment3Mbr
-            )
-        )
-
         // bottom navigator 버튼에 따라 화면 프레그먼트 변경 리스너
         bindingMbr.bottomNav.setOnItemSelectedListener { item: MenuItem ->
             when (item.itemId) {
@@ -299,6 +286,22 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     // (액티비티 진입 권한이 클리어 된 시점)
     private fun allPermissionsGranted() {
+        // (뷰페이저 플래그먼트 세팅)
+        adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
+            listOf(
+                viewModelMbr.fragment1Mbr,
+                viewModelMbr.fragment2Mbr,
+                viewModelMbr.fragment3Mbr
+            )
+        ).apply {
+            // 뷰페이저 조작 금지
+            bindingMbr.screenViewPager.isUserInputEnabled = false
+
+            // 뷰페이저 어뎁터 연결
+            bindingMbr.screenViewPager.adapter = adapterSetMbr.screenViewPagerFragmentStateAdapter
+        }
+
+        // (화면 회전 여부 판단)
         if (!viewModelMbr.isActivityRecreatedMbr) { // 화면 회전이 아닐때
             if (!viewModelMbr.doItAlreadyMbr) {
                 viewModelMbr.doItAlreadyMbr = true
@@ -355,25 +358,28 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         // (플래그먼트)
         // : 화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것
         val fragment1Mbr = FragmentActivityBasicBottomSheetNavigationSampleFragment1()
-        val fragment1DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment1.FragmentViewModel(
-            application,
-            repositorySetMbr,
-            executorServiceMbr
-        )
+        val fragment1DataMbr =
+            FragmentActivityBasicBottomSheetNavigationSampleFragment1.FragmentViewModel(
+                application,
+                repositorySetMbr,
+                executorServiceMbr
+            )
 
         val fragment2Mbr = FragmentActivityBasicBottomSheetNavigationSampleFragment2()
-        val fragment2DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment2.FragmentViewModel(
-            application,
-            repositorySetMbr,
-            executorServiceMbr
-        )
+        val fragment2DataMbr =
+            FragmentActivityBasicBottomSheetNavigationSampleFragment2.FragmentViewModel(
+                application,
+                repositorySetMbr,
+                executorServiceMbr
+            )
 
         val fragment3Mbr = FragmentActivityBasicBottomSheetNavigationSampleFragment3()
-        val fragment3DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment3.FragmentViewModel(
-            application,
-            repositorySetMbr,
-            executorServiceMbr
-        )
+        val fragment3DataMbr =
+            FragmentActivityBasicBottomSheetNavigationSampleFragment3.FragmentViewModel(
+                application,
+                repositorySetMbr,
+                executorServiceMbr
+            )
 
 
         // ---------------------------------------------------------------------------------------------
