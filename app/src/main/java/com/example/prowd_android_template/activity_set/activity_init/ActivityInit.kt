@@ -4,7 +4,6 @@ import android.app.Application
 import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -29,31 +28,12 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 class ActivityInit : AppCompatActivity() {
-    // <멤버 상수 공간>
-    // (앱 진입 필수 권한 배열)
-    // : 앱 진입에 필요한 권한 배열.
-    //     ex : Manifest.permission.INTERNET
-    private val activityPermissionArrayMbr: Array<String> = arrayOf()
-
-    // (스레드 풀)
-    val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
-
-    // delayCountDownTimerMbr 인터벌 MilliSec
-    val delayCountDownTimerIntervalMsMbr = 100L
-
-    val goToNextActivitySemaphoreMbr = Semaphore(1)
-
-
-    // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityInitBinding
 
     // (뷰 모델 객체)
     lateinit var viewModelMbr: ViewModel
-
-    // (repository 모델)
-    lateinit var repositorySetMbr: RepositorySet
 
     // (다이얼로그 객체)
     var dialogMbr: Dialog? = null
@@ -66,10 +46,6 @@ class ActivityInit : AppCompatActivity() {
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
-
-    // (SharedPreference 객체)
-    // 현 로그인 정보 접근 객체
-    lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
     // (데이터)
     // 카운터 객체
@@ -104,7 +80,7 @@ class ActivityInit : AppCompatActivity() {
         // 진입 필수 권한이 클리어 되어야 로직이 실행
         permissionRequestCallbackMbr = { permissions ->
             var isPermissionAllGranted = true
-            for (activityPermission in activityPermissionArrayMbr) {
+            for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
                 if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
                     viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
                         true,
@@ -134,13 +110,13 @@ class ActivityInit : AppCompatActivity() {
             }
         }
 
-        permissionRequestMbr.launch(activityPermissionArrayMbr)
+        permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
     }
 
     override fun onPause() {
-        goToNextActivitySemaphoreMbr.acquire()
+        viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
         if (!viewModelMbr.waitToGoToNextActivityCompletedMbr) { // 화면 대기가 끝나지 않았을 때
-            goToNextActivitySemaphoreMbr.release()
+            viewModelMbr.goToNextActivitySemaphoreMbr.release()
             // 화면이 멈추면 카운터도 멈춤
             delayCountDownTimerMbr?.cancel()
         }
@@ -178,9 +154,6 @@ class ActivityInit : AppCompatActivity() {
         // 뷰 모델 객체 생성
         viewModelMbr = ViewModelProvider(this)[ViewModel::class.java]
 
-        // 레포지토리 객체 생성
-        repositorySetMbr = RepositorySet.getInstance(this)
-
         // 권한 요청 객체 생성
         permissionRequestMbr =
             registerForActivityResult(
@@ -197,9 +170,6 @@ class ActivityInit : AppCompatActivity() {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
             resultLauncherCallbackMbr = null
         }
-
-        // 로그인 SPW 생성
-        currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
     }
 
     // (초기 뷰 설정)
@@ -294,6 +264,10 @@ class ActivityInit : AppCompatActivity() {
                 dialogMbr?.show()
             }
         }
+
+        viewModelMbr.countDownNumberLiveDataMbr.observe(this) {
+            bindingMbr.countDownTxt.text = it.toString()
+        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -311,7 +285,7 @@ class ActivityInit : AppCompatActivity() {
             // (실질적인 onResume 로직) : 권한 클리어
             // (뷰 데이터 로딩)
             // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
             if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
                 viewModelMbr.currentUserSessionTokenMbr = sessionToken
@@ -331,18 +305,18 @@ class ActivityInit : AppCompatActivity() {
 
     // (대기시간 타이머 실행)
     private fun startDelayTimer() {
-        goToNextActivitySemaphoreMbr.acquire()
+        viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
         if (viewModelMbr.waitToGoToNextActivityCompletedMbr) {// 화면 대기가 이전에 끝났을 때
-            goToNextActivitySemaphoreMbr.release()
+            viewModelMbr.goToNextActivitySemaphoreMbr.release()
             return
         }
-        goToNextActivitySemaphoreMbr.release()
+        viewModelMbr.goToNextActivitySemaphoreMbr.release()
 
         // 화면 딜레이 타이머 실행
         delayCountDownTimerMbr = object :
             CountDownTimer(
                 viewModelMbr.delayCountDownTimerRestMilliSecMbr,
-                delayCountDownTimerIntervalMsMbr
+                viewModelMbr.delayCountDownTimerIntervalMsMbr
             ) {
             override fun onTick(millisUntilFinished: Long) {
                 // 초 마다 화면에 카운트 다운
@@ -352,15 +326,15 @@ class ActivityInit : AppCompatActivity() {
                 }
 
                 viewModelMbr.delayCountDownTimerRestMilliSecMbr =
-                    viewModelMbr.delayCountDownTimerRestMilliSecMbr - delayCountDownTimerIntervalMsMbr
+                    viewModelMbr.delayCountDownTimerRestMilliSecMbr - viewModelMbr.delayCountDownTimerIntervalMsMbr
             }
 
             override fun onFinish() {
                 viewModelMbr.countDownNumberLiveDataMbr.value = 0
 
-                goToNextActivitySemaphoreMbr.acquire()
+                viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
                 viewModelMbr.waitToGoToNextActivityCompletedMbr = true
-                goToNextActivitySemaphoreMbr.release()
+                viewModelMbr.goToNextActivitySemaphoreMbr.release()
 
                 goToNextActivity()
             }
@@ -428,9 +402,9 @@ class ActivityInit : AppCompatActivity() {
                                         onCanceled = {}
                                     )
                             } else { // 업데이트 불필요
-                                goToNextActivitySemaphoreMbr.acquire()
+                                viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
                                 viewModelMbr.checkAppVersionCompletedMbr = true
-                                goToNextActivitySemaphoreMbr.release()
+                                viewModelMbr.goToNextActivitySemaphoreMbr.release()
 
                                 checkLogin()
                             }
@@ -446,7 +420,7 @@ class ActivityInit : AppCompatActivity() {
             }
 
         // 네트워크 비동기 요청을 가정
-        executorServiceMbr.execute {
+        viewModelMbr.executorServiceMbr.execute {
             onComplete(1, "1.0.0")
         }
     }
@@ -454,13 +428,13 @@ class ActivityInit : AppCompatActivity() {
     // (초기 로그인 체크)
     private fun checkLogin() {
         val isAutoLogin: Boolean =
-            currentLoginSessionInfoSpwMbr.isAutoLogin
+            viewModelMbr.currentLoginSessionInfoSpwMbr.isAutoLogin
         val loginType: Int =
-            currentLoginSessionInfoSpwMbr.loginType
+            viewModelMbr.currentLoginSessionInfoSpwMbr.loginType
         val serverId: String? =
-            currentLoginSessionInfoSpwMbr.userServerId
+            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerId
         val serverPw: String? =
-            currentLoginSessionInfoSpwMbr.userServerPw
+            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerPw
 
         if (isAutoLogin && loginType != 0) { // 로그인 검증 필요
             // (정보 요청 콜백)
@@ -472,31 +446,33 @@ class ActivityInit : AppCompatActivity() {
                         when (statusCode) {
                             1 -> {// 로그인 완료
                                 // 회원 처리
-                                currentLoginSessionInfoSpwMbr.isAutoLogin = true
-                                currentLoginSessionInfoSpwMbr.sessionToken = sessionToken
-                                currentLoginSessionInfoSpwMbr.userNickName = userNickName
-                                currentLoginSessionInfoSpwMbr.userServerId = serverId
-                                currentLoginSessionInfoSpwMbr.userServerPw = serverPw
-                                currentLoginSessionInfoSpwMbr.loginType = loginType
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.isAutoLogin = true
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken =
+                                    sessionToken
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.userNickName =
+                                    userNickName
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.userServerId = serverId
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.userServerPw = serverPw
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.loginType = loginType
 
-                                goToNextActivitySemaphoreMbr.acquire()
+                                viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
                                 viewModelMbr.checkLoginCompletedMbr = true
-                                goToNextActivitySemaphoreMbr.release()
+                                viewModelMbr.goToNextActivitySemaphoreMbr.release()
 
                                 goToNextActivity()
                             }
                             2 -> { // 로그인 정보 불일치
                                 // 비회원 처리
-                                currentLoginSessionInfoSpwMbr.isAutoLogin = false
-                                currentLoginSessionInfoSpwMbr.sessionToken = null
-                                currentLoginSessionInfoSpwMbr.userNickName = null
-                                currentLoginSessionInfoSpwMbr.userServerId = null
-                                currentLoginSessionInfoSpwMbr.userServerPw = null
-                                currentLoginSessionInfoSpwMbr.loginType = 0
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.isAutoLogin = false
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken = null
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.userNickName = null
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.userServerId = null
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.userServerPw = null
+                                viewModelMbr.currentLoginSessionInfoSpwMbr.loginType = 0
 
-                                goToNextActivitySemaphoreMbr.acquire()
+                                viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
                                 viewModelMbr.checkLoginCompletedMbr = true
-                                goToNextActivitySemaphoreMbr.release()
+                                viewModelMbr.goToNextActivitySemaphoreMbr.release()
 
                                 goToNextActivity()
                             }
@@ -511,34 +487,34 @@ class ActivityInit : AppCompatActivity() {
                 }
 
             // 네트워크 비동기 요청을 가정
-            executorServiceMbr.execute {
+            viewModelMbr.executorServiceMbr.execute {
                 onComplete(1, "##ADRE_DRTG_1234", "행복한 너구리")
             }
         } else { // 로그인 검증 불필요
             // 비회원 처리
-            currentLoginSessionInfoSpwMbr.isAutoLogin = false
-            currentLoginSessionInfoSpwMbr.sessionToken = null
-            currentLoginSessionInfoSpwMbr.userNickName = null
-            currentLoginSessionInfoSpwMbr.userServerId = null
-            currentLoginSessionInfoSpwMbr.userServerPw = null
-            currentLoginSessionInfoSpwMbr.loginType = 0
+            viewModelMbr.currentLoginSessionInfoSpwMbr.isAutoLogin = false
+            viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken = null
+            viewModelMbr.currentLoginSessionInfoSpwMbr.userNickName = null
+            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerId = null
+            viewModelMbr.currentLoginSessionInfoSpwMbr.userServerPw = null
+            viewModelMbr.currentLoginSessionInfoSpwMbr.loginType = 0
 
-            goToNextActivitySemaphoreMbr.acquire()
+            viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
             viewModelMbr.checkLoginCompletedMbr = true
-            goToNextActivitySemaphoreMbr.release()
+            viewModelMbr.goToNextActivitySemaphoreMbr.release()
 
             goToNextActivity()
         }
     }
 
-    private fun goToNextActivity(){
-        goToNextActivitySemaphoreMbr.acquire()
+    private fun goToNextActivity() {
+        viewModelMbr.goToNextActivitySemaphoreMbr.acquire()
         if (viewModelMbr.waitToGoToNextActivityCompletedMbr && // 앱 대기 시간이 끝났을 때
             viewModelMbr.checkAppVersionCompletedMbr && // 앱 버전 검증이 끝났을 때
             viewModelMbr.checkLoginCompletedMbr && // 로그인 검증이 끝났을 때
             (!isDestroyed && !isFinishing) // 종료되지 않았을 때
         ) {
-            goToNextActivitySemaphoreMbr.release()
+            viewModelMbr.goToNextActivitySemaphoreMbr.release()
             val intent =
                 Intent(
                     this,
@@ -548,7 +524,7 @@ class ActivityInit : AppCompatActivity() {
             overridePendingTransition(0, 0)
             finish()
         }
-        goToNextActivitySemaphoreMbr.release()
+        viewModelMbr.goToNextActivitySemaphoreMbr.release()
     }
 
 
@@ -556,7 +532,32 @@ class ActivityInit : AppCompatActivity() {
     // <중첩 클래스 공간>
     // (뷰모델 객체)
     // : 액티비티 reCreate 이후에도 남아있는 데이터 묶음 = 뷰의 데이터 모델
+    //     뷰모델이 맡은 것은 화면 회전시에도 불변할 데이터의 저장
     class ViewModel(application: Application) : AndroidViewModel(application) {
+        // <멤버 상수 공간>
+        // (repository 모델)
+        val repositorySetMbr: RepositorySet = RepositorySet.getInstance(application)
+
+        // (스레드 풀)
+        val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
+        // (SharedPreference 객체)
+        // 현 로그인 정보 접근 객체
+        val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
+            CurrentLoginSessionInfoSpw(application)
+
+        // (앱 진입 필수 권한 배열)
+        // : 앱 진입에 필요한 권한 배열.
+        //     ex : Manifest.permission.INTERNET
+        val activityPermissionArrayMbr: Array<String> = arrayOf()
+
+        // delayCountDownTimerMbr 인터벌 MilliSec
+        val delayCountDownTimerIntervalMsMbr = 100L
+
+        val goToNextActivitySemaphoreMbr = Semaphore(1)
+
+
+        // ---------------------------------------------------------------------------------------------
         // <멤버 변수 공간>
         // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
         var doItAlreadyMbr = false
@@ -578,6 +579,7 @@ class ActivityInit : AppCompatActivity() {
 
         // 로그인 체크 완료 플래그
         var checkLoginCompletedMbr = false
+
 
         // ---------------------------------------------------------------------------------------------
         // <뷰모델 라이브데이터 공간>
