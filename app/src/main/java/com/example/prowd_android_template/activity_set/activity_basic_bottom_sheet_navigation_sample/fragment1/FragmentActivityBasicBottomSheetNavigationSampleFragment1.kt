@@ -4,6 +4,7 @@ import android.app.Application
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -16,33 +17,39 @@ import java.util.concurrent.ExecutorService
 
 class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // <멤버 변수 공간>
-    // (뷰 바인더 객체)
-    lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
-
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
     lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
 
-    // (뷰 모델 객체)
-    lateinit var viewModelMbr: VmData
-
     // (Ui 스레드 핸들러 객체) handler.post{}
-    var uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
+    private val uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
+
+    // (뷰 바인더 객체)
+    lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
+
+    // (뷰 모델 객체)
+    lateinit var viewModelMbr: FragmentViewModel
 
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
+    // : 플래그먼트 실행  = onAttach() → onCreate() → onCreateView() → onActivityCreated() → onStart() → onResume()
+    //     플래그먼트 일시정지 후 재실행 = onPause() → ... -> onResume()
+    //     플래그먼트 정지 후 재실행 = onPause() → onStop() -> ... -> onStart() → onResume()
+    //     플래그먼트 종료 = onPause() → onStop() → onDestroyView() → onDestroy() → onDetach()
+    //     플래그먼트 화면 회전 = onPause() → onSaveInstanceState() → onStop() → onDestroyView() → onDestroy() →
+    //         onDetach() → onAttach() → onCreate() → onCreateView() → onActivityCreated() → onStart() → onResume()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         // (초기 객체 생성)
-        createMemberObjects()
+        onCreateViewInitObject()
+
+        // (초기 뷰 설정)
+        onCreateViewInitView()
 
         // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
         setLiveData()
-
-        // (초기 뷰 설정)
-        viewSetting()
 
         return bindingMbr.root
     }
@@ -71,6 +78,12 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
 
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        Log.e("dd", "efs")
+
+        super.onSaveInstanceState(outState)
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
@@ -78,21 +91,21 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
-    // 초기 멤버 객체 생성
-    private fun createMemberObjects() {
+    // (초기 객체 생성)
+    private fun onCreateViewInitObject() {
+        // (부모 객체 저장)
+        parentActivityMbr = requireActivity() as ActivityBasicBottomSheetNavigationSample
+
         // (뷰 바인딩)
         bindingMbr =
             FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding.inflate(layoutInflater)
-
-        // (부모 객체 저장)
-        parentActivityMbr = requireActivity() as ActivityBasicBottomSheetNavigationSample
 
         // (플래그먼트 뷰모델)
         viewModelMbr = parentActivityMbr.viewModelMbr.fragment1DataMbr
     }
 
     // 초기 뷰 설정
-    private fun viewSetting() {
+    private fun onCreateViewInitView() {
         bindingMbr.fragmentClickBtn.setOnClickListener {
             parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.value = 1
         }
@@ -101,6 +114,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
 
     // 라이브 데이터 설정
     private fun setLiveData() {
+        // 공유되는 부모 뷰모델 정보 반영 예시
         parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.observe(parentActivityMbr) {
             if (null == it) {
                 bindingMbr.clickedByValueTxt.text = "클릭 없음"
@@ -113,8 +127,8 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    data class VmData(
-        val application: Application,
+    class FragmentViewModel(
+        application: Application,
         val repositorySetMbr: RepositorySet,
         val executorServiceMbr: ExecutorService?
     ) {

@@ -23,7 +23,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
     lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
 
     // (뷰 모델 객체)
-    lateinit var viewModelMbr: VmData
+    lateinit var viewModelMbr: FragmentViewModel
 
     // (Ui 스레드 핸들러 객체) handler.post{}
     var uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
@@ -115,7 +115,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    data class VmData(
+    data class FragmentViewModel(
         val application: Application,
         val repositorySetMbr: RepositorySet,
         val executorServiceMbr: ExecutorService?

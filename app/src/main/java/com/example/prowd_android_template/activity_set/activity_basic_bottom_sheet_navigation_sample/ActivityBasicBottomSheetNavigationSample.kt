@@ -27,6 +27,8 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+
+// todo : 프래그먼트는 권한이 충족된 이후 연결하도록
 class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -171,12 +173,12 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     // (초기 뷰 설정)
     private fun onCreateInitView() {
-        // 프레그먼트 컨테이너 조작 금지
+        // 뷰페이저 조작 금지
         bindingMbr.screenViewPager.isUserInputEnabled = false
-
-        // 프레그먼트 어뎁터 연결
+        // 뷰페이저 어뎁터 연결
         bindingMbr.screenViewPager.adapter = adapterSetMbr.screenViewPagerFragmentStateAdapter
 
+        // 뷰페이저 어뎁터 플래그먼트 세팅
         adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
             listOf(
                 viewModelMbr.fragment1Mbr,
@@ -353,21 +355,21 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         // (플래그먼트)
         // : 화면 회전시 에러가 안나기 위하여 기본 생성자를 사용할 것
         val fragment1Mbr = FragmentActivityBasicBottomSheetNavigationSampleFragment1()
-        val fragment1DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment1.VmData(
+        val fragment1DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment1.FragmentViewModel(
             application,
             repositorySetMbr,
             executorServiceMbr
         )
 
         val fragment2Mbr = FragmentActivityBasicBottomSheetNavigationSampleFragment2()
-        val fragment2DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment2.VmData(
+        val fragment2DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment2.FragmentViewModel(
             application,
             repositorySetMbr,
             executorServiceMbr
         )
 
         val fragment3Mbr = FragmentActivityBasicBottomSheetNavigationSampleFragment3()
-        val fragment3DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment3.VmData(
+        val fragment3DataMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment3.FragmentViewModel(
             application,
             repositorySetMbr,
             executorServiceMbr
