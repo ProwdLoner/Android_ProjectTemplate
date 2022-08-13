@@ -5,7 +5,6 @@ import android.app.Dialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.ActivityResult
@@ -29,7 +28,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
-// todo : 프래그먼트는 권한이 충족된 이후 연결하도록
 class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
