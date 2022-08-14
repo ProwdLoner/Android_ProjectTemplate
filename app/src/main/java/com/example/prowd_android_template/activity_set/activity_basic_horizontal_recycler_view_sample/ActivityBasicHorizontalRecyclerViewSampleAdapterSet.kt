@@ -18,11 +18,13 @@ class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
         private val parentViewMbr: ActivityBasicHorizontalRecyclerViewSample,
         targetView: RecyclerView,
         isVertical: Boolean,
+        oneRowItemCount : Int,
         onScrollReachTheEnd: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
+        oneRowItemCount,
         onScrollReachTheEnd
     ) {
         // <멤버 변수 공간>

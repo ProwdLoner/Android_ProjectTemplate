@@ -280,6 +280,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                 this,
                 bindingMbr.recyclerView,
                 true,
+                1,
                 onScrollReachTheEnd = {
                     if (viewModelMbr.isRecyclerViewItemLoadingMbr) {
                         return@RecyclerViewAdapter

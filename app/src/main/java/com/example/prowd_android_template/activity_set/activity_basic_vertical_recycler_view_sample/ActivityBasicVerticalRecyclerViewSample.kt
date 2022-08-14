@@ -200,6 +200,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 this,
                 bindingMbr.recyclerView,
                 true,
+                1,
                 onScrollReachTheEnd = {
                     if (viewModelMbr.isRecyclerViewItemLoadingMbr) {
                         return@RecyclerViewAdapter

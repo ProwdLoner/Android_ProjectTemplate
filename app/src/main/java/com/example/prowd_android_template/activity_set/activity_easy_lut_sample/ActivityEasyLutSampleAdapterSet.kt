@@ -28,11 +28,13 @@ class ActivityEasyLutSampleAdapterSet(
         private val parentViewMbr: ActivityEasyLutSample,
         targetView: RecyclerView,
         isVertical: Boolean,
+        oneRowItemCount : Int,
         onScrollReachTheEnd: (() -> Unit)?
     ) : ProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,
+        oneRowItemCount,
         onScrollReachTheEnd
     ) {
         // <멤버 변수 공간>

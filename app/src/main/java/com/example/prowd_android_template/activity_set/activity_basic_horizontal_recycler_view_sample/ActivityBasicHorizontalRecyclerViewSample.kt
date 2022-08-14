@@ -199,6 +199,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                 this,
                 bindingMbr.recyclerView,
                 false,
+                1,
                 onScrollReachTheEnd = {
                     if (viewModelMbr.isRecyclerViewItemLoadingMbr) {
                         return@RecyclerViewAdapter

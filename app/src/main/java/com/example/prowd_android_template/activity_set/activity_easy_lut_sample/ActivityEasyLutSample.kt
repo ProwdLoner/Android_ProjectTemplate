@@ -229,6 +229,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
                 this,
                 bindingMbr.filterList,
                 false,
+                1,
                 null
             )
         )

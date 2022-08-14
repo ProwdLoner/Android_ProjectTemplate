@@ -1,6 +1,7 @@
 package com.example.prowd_android_template.abstract_class
 
 import android.content.Context
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.util.concurrent.Semaphore
@@ -12,6 +13,7 @@ abstract class ProwdRecyclerViewAdapter(
     context: Context,
     targetView: RecyclerView,
     isVertical: Boolean,
+    oneRowItemCount : Int,
     onScrollReachTheEnd: (() -> Unit)?
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // <멤버 변수 공간>
@@ -194,12 +196,22 @@ abstract class ProwdRecyclerViewAdapter(
     init {
         targetView.adapter = this
 
-        val scrollAdapterLayoutManager = LinearLayoutManager(context)
-        if (isVertical) {
-            scrollAdapterLayoutManager.orientation = LinearLayoutManager.VERTICAL
-        } else {
-            scrollAdapterLayoutManager.orientation = LinearLayoutManager.HORIZONTAL
+        val scrollAdapterLayoutManager = if (oneRowItemCount > 1){
+            if (isVertical) {
+                GridLayoutManager(context, oneRowItemCount)
+            }else{
+                GridLayoutManager(context, oneRowItemCount, GridLayoutManager.HORIZONTAL, false)
+            }
+        }else{
+            LinearLayoutManager(context).apply {
+                if (isVertical) {
+                    this.orientation = LinearLayoutManager.VERTICAL
+                } else {
+                    this.orientation = LinearLayoutManager.HORIZONTAL
+                }
+            }
         }
+
         targetView.layoutManager = scrollAdapterLayoutManager
 
         // 리사이클러 뷰 스크롤 설정
