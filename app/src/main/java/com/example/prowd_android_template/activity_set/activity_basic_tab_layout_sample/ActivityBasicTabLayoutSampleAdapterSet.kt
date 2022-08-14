@@ -19,10 +19,12 @@ data class ActivityBasicTabLayoutSampleAdapterSet(
 
         // ---------------------------------------------------------------------------------------------
         // <메소드 오버라이딩 공간>
+        // 전체 프레그먼트 아이템 개수
         override fun getItemCount(): Int {
             return adapterMainDataMbr.size
         }
 
+        // 각 프레그먼트 생성시의 콜백
         override fun createFragment(position: Int): Fragment {
             return adapterMainDataMbr[position]
         }

@@ -5,16 +5,28 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/clicked_by_label_txt"
+        android:id="@+id/fragment_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
+        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+        android:text="[fragment 2]"
+        android:textColor="#FF000000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/clicked_by_label_txt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:fontFamily="@font/apple_sd_gothic_neo_sb"
         android:text="clicked : "
         android:textColor="#FF000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/fragment_title" />
 
     <TextView
         android:id="@+id/clicked_by_value_txt"
