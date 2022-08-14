@@ -154,150 +154,150 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                     binding.title.text = copyEntity.title
 
-                    // 아이템 제거 버튼
-                    binding.deleteBtn.setOnClickListener {
-                        if (parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr ||
-                            // 뷰가 제거되는 애니메이션이 진행되는 동안 버튼이 활성화 되는 것을 막기 위해 실제 리스트에 존재하는지를 파악
-                            currentItemListCloneMbr.indexOfFirst { it.itemUid == copyEntity.itemUid } == -1
-                        ) {
-                            return@setOnClickListener
-                        }
-                        parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
-
-                        parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
-                            parentViewMbr.runOnUiThread runOnUiThread1@{
-
-                                // 처리 다이얼로그 표시
-                                parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                    DialogProgressLoading.DialogInfoVO(
-                                        false,
-                                        "데이터를 제거합니다.",
-                                        onCanceled = {}
-                                    )
-
-                                parentViewMbr.viewModelMbr.deleteRecyclerViewItemData(
-                                    copyEntity.serverItemUid,
-                                    executorOnComplete = {
-                                        parentViewMbr.runOnUiThread runOnUiThread2@{
-                                            val itemListCopy = currentItemListCloneMbr
-
-                                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
-                                            val thisItemListIdx =
-                                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
-
-                                            if (-1 == thisItemListIdx) {
-                                                parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                                    null
-                                                return@runOnUiThread2
-                                            }
-
-                                            itemListCopy.removeAt(thisItemListIdx)
-
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                                itemListCopy
-                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                                null
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
-
-                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
-                                                false
-                                        }
-                                    },
-                                    executorOnError = {
-                                        parentViewMbr.runOnUiThread {
-                                            // 처리 다이얼로그 제거
-                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                                null
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
-
-                                            if (it is SocketTimeoutException) { // 타임아웃 에러
-                                                // todo
-                                            } else { // 그외 에러
-                                                // todo
-                                            }
-
-                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
-                                                false
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    // 아이템 변경
-                    binding.root.setOnClickListener {
-                        if (parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr) {
-                            return@setOnClickListener
-                        }
-                        parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr = true
-
-                        parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
-                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
-                            parentViewMbr.runOnUiThread {
-
-                                // 처리 다이얼로그 표시
-                                parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                    DialogProgressLoading.DialogInfoVO(
-                                        false,
-                                        "데이터를 변경합니다.",
-                                        onCanceled = {}
-                                    )
-
-                                val data = "(Item Clicked!)"
-
-                                parentViewMbr.viewModelMbr.putRecyclerViewItemData(
-                                    ActivityBasicVerticalRecyclerViewSampleViewModel.PutRecyclerViewItemDataInputVo(
-                                        copyEntity.serverItemUid,
-                                        data
-                                    ),
-                                    executorOnComplete = {
-                                        parentViewMbr.runOnUiThread runOnUiThread2@{
-                                            val itemListCopy = currentItemListCloneMbr
-
-                                            copyEntity.title = data
-
-                                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
-                                            val thisItemListIdx =
-                                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
-
-                                            if (-1 == thisItemListIdx) {
-                                                return@runOnUiThread2
-                                            }
-
-                                            itemListCopy[thisItemListIdx] = copyEntity
-
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                                itemListCopy
-
-                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                                null
-                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
-                                                false
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
-                                        }
-                                    },
-                                    executorOnError = {
-                                        parentViewMbr.runOnUiThread {
-                                            // 처리 다이얼로그 제거
-                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
-                                                null
-                                            parentViewMbr.viewModelMbr.isRecyclerViewItemLoadingMbr =
-                                                false
-                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
-
-                                            if (it is SocketTimeoutException) { // 타임아웃 에러
-                                                // todo
-                                            } else { // 그외 에러
-                                                // todo
-                                            }
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
+//                    // 아이템 제거 버튼
+//                    binding.deleteBtn.setOnClickListener {
+//                        if (parentViewMbr.viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr ||
+//                            // 뷰가 제거되는 애니메이션이 진행되는 동안 버튼이 활성화 되는 것을 막기 위해 실제 리스트에 존재하는지를 파악
+//                            currentItemListCloneMbr.indexOfFirst { it.itemUid == copyEntity.itemUid } == -1
+//                        ) {
+//                            return@setOnClickListener
+//                        }
+//                        parentViewMbr.viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
+//
+//                        parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
+//                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
+//                            parentViewMbr.runOnUiThread runOnUiThread1@{
+//
+//                                // 처리 다이얼로그 표시
+//                                parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+//                                    DialogProgressLoading.DialogInfoVO(
+//                                        false,
+//                                        "데이터를 제거합니다.",
+//                                        onCanceled = {}
+//                                    )
+//
+//                                parentViewMbr.viewModelMbr.deleteRecyclerViewItemData(
+//                                    copyEntity.serverItemUid,
+//                                    executorOnComplete = {
+//                                        parentViewMbr.runOnUiThread runOnUiThread2@{
+//                                            val itemListCopy = currentItemListCloneMbr
+//
+//                                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
+//                                            val thisItemListIdx =
+//                                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
+//
+//                                            if (-1 == thisItemListIdx) {
+//                                                parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+//                                                    null
+//                                                return@runOnUiThread2
+//                                            }
+//
+//                                            itemListCopy.removeAt(thisItemListIdx)
+//
+//                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
+//                                                itemListCopy
+//                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+//                                                null
+//                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+//
+//                                            parentViewMbr.viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr =
+//                                                false
+//                                        }
+//                                    },
+//                                    executorOnError = {
+//                                        parentViewMbr.runOnUiThread {
+//                                            // 처리 다이얼로그 제거
+//                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+//                                                null
+//                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+//
+//                                            if (it is SocketTimeoutException) { // 타임아웃 에러
+//                                                // todo
+//                                            } else { // 그외 에러
+//                                                // todo
+//                                            }
+//
+//                                            parentViewMbr.viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr =
+//                                                false
+//                                        }
+//                                    }
+//                                )
+//                            }
+//                        }
+//                    }
+//
+//                    // 아이템 변경
+//                    binding.root.setOnClickListener {
+//                        if (parentViewMbr.viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
+//                            return@setOnClickListener
+//                        }
+//                        parentViewMbr.viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
+//
+//                        parentViewMbr.viewModelMbr.executorServiceMbr?.execute {
+//                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
+//                            parentViewMbr.runOnUiThread {
+//
+//                                // 처리 다이얼로그 표시
+//                                parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+//                                    DialogProgressLoading.DialogInfoVO(
+//                                        false,
+//                                        "데이터를 변경합니다.",
+//                                        onCanceled = {}
+//                                    )
+//
+//                                val data = "(Item Clicked!)"
+//
+//                                parentViewMbr.viewModelMbr.putRecyclerViewItemData(
+//                                    ActivityBasicVerticalRecyclerViewSampleViewModel.PutRecyclerViewItemDataInputVo(
+//                                        copyEntity.serverItemUid,
+//                                        data
+//                                    ),
+//                                    executorOnComplete = {
+//                                        parentViewMbr.runOnUiThread runOnUiThread2@{
+//                                            val itemListCopy = currentItemListCloneMbr
+//
+//                                            copyEntity.title = data
+//
+//                                            // position 이 달라졌을 수가 있기에 itemUid 를 사용해 조작 위치를 검색
+//                                            val thisItemListIdx =
+//                                                itemListCopy.indexOfFirst { it.itemUid == copyEntity.itemUid }
+//
+//                                            if (-1 == thisItemListIdx) {
+//                                                return@runOnUiThread2
+//                                            }
+//
+//                                            itemListCopy[thisItemListIdx] = copyEntity
+//
+//                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
+//                                                itemListCopy
+//
+//                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+//                                                null
+//                                            parentViewMbr.viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr =
+//                                                false
+//                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+//                                        }
+//                                    },
+//                                    executorOnError = {
+//                                        parentViewMbr.runOnUiThread {
+//                                            // 처리 다이얼로그 제거
+//                                            parentViewMbr.viewModelMbr.progressLoadingDialogInfoLiveDataMbr.value =
+//                                                null
+//                                            parentViewMbr.viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr =
+//                                                false
+//                                            parentViewMbr.viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+//
+//                                            if (it is SocketTimeoutException) { // 타임아웃 에러
+//                                                // todo
+//                                            } else { // 그외 에러
+//                                                // todo
+//                                            }
+//                                        }
+//                                    }
+//                                )
+//                            }
+//                        }
+//                    }
 
                 }
 

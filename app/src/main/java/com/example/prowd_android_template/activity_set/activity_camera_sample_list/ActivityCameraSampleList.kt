@@ -274,25 +274,26 @@ class ActivityCameraSampleList : AppCompatActivity() {
     private fun allPermissionsGranted() {
         if (!viewModelMbr.isActivityRecreatedMbr) { // 화면 회전이 아닐때
             if (!viewModelMbr.doItAlreadyMbr) {
+                // (액티비티 실행시 처음 한번만 실행되는 로직)
                 viewModelMbr.doItAlreadyMbr = true
 
-                // ---------------------------------------------------------------------------------
-                // (실질적인 onCreate 로직) : 권한 클리어 + 처음 실행
+                // (초기 데이터 수집)
 
+                // (알고리즘)
+            }else{
+                // (회전이 아닌 onResume 로직) : 권한 클리어
+                // (뷰 데이터 로딩)
+                // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
+                val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+                if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+                    // 진입 플래그 변경
+                    viewModelMbr.currentUserSessionTokenMbr = sessionToken
+
+                    // (데이터 수집)
+
+                    // (알고리즘)
+                }
             }
-
-            // -------------------------------------------------------------------------------------
-            // (실질적인 onResume 로직) : 권한 클리어
-            // (뷰 데이터 로딩)
-            // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
-                // 진입 플래그 변경
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
-
-                // 데이터 수집
-            }
-
         } else { // 화면 회전일 때
 
         }
