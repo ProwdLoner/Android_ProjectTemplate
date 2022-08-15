@@ -203,15 +203,13 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
         }
 
-        // todo
-
-//        // 화면 리플레시
-//        bindingMbr.screenRefreshLayout.setOnRefreshListener {
-//            viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
-//            getRecyclerViewAdapterItemList(true, onComplete = {
-//                viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
-//            })
-//        }
+        // 화면 리플레시
+        bindingMbr.screenRefreshLayout.setOnRefreshListener {
+            viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = true
+            getRecyclerViewAdapterItemList(true, onComplete = {
+                viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
+            })
+        }
     }
 
     // (라이브 데이터 설정)
@@ -513,12 +511,21 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                         viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
                         viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
                         viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
                     }
                     -1 -> { // 네트워크 에러
                         // todo
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
                     }
                     else -> { // 그외 서버 에러
                         // todo
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
                     }
                 }
             }
@@ -534,31 +541,128 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         }
     }
 
-//    // 아이템 데이터 제거 요청
-//    fun deleteRecyclerViewItemData(
-//        serverItemUid: Long,
-//        executorOnComplete: () -> Unit,
-//        executorOnError: (Throwable) -> Unit
-//    ) {
-//        executorServiceMbr?.execute {
-//            Thread.sleep(150)
-//
-//            executorOnComplete()
-//        }
-//    }
-//
-//    // 아이템 데이터 변경 요청
-//    fun putRecyclerViewItemData(
-//        putRecyclerViewItemDataInputVo: PutRecyclerViewItemDataInputVo,
-//        executorOnComplete: () -> Unit,
-//        executorOnError: (Throwable) -> Unit
-//    ) {
-//        executorServiceMbr?.execute {
-//            Thread.sleep(150)
-//
-//            executorOnComplete()
-//        }
-//    }
+    // 아이템 데이터 변경 요청
+    fun putRecyclerViewItemData(
+        serverUid: Long,
+        text: String,
+        onComplete: () -> Unit
+    ) {
+        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+        if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
+            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+            onComplete()
+            return
+        }
+        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
+        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+
+        val networkOnComplete: (Int) -> Unit = { statusCode ->
+            runOnUiThread {
+                when (statusCode) {
+                    1 -> {// 완료
+                        val cloneItemList =
+                            adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+                        val idx =
+                            cloneItemList.indexOfFirst {
+                                (it as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
+                                    .serverItemUid == serverUid
+                            }
+
+                        (cloneItemList[idx] as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).title =
+                            text
+
+                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
+                            cloneItemList
+
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
+                    }
+                    -1 -> { // 네트워크 에러
+                        // todo
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
+                    }
+                    else -> { // 그외 서버 에러
+                        // todo
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
+                    }
+                }
+            }
+        }
+
+        // 네트워크 비동기 요청을 가정
+        viewModelMbr.executorServiceMbr.execute {
+            networkOnComplete(1)
+        }
+    }
+    // todo
+
+    // 아이템 데이터 제거 요청
+    fun deleteRecyclerViewItemData(
+        serverUid: Long,
+        onComplete: () -> Unit
+    ) {
+        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+        if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
+            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+            onComplete()
+            return
+        }
+        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
+        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+
+        val networkOnComplete: (Int) -> Unit = { statusCode ->
+            runOnUiThread {
+                when (statusCode) {
+                    1 -> {// 완료
+                        val cloneItemList =
+                            adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+                        val idx =
+                            cloneItemList.indexOfFirst {
+                                (it as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
+                                    .serverItemUid == serverUid
+                            }
+
+                        cloneItemList.removeAt(idx)
+
+                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
+                            cloneItemList
+
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
+                    }
+                    -1 -> { // 네트워크 에러
+                        // todo
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
+                    }
+                    else -> { // 그외 서버 에러
+                        // todo
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
+                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                        onComplete()
+                    }
+                }
+            }
+        }
+
+        // 네트워크 비동기 요청을 가정
+        viewModelMbr.executorServiceMbr.execute {
+            networkOnComplete(1)
+        }
+    }
 
 
     // ---------------------------------------------------------------------------------------------
