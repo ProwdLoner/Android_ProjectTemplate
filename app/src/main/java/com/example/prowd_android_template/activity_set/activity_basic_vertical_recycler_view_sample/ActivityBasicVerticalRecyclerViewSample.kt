@@ -25,7 +25,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 // todo : 에러 화면 처리, 아이템 없을 때의 처리
-//     다른 처리중 버튼 비활성화 및 명령 큐로 순차진행
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -602,7 +601,6 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             networkOnComplete(1)
         }
     }
-    // todo
 
     // 아이템 데이터 제거 요청
     fun deleteRecyclerViewItemData(
