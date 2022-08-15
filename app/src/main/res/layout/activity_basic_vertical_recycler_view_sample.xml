@@ -86,7 +86,6 @@
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:paddingStart="20dp"
                 android:paddingTop="15dp"
                 android:paddingEnd="20dp"
                 app:layout_constraintEnd_toEndOf="parent"
