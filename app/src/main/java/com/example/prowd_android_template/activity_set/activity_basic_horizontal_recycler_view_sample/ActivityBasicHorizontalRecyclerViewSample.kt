@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -201,13 +202,13 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
             viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
         }
 
-        // todo 화면 리플레시
-//        bindingMbr.screenRefreshLayout.setOnRefreshListener {
-//            viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = true
-//            getRecyclerViewAdapterItemList(true, onComplete = {
-//                viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
-//            })
-//        }
+        // 화면 리플레시
+        bindingMbr.screenRefreshLayout.setOnRefreshListener {
+            viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = true
+            getRecyclerViewAdapterItemList(true, onComplete = {
+                viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
+            })
+        }
     }
 
     // (라이브 데이터 설정)
@@ -303,10 +304,9 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
             adapterSetMbr.recyclerViewAdapter.setItemList(it)
         }
 
-        // todo
-//        viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.observe(this) {
-//            bindingMbr.screenRefreshLayout.isRefreshing = it
-//        }
+        viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.observe(this) {
+            bindingMbr.screenRefreshLayout.isRefreshing = it
+        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -338,13 +338,14 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                 // (알고리즘)
             }
         } else { // 화면 회전일 때
-
+            Log.e("d", adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.toString())
         }
 
         // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
         viewModelMbr.isActivityRecreatedMbr = false
     }
 
+    // (데이터 요청 함수)
     private fun getRecyclerViewAdapterItemList(requestRefresh: Boolean, onComplete: () -> Unit) {
         viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
         if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
@@ -355,27 +356,27 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
         viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
         viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
 
+        // (로딩 처리)
+        val cloneItemList =
+            adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
         // 리스트 초기화 여부
         if (requestRefresh) {
             // 리스트 초기화
-            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = arrayListOf()
+            cloneItemList.clear()
+            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = cloneItemList
         }
 
-        val cloneItemList1 =
-            adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-
-        // (로딩 처리)
         // 아이템 리스트 마지막에 로더 추가
-        cloneItemList1.add(
+        cloneItemList.add(
             ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
                 adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
             )
         )
-        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = cloneItemList1
+        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = cloneItemList
 
         // 로더 추가시 스크롤을 내리기
         bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr)
-
 
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
@@ -386,11 +387,9 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                     when (statusCode) {
                         1 -> {// 완료
                             // 로더 제거
-                            val cloneItemList2 =
-                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-                            cloneItemList2.removeLast()
+                            cloneItemList.removeLast()
                             viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                cloneItemList2
+                                cloneItemList
 
                             if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있다면 그냥 멈추기
                                 viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
@@ -398,12 +397,10 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                                 viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
                                 onComplete()
                             } else {
-                                val cloneItemList3 =
-                                    adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
                                 // 받아온 아이템 추가
-                                cloneItemList3.addAll(itemList)
+                                cloneItemList.addAll(itemList)
                                 viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                    cloneItemList3
+                                    cloneItemList
 
                                 viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
                                 viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
@@ -414,11 +411,9 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                         -1 -> { // 네트워크 에러
                             // todo
                             // 로더 제거
-                            val cloneItemList2 =
-                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-                            cloneItemList2.removeLast()
+                            cloneItemList.removeLast()
                             viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                cloneItemList2
+                                cloneItemList
 
                             viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
                             viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
@@ -428,11 +423,9 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                         else -> { // 그외 서버 에러
                             // todo
                             // 로더 제거
-                            val cloneItemList2 =
-                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-                            cloneItemList2.removeLast()
+                            cloneItemList.removeLast()
                             viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                cloneItemList2
+                                cloneItemList
 
                             viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
                             viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
@@ -477,6 +470,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
         }
     }
 
+    // todo : 로딩 처리
     private fun postRecyclerViewAdapterItemList(text: String, onComplete: () -> Unit) {
         viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
         if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
@@ -540,6 +534,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
         }
     }
 
+    // todo : 로딩 처리
     // 아이템 데이터 변경 요청
     fun putRecyclerViewItemData(
         serverUid: Long,
@@ -602,6 +597,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
         }
     }
 
+    // todo : 로딩 처리
     // 아이템 데이터 제거 요청
     fun deleteRecyclerViewItemData(
         serverUid: Long,
