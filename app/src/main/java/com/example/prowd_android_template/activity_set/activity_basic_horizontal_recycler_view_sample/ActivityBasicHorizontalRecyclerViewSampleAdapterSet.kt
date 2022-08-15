@@ -6,9 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
-import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.*
-import java.net.SocketTimeoutException
 
 class ActivityBasicHorizontalRecyclerViewSampleAdapterSet(
     val recyclerViewAdapter: RecyclerViewAdapter

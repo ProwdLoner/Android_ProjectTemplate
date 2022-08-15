@@ -338,7 +338,6 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
                 // (알고리즘)
             }
         } else { // 화면 회전일 때
-            Log.e("d", adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.toString())
         }
 
         // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
@@ -374,6 +373,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
             )
         )
         viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = cloneItemList
+        Log.e("d", adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.toString())
 
         // 로더 추가시 스크롤을 내리기
         bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr)

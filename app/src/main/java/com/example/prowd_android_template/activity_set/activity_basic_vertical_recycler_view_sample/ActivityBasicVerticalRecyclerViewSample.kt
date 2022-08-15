@@ -5,7 +5,6 @@ import android.app.Dialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -340,7 +339,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 // (알고리즘)
             }
         } else { // 화면 회전일 때
-            Log.e("d", adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.toString())
+
         }
 
         // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
