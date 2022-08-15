@@ -25,6 +25,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 // todo : 에러 화면 처리, 아이템 없을 때의 처리
+// 세로 리사이클러 뷰 예시
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -163,8 +164,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter(
                 this,
                 bindingMbr.recyclerView,
-                true,
-                1,
+                true, // 세로 스크롤인지 가로 스크롤인지
+                1, // 이 개수를 늘리면 그리드 레이아웃으로 변화
                 onScrollReachTheEnd = {
                     getRecyclerViewAdapterItemList(
                         false,
