@@ -139,7 +139,7 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
     class FragmentViewModel(
         application: Application,
         val repositorySetMbr: RepositorySet,
-        val executorServiceMbr: ExecutorService?
+        val executorServiceMbr: ExecutorService
     ) {
         // <멤버 상수 공간>
         // (SharedPreference 객체)
