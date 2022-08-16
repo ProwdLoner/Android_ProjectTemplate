@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import androidx.constraintlayout.widget.ConstraintSet
+import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.databinding.DialogRadioButtonChooseBinding
 
 class DialogRadioButtonChoose constructor(
@@ -97,7 +98,7 @@ class DialogRadioButtonChoose constructor(
                 it.id == checkedId
             }
             checkedItemIndexMbr = checkedIdx
-            if (!isFirstCheckMbr){
+            if (!isFirstCheckMbr) {
                 dialogInfoMbr.onRadioItemClicked(checkedIdx)
             }
         }
@@ -167,5 +168,5 @@ class DialogRadioButtonChoose constructor(
         var onSelectBtnClicked: (Int) -> Unit,
         var onCancelBtnClicked: Runnable,
         var onCanceled: Runnable
-    )
+    ) : InterfaceDialogInfoVO
 }

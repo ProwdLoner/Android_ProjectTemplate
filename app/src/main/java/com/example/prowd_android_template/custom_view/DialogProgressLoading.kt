@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.View
 import com.bumptech.glide.Glide
 import com.example.prowd_android_template.R
+import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.databinding.DialogProgressLoadingBinding
 
 class DialogProgressLoading constructor(
@@ -67,5 +68,5 @@ class DialogProgressLoading constructor(
         var isCancelable: Boolean,
         var progressMsg: String?,
         var onCanceled: Runnable
-    )
+    ) : InterfaceDialogInfoVO
 }

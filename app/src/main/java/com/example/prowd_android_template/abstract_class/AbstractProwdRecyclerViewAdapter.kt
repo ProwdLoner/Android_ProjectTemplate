@@ -9,7 +9,7 @@ import java.util.concurrent.Semaphore
 // 주의 : 데이터 변경을 하고 싶을때는 Shallow Copy 로 인해 변경사항이 반영되지 않을 수 있으므로 이에 주의할 것
 // itemUid 는 화면 반영 방식에 영향을 주기에 유의해서 다룰것. (애니메이션, 스크롤, 반영여부 등)
 // 내부 동기화 처리는 되어있음. 데이터 리스트 조회, 조작 기능의 뮤텍스. 다만 조회와 조작을 동시에 실행하는 비동기 기능의 경우 외부적 뮤텍스를 적용할것
-abstract class ProwdRecyclerViewAdapter(
+abstract class AbstractProwdRecyclerViewAdapter(
     context: Context,
     targetView: RecyclerView,
     isVertical: Boolean,

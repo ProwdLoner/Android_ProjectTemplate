@@ -4,7 +4,7 @@ import android.app.Application
 import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -76,7 +76,7 @@ class ActivityEasyLutSampleViewModel(application: Application) :
 
     // (RecyclerViewAdapter 데이터)
     // recyclerView 내에서 사용되는 뷰모델 데이터
-    val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
+    val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
         MutableLiveData(ArrayList())
 
 

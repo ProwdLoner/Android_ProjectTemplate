@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.activity_set.activity_pinch_image_viewer.ActivityPinchImageViewer
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -159,7 +159,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
 
                     // 아이템 반영
                     viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                        adapterDataList as ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
+                        adapterDataList as ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>
 
                     // 이전에 선택되었던 필터명을 가져오기
                     val selectedFilterName = viewModelMbr.thisSpw.selectedFilterName

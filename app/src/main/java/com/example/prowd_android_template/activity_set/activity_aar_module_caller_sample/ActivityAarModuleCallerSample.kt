@@ -1,18 +1,19 @@
 package com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample
 
-import android.app.Application
 import android.app.Dialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
-import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModelProvider
+import androidx.core.app.ActivityCompat
+import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -32,15 +33,85 @@ import java.util.concurrent.Executors
 // build.gradle(:app) 안에 implementation fileTree(dir: 'libs', include: ['*.aar']) 를 추가하여 실행
 // aar 파일이 추가되었는데 코드상 해당 모듈 기능이 검색되지 않으면, build.gradle 을 새로 빌드하면 됩니다.
 class ActivityAarModuleCallerSample : AppCompatActivity() {
-    // <멤버 변수 공간>
+    // <멤버 상수 공간>
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityAarModuleCallerSampleBinding
 
-    // (뷰 모델 객체)
-    lateinit var viewModelMbr: ViewModel
+    // (repository 모델)
+    lateinit var repositorySetMbr: RepositorySet
 
+    // (SharedPreference 객체)
+    // 현 로그인 정보 접근 객체
+    lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
+
+    // (스레드 풀)
+    val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
+    // (앱 진입 필수 권한 배열)
+    // : 앱 진입에 필요한 권한 배열.
+    //     ex : Manifest.permission.INTERNET
+    val activityPermissionArrayMbr: Array<String> = arrayOf()
+
+    // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
+    var doItAlreadyMbr = false
+
+    // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
+    var currentUserSessionTokenMbr: String? = null
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <멤버 변수 공간>
     // (다이얼로그 객체)
     var dialogMbr: Dialog? = null
+    var shownDialogClassNameMbr: InterfaceDialogInfoVO? = null
+        set(value) {
+            when (value) {
+                is DialogBinaryChoose.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogBinaryChoose(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogConfirm.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogConfirm(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogProgressLoading.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogProgressLoading(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogRadioButtonChoose.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogRadioButtonChoose(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                else -> {
+                    dialogMbr?.dismiss()
+                    dialogMbr = null
+
+                    field = null
+                    return
+                }
+            }
+            field = value
+        }
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
@@ -58,8 +129,6 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
     //     액티비티 일시정지 후 재실행 = onPause() → ... -> onResume()
     //     액티비티 정지 후 재실행 = onPause() → onStop() -> ... -> onStart() → onResume()
     //     액티비티 종료 = onPause() → onStop() → onDestroy()
-    //     앨티비티 화면 회전 = onPause() → onSaveInstanceState() → onStop() → onDestroy() →
-    //         onCreate(savedInstanceState) → onStart() → onResume()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -68,9 +137,6 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
 
         // (초기 뷰 설정)
         onCreateInitView()
-
-        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
-        onCreateSetLiveData()
     }
 
     override fun onResume() {
@@ -80,26 +146,11 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
         // 진입 필수 권한이 클리어 되어야 로직이 실행
         permissionRequestCallbackMbr = { permissions ->
             var isPermissionAllGranted = true
-            for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
+            var neverAskAgain = false
+            for (activityPermission in activityPermissionArrayMbr) {
                 if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                        true,
-                        "권한 필요",
-                        "서비스를 실행하기 위해 필요한 권한이 거부되었습니다.",
-                        "뒤로가기",
-                        onCheckBtnClicked = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                            finish()
-                        },
-                        onCanceled = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                            finish()
-                        }
-                    )
-
                     // 권한 클리어 플래그를 변경하고 break
+                    neverAskAgain = !shouldShowRequestPermissionRationale(activityPermission)
                     isPermissionAllGranted = false
                     break
                 }
@@ -107,10 +158,129 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
 
             if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
                 allPermissionsGranted()
+            } else if (!neverAskAgain) { // 단순 거부
+                shownDialogClassNameMbr = DialogConfirm.DialogInfoVO(
+                    true,
+                    "권한 필요",
+                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                    "뒤로가기",
+                    onCheckBtnClicked = {
+                        shownDialogClassNameMbr = null
+
+                        finish()
+                    },
+                    onCanceled = {
+                        shownDialogClassNameMbr = null
+
+                        finish()
+                    }
+                )
+
+            } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                shownDialogClassNameMbr =
+                    DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "권한 요청",
+                        "해당 서비스를 이용하기 위해선\n" +
+                                "필수 권한 승인이 필요합니다.\n" +
+                                "권한 설정 화면으로 이동하시겠습니까?",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            shownDialogClassNameMbr = null
+
+                            // 권한 설정 화면으로 이동
+                            val intent =
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            intent.data = Uri.fromParts("package", packageName, null)
+
+                            resultLauncherCallbackMbr = {
+                                // 설정 페이지 복귀시 콜백
+                                var isPermissionAllGranted1 = true
+                                for (activityPermission in activityPermissionArrayMbr) {
+                                    if (ActivityCompat.checkSelfPermission(
+                                            this,
+                                            activityPermission
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) { // 거부된 필수 권한이 존재
+                                        // 권한 클리어 플래그를 변경하고 break
+                                        isPermissionAllGranted1 = false
+                                        break
+                                    }
+                                }
+
+                                if (isPermissionAllGranted1) { // 권한 승인
+                                    allPermissionsGranted()
+                                } else { // 권한 거부
+                                    shownDialogClassNameMbr =
+                                        DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "권한 요청",
+                                            "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                            "뒤로가기",
+                                            onCheckBtnClicked = {
+                                                shownDialogClassNameMbr =
+                                                    null
+                                                finish()
+                                            },
+                                            onCanceled = {
+                                                shownDialogClassNameMbr =
+                                                    null
+                                                finish()
+                                            }
+                                        )
+                                }
+                            }
+                            resultLauncherMbr.launch(intent)
+                        },
+                        onNegBtnClicked = {
+                            shownDialogClassNameMbr = null
+
+                            shownDialogClassNameMbr =
+                                DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "권한 요청",
+                                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                    "뒤로가기",
+                                    onCheckBtnClicked = {
+                                        shownDialogClassNameMbr =
+                                            null
+                                        finish()
+                                    },
+                                    onCanceled = {
+                                        shownDialogClassNameMbr =
+                                            null
+                                        finish()
+                                    }
+                                )
+                        },
+                        onCanceled = {
+                            shownDialogClassNameMbr = null
+
+                            shownDialogClassNameMbr =
+                                DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "권한 요청",
+                                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                    "뒤로가기",
+                                    onCheckBtnClicked = {
+                                        shownDialogClassNameMbr =
+                                            null
+                                        finish()
+                                    },
+                                    onCanceled = {
+                                        shownDialogClassNameMbr =
+                                            null
+                                        finish()
+                                    }
+                                )
+                        }
+                    )
+
             }
         }
 
-        permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
+        permissionRequestMbr.launch(activityPermissionArrayMbr)
     }
 
     override fun onDestroy() {
@@ -118,6 +288,17 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
         dialogMbr?.dismiss()
 
         super.onDestroy()
+    }
+
+    // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) { // 화면회전 landscape
+
+        } else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { // 화면회전 portrait
+
+        }
     }
 
 
@@ -134,8 +315,10 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
-        // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ViewModel::class.java]
+        // 레포지토리 객체
+        repositorySetMbr = RepositorySet.getInstance(application)
+
+        currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
         permissionRequestMbr =
@@ -161,100 +344,11 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
 
     }
 
-    // (라이브 데이터 설정)
-    private fun onCreateSetLiveData() {
-        // 로딩 다이얼로그 출력 플래그
-        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogProgressLoading) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogProgressLoading(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // progressSample2 진행도
-        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
-            if (it != -1) {
-                val loadingText = "로딩중 $it%"
-                if (dialogMbr != null) {
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressMessageTxt.text =
-                        loadingText
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.visibility =
-                        View.VISIBLE
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.progress = it
-                }
-            }
-        }
-
-        // 선택 다이얼로그 출력 플래그
-        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogBinaryChoose) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogBinaryChoose(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // 확인 다이얼로그 출력 플래그
-        viewModelMbr.confirmDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogConfirm) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogConfirm(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // 라디오 버튼 선택 다이얼로그 출력 플래그
-        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogRadioButtonChoose) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogRadioButtonChoose(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-    }
-
     // (액티비티 진입 권한이 클리어 된 시점)
     private fun allPermissionsGranted() {
-        if (!viewModelMbr.doItAlreadyMbr) {
+        if (!doItAlreadyMbr) {
             // (액티비티 실행시 처음 한번만 실행되는 로직)
-            viewModelMbr.doItAlreadyMbr = true
+            doItAlreadyMbr = true
 
             // (초기 데이터 수집)
 
@@ -272,78 +366,24 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
 
             finish()
         } else {
-            // (회전이 아닌 onResume 로직) : 권한 클리어
+            // (onResume 로직) : 권한 클리어
             // (뷰 데이터 로딩)
             // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
+            if (sessionToken != currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+                currentUserSessionTokenMbr = sessionToken
 
                 // (데이터 수집)
 
                 // (알고리즘)
             }
+
+            // (알고리즘)
         }
     }
 
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    // (뷰모델 객체)
-    // : 액티비티 reCreate 이후에도 남아있는 데이터 묶음 = 뷰의 데이터 모델
-    //     뷰모델이 맡은 것은 화면 회전시에도 불변할 데이터의 저장
-    class ViewModel(application: Application) : AndroidViewModel(application) {
-        // <멤버 상수 공간>
-        // (repository 모델)
-        val repositorySetMbr: RepositorySet = RepositorySet.getInstance(application)
-
-        // (스레드 풀)
-        val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
-
-        // (SharedPreference 객체)
-        // 현 로그인 정보 접근 객체
-        val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
-            CurrentLoginSessionInfoSpw(application)
-
-        // (앱 진입 필수 권한 배열)
-        // : 앱 진입에 필요한 권한 배열.
-        //     ex : Manifest.permission.INTERNET
-        val activityPermissionArrayMbr: Array<String> = arrayOf()
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <멤버 변수 공간>
-        // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
-        var doItAlreadyMbr = false
-
-        // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
-        var currentUserSessionTokenMbr: String? = null
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <뷰모델 라이브데이터 공간>
-        // 로딩 다이얼로그 출력 정보
-        val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        val progressDialogSample2ProgressValue: MutableLiveData<Int> =
-            MutableLiveData(-1)
-
-        // 선택 다이얼로그 출력 정보
-        val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        // 확인 다이얼로그 출력 정보
-        val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        // 라디오 버튼 선택 다이얼로그 출력 정보
-        val radioButtonChooseDialogInfoLiveDataMbr: MutableLiveData<DialogRadioButtonChoose.DialogInfoVO?> =
-            MutableLiveData(null)
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <중첩 클래스 공간>
-    }
 }

@@ -8,11 +8,12 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.TouchDelegate
 import android.view.View
+import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.databinding.DialogConfirmBinding
 
 class DialogConfirm constructor(
     context: Context,
-    var dialogInfoMbr : DialogInfoVO
+    var dialogInfoMbr: DialogInfoVO
 ) : Dialog(context) {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
@@ -85,5 +86,5 @@ class DialogConfirm constructor(
         var checkBtnTxt: String?,
         var onCheckBtnClicked: Runnable,
         var onCanceled: Runnable
-    )
+    ) : InterfaceDialogInfoVO
 }

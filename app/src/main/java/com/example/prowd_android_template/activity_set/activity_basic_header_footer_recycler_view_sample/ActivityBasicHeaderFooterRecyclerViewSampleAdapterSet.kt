@@ -5,7 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.databinding.*
 
 class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
@@ -18,7 +18,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
         isVertical: Boolean,
         oneRowItemCount: Int,
         onScrollReachTheEnd: (() -> Unit)?
-    ) : ProwdRecyclerViewAdapter(
+    ) : AbstractProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,

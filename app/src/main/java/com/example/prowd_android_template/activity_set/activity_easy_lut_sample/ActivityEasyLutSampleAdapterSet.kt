@@ -3,14 +3,13 @@ package com.example.prowd_android_template.activity_set.activity_easy_lut_sample
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
-import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.activity_set.activity_basic_vertical_recycler_view_sample.ActivityBasicVerticalRecyclerViewSampleAdapterSet
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.databinding.ItemActivityEasyLutSampleAdapterRecyclerViewItem1Binding
@@ -30,7 +29,7 @@ class ActivityEasyLutSampleAdapterSet(
         isVertical: Boolean,
         oneRowItemCount : Int,
         onScrollReachTheEnd: (() -> Unit)?
-    ) : ProwdRecyclerViewAdapter(
+    ) : AbstractProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
         isVertical,

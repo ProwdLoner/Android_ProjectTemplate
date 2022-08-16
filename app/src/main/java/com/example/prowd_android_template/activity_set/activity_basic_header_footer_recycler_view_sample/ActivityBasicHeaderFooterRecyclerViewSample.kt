@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
-import com.example.prowd_android_template.abstract_class.ProwdRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -381,7 +381,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
         // sessionToken : 로그인 완료시 반환되는 세션토큰
-        val networkOnComplete: (statusCode: Int, item: ProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
+        val networkOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
             { statusCode, item ->
                 runOnUiThread {
                     when (statusCode) {
@@ -466,7 +466,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
         // sessionToken : 로그인 완료시 반환되는 세션토큰
-        val networkOnComplete: (statusCode: Int, item: ProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
+        val networkOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
             { statusCode, item ->
                 runOnUiThread {
                     when (statusCode) {
@@ -559,7 +559,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
         // sessionToken : 로그인 완료시 반환되는 세션토큰
-        val networkOnComplete: (statusCode: Int, itemList: ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
+        val networkOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
             { statusCode, itemList ->
                 runOnUiThread {
                     when (statusCode) {
@@ -629,7 +629,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                     0
                 }
 
-            val resultObj = arrayListOf<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+            val resultObj = arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
 
             if (firstAddedItemUid < 30) {
                 for (idx in firstAddedItemUid..firstAddedItemUid + 10) {
@@ -902,19 +902,19 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             MutableLiveData(null)
 
         // recyclerView 내에서 사용되는 뷰모델 데이터
-        val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
+        val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
             MutableLiveData(ArrayList())
 
         val screenRefreshLayoutOnLoadingLiveDataMbr: MutableLiveData<Boolean> =
             MutableLiveData(false)
 
-        val recyclerViewAdapterHeaderLiveDataMbr: MutableLiveData<ProwdRecyclerViewAdapter.AdapterHeaderAbstractVO> =
+        val recyclerViewAdapterHeaderLiveDataMbr: MutableLiveData<AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO> =
             MutableLiveData(
                 ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
                     null
                 )
             )
-        val recyclerViewAdapterFooterLiveDataMbr: MutableLiveData<ProwdRecyclerViewAdapter.AdapterFooterAbstractVO> =
+        val recyclerViewAdapterFooterLiveDataMbr: MutableLiveData<AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO> =
             MutableLiveData(
                 ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
                     null
