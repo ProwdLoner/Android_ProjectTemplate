@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -85,11 +86,11 @@ class ActivityBasicServiceSample : AppCompatActivity() {
         viewModelMbr.isChangingConfigurationsMbr = false
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-
+    override fun onConfigurationChanged(newConfig: Configuration) {
         // 설정 변경(화면회전)을 했는지 여부를 반영
         viewModelMbr.isChangingConfigurationsMbr = true
+
+        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {

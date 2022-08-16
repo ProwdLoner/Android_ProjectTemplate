@@ -1,6 +1,7 @@
 package com.example.prowd_android_template.activity_set.activity_easy_lut_sample
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
@@ -190,11 +191,11 @@ class ActivityEasyLutSample : AppCompatActivity() {
         viewModelMbr.isChangingConfigurationsMbr = false
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-
+    override fun onConfigurationChanged(newConfig: Configuration) {
         // 설정 변경(화면회전)을 했는지 여부를 반영
         viewModelMbr.isChangingConfigurationsMbr = true
+
+        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {

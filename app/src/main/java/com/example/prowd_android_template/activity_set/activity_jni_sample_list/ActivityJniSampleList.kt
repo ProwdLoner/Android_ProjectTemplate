@@ -3,6 +3,7 @@ package com.example.prowd_android_template.activity_set.activity_jni_sample_list
 import android.app.Application
 import android.app.Dialog
 import android.content.Intent
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -106,11 +107,11 @@ class ActivityJniSampleList : AppCompatActivity() {
         permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
+    override fun onConfigurationChanged(newConfig: Configuration) {
         // 설정 변경(화면회전)을 했는지 여부를 반영
         viewModelMbr.isActivityRecreatedMbr = true
 
-        super.onSaveInstanceState(outState)
+        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {

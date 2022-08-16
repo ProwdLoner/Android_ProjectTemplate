@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.Dialog
 import android.app.NotificationManager
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -111,11 +112,11 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
         permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
+    override fun onConfigurationChanged(newConfig: Configuration) {
         // 설정 변경(화면회전)을 했는지 여부를 반영
         viewModelMbr.isActivityRecreatedMbr = true
 
-        super.onSaveInstanceState(outState)
+        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {

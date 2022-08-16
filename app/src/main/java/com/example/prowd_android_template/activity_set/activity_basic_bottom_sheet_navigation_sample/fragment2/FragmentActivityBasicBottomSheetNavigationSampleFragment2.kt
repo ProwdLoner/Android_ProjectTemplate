@@ -1,6 +1,7 @@
 package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment2
 
 import android.app.Application
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -85,11 +86,11 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment2 : Fragment() {
         viewModelMbr.isActivityRecreatedMbr = false
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
+    override fun onConfigurationChanged(newConfig: Configuration) {
         // 설정 변경(화면회전)을 했는지 여부를 반영
         viewModelMbr.isActivityRecreatedMbr = true
 
-        super.onSaveInstanceState(outState)
+        super.onConfigurationChanged(newConfig)
     }
 
 
