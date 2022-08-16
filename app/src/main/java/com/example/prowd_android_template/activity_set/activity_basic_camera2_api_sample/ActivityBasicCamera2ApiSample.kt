@@ -6,7 +6,6 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.graphics.Rect
@@ -372,13 +371,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         super.onPause()
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        // 설정 변경(화면회전)을 했는지 여부를 반영
-        viewModelMbr.isActivityRecreatedMbr = true
-
-        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {
@@ -1014,136 +1006,128 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (액티비티 진입 권한이 클리어 된 시점)
     private fun allPermissionsGranted() {
-        if (!viewModelMbr.isActivityRecreatedMbr) { // 화면 회전이 아닐때
-            if (!viewModelMbr.doItAlreadyMbr) {
-                // (액티비티 실행시 처음 한번만 실행되는 로직)
-                viewModelMbr.doItAlreadyMbr = true
+        if (!viewModelMbr.doItAlreadyMbr) {
+            // (액티비티 실행시 처음 한번만 실행되는 로직)
+            viewModelMbr.doItAlreadyMbr = true
 
-                // (초기 데이터 수집)
+            // (초기 데이터 수집)
 
-                // (알고리즘)
-                // (카메라 실행)
-                // 지원 사이즈 탐지
-                val chosenPreviewSurfaceSize =
-                    cameraObjMbr.getNearestSupportedCameraOutputSize(
-                        1,
-                        Long.MAX_VALUE,
-                        3.0 / 2.0
-                    )!!
+            // (알고리즘)
+            // (카메라 실행)
+            // 지원 사이즈 탐지
+            val chosenPreviewSurfaceSize =
+                cameraObjMbr.getNearestSupportedCameraOutputSize(
+                    1,
+                    Long.MAX_VALUE,
+                    3.0 / 2.0
+                )!!
 
-                val previewConfigVo =
-                    // 설정 객체 반환
-                    arrayListOf(
-                        CameraObj.PreviewConfigVo(
-                            chosenPreviewSurfaceSize,
-                            bindingMbr.cameraPreviewAutoFitTexture
-                        )
+            val previewConfigVo =
+                // 설정 객체 반환
+                arrayListOf(
+                    CameraObj.PreviewConfigVo(
+                        chosenPreviewSurfaceSize,
+                        bindingMbr.cameraPreviewAutoFitTexture
                     )
+                )
 
-                // 지원 사이즈 탐지
-                val chosenImageReaderSurfaceSize =
-                    cameraObjMbr.getNearestSupportedCameraOutputSize(
-                        2,
-                        500 * 500,
-                        3.0 / 2.0
-                    )!!
+            // 지원 사이즈 탐지
+            val chosenImageReaderSurfaceSize =
+                cameraObjMbr.getNearestSupportedCameraOutputSize(
+                    2,
+                    500 * 500,
+                    3.0 / 2.0
+                )!!
 
-                val analysisImageReaderConfigVo =
-                    // 설정 객체 반환
-                    CameraObj.ImageReaderConfigVo(
-                        chosenImageReaderSurfaceSize,
-                        imageReaderCallback = { reader ->
-                            analyzeImage(reader)
-                        }
-                    )
-
-                val chosenCaptureImageReaderSurfaceSize =
-                    cameraObjMbr.getNearestSupportedCameraOutputSize(
-                        2,
-                        Long.MAX_VALUE,
-                        3.0 / 2.0
-                    )!!
-
-                val captureImageReaderConfigVo =
-                    // 설정 객체 반환
-                    CameraObj.ImageReaderConfigVo(
-                        chosenCaptureImageReaderSurfaceSize,
-                        imageReaderCallback = { reader ->
-                            captureImage(reader)
-                        }
-                    )
-
-                // (카메라 변수 설정)
-                // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
-                // 떨림 보정
-                cameraObjMbr.setCameraStabilization(
-                    true,
-                    onComplete = {},
-                    onError = {})
-
-                // (카메라 서페이스 설정)
-                cameraObjMbr.setCameraOutputSurfaces(
-                    previewConfigVo,
-                    captureImageReaderConfigVo,
-                    null,
-                    analysisImageReaderConfigVo,
-                    onComplete = {
-                        // (카메라 리퀘스트 설정)
-                        cameraObjMbr.repeatingRequestOnTemplate(
-                            forPreview = true,
-                            forMediaRecorder = false,
-                            forAnalysisImageReader = true,
-                            onComplete = {
-
-                            },
-                            onError = {
-
-                            }
-                        )
-                    },
-                    onError = {
-
+            val analysisImageReaderConfigVo =
+                // 설정 객체 반환
+                CameraObj.ImageReaderConfigVo(
+                    chosenImageReaderSurfaceSize,
+                    imageReaderCallback = { reader ->
+                        analyzeImage(reader)
                     }
                 )
-            } else {
-                // (회전이 아닌 onResume 로직) : 권한 클리어
-                // (뷰 데이터 로딩)
-                // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-                val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-                if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
-                    // 진입 플래그 변경
-                    viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
-                    // (데이터 수집)
+            val chosenCaptureImageReaderSurfaceSize =
+                cameraObjMbr.getNearestSupportedCameraOutputSize(
+                    2,
+                    Long.MAX_VALUE,
+                    3.0 / 2.0
+                )!!
 
-                    // (알고리즘)
+            val captureImageReaderConfigVo =
+                // 설정 객체 반환
+                CameraObj.ImageReaderConfigVo(
+                    chosenCaptureImageReaderSurfaceSize,
+                    imageReaderCallback = { reader ->
+                        captureImage(reader)
+                    }
+                )
+
+            // (카메라 변수 설정)
+            // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
+            // 떨림 보정
+            cameraObjMbr.setCameraStabilization(
+                true,
+                onComplete = {},
+                onError = {})
+
+            // (카메라 서페이스 설정)
+            cameraObjMbr.setCameraOutputSurfaces(
+                previewConfigVo,
+                captureImageReaderConfigVo,
+                null,
+                analysisImageReaderConfigVo,
+                onComplete = {
+                    // (카메라 리퀘스트 설정)
+                    cameraObjMbr.repeatingRequestOnTemplate(
+                        forPreview = true,
+                        forMediaRecorder = false,
+                        forAnalysisImageReader = true,
+                        onComplete = {
+
+                        },
+                        onError = {
+
+                        }
+                    )
+                },
+                onError = {
+
                 }
+            )
+        } else {
+            // (회전이 아닌 onResume 로직) : 권한 클리어
+            // (뷰 데이터 로딩)
+            // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+                // 진입 플래그 변경
+                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+
+                // (데이터 수집)
 
                 // (알고리즘)
-                // (카메라 실행)
-                // todo
-                cameraObjMbr.repeatingRequestOnTemplate(
-                    forPreview = true,
-                    forMediaRecorder = false,
-                    forAnalysisImageReader = true,
-                    onComplete = {
-
-                    },
-                    onError = {
-
-                    }
-                )
             }
-        } else { // 화면 회전일 때
 
+            // (알고리즘)
+            // (카메라 실행)
+            // todo
+            cameraObjMbr.repeatingRequestOnTemplate(
+                forPreview = true,
+                forMediaRecorder = false,
+                forAnalysisImageReader = true,
+                onComplete = {
+
+                },
+                onError = {
+
+                }
+            )
         }
 
         // 화면 회전 고정
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-
-
-        // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
-        viewModelMbr.isActivityRecreatedMbr = false
     }
 
     // GPU 접속 제한 세마포어
@@ -1602,9 +1586,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // <멤버 변수 공간>
         // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
         var doItAlreadyMbr = false
-
-        // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
-        var isActivityRecreatedMbr = false
 
         // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
         var currentUserSessionTokenMbr: String? = null

@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -86,30 +85,17 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
         super.onResume()
 
         // (데이터 갱신 시점 적용)
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+        val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
-            if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-                sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
-            ) {
-                // 진입 플래그 변경
-                viewModelMbr.isDataFirstLoadingMbr = false
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+        if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
+            sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
+        ) {
+            // 진입 플래그 변경
+            viewModelMbr.isDataFirstLoadingMbr = false
+            viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
-                //  데이터 로딩
-            }
+            //  데이터 로딩
         }
-
-        // 설정 변경(화면회전)을 했는지 여부를 초기화
-        // onResume 의 가장 마지막
-        viewModelMbr.isChangingConfigurationsMbr = false
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        // 설정 변경(화면회전)을 했는지 여부를 반영
-        viewModelMbr.isChangingConfigurationsMbr = true
-
-        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {

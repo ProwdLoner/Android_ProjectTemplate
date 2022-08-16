@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_easy_lut_sample
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
@@ -75,127 +74,114 @@ class ActivityEasyLutSample : AppCompatActivity() {
         super.onResume()
 
         // (데이터 갱신 시점 적용)
-        if (!viewModelMbr.isChangingConfigurationsMbr) { // 화면 회전이 아닐 때
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+        val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
 
-            if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
-                sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
-            ) {
-                // 진입 플래그 변경
-                viewModelMbr.isDataFirstLoadingMbr = false
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+        if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
+            sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때
+        ) {
+            // 진입 플래그 변경
+            viewModelMbr.isDataFirstLoadingMbr = false
+            viewModelMbr.currentUserSessionTokenMbr = sessionToken
 
-                // [데이터 로딩]
-                // (리사이클러 뷰 어뎁터)
-                viewModelMbr.isRecyclerViewItemLoadingMbr = true
-                // 세마포어 acquire 를 위한 별도 스레드 실행
-                viewModelMbr.executorServiceMbr?.execute {
-                    viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
-                    runOnUiThread {
-                        // (로딩 처리)
-                        // 화면을 비우고 로더 추가
-                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                            arrayListOf(
-                                ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
-                                )
+            // [데이터 로딩]
+            // (리사이클러 뷰 어뎁터)
+            viewModelMbr.isRecyclerViewItemLoadingMbr = true
+            // 세마포어 acquire 를 위한 별도 스레드 실행
+            viewModelMbr.executorServiceMbr?.execute {
+                viewModelMbr.recyclerViewAdapterItemSemaphore.acquire()
+                runOnUiThread {
+                    // (로딩 처리)
+                    // 화면을 비우고 로더 추가
+                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
+                        arrayListOf(
+                            ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
+                                adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
                             )
-
-                        // (데이터 준비)
-                        // 숫자 타이틀에 따른 정렬 콜백
-                        val numTitleComp =
-                            Comparator { a: String,
-                                         b: String ->
-                                val num1 = a.replace("[^0-9]".toRegex(), "").toInt()
-                                val num2 = b.replace("[^0-9]".toRegex(), "").toInt()
-                                num1 - num2
-                            }
-
-                        val wideFilterFileList = assets.list("lut_filters_wide")!!
-                        wideFilterFileList.sortWith(
-                            numTitleComp
                         )
 
-                        val haldFilterFileList = assets.list("lut_filters_hald")!!
-                        haldFilterFileList.sortWith(
-                            numTitleComp
+                    // (데이터 준비)
+                    // 숫자 타이틀에 따른 정렬 콜백
+                    val numTitleComp =
+                        Comparator { a: String,
+                                     b: String ->
+                            val num1 = a.replace("[^0-9]".toRegex(), "").toInt()
+                            val num2 = b.replace("[^0-9]".toRegex(), "").toInt()
+                            num1 - num2
+                        }
+
+                    val wideFilterFileList = assets.list("lut_filters_wide")!!
+                    wideFilterFileList.sortWith(
+                        numTitleComp
+                    )
+
+                    val haldFilterFileList = assets.list("lut_filters_hald")!!
+                    haldFilterFileList.sortWith(
+                        numTitleComp
+                    )
+
+                    val squareFilterFileList = assets.list("lut_filters_square")!!
+                    squareFilterFileList.sortWith(
+                        numTitleComp
+                    )
+
+                    val adapterDataList =
+                        ArrayList<ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO>()
+
+                    for (filterFile in wideFilterFileList) {
+                        adapterDataList.add(
+                            ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                filterFile.split(".")[0]
+                            )
                         )
-
-                        val squareFilterFileList = assets.list("lut_filters_square")!!
-                        squareFilterFileList.sortWith(
-                            numTitleComp
-                        )
-
-                        val adapterDataList =
-                            ArrayList<ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO>()
-
-                        for (filterFile in wideFilterFileList) {
-                            adapterDataList.add(
-                                ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                                    filterFile.split(".")[0]
-                                )
-                            )
-                        }
-
-                        for (filterFile in haldFilterFileList) {
-                            adapterDataList.add(
-                                ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                                    filterFile.split(".")[0]
-                                )
-                            )
-                        }
-
-                        for (filterFile in squareFilterFileList) {
-                            adapterDataList.add(
-                                ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                                    filterFile.split(".")[0]
-                                )
-                            )
-                        }
-
-                        // 로더 제거
-                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = ArrayList()
-
-                        // 아이템 반영
-                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                            adapterDataList as ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
-
-                        // 이전에 선택되었던 필터명을 가져오기
-                        val selectedFilterName = viewModelMbr.thisSpw.selectedFilterName
-
-                        if (null != selectedFilterName) {
-                            // 이전에 선택된 필터명의 위치에 따른 처리 및 해당 위치 스크롤
-                            val selectedFilterIdx =
-                                adapterDataList.indexOfFirst { it.title == selectedFilterName }
-
-                            if (selectedFilterIdx != -1) {
-                                adapterSetMbr.recyclerViewAdapter.selectedItemPosition =
-                                    selectedFilterIdx
-                                bindingMbr.filterList.scrollToPosition(selectedFilterIdx)
-
-                            }
-                        }
-
-                        viewModelMbr.recyclerViewAdapterItemSemaphore.release()
-                        viewModelMbr.isRecyclerViewItemLoadingMbr = false
                     }
+
+                    for (filterFile in haldFilterFileList) {
+                        adapterDataList.add(
+                            ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                filterFile.split(".")[0]
+                            )
+                        )
+                    }
+
+                    for (filterFile in squareFilterFileList) {
+                        adapterDataList.add(
+                            ActivityEasyLutSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                filterFile.split(".")[0]
+                            )
+                        )
+                    }
+
+                    // 로더 제거
+                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = ArrayList()
+
+                    // 아이템 반영
+                    viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
+                        adapterDataList as ArrayList<ProwdRecyclerViewAdapter.AdapterItemAbstractVO>
+
+                    // 이전에 선택되었던 필터명을 가져오기
+                    val selectedFilterName = viewModelMbr.thisSpw.selectedFilterName
+
+                    if (null != selectedFilterName) {
+                        // 이전에 선택된 필터명의 위치에 따른 처리 및 해당 위치 스크롤
+                        val selectedFilterIdx =
+                            adapterDataList.indexOfFirst { it.title == selectedFilterName }
+
+                        if (selectedFilterIdx != -1) {
+                            adapterSetMbr.recyclerViewAdapter.selectedItemPosition =
+                                selectedFilterIdx
+                            bindingMbr.filterList.scrollToPosition(selectedFilterIdx)
+
+                        }
+                    }
+
+                    viewModelMbr.recyclerViewAdapterItemSemaphore.release()
+                    viewModelMbr.isRecyclerViewItemLoadingMbr = false
                 }
             }
         }
-
-        // 설정 변경(화면회전)을 했는지 여부를 초기화
-        // onResume 의 가장 마지막
-        viewModelMbr.isChangingConfigurationsMbr = false
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        // 설정 변경(화면회전)을 했는지 여부를 반영
-        viewModelMbr.isChangingConfigurationsMbr = true
-
-        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {

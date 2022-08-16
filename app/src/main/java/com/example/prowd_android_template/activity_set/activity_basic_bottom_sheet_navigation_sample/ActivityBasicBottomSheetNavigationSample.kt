@@ -3,7 +3,6 @@ package com.example.prowd_android_template.activity_set.activity_basic_bottom_sh
 import android.app.Application
 import android.app.Dialog
 import android.content.Intent
-import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
@@ -27,7 +26,6 @@ import com.example.prowd_android_template.databinding.ActivityBasicBottomSheetNa
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
 
 class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // <멤버 변수 공간>
@@ -112,13 +110,6 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         }
 
         permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        // 설정 변경(화면회전)을 했는지 여부를 반영
-        viewModelMbr.isActivityRecreatedMbr = true
-
-        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {
@@ -285,50 +276,43 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
 
     // (액티비티 진입 권한이 클리어 된 시점)
     private fun allPermissionsGranted() {
-        // (뷰페이저 플래그먼트 세팅)
-        adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
-            listOf(
-                viewModelMbr.fragment1Mbr,
-                viewModelMbr.fragment2Mbr,
-                viewModelMbr.fragment3Mbr
-            )
-        ).apply {
-            // 뷰페이저 조작 금지
-            bindingMbr.screenViewPager.isUserInputEnabled = false
-
-            // 뷰페이저 어뎁터 연결
-            bindingMbr.screenViewPager.adapter = adapterSetMbr.screenViewPagerFragmentStateAdapter
-        }
-
         // (화면 회전 여부 판단)
-        if (!viewModelMbr.isActivityRecreatedMbr) { // 화면 회전이 아닐때
-            if (!viewModelMbr.doItAlreadyMbr) {
-                // (회전이 아닌 onResume 로직) : 권한 클리어
-                viewModelMbr.doItAlreadyMbr = true
+        if (!viewModelMbr.doItAlreadyMbr) {
+            // (회전이 아닌 onResume 로직) : 권한 클리어
+            viewModelMbr.doItAlreadyMbr = true
 
-                // (초기 데이터 수집)
+            // (초기 데이터 수집)
+
+            // (알고리즘)
+            // (뷰페이저 플래그먼트 세팅)
+            adapterSetMbr.screenViewPagerFragmentStateAdapter.setItems(
+                listOf(
+                    viewModelMbr.fragment1Mbr,
+                    viewModelMbr.fragment2Mbr,
+                    viewModelMbr.fragment3Mbr
+                )
+            ).apply {
+                // 뷰페이저 조작 금지
+                bindingMbr.screenViewPager.isUserInputEnabled = false
+
+                // 뷰페이저 어뎁터 연결
+                bindingMbr.screenViewPager.adapter =
+                    adapterSetMbr.screenViewPagerFragmentStateAdapter
+            }
+        } else {
+            // (회전이 아닌 onResume 로직) : 권한 클리어
+            // (뷰 데이터 로딩)
+            // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
+            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+                // 진입 플래그 변경
+                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+
+                // (데이터 수집)
 
                 // (알고리즘)
-            }else{
-                // (회전이 아닌 onResume 로직) : 권한 클리어
-                // (뷰 데이터 로딩)
-                // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-                val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-                if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
-                    // 진입 플래그 변경
-                    viewModelMbr.currentUserSessionTokenMbr = sessionToken
-
-                    // (데이터 수집)
-
-                    // (알고리즘)
-                }
             }
-        } else { // 화면 회전일 때
-
         }
-
-        // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
-        viewModelMbr.isActivityRecreatedMbr = false
     }
 
 
@@ -386,9 +370,6 @@ class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
         // <멤버 변수 공간>
         // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
         var doItAlreadyMbr = false
-
-        // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
-        var isActivityRecreatedMbr = false
 
         // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
         var currentUserSessionTokenMbr: String? = null

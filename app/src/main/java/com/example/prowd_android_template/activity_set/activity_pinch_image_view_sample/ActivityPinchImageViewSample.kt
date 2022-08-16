@@ -3,7 +3,6 @@ package com.example.prowd_android_template.activity_set.activity_pinch_image_vie
 import android.app.Application
 import android.app.Dialog
 import android.content.Intent
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.app.AppCompatActivity
@@ -112,13 +111,6 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
         }
 
         permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        // 설정 변경(화면회전)을 했는지 여부를 반영
-        viewModelMbr.isActivityRecreatedMbr = true
-
-        super.onConfigurationChanged(newConfig)
     }
 
     override fun onDestroy() {
@@ -304,7 +296,6 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
 
     // (액티비티 진입 권한이 클리어 된 시점)
     private fun allPermissionsGranted() {
-        if (!viewModelMbr.isActivityRecreatedMbr) { // 화면 회전이 아닐때
             if (!viewModelMbr.doItAlreadyMbr) {
                 // (액티비티 실행시 처음 한번만 실행되는 로직)
                 viewModelMbr.doItAlreadyMbr = true
@@ -326,12 +317,6 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
                     // (알고리즘)
                 }
             }
-        } else { // 화면 회전일 때
-
-        }
-
-        // onResume 의 가장 마지막엔 설정 변경(화면회전) 여부를 초기화
-        viewModelMbr.isActivityRecreatedMbr = false
     }
 
 
@@ -363,9 +348,6 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
         // <멤버 변수 공간>
         // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
         var doItAlreadyMbr = false
-
-        // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
-        var isActivityRecreatedMbr = false
 
         // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
         var currentUserSessionTokenMbr: String? = null

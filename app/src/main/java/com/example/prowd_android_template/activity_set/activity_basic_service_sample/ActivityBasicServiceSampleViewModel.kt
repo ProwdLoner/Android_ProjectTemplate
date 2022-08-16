@@ -28,9 +28,6 @@ class ActivityBasicServiceSampleViewModel(application: Application) :
     val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
         CurrentLoginSessionInfoSpw(application)
 
-    // (설정 변경 여부) : 의도적인 액티비티 종료가 아닌 화면 회전과 같은 상황
-    var isChangingConfigurationsMbr = false
-
     // (플래그 데이터)
     // 이 화면에 도달한 유저 계정 고유값(세션 토큰이 없다면 비회원 상태)
     var currentUserSessionTokenMbr: String? = null
