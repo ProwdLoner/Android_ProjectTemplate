@@ -34,94 +34,124 @@
         tools:targetApi="31">
         <activity
             android:name=".activity_set.activity_bitmap_and_opencv_jni_sample.ActivityBitmapAndOpencvJniSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_jni_sample_list.ActivityJniSampleList"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_broadcast_receiver_sample_sender.ActivityBroadcastReceiverSampleSender"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_notification_sample.ActivityBasicNotificationSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_service_sample.ActivityBasicServiceSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_module_caller_sample.ActivityModuleCallerSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_etc_sample_list.ActivityEtcSampleList"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_pinch_image_viewer.ActivityPinchImageViewer"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_media_player_sample_list.ActivityMediaPlayerSampleList"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_pinch_image_view_sample.ActivityPinchImageViewSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_easy_lut_sample.ActivityEasyLutSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_image_processing_sample_list.ActivityImageProcessingSampleList"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_camera2_api_sample.ActivityBasicCamera2ApiSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false"
             android:theme="@style/Theme.Camera" />
         <activity
             android:name=".activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_horizontal_recycler_view_sample.ActivityBasicHorizontalRecyclerViewSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_vertical_recycler_view_sample.ActivityBasicVerticalRecyclerViewSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_permission_sample.ActivityPermissionSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_system_camera_photo_sample.ActivitySystemCameraPhotoSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_camera_sample_list.ActivityCameraSampleList"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_jni_sample.ActivityJniSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleList"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_dialog_sample.ActivityDialogSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_home.ActivityHome"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
         <activity
             android:name=".activity_set.activity_init.ActivityInit"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:theme="@style/Theme.ActivityInit">
             <intent-filter>

@@ -4,6 +4,8 @@ import android.app.Application
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -219,6 +221,16 @@ class ActivityATemplate : AppCompatActivity() {
         dialogMbr?.dismiss()
 
         super.onDestroy()
+    }
+
+    // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (resources.configuration.orientation == ORIENTATION_LANDSCAPE) { // landscape
+
+        } else { // portrait
+
+        }
     }
 
 
