@@ -1,11 +1,12 @@
 package com.example.prowd_android_template.activity_set.activity_basic_camera2_api_sample
 
-import android.Manifest
 import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.graphics.Rect
@@ -32,13 +33,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.FitCenter
 import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.ScriptC_rotator
+import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -58,16 +57,99 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
+// todo : onresume 에러, 전체확인
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
+    // <멤버 상수 공간>
+    // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지
+    private lateinit var bindingMbr: ActivityBasicCamera2ApiSampleBinding
+
+    // (repository 모델)
+    lateinit var repositorySetMbr: RepositorySet
+
+    // (SharedPreference 객체)
+    // 현 로그인 정보 접근 객체
+    lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
+
+    // 카메라 설정 정보 접근 객체
+    lateinit var classSpwMbr: ClassSpw
+
+    // (스레드 풀)
+    val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
+    // (앱 진입 필수 권한 배열)
+    // : 앱 진입에 필요한 권한 배열.
+    //     ex : Manifest.permission.INTERNET
+    val activityPermissionArrayMbr: Array<String> = arrayOf()
+
+    // 랜더 스크립트
+    lateinit var renderScriptMbr: RenderScript
+
+    // intrinsic yuv to rgb
+    lateinit var scriptIntrinsicYuvToRGBMbr: ScriptIntrinsicYuvToRGB
+
+    // image rotate
+    lateinit var scriptCRotatorMbr: ScriptC_rotator
+
+    // image crop
+    lateinit var scriptCCropMbr: ScriptC_crop
+
+    // image resize
+    lateinit var scriptIntrinsicResizeMbr: ScriptIntrinsicResize
+
+
+    // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
-    // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityBasicCamera2ApiSampleBinding
-
-    // (뷰 모델 객체)
-    lateinit var viewModelMbr: ViewModel
-
     // (다이얼로그 객체)
     var dialogMbr: Dialog? = null
+    var shownDialogClassNameMbr: InterfaceDialogInfoVO? = null
+        set(value) {
+            when (value) {
+                is DialogBinaryChoose.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogBinaryChoose(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogConfirm.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogConfirm(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogProgressLoading.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogProgressLoading(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogRadioButtonChoose.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogRadioButtonChoose(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                else -> {
+                    dialogMbr?.dismiss()
+                    dialogMbr = null
+
+                    field = null
+                    return
+                }
+            }
+            field = value
+        }
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
@@ -78,9 +160,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
-    // (데이터)
+    // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
+    var doItAlreadyMbr = false
+
+    // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
+    var currentUserSessionTokenMbr: String? = null
+
     // 카메라 실행 객체
     private lateinit var cameraObjMbr: CameraObj
+
+    // 이미지 리더 프로세싱 일시정지 여부
+    private var imageProcessingPauseMbr = false
 
 
     // ---------------------------------------------------------------------------------------------
@@ -89,22 +179,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     //     액티비티 일시정지 후 재실행 = onPause() → ... -> onResume()
     //     액티비티 정지 후 재실행 = onPause() → onStop() -> ... -> onStart() → onResume()
     //     액티비티 종료 = onPause() → onStop() → onDestroy()
-    //     앨티비티 화면 회전 = onPause() → onSaveInstanceState() → onStop() → onDestroy() →
-    //         onCreate(savedInstanceState) → onStart() → onResume()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // (화면을 꺼지지 않도록 하는 플래그)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         // (초기 객체 생성)
         onCreateInitObject()
 
         // (초기 뷰 설정)
         onCreateInitView()
-
-        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
-        onCreateSetLiveData()
     }
 
     override fun onResume() {
@@ -115,29 +197,47 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         permissionRequestCallbackMbr = { permissions ->
             var isPermissionAllGranted = true
             var neverAskAgain = false
-            for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
+            for (activityPermission in activityPermissionArrayMbr) {
                 if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
                     // 권한 클리어 플래그를 변경하고 break
-                    isPermissionAllGranted = false
                     neverAskAgain = !shouldShowRequestPermissionRationale(activityPermission)
+                    isPermissionAllGranted = false
                     break
                 }
             }
 
             if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
                 allPermissionsGranted()
-            } else if (neverAskAgain) { // 다시 묻지 않기 선택
-                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+            } else if (!neverAskAgain) { // 단순 거부
+                shownDialogClassNameMbr = DialogConfirm.DialogInfoVO(
+                    true,
+                    "권한 필요",
+                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                    "뒤로가기",
+                    onCheckBtnClicked = {
+                        shownDialogClassNameMbr = null
+
+                        finish()
+                    },
+                    onCanceled = {
+                        shownDialogClassNameMbr = null
+
+                        finish()
+                    }
+                )
+
+            } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                shownDialogClassNameMbr =
                     DialogBinaryChoose.DialogInfoVO(
-                        true,
+                        false,
                         "권한 요청",
                         "해당 서비스를 이용하기 위해선\n" +
-                                "카메라 권한 승인이 필요합니다.\n" +
+                                "필수 권한 승인이 필요합니다.\n" +
                                 "권한 설정 화면으로 이동하시겠습니까?",
                         null,
                         null,
                         onPosBtnClicked = {
-                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+                            shownDialogClassNameMbr = null
 
                             // 권한 설정 화면으로 이동
                             val intent =
@@ -147,7 +247,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             resultLauncherCallbackMbr = {
                                 // 설정 페이지 복귀시 콜백
                                 var isPermissionAllGranted1 = true
-                                for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
+                                for (activityPermission in activityPermissionArrayMbr) {
                                     if (ActivityCompat.checkSelfPermission(
                                             this,
                                             activityPermission
@@ -162,19 +262,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 if (isPermissionAllGranted1) { // 권한 승인
                                     allPermissionsGranted()
                                 } else { // 권한 거부
-                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                    shownDialogClassNameMbr =
                                         DialogConfirm.DialogInfoVO(
                                             true,
                                             "권한 요청",
-                                            "서비스를 실행하기 위해 필요한 권한이 거부되었습니다.",
-                                            null,
+                                            "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                            "뒤로가기",
                                             onCheckBtnClicked = {
-                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                shownDialogClassNameMbr =
                                                     null
                                                 finish()
                                             },
                                             onCanceled = {
-                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                shownDialogClassNameMbr =
                                                     null
                                                 finish()
                                             }
@@ -184,42 +284,42 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
-                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+                            shownDialogClassNameMbr = null
 
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                            shownDialogClassNameMbr =
                                 DialogConfirm.DialogInfoVO(
                                     true,
                                     "권한 요청",
-                                    "서비스를 실행하기 위해 필요한 권한이 거부되었습니다.",
-                                    null,
+                                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                    "뒤로가기",
                                     onCheckBtnClicked = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        shownDialogClassNameMbr =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        shownDialogClassNameMbr =
                                             null
                                         finish()
                                     }
                                 )
                         },
                         onCanceled = {
-                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+                            shownDialogClassNameMbr = null
 
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                            shownDialogClassNameMbr =
                                 DialogConfirm.DialogInfoVO(
                                     true,
                                     "권한 요청",
-                                    "서비스를 실행하기 위해 필요한 권한이 거부되었습니다.",
-                                    null,
+                                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                    "뒤로가기",
                                     onCheckBtnClicked = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        shownDialogClassNameMbr =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        shownDialogClassNameMbr =
                                             null
                                         finish()
                                     }
@@ -227,52 +327,37 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         }
                     )
 
-            } else { // 단순 거부
-                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                    true,
-                    "권한 필요",
-                    "서비스를 실행하기 위해 필요한 권한이 거부되었습니다.",
-                    "뒤로가기",
-                    onCheckBtnClicked = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                        finish()
-                    },
-                    onCanceled = {
-                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                        finish()
-                    }
-                )
-
             }
         }
 
         // 연결된 카메라가 없을 때
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                true,
-                "카메라 장치가 없습니다.",
-                "카메라 장치가 발견되지 않습니다.\n화면을 종료합니다.",
-                null,
-                onCheckBtnClicked = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    finish()
-                },
-                onCanceled = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-                    finish()
-                }
-            )
+            shownDialogClassNameMbr =
+                DialogConfirm.DialogInfoVO(
+                    true,
+                    "카메라 장치가 없습니다.",
+                    "카메라 장치가 발견되지 않습니다.\n화면을 종료합니다.",
+                    null,
+                    onCheckBtnClicked = {
+                        shownDialogClassNameMbr =
+                            null
+                        finish()
+                    },
+                    onCanceled = {
+                        shownDialogClassNameMbr =
+                            null
+                        finish()
+                    }
+                )
         } else {
-            permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
+            permissionRequestMbr.launch(activityPermissionArrayMbr)
         }
     }
 
     override fun onPause() {
         if (cameraObjMbr.mediaRecorderStatusCodeMbr == 3 ||
             cameraObjMbr.mediaRecorderStatusCodeMbr == 4
-        ) { // 레코딩 중이라면 기존 레코딩 세션을 제거 후 프리뷰 세션으로 전환
+        ) { // 레코딩 중이라면 기존 레코딩 세션 중지 후 녹화 파일 제거 하고 프리뷰 세션 준비상태로 전환
             // 기존 저장 폴더 백업
             val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
 
@@ -380,33 +465,53 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 카메라 해소
         cameraObjMbr.destroyCameraObject(onComplete = {})
 
+        // 랜더 스크립트 객체 해소
+        scriptCCropMbr.destroy()
+        scriptIntrinsicResizeMbr.destroy()
+        scriptIntrinsicYuvToRGBMbr.destroy()
+        scriptCRotatorMbr.destroy()
+        renderScriptMbr.finish()
+        renderScriptMbr.destroy()
+
         super.onDestroy()
     }
 
+    // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) { // 화면회전 landscape
+
+        } else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { // 화면회전 portrait
+
+        }
+    }
+
     override fun onBackPressed() {
-        viewModelMbr.imageProcessingPauseMbr = true
-        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = DialogBinaryChoose.DialogInfoVO(
-            true,
-            "카메라 종료",
-            "카메라를 종료하시겠습니까?",
-            "종료",
-            "취소",
-            onPosBtnClicked = {
-                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                finish()
-            },
-            onNegBtnClicked = {
-                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                viewModelMbr.imageProcessingPauseMbr = false
-            },
-            onCanceled = {
-                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
-
-                viewModelMbr.imageProcessingPauseMbr = false
-            }
-        )
+        imageProcessingPauseMbr = true
+        shownDialogClassNameMbr =
+            DialogBinaryChoose.DialogInfoVO(
+                true,
+                "카메라 종료",
+                "카메라를 종료하시겠습니까?",
+                "종료",
+                "취소",
+                onPosBtnClicked = {
+                    shownDialogClassNameMbr =
+                        null
+                    finish()
+                },
+                onNegBtnClicked = {
+                    shownDialogClassNameMbr =
+                        null
+                    imageProcessingPauseMbr = false
+                },
+                onCanceled = {
+                    shownDialogClassNameMbr =
+                        null
+                    imageProcessingPauseMbr = false
+                }
+            )
     }
 
 
@@ -423,8 +528,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
-        // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ViewModel::class.java]
+        // 레포지토리 객체
+        repositorySetMbr = RepositorySet.getInstance(application)
+
+        currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
+        classSpwMbr = ClassSpw(application)
 
         // 권한 요청 객체 생성
         permissionRequestMbr =
@@ -443,23 +551,33 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             resultLauncherCallbackMbr = null
         }
 
+        renderScriptMbr = RenderScript.create(application)
+        scriptIntrinsicYuvToRGBMbr = ScriptIntrinsicYuvToRGB.create(
+            renderScriptMbr,
+            Element.U8_4(renderScriptMbr)
+        )
+        scriptCRotatorMbr = ScriptC_rotator(renderScriptMbr)
+        scriptCCropMbr = ScriptC_crop(renderScriptMbr)
+        scriptIntrinsicResizeMbr = ScriptIntrinsicResize.create(
+            renderScriptMbr
+        )
 
         // (최초 사용 카메라 객체 생성)
         val cameraInfoList = CameraObj.getAllSupportedCameraInfoList(this)
 
         if (cameraInfoList.size == 0) {
             // 지원하는 카메라가 없음
-            viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+            shownDialogClassNameMbr = DialogConfirm.DialogInfoVO(
                 true,
                 "에러",
                 "지원되는 카메라를 찾을 수 없습니다.",
                 null,
                 onCheckBtnClicked = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    shownDialogClassNameMbr = null
                     finish()
                 },
                 onCanceled = {
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+                    shownDialogClassNameMbr = null
                     finish()
                 }
             )
@@ -467,16 +585,16 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 초기 카메라 아이디 선정
         val cameraId: String =
-            if (viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId != null) { // 기존 아이디가 있을 때
+            if (classSpwMbr.currentCameraId != null) { // 기존 아이디가 있을 때
 
                 // 기존 아이디가 현재 지원 카메라 리스트에 있는지를 확인
                 val lastCameraIdIdx = cameraInfoList.indexOfFirst {
-                    it.cameraId == viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId
+                    it.cameraId == classSpwMbr.currentCameraId
                 }
 
                 if (lastCameraIdIdx != -1) {
                     // 기존 아이디가 제공 아이디 리스트에 있을 때
-                    viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId!!
+                    classSpwMbr.currentCameraId!!
                 } else {
                     // 기존 아이디가 제공 아이디 리스트에 없을 때 = 후면 카메라를 먼저 적용
                     val backCameraIdx = cameraInfoList.indexOfFirst {
@@ -537,11 +655,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // 핀치 줌 설정
         cameraObjMbr.setCameraPinchZoomTouchListener(bindingMbr.cameraPreviewAutoFitTexture)
 
-        viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId = cameraId
+        classSpwMbr.currentCameraId = cameraId
     }
 
     // (초기 뷰 설정)
     private fun onCreateInitView() {
+        // (화면을 꺼지지 않도록 하는 플래그)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         bindingMbr.btn2.setOnClickListener {
             cameraObjMbr.captureRequest(null, onError = {})
         }
@@ -607,15 +728,15 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
 
             var checkedIdx = cameraInfoList.indexOfFirst {
-                it.cameraId == viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId
+                it.cameraId == classSpwMbr.currentCameraId
             }
 
             if (checkedIdx == -1) {
                 checkedIdx = 0
             }
 
-            viewModelMbr.imageProcessingPauseMbr = true
-            viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value =
+            imageProcessingPauseMbr = true
+            shownDialogClassNameMbr =
                 DialogRadioButtonChoose.DialogInfoVO(
                     isCancelable = true,
                     title = "카메라 선택",
@@ -626,13 +747,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     onRadioItemClicked = {
                     },
                     onCancelBtnClicked = {
-                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
-                        viewModelMbr.imageProcessingPauseMbr = false
+                        shownDialogClassNameMbr = null
+                        imageProcessingPauseMbr = false
                     },
                     onSelectBtnClicked = {
                         val checkedCameraId = cameraInfoList[it].cameraId
 
-                        if (checkedCameraId != viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId) {
+                        if (checkedCameraId != classSpwMbr.currentCameraId) {
                             // 기존 저장 폴더 백업
                             val videoFile =
                                 if (cameraObjMbr.mediaRecorderStatusCodeMbr == 3 || cameraObjMbr.mediaRecorderStatusCodeMbr == 4) {
@@ -657,7 +778,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 // 핀치 줌 설정
                                 cameraObjMbr.setCameraPinchZoomTouchListener(bindingMbr.cameraPreviewAutoFitTexture)
 
-                                viewModelMbr.cameraConfigInfoSpwMbr.currentCameraId =
+                                classSpwMbr.currentCameraId =
                                     checkedCameraId
 
                                 // (카메라 실행)
@@ -745,12 +866,12 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 )
                             }
                         }
-                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
-                        viewModelMbr.imageProcessingPauseMbr = false
+                        shownDialogClassNameMbr = null
+                        imageProcessingPauseMbr = false
                     },
                     onCanceled = {
-                        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.value = null
-                        viewModelMbr.imageProcessingPauseMbr = false
+                        shownDialogClassNameMbr = null
+                        imageProcessingPauseMbr = false
                     }
                 )
         }
@@ -912,198 +1033,25 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 )
             }
         }
-
-    }
-
-    // (라이브 데이터 설정)
-    private fun onCreateSetLiveData() {
-        // 로딩 다이얼로그 출력 플래그
-        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogProgressLoading) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogProgressLoading(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // progressSample2 진행도
-        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
-            if (it != -1) {
-                val loadingText = "로딩중 $it%"
-                if (dialogMbr != null) {
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressMessageTxt.text =
-                        loadingText
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.visibility =
-                        View.VISIBLE
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.progress = it
-                }
-            }
-        }
-
-        // 선택 다이얼로그 출력 플래그
-        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogBinaryChoose) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogBinaryChoose(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // 확인 다이얼로그 출력 플래그
-        viewModelMbr.confirmDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogConfirm) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogConfirm(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // 라디오 버튼 선택 다이얼로그 출력 플래그
-        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogRadioButtonChoose) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogRadioButtonChoose(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
     private fun allPermissionsGranted() {
-        if (!viewModelMbr.doItAlreadyMbr) {
-            // (액티비티 실행시 처음 한번만 실행되는 로직)
-            viewModelMbr.doItAlreadyMbr = true
+        if (!doItAlreadyMbr) {
+            // (onCreate + permissionGrant)
+            doItAlreadyMbr = true
 
             // (초기 데이터 수집)
 
             // (알고리즘)
-            // (카메라 실행)
-            // 지원 사이즈 탐지
-            val chosenPreviewSurfaceSize =
-                cameraObjMbr.getNearestSupportedCameraOutputSize(
-                    1,
-                    Long.MAX_VALUE,
-                    3.0 / 2.0
-                )!!
-
-            val previewConfigVo =
-                // 설정 객체 반환
-                arrayListOf(
-                    CameraObj.PreviewConfigVo(
-                        chosenPreviewSurfaceSize,
-                        bindingMbr.cameraPreviewAutoFitTexture
-                    )
-                )
-
-            // 지원 사이즈 탐지
-            val chosenImageReaderSurfaceSize =
-                cameraObjMbr.getNearestSupportedCameraOutputSize(
-                    2,
-                    500 * 500,
-                    3.0 / 2.0
-                )!!
-
-            val analysisImageReaderConfigVo =
-                // 설정 객체 반환
-                CameraObj.ImageReaderConfigVo(
-                    chosenImageReaderSurfaceSize,
-                    imageReaderCallback = { reader ->
-                        analyzeImage(reader)
-                    }
-                )
-
-            val chosenCaptureImageReaderSurfaceSize =
-                cameraObjMbr.getNearestSupportedCameraOutputSize(
-                    2,
-                    Long.MAX_VALUE,
-                    3.0 / 2.0
-                )!!
-
-            val captureImageReaderConfigVo =
-                // 설정 객체 반환
-                CameraObj.ImageReaderConfigVo(
-                    chosenCaptureImageReaderSurfaceSize,
-                    imageReaderCallback = { reader ->
-                        captureImage(reader)
-                    }
-                )
-
-            // (카메라 변수 설정)
-            // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
-            // 떨림 보정
-            cameraObjMbr.setCameraStabilization(
-                true,
-                onComplete = {},
-                onError = {})
-
-            // (카메라 서페이스 설정)
-            cameraObjMbr.setCameraOutputSurfaces(
-                previewConfigVo,
-                captureImageReaderConfigVo,
-                null,
-                analysisImageReaderConfigVo,
-                onComplete = {
-                    // (카메라 리퀘스트 설정)
-                    cameraObjMbr.repeatingRequestOnTemplate(
-                        forPreview = true,
-                        forMediaRecorder = false,
-                        forAnalysisImageReader = true,
-                        onComplete = {
-
-                        },
-                        onError = {
-
-                        }
-                    )
-                },
-                onError = {
-
-                }
-            )
         } else {
-            // (회전이 아닌 onResume 로직) : 권한 클리어
+            // (onResume - (onCreate + permissionGrant)) : 권한 클리어
             // (뷰 데이터 로딩)
             // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
+            if (sessionToken != currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+                currentUserSessionTokenMbr = sessionToken
 
                 // (데이터 수집)
 
@@ -1111,23 +1059,93 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
 
             // (알고리즘)
-            // (카메라 실행)
-            // todo
-            cameraObjMbr.repeatingRequestOnTemplate(
-                forPreview = true,
-                forMediaRecorder = false,
-                forAnalysisImageReader = true,
-                onComplete = {
-
-                },
-                onError = {
-
-                }
-            )
         }
 
-        // 화면 회전 고정
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        // (onResume 로직)
+        // (알고리즘)
+        // (카메라 실행)
+        // 지원 사이즈 탐지
+        val chosenPreviewSurfaceSize =
+            cameraObjMbr.getNearestSupportedCameraOutputSize(
+                1,
+                Long.MAX_VALUE,
+                3.0 / 2.0
+            )!!
+
+        val previewConfigVo =
+            // 설정 객체 반환
+            arrayListOf(
+                CameraObj.PreviewConfigVo(
+                    chosenPreviewSurfaceSize,
+                    bindingMbr.cameraPreviewAutoFitTexture
+                )
+            )
+
+        // 지원 사이즈 탐지
+        val chosenImageReaderSurfaceSize =
+            cameraObjMbr.getNearestSupportedCameraOutputSize(
+                2,
+                500 * 500,
+                3.0 / 2.0
+            )!!
+
+        val analysisImageReaderConfigVo =
+            // 설정 객체 반환
+            CameraObj.ImageReaderConfigVo(
+                chosenImageReaderSurfaceSize,
+                imageReaderCallback = { reader ->
+                    analyzeImage(reader)
+                }
+            )
+
+        val chosenCaptureImageReaderSurfaceSize =
+            cameraObjMbr.getNearestSupportedCameraOutputSize(
+                2,
+                Long.MAX_VALUE,
+                3.0 / 2.0
+            )!!
+
+        val captureImageReaderConfigVo =
+            // 설정 객체 반환
+            CameraObj.ImageReaderConfigVo(
+                chosenCaptureImageReaderSurfaceSize,
+                imageReaderCallback = { reader ->
+                    captureImage(reader)
+                }
+            )
+
+        // (카메라 변수 설정)
+        // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
+        // 떨림 보정
+        cameraObjMbr.setCameraStabilization(
+            true,
+            onComplete = {},
+            onError = {})
+
+        // (카메라 서페이스 설정)
+        cameraObjMbr.setCameraOutputSurfaces(
+            previewConfigVo,
+            captureImageReaderConfigVo,
+            null,
+            analysisImageReaderConfigVo,
+            onComplete = {
+                // (카메라 리퀘스트 설정)
+                cameraObjMbr.repeatingRequestOnTemplate(
+                    forPreview = true,
+                    forMediaRecorder = false,
+                    forAnalysisImageReader = true,
+                    onComplete = {
+
+                    },
+                    onError = {
+
+                    }
+                )
+            },
+            onError = {
+
+            }
+        )
     }
 
     // GPU 접속 제한 세마포어
@@ -1150,7 +1168,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // 조기 종료 플래그
             if (cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
-                viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+                imageProcessingPauseMbr || // imageProcessing 정지 신호
                 isDestroyed || isFinishing // 액티비티 자체가 종료
             ) {
                 imageObj.close()
@@ -1188,13 +1206,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
 
             // (2. 비동기 이미지 프로세싱 시작)
-            viewModelMbr.executorServiceMbr?.execute {
+            executorServiceMbr.execute {
 
                 // 조기 종료 확인
                 asyncImageProcessingOnProgressSemaphoreMbr.acquire()
                 if (asyncImageProcessingOnProgressMbr || // 현재 비동기 이미지 프로세싱 중일 때
                     cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
-                    viewModelMbr.imageProcessingPauseMbr || // imageProcessing 정지 신호
+                    imageProcessingPauseMbr || // imageProcessing 정지 신호
                     isDestroyed || isFinishing // 액티비티 자체가 종료
                 ) {
                     asyncImageProcessingOnProgressSemaphoreMbr.release()
@@ -1261,8 +1279,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 gpuSemaphoreMbr.acquire()
                 val rotatedCameraImageFrameBitmap =
                     RenderScriptUtil.rotateBitmapCounterClock(
-                        viewModelMbr.renderScriptMbr,
-                        viewModelMbr.scriptCRotatorMbr,
+                        renderScriptMbr,
+                        scriptCRotatorMbr,
                         cameraImageFrameBitmap,
                         rotateCounterClockAngle
                     )
@@ -1287,8 +1305,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 gpuSemaphoreMbr.acquire()
                 val resizedBitmap = RenderScriptUtil.resizeBitmapIntrinsic(
-                    viewModelMbr.renderScriptMbr,
-                    viewModelMbr.scriptIntrinsicResizeMbr,
+                    renderScriptMbr,
+                    scriptIntrinsicResizeMbr,
                     rotatedCameraImageFrameBitmap,
                     dstSize.width,
                     dstSize.height
@@ -1316,8 +1334,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 gpuSemaphoreMbr.acquire()
                 val croppedBitmap = RenderScriptUtil.cropBitmap(
-                    viewModelMbr.renderScriptMbr,
-                    viewModelMbr.scriptCCropMbr,
+                    renderScriptMbr,
+                    scriptCCropMbr,
                     rotatedCameraImageFrameBitmap,
                     Rect(
                         (cropAreaRatioRectF.left * rotatedCameraImageFrameBitmap.width).toInt(),
@@ -1382,7 +1400,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         .into(bindingMbr.captureImg)
                 }
 
-                viewModelMbr.executorServiceMbr?.execute {
+                executorServiceMbr.execute {
                     Thread.sleep(2000)
                     file.delete()
                 }
@@ -1522,8 +1540,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
         gpuSemaphoreMbr.acquire()
         val result = RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
-            viewModelMbr.renderScriptMbr,
-            viewModelMbr.scriptIntrinsicYuvToRGBMbr,
+            renderScriptMbr,
+            scriptIntrinsicYuvToRGBMbr,
             imageWidth,
             imageHeight,
             yuvByteArray
@@ -1536,103 +1554,35 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    // (뷰모델 객체)
-    // : 액티비티 reCreate 이후에도 남아있는 데이터 묶음 = 뷰의 데이터 모델
-    //     뷰모델이 맡은 것은 화면 회전시에도 불변할 데이터의 저장
-    class ViewModel(application: Application) : AndroidViewModel(application) {
-        // <멤버 상수 공간>
-        // (repository 모델)
-        val repositorySetMbr: RepositorySet = RepositorySet.getInstance(application)
-
-        // (스레드 풀)
-        val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
-
-        // (SharedPreference 객체)
-        // 현 로그인 정보 접근 객체
-        val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
-            CurrentLoginSessionInfoSpw(application)
-
-        // 카메라 설정 정보 접근 객체
-        val cameraConfigInfoSpwMbr: ActivityBasicCamera2ApiSampleSpw =
-            ActivityBasicCamera2ApiSampleSpw(application)
-
-        // (앱 진입 필수 권한 배열)
-        // : 앱 진입에 필요한 권한 배열.
-        //     ex : Manifest.permission.INTERNET
-        val activityPermissionArrayMbr: Array<String> = arrayOf(Manifest.permission.CAMERA)
-
-        // 랜더 스크립트
-        val renderScriptMbr: RenderScript = RenderScript.create(application)
-
-        // intrinsic yuv to rgb
-        val scriptIntrinsicYuvToRGBMbr: ScriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(
-            renderScriptMbr,
-            Element.U8_4(renderScriptMbr)
-        )
-
-        // image rotate
-        val scriptCRotatorMbr: ScriptC_rotator = ScriptC_rotator(renderScriptMbr)
-
-        // image crop
-        val scriptCCropMbr: ScriptC_crop = ScriptC_crop(renderScriptMbr)
-
-        // image resize
-        val scriptIntrinsicResizeMbr: ScriptIntrinsicResize = ScriptIntrinsicResize.create(
-            renderScriptMbr
-        )
-
-
-        // ---------------------------------------------------------------------------------------------
+    class ClassSpw(application: Application) {
         // <멤버 변수 공간>
-        // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
-        var doItAlreadyMbr = false
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityBasicCamera2ApiSampleSpw",
+            Context.MODE_PRIVATE
+        )
 
-        // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
-        var currentUserSessionTokenMbr: String? = null
-
-        // 이미지 리더 프로세싱 일시정지 여부
-        var imageProcessingPauseMbr = false
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <뷰모델 라이브데이터 공간>
-        // 로딩 다이얼로그 출력 정보
-        val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        val progressDialogSample2ProgressValue: MutableLiveData<Int> =
-            MutableLiveData(-1)
-
-        // 선택 다이얼로그 출력 정보
-        val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        // 확인 다이얼로그 출력 정보
-        val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        // 라디오 버튼 선택 다이얼로그 출력 정보
-        val radioButtonChooseDialogInfoLiveDataMbr: MutableLiveData<DialogRadioButtonChoose.DialogInfoVO?> =
-            MutableLiveData(null)
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <클래스 생명주기 공간>
-        override fun onCleared() {
-            // 랜더 스크립트 객체 해소
-            scriptCCropMbr.destroy()
-            scriptIntrinsicResizeMbr.destroy()
-            scriptIntrinsicYuvToRGBMbr.destroy()
-            scriptCRotatorMbr.destroy()
-            renderScriptMbr.finish()
-            renderScriptMbr.destroy()
-
-            super.onCleared()
-        }
+        var currentCameraId: String?
+            get() {
+                return spMbr.getString(
+                    "currentCameraId",
+                    null
+                )
+            }
+            set(value) {
+                with(spMbr.edit()) {
+                    putString(
+                        "currentCameraId",
+                        value
+                    )
+                    apply()
+                }
+            }
 
 
         // ---------------------------------------------------------------------------------------------
         // <중첩 클래스 공간>
+
     }
 
     data class ImageDataVo(
