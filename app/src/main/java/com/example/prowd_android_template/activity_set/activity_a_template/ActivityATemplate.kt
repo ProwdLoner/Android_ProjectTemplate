@@ -3,12 +3,16 @@ package com.example.prowd_android_template.activity_set.activity_a_template
 import android.app.Application
 import android.app.Dialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
@@ -73,26 +77,11 @@ class ActivityATemplate : AppCompatActivity() {
         // 진입 필수 권한이 클리어 되어야 로직이 실행
         permissionRequestCallbackMbr = { permissions ->
             var isPermissionAllGranted = true
+            var neverAskAgain = false
             for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
                 if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                        true,
-                        "권한 필요",
-                        "서비스를 실행하기 위해 필요한 권한이 거부되었습니다.",
-                        "뒤로가기",
-                        onCheckBtnClicked = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                            finish()
-                        },
-                        onCanceled = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                            finish()
-                        }
-                    )
-
                     // 권한 클리어 플래그를 변경하고 break
+                    neverAskAgain = !shouldShowRequestPermissionRationale(activityPermission)
                     isPermissionAllGranted = false
                     break
                 }
@@ -100,6 +89,125 @@ class ActivityATemplate : AppCompatActivity() {
 
             if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
                 allPermissionsGranted()
+            } else if (!neverAskAgain) { // 단순 거부
+                viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
+                    true,
+                    "권한 필요",
+                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                    "뒤로가기",
+                    onCheckBtnClicked = {
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+
+                        finish()
+                    },
+                    onCanceled = {
+                        viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+
+                        finish()
+                    }
+                )
+
+            } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value =
+                    DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "권한 요청",
+                        "해당 서비스를 이용하기 위해선\n" +
+                                "필수 권한 승인이 필요합니다.\n" +
+                                "권한 설정 화면으로 이동하시겠습니까?",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            // 권한 설정 화면으로 이동
+                            val intent =
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            intent.data = Uri.fromParts("package", packageName, null)
+
+                            resultLauncherCallbackMbr = {
+                                // 설정 페이지 복귀시 콜백
+                                var isPermissionAllGranted1 = true
+                                for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
+                                    if (ActivityCompat.checkSelfPermission(
+                                            this,
+                                            activityPermission
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) { // 거부된 필수 권한이 존재
+                                        // 권한 클리어 플래그를 변경하고 break
+                                        isPermissionAllGranted1 = false
+                                        break
+                                    }
+                                }
+
+                                if (isPermissionAllGranted1) { // 권한 승인
+                                    allPermissionsGranted()
+                                } else { // 권한 거부
+                                    viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                        DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "권한 요청",
+                                            "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                            "뒤로가기",
+                                            onCheckBtnClicked = {
+                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                    null
+                                                finish()
+                                            },
+                                            onCanceled = {
+                                                viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                                    null
+                                                finish()
+                                            }
+                                        )
+                                }
+                            }
+                            resultLauncherMbr.launch(intent)
+                        },
+                        onNegBtnClicked = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "권한 요청",
+                                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                    "뒤로가기",
+                                    onCheckBtnClicked = {
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            null
+                                        finish()
+                                    },
+                                    onCanceled = {
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            null
+                                        finish()
+                                    }
+                                )
+                        },
+                        onCanceled = {
+                            viewModelMbr.binaryChooseDialogInfoLiveDataMbr.value = null
+
+                            viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "권한 요청",
+                                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                    "뒤로가기",
+                                    onCheckBtnClicked = {
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            null
+                                        finish()
+                                    },
+                                    onCanceled = {
+                                        viewModelMbr.confirmDialogInfoLiveDataMbr.value =
+                                            null
+                                        finish()
+                                    }
+                                )
+                        }
+                    )
+
             }
         }
 
