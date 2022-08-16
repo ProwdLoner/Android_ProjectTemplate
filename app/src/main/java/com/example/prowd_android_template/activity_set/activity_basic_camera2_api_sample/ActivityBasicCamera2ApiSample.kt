@@ -658,14 +658,35 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         classSpwMbr.currentCameraId = cameraId
     }
 
+    // todo
     // (초기 뷰 설정)
     private fun onCreateInitView() {
         // (화면을 꺼지지 않도록 하는 플래그)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        // (화면 방향에 따른 뷰 마진 설정)
+        val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display!!.rotation
+        } else {
+            windowManager.defaultDisplay.rotation
+        }
+
+        if (deviceOrientation == Surface.ROTATION_0) {
+            bindingMbr.btn1.y =
+                bindingMbr.btn1.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+
+            bindingMbr.btn2.y =
+                bindingMbr.btn2.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+
+            bindingMbr.btn3.y =
+                bindingMbr.btn3.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+        }
+
+        // (캡쳐)
         bindingMbr.btn2.setOnClickListener {
             cameraObjMbr.captureRequest(null, onError = {})
         }
+
         // (디버그 이미지 뷰 전환 기능)
         bindingMbr.debugYuvToRgbImg.setOnClickListener {
             bindingMbr.debugYuvToRgbImg.visibility = View.GONE
@@ -700,25 +721,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             bindingMbr.debugImageLabel.text = "ORIGIN"
         }
 
-        // 화면 방향에 따른 뷰 마진 설정
-        val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display!!.rotation
-        } else {
-            windowManager.defaultDisplay.rotation
-        }
-
-        if (deviceOrientation == Surface.ROTATION_0) {
-            bindingMbr.btn1.y =
-                bindingMbr.btn1.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
-
-            bindingMbr.btn2.y =
-                bindingMbr.btn2.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
-
-            bindingMbr.btn3.y =
-                bindingMbr.btn3.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
-        }
-
-        // 카메라 전환
+        // (카메라 전환)
         bindingMbr.cameraChangeBtn.setOnClickListener {
             val cameraInfoList = CameraObj.getAllSupportedCameraInfoList(this)
             val cameraItemList = ArrayList<String>()
@@ -1114,38 +1117,52 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 }
             )
 
-        // (카메라 변수 설정)
-        // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
-        // 떨림 보정
-        cameraObjMbr.setCameraStabilization(
-            true,
-            onComplete = {},
-            onError = {})
+        if (cameraObjMbr.cameraStatusCodeMbr == 1) {
+            cameraObjMbr.repeatingRequestOnTemplate(
+                forPreview = true,
+                forMediaRecorder = false,
+                forAnalysisImageReader = true,
+                onComplete = {
 
-        // (카메라 서페이스 설정)
-        cameraObjMbr.setCameraOutputSurfaces(
-            previewConfigVo,
-            captureImageReaderConfigVo,
-            null,
-            analysisImageReaderConfigVo,
-            onComplete = {
-                // (카메라 리퀘스트 설정)
-                cameraObjMbr.repeatingRequestOnTemplate(
-                    forPreview = true,
-                    forMediaRecorder = false,
-                    forAnalysisImageReader = true,
-                    onComplete = {
+                },
+                onError = {
 
-                    },
-                    onError = {
+                }
+            )
+        } else {
+            // (카메라 변수 설정)
+            // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
+            // 떨림 보정
+            cameraObjMbr.setCameraStabilization(
+                true,
+                onComplete = {},
+                onError = {})
 
-                    }
-                )
-            },
-            onError = {
+            // (카메라 서페이스 설정)
+            cameraObjMbr.setCameraOutputSurfaces(
+                previewConfigVo,
+                captureImageReaderConfigVo,
+                null,
+                analysisImageReaderConfigVo,
+                onComplete = {
+                    // (카메라 리퀘스트 설정)
+                    cameraObjMbr.repeatingRequestOnTemplate(
+                        forPreview = true,
+                        forMediaRecorder = false,
+                        forAnalysisImageReader = true,
+                        onComplete = {
 
-            }
-        )
+                        },
+                        onError = {
+
+                        }
+                    )
+                },
+                onError = {
+
+                }
+            )
+        }
     }
 
     // GPU 접속 제한 세마포어
