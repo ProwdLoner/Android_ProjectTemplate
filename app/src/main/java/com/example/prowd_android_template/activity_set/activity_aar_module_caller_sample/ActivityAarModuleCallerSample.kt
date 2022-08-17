@@ -347,10 +347,8 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
     // (액티비티 진입 권한이 클리어 된 시점)
     private fun allPermissionsGranted() {
         if (!doItAlreadyMbr) {
-            // (액티비티 실행시 처음 한번만 실행되는 로직)
+            // (onCreate + permissionGrant)
             doItAlreadyMbr = true
-
-            // (초기 데이터 수집)
 
             // (알고리즘)
             // 테스트 모듈의 함수 실행 결과 로깅
@@ -366,18 +364,21 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
 
             finish()
         } else {
-            // (onResume 로직) : 권한 클리어
-            // (뷰 데이터 로딩)
-            // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
-                // 진입 플래그 변경
-                currentUserSessionTokenMbr = sessionToken
+            // (onResume - (onCreate + permissionGrant)) : 권한 클리어
 
-                // (데이터 수집)
+            // (알고리즘)
+        }
 
-                // (알고리즘)
-            }
+        // (onResume)
+        // (알고리즘)
+        // (뷰 데이터 로딩)
+        // : 데이터 갱신은 유저 정보가 변경된 것을 기준으로 함.
+        val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
+        if (sessionToken != currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            // 진입 플래그 변경
+            currentUserSessionTokenMbr = sessionToken
+
+            // (데이터 수집)
 
             // (알고리즘)
         }
