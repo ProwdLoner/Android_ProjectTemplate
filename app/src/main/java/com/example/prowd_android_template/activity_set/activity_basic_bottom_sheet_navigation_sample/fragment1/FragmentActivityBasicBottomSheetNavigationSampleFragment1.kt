@@ -13,7 +13,7 @@ import com.example.prowd_android_template.databinding.FragmentActivityBasicBotto
 
 // 플래그먼트 필수 권한은 이를 사용하는 액티비티에서 처리를 할 것 = 권한 충족이 되었다고 가정
 class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
-    // <멤버 상수 공간>
+    // <멤버 변수 공간>
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
     lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
 
@@ -27,9 +27,6 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
-
-    // ---------------------------------------------------------------------------------------------
-    // <멤버 변수 공간>
     // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
     var doItAlreadyMbr = false
 

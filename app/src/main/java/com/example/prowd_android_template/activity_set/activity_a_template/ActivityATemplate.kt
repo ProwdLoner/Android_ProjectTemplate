@@ -28,7 +28,7 @@ import java.util.concurrent.Executors
 // 실제 어디도 연결되어 있지 않은 템플릿용 액티비티
 // 붙여놓고 사용할수 있도록 기본적인 구조가 완성
 class ActivityATemplate : AppCompatActivity() {
-    // <멤버 상수 공간>
+    // <멤버 변수 공간>
     // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지
     private lateinit var bindingMbr: ActivityATemplateBinding
 
@@ -47,12 +47,9 @@ class ActivityATemplate : AppCompatActivity() {
     //     ex : Manifest.permission.INTERNET
     val activityPermissionArrayMbr: Array<String> = arrayOf()
 
-
-    // ---------------------------------------------------------------------------------------------
-    // <멤버 변수 공간>
     // (다이얼로그 객체)
     var dialogMbr: Dialog? = null
-    var shownDialogClassNameMbr: InterfaceDialogInfoVO? = null
+    var shownDialogInfoVOMbr: InterfaceDialogInfoVO? = null
         set(value) {
             when (value) {
                 is DialogBinaryChoose.DialogInfoVO -> {
@@ -154,25 +151,25 @@ class ActivityATemplate : AppCompatActivity() {
             if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
                 allPermissionsGranted()
             } else if (!neverAskAgain) { // 단순 거부
-                shownDialogClassNameMbr = DialogConfirm.DialogInfoVO(
+                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
                     true,
                     "권한 필요",
                     "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
                     "뒤로가기",
                     onCheckBtnClicked = {
-                        shownDialogClassNameMbr = null
+                        shownDialogInfoVOMbr = null
 
                         finish()
                     },
                     onCanceled = {
-                        shownDialogClassNameMbr = null
+                        shownDialogInfoVOMbr = null
 
                         finish()
                     }
                 )
 
             } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
-                shownDialogClassNameMbr =
+                shownDialogInfoVOMbr =
                     DialogBinaryChoose.DialogInfoVO(
                         false,
                         "권한 요청",
@@ -182,7 +179,7 @@ class ActivityATemplate : AppCompatActivity() {
                         null,
                         null,
                         onPosBtnClicked = {
-                            shownDialogClassNameMbr = null
+                            shownDialogInfoVOMbr = null
 
                             // 권한 설정 화면으로 이동
                             val intent =
@@ -207,19 +204,19 @@ class ActivityATemplate : AppCompatActivity() {
                                 if (isPermissionAllGranted1) { // 권한 승인
                                     allPermissionsGranted()
                                 } else { // 권한 거부
-                                    shownDialogClassNameMbr =
+                                    shownDialogInfoVOMbr =
                                         DialogConfirm.DialogInfoVO(
                                             true,
                                             "권한 요청",
                                             "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
                                             "뒤로가기",
                                             onCheckBtnClicked = {
-                                                shownDialogClassNameMbr =
+                                                shownDialogInfoVOMbr =
                                                     null
                                                 finish()
                                             },
                                             onCanceled = {
-                                                shownDialogClassNameMbr =
+                                                shownDialogInfoVOMbr =
                                                     null
                                                 finish()
                                             }
@@ -229,42 +226,42 @@ class ActivityATemplate : AppCompatActivity() {
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
-                            shownDialogClassNameMbr = null
+                            shownDialogInfoVOMbr = null
 
-                            shownDialogClassNameMbr =
+                            shownDialogInfoVOMbr =
                                 DialogConfirm.DialogInfoVO(
                                     true,
                                     "권한 요청",
                                     "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
                                     "뒤로가기",
                                     onCheckBtnClicked = {
-                                        shownDialogClassNameMbr =
+                                        shownDialogInfoVOMbr =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        shownDialogClassNameMbr =
+                                        shownDialogInfoVOMbr =
                                             null
                                         finish()
                                     }
                                 )
                         },
                         onCanceled = {
-                            shownDialogClassNameMbr = null
+                            shownDialogInfoVOMbr = null
 
-                            shownDialogClassNameMbr =
+                            shownDialogInfoVOMbr =
                                 DialogConfirm.DialogInfoVO(
                                     true,
                                     "권한 요청",
                                     "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
                                     "뒤로가기",
                                     onCheckBtnClicked = {
-                                        shownDialogClassNameMbr =
+                                        shownDialogInfoVOMbr =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        shownDialogClassNameMbr =
+                                        shownDialogInfoVOMbr =
                                             null
                                         finish()
                                     }

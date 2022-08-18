@@ -59,7 +59,7 @@ import java.util.concurrent.Semaphore
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : onresume 에러, 전체확인
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
-    // <멤버 상수 공간>
+    // <멤버 변수 공간>
     // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지
     private lateinit var bindingMbr: ActivityBasicCamera2ApiSampleBinding
 
@@ -96,12 +96,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // image resize
     lateinit var scriptIntrinsicResizeMbr: ScriptIntrinsicResize
 
-
-    // ---------------------------------------------------------------------------------------------
-    // <멤버 변수 공간>
     // (다이얼로그 객체)
     var dialogMbr: Dialog? = null
-    var shownDialogClassNameMbr: InterfaceDialogInfoVO? = null
+    var shownDialogInfoVOMbr: InterfaceDialogInfoVO? = null
         set(value) {
             when (value) {
                 is DialogBinaryChoose.DialogInfoVO -> {
@@ -209,25 +206,25 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
                 allPermissionsGranted()
             } else if (!neverAskAgain) { // 단순 거부
-                shownDialogClassNameMbr = DialogConfirm.DialogInfoVO(
+                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
                     true,
                     "권한 필요",
                     "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
                     "뒤로가기",
                     onCheckBtnClicked = {
-                        shownDialogClassNameMbr = null
+                        shownDialogInfoVOMbr = null
 
                         finish()
                     },
                     onCanceled = {
-                        shownDialogClassNameMbr = null
+                        shownDialogInfoVOMbr = null
 
                         finish()
                     }
                 )
 
             } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
-                shownDialogClassNameMbr =
+                shownDialogInfoVOMbr =
                     DialogBinaryChoose.DialogInfoVO(
                         false,
                         "권한 요청",
@@ -237,7 +234,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         null,
                         null,
                         onPosBtnClicked = {
-                            shownDialogClassNameMbr = null
+                            shownDialogInfoVOMbr = null
 
                             // 권한 설정 화면으로 이동
                             val intent =
@@ -262,19 +259,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 if (isPermissionAllGranted1) { // 권한 승인
                                     allPermissionsGranted()
                                 } else { // 권한 거부
-                                    shownDialogClassNameMbr =
+                                    shownDialogInfoVOMbr =
                                         DialogConfirm.DialogInfoVO(
                                             true,
                                             "권한 요청",
                                             "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
                                             "뒤로가기",
                                             onCheckBtnClicked = {
-                                                shownDialogClassNameMbr =
+                                                shownDialogInfoVOMbr =
                                                     null
                                                 finish()
                                             },
                                             onCanceled = {
-                                                shownDialogClassNameMbr =
+                                                shownDialogInfoVOMbr =
                                                     null
                                                 finish()
                                             }
@@ -284,42 +281,42 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             resultLauncherMbr.launch(intent)
                         },
                         onNegBtnClicked = {
-                            shownDialogClassNameMbr = null
+                            shownDialogInfoVOMbr = null
 
-                            shownDialogClassNameMbr =
+                            shownDialogInfoVOMbr =
                                 DialogConfirm.DialogInfoVO(
                                     true,
                                     "권한 요청",
                                     "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
                                     "뒤로가기",
                                     onCheckBtnClicked = {
-                                        shownDialogClassNameMbr =
+                                        shownDialogInfoVOMbr =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        shownDialogClassNameMbr =
+                                        shownDialogInfoVOMbr =
                                             null
                                         finish()
                                     }
                                 )
                         },
                         onCanceled = {
-                            shownDialogClassNameMbr = null
+                            shownDialogInfoVOMbr = null
 
-                            shownDialogClassNameMbr =
+                            shownDialogInfoVOMbr =
                                 DialogConfirm.DialogInfoVO(
                                     true,
                                     "권한 요청",
                                     "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
                                     "뒤로가기",
                                     onCheckBtnClicked = {
-                                        shownDialogClassNameMbr =
+                                        shownDialogInfoVOMbr =
                                             null
                                         finish()
                                     },
                                     onCanceled = {
-                                        shownDialogClassNameMbr =
+                                        shownDialogInfoVOMbr =
                                             null
                                         finish()
                                     }
@@ -332,19 +329,19 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 연결된 카메라가 없을 때
         if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-            shownDialogClassNameMbr =
+            shownDialogInfoVOMbr =
                 DialogConfirm.DialogInfoVO(
                     true,
                     "카메라 장치가 없습니다.",
                     "카메라 장치가 발견되지 않습니다.\n화면을 종료합니다.",
                     null,
                     onCheckBtnClicked = {
-                        shownDialogClassNameMbr =
+                        shownDialogInfoVOMbr =
                             null
                         finish()
                     },
                     onCanceled = {
-                        shownDialogClassNameMbr =
+                        shownDialogInfoVOMbr =
                             null
                         finish()
                     }
@@ -489,7 +486,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     override fun onBackPressed() {
         imageProcessingPauseMbr = true
-        shownDialogClassNameMbr =
+        shownDialogInfoVOMbr =
             DialogBinaryChoose.DialogInfoVO(
                 true,
                 "카메라 종료",
@@ -497,17 +494,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 "종료",
                 "취소",
                 onPosBtnClicked = {
-                    shownDialogClassNameMbr =
+                    shownDialogInfoVOMbr =
                         null
                     finish()
                 },
                 onNegBtnClicked = {
-                    shownDialogClassNameMbr =
+                    shownDialogInfoVOMbr =
                         null
                     imageProcessingPauseMbr = false
                 },
                 onCanceled = {
-                    shownDialogClassNameMbr =
+                    shownDialogInfoVOMbr =
                         null
                     imageProcessingPauseMbr = false
                 }
@@ -567,17 +564,17 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         if (cameraInfoList.size == 0) {
             // 지원하는 카메라가 없음
-            shownDialogClassNameMbr = DialogConfirm.DialogInfoVO(
+            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
                 true,
                 "에러",
                 "지원되는 카메라를 찾을 수 없습니다.",
                 null,
                 onCheckBtnClicked = {
-                    shownDialogClassNameMbr = null
+                    shownDialogInfoVOMbr = null
                     finish()
                 },
                 onCanceled = {
-                    shownDialogClassNameMbr = null
+                    shownDialogInfoVOMbr = null
                     finish()
                 }
             )
@@ -739,7 +736,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
 
             imageProcessingPauseMbr = true
-            shownDialogClassNameMbr =
+            shownDialogInfoVOMbr =
                 DialogRadioButtonChoose.DialogInfoVO(
                     isCancelable = true,
                     title = "카메라 선택",
@@ -750,7 +747,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     onRadioItemClicked = {
                     },
                     onCancelBtnClicked = {
-                        shownDialogClassNameMbr = null
+                        shownDialogInfoVOMbr = null
                         imageProcessingPauseMbr = false
                     },
                     onSelectBtnClicked = {
@@ -869,11 +866,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                                 )
                             }
                         }
-                        shownDialogClassNameMbr = null
+                        shownDialogInfoVOMbr = null
                         imageProcessingPauseMbr = false
                     },
                     onCanceled = {
-                        shownDialogClassNameMbr = null
+                        shownDialogInfoVOMbr = null
                         imageProcessingPauseMbr = false
                     }
                 )
