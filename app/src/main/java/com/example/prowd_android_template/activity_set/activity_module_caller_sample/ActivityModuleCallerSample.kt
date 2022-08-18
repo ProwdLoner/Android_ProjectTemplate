@@ -42,7 +42,7 @@ class ActivityModuleCallerSample : AppCompatActivity() {
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
-    var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
+    var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
 
     // (ActivityResultLauncher 객체)
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일

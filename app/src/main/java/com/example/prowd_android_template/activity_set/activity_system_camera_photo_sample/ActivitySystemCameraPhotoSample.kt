@@ -51,7 +51,7 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
-    var permissionRequestCallbackMbr: (((MutableMap<String, Boolean>) -> Unit))? = null
+    var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
 
     // (ResultLauncher 객체)
     // 액티비티 이동 복귀 객체
