@@ -19,3 +19,6 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# request api set 안의 모든 하위 폴더, 모든 클래스를 제외
+-keep public class com.example.prowd_android_template.repository.network_retrofit2.request_api_set.** { *; }
