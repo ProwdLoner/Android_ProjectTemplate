@@ -14,6 +14,7 @@ import com.example.prowd_android_template.databinding.FragmentActivityBasicTabLa
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 
+// todo : 신코드 적용
 class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
     // <멤버 변수 공간>
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용

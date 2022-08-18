@@ -29,6 +29,7 @@ import com.example.prowd_android_template.util_object.NotificationWrapper
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+// todo : 신코드 적용
 class ActivityBasicNotificationSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)

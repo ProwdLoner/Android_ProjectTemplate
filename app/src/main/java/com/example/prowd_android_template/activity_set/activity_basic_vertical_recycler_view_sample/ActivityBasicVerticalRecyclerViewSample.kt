@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 신코드 적용
 // todo : 에러 화면 처리, 아이템 없을 때의 처리
 // 세로 리사이클러 뷰 예시
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {

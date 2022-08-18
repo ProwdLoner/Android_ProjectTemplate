@@ -17,7 +17,7 @@ import com.example.prowd_android_template.databinding.ActivityBasicServiceSample
 import com.example.prowd_android_template.services.BackgroundServiceTest
 import com.example.prowd_android_template.services.ForegroundServiceTest
 
-
+// todo : 신코드 적용
 class ActivityBasicServiceSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
