@@ -14,6 +14,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
     )
 
     // (autoLogin)
+    // 자동 로그인 설정
     var isAutoLogin: Boolean
         get() {
             return spMbr.getBoolean(
@@ -32,6 +33,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
         }
 
     // (sessionToken)
+    // 서버에서 발급한 고유 식별자. 비회원 상태라면 null
     var sessionToken: String?
         get() {
             return spMbr.getString(
@@ -87,36 +89,38 @@ class CurrentLoginSessionInfoSpw(application: Application) {
             }
         }
 
-    // (userServerId)
-    var userServerId: String?
+    // (loginId)
+    // 자체서버라면 서버 아이디, SNS 로그인이라면 각 식별 아이디
+    var loginId: String?
         get(): String? {
             return spMbr.getString(
-                "userServerId",
+                "loginId",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "userServerId",
+                    "loginId",
                     value
                 )
                 apply()
             }
         }
 
-    // (userServerPw)
-    var userServerPw: String?
+    // (loginPw)
+    // 서버 로그인 처럼 필요한 곳이 아니라면 null
+    var loginPw: String?
         get(): String? {
             return spMbr.getString(
-                "userServerPw",
+                "loginPw",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "userServerPw",
+                    "loginPw",
                     value
                 )
                 apply()

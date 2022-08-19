@@ -565,9 +565,9 @@ class ActivityInit : AppCompatActivity() {
         val loginType: Int =
             currentLoginSessionInfoSpwMbr.loginType
         val serverId: String? =
-            currentLoginSessionInfoSpwMbr.userServerId
+            currentLoginSessionInfoSpwMbr.loginId
         val serverPw: String? =
-            currentLoginSessionInfoSpwMbr.userServerPw
+            currentLoginSessionInfoSpwMbr.loginPw
 
         if (isAutoLogin && loginType != 0) { // 로그인 검증 필요
             // (정보 요청 콜백)
@@ -582,8 +582,8 @@ class ActivityInit : AppCompatActivity() {
                                 currentLoginSessionInfoSpwMbr.isAutoLogin = true
                                 currentLoginSessionInfoSpwMbr.sessionToken = sessionToken
                                 currentLoginSessionInfoSpwMbr.userNickName = userNickName
-                                currentLoginSessionInfoSpwMbr.userServerId = serverId
-                                currentLoginSessionInfoSpwMbr.userServerPw = serverPw
+                                currentLoginSessionInfoSpwMbr.loginId = serverId
+                                currentLoginSessionInfoSpwMbr.loginPw = serverPw
                                 currentLoginSessionInfoSpwMbr.loginType = loginType
 
                                 goToNextActivitySemaphoreMbr.acquire()
@@ -597,8 +597,8 @@ class ActivityInit : AppCompatActivity() {
                                 currentLoginSessionInfoSpwMbr.isAutoLogin = false
                                 currentLoginSessionInfoSpwMbr.sessionToken = null
                                 currentLoginSessionInfoSpwMbr.userNickName = null
-                                currentLoginSessionInfoSpwMbr.userServerId = null
-                                currentLoginSessionInfoSpwMbr.userServerPw = null
+                                currentLoginSessionInfoSpwMbr.loginId = null
+                                currentLoginSessionInfoSpwMbr.loginPw = null
                                 currentLoginSessionInfoSpwMbr.loginType = 0
 
                                 goToNextActivitySemaphoreMbr.acquire()
@@ -657,8 +657,8 @@ class ActivityInit : AppCompatActivity() {
             currentLoginSessionInfoSpwMbr.isAutoLogin = false
             currentLoginSessionInfoSpwMbr.sessionToken = null
             currentLoginSessionInfoSpwMbr.userNickName = null
-            currentLoginSessionInfoSpwMbr.userServerId = null
-            currentLoginSessionInfoSpwMbr.userServerPw = null
+            currentLoginSessionInfoSpwMbr.loginId = null
+            currentLoginSessionInfoSpwMbr.loginPw = null
             currentLoginSessionInfoSpwMbr.loginType = 0
 
             goToNextActivitySemaphoreMbr.acquire()
