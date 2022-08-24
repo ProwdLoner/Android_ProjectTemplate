@@ -25,6 +25,7 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+// todo : 신코드 적용
 class ActivityJniSampleList : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)

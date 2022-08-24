@@ -103,6 +103,7 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
     var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
+    private var permissionRequestOnProgressMbr = false
 
     // (ActivityResultLauncher 객체)
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
@@ -150,6 +151,7 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
             }
 
             if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                permissionRequestOnProgressMbr= false
                 allPermissionsGranted()
             } else if (!neverAskAgain) { // 단순 거부
                 shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
@@ -159,11 +161,13 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
                     "뒤로가기",
                     onCheckBtnClicked = {
                         shownDialogInfoVOMbr = null
+                        permissionRequestOnProgressMbr= false
 
                         finish()
                     },
                     onCanceled = {
                         shownDialogInfoVOMbr = null
+                        permissionRequestOnProgressMbr= false
 
                         finish()
                     }
@@ -203,6 +207,7 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
                                 }
 
                                 if (isPermissionAllGranted1) { // 권한 승인
+                                    permissionRequestOnProgressMbr= false
                                     allPermissionsGranted()
                                 } else { // 권한 거부
                                     shownDialogInfoVOMbr =
@@ -214,11 +219,13 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
                                             onCheckBtnClicked = {
                                                 shownDialogInfoVOMbr =
                                                     null
+                                                permissionRequestOnProgressMbr= false
                                                 finish()
                                             },
                                             onCanceled = {
                                                 shownDialogInfoVOMbr =
                                                     null
+                                                permissionRequestOnProgressMbr= false
                                                 finish()
                                             }
                                         )
@@ -238,11 +245,13 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
                                     onCheckBtnClicked = {
                                         shownDialogInfoVOMbr =
                                             null
+                                        permissionRequestOnProgressMbr= false
                                         finish()
                                     },
                                     onCanceled = {
                                         shownDialogInfoVOMbr =
                                             null
+                                        permissionRequestOnProgressMbr= false
                                         finish()
                                     }
                                 )
@@ -259,11 +268,13 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
                                     onCheckBtnClicked = {
                                         shownDialogInfoVOMbr =
                                             null
+                                        permissionRequestOnProgressMbr= false
                                         finish()
                                     },
                                     onCanceled = {
                                         shownDialogInfoVOMbr =
                                             null
+                                        permissionRequestOnProgressMbr= false
                                         finish()
                                     }
                                 )
@@ -273,7 +284,10 @@ class ActivityViewPagerSampleList : AppCompatActivity() {
             }
         }
 
-        permissionRequestMbr.launch(activityPermissionArrayMbr)
+        if (!permissionRequestOnProgressMbr){
+            permissionRequestOnProgressMbr= true
+            permissionRequestMbr.launch(activityPermissionArrayMbr)
+        }
     }
 
     override fun onDestroy() {
