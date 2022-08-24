@@ -28,6 +28,7 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+// todo : 신코드 적용
 class ActivityBasicBottomSheetNavigationSample : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지

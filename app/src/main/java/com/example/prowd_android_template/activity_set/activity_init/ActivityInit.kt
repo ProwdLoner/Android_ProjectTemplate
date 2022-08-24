@@ -27,10 +27,12 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 신코드 적용
 // todo : 네트워크 요청 부분 변경.
 //    아직 api 주어지기 전을 가정하여 뷰에 필요한 데이터만 가져올수 있게 액티비티 내부에서 클래스 만들고,
 //    네트워크 요청의 onComplete를 가진 함수 만들기
 //    네트워크 요청 함수는 별도 스레드에서 동작하며, 한 사이클간 중복되지 않게 내부에 세마포어를 연결
+// todo : 푸시 권한 추가
 class ActivityInit : AppCompatActivity() {
     // <멤버 변수 공간>
     // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지

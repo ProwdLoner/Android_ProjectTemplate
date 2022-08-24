@@ -56,6 +56,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 신코드 적용
 // todo : 180 도 회전시 프리뷰 거꾸로 나오는 문제(restart 가 되지 않고 있음)
 // todo : onresume 에러, 전체확인
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
