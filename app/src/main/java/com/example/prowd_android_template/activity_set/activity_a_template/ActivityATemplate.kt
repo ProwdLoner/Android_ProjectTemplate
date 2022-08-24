@@ -25,6 +25,7 @@ import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+// todo : 권한 요청 부분 검증
 // 실제 어디도 연결되어 있지 않은 템플릿용 액티비티
 // 붙여놓고 사용할수 있도록 기본적인 구조가 완성
 class ActivityATemplate : AppCompatActivity() {
