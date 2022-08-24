@@ -105,6 +105,7 @@ class ActivityATemplate : AppCompatActivity() {
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
     var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
+    private var permissionRequestOnProgressMbr = false
 
     // (ActivityResultLauncher 객체)
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
@@ -152,6 +153,7 @@ class ActivityATemplate : AppCompatActivity() {
             }
 
             if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                permissionRequestOnProgressMbr= false
                 allPermissionsGranted()
             } else if (!neverAskAgain) { // 단순 거부
                 shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
@@ -161,11 +163,13 @@ class ActivityATemplate : AppCompatActivity() {
                     "뒤로가기",
                     onCheckBtnClicked = {
                         shownDialogInfoVOMbr = null
+                        permissionRequestOnProgressMbr= false
 
                         finish()
                     },
                     onCanceled = {
                         shownDialogInfoVOMbr = null
+                        permissionRequestOnProgressMbr= false
 
                         finish()
                     }
@@ -205,6 +209,7 @@ class ActivityATemplate : AppCompatActivity() {
                                 }
 
                                 if (isPermissionAllGranted1) { // 권한 승인
+                                    permissionRequestOnProgressMbr= false
                                     allPermissionsGranted()
                                 } else { // 권한 거부
                                     shownDialogInfoVOMbr =
@@ -216,11 +221,13 @@ class ActivityATemplate : AppCompatActivity() {
                                             onCheckBtnClicked = {
                                                 shownDialogInfoVOMbr =
                                                     null
+                                                permissionRequestOnProgressMbr= false
                                                 finish()
                                             },
                                             onCanceled = {
                                                 shownDialogInfoVOMbr =
                                                     null
+                                                permissionRequestOnProgressMbr= false
                                                 finish()
                                             }
                                         )
@@ -240,11 +247,13 @@ class ActivityATemplate : AppCompatActivity() {
                                     onCheckBtnClicked = {
                                         shownDialogInfoVOMbr =
                                             null
+                                        permissionRequestOnProgressMbr= false
                                         finish()
                                     },
                                     onCanceled = {
                                         shownDialogInfoVOMbr =
                                             null
+                                        permissionRequestOnProgressMbr= false
                                         finish()
                                     }
                                 )
@@ -261,11 +270,13 @@ class ActivityATemplate : AppCompatActivity() {
                                     onCheckBtnClicked = {
                                         shownDialogInfoVOMbr =
                                             null
+                                        permissionRequestOnProgressMbr= false
                                         finish()
                                     },
                                     onCanceled = {
                                         shownDialogInfoVOMbr =
                                             null
+                                        permissionRequestOnProgressMbr= false
                                         finish()
                                     }
                                 )
@@ -275,7 +286,10 @@ class ActivityATemplate : AppCompatActivity() {
             }
         }
 
-        permissionRequestMbr.launch(activityPermissionArrayMbr)
+        if (!permissionRequestOnProgressMbr){
+            permissionRequestOnProgressMbr= true
+            permissionRequestMbr.launch(activityPermissionArrayMbr)
+        }
     }
 
     override fun onDestroy() {
