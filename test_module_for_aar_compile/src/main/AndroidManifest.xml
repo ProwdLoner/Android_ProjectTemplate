@@ -5,6 +5,7 @@
     <application>
         <activity
             android:name=".activity_set.ActivityTestModuleForAarCompile"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />
     </application>
 
