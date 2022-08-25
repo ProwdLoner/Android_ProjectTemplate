@@ -24,20 +24,20 @@ import com.example.prowd_android_template.databinding.ActivityJniSampleListBindi
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
 
-// todo : 신코드 적용
 class ActivityJniSampleList : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
     //     ex : Manifest.permission.INTERNET
-    val activityPermissionArrayMbr: Array<String> = arrayOf()
+    private val activityPermissionArrayMbr: Array<String> = arrayOf()
 
 
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
-    // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지
-    private lateinit var bindingMbr: ActivityJniSampleListBinding
+    // (뷰 바인더 객체)
+    lateinit var bindingMbr: ActivityJniSampleListBinding
 
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
@@ -104,17 +104,13 @@ class ActivityJniSampleList : AppCompatActivity() {
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
     var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
+    private var permissionRequestOnProgressMbr = false
+    private val permissionRequestOnProgressSemaphoreMbr = Semaphore(1)
 
     // (ActivityResultLauncher 객체)
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
-
-    // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
-    var doItAlreadyMbr = false
-
-    // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
-    var currentUserSessionTokenMbr: String? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -136,145 +132,198 @@ class ActivityJniSampleList : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        // (액티비티 진입 필수 권한 확인)
-        // 진입 필수 권한이 클리어 되어야 로직이 실행
-        permissionRequestCallbackMbr = { permissions ->
-            var isPermissionAllGranted = true
-            var neverAskAgain = false
-            for (activityPermission in activityPermissionArrayMbr) {
-                if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
-                    // 권한 클리어 플래그를 변경하고 break
-                    neverAskAgain = !shouldShowRequestPermissionRationale(activityPermission)
-                    isPermissionAllGranted = false
-                    break
+        executorServiceMbr.execute {
+            permissionRequestOnProgressSemaphoreMbr.acquire()
+            runOnUiThread {
+                if (!permissionRequestOnProgressMbr) { // 현재 권한 요청중이 아님
+                    permissionRequestOnProgressMbr = true
+                    permissionRequestOnProgressSemaphoreMbr.release()
+                    // (액티비티 진입 필수 권한 확인)
+                    // 진입 필수 권한이 클리어 되어야 로직이 실행
+
+                    // 권한 요청 콜백
+                    permissionRequestCallbackMbr = { permissions ->
+                        var isPermissionAllGranted = true
+                        var neverAskAgain = false
+                        for (activityPermission in activityPermissionArrayMbr) {
+                            if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
+                                // 권한 클리어 플래그를 변경하고 break
+                                neverAskAgain =
+                                    !shouldShowRequestPermissionRationale(activityPermission)
+                                isPermissionAllGranted = false
+                                break
+                            }
+                        }
+
+                        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                            permissionRequestOnProgressSemaphoreMbr.acquire()
+                            permissionRequestOnProgressMbr = false
+                            permissionRequestOnProgressSemaphoreMbr.release()
+
+                            allPermissionsGranted()
+                        } else if (!neverAskAgain) { // 단순 거부
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "권한 필요",
+                                "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                "뒤로가기",
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                    permissionRequestOnProgressMbr = false
+                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                    finish()
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                    permissionRequestOnProgressMbr = false
+                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                    finish()
+                                }
+                            )
+
+                        } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                            shownDialogInfoVOMbr =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "해당 서비스를 이용하기 위해선\n" +
+                                            "필수 권한 승인이 필요합니다.\n" +
+                                            "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 권한 설정 화면으로 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        intent.data = Uri.fromParts("package", packageName, null)
+
+                                        resultLauncherCallbackMbr = {
+                                            // 설정 페이지 복귀시 콜백
+                                            var isPermissionAllGranted1 = true
+                                            for (activityPermission in activityPermissionArrayMbr) {
+                                                if (ActivityCompat.checkSelfPermission(
+                                                        this,
+                                                        activityPermission
+                                                    ) != PackageManager.PERMISSION_GRANTED
+                                                ) { // 거부된 필수 권한이 존재
+                                                    // 권한 클리어 플래그를 변경하고 break
+                                                    isPermissionAllGranted1 = false
+                                                    break
+                                                }
+                                            }
+
+                                            if (isPermissionAllGranted1) { // 권한 승인
+                                                permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                permissionRequestOnProgressMbr = false
+                                                permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                allPermissionsGranted()
+                                            } else { // 권한 거부
+                                                shownDialogInfoVOMbr =
+                                                    DialogConfirm.DialogInfoVO(
+                                                        true,
+                                                        "권한 요청",
+                                                        "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                                        "뒤로가기",
+                                                        onCheckBtnClicked = {
+                                                            shownDialogInfoVOMbr =
+                                                                null
+                                                            permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                            permissionRequestOnProgressMbr = false
+                                                            permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                            finish()
+                                                        },
+                                                        onCanceled = {
+                                                            shownDialogInfoVOMbr =
+                                                                null
+                                                            permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                            permissionRequestOnProgressMbr = false
+                                                            permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                            finish()
+                                                        }
+                                                    )
+                                            }
+                                        }
+                                        resultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        shownDialogInfoVOMbr =
+                                            DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "권한 요청",
+                                                "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                                "뒤로가기",
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr =
+                                                        null
+                                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                    permissionRequestOnProgressMbr = false
+                                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                    finish()
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr =
+                                                        null
+                                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                    permissionRequestOnProgressMbr = false
+                                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                    finish()
+                                                }
+                                            )
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+
+                                        shownDialogInfoVOMbr =
+                                            DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "권한 요청",
+                                                "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                                "뒤로가기",
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr =
+                                                        null
+                                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                    permissionRequestOnProgressMbr = false
+                                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                    finish()
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr =
+                                                        null
+                                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                    permissionRequestOnProgressMbr = false
+                                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                    finish()
+                                                }
+                                            )
+                                    }
+                                )
+
+                        }
+                    }
+
+                    // 권한 요청
+                    permissionRequestMbr.launch(activityPermissionArrayMbr)
+                } else { // 현재 권한 요청중
+                    permissionRequestOnProgressSemaphoreMbr.release()
                 }
             }
-
-            if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
-                allPermissionsGranted()
-            } else if (!neverAskAgain) { // 단순 거부
-                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                    true,
-                    "권한 필요",
-                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
-                    "뒤로가기",
-                    onCheckBtnClicked = {
-                        shownDialogInfoVOMbr = null
-
-                        finish()
-                    },
-                    onCanceled = {
-                        shownDialogInfoVOMbr = null
-
-                        finish()
-                    }
-                )
-
-            } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
-                shownDialogInfoVOMbr =
-                    DialogBinaryChoose.DialogInfoVO(
-                        false,
-                        "권한 요청",
-                        "해당 서비스를 이용하기 위해선\n" +
-                                "필수 권한 승인이 필요합니다.\n" +
-                                "권한 설정 화면으로 이동하시겠습니까?",
-                        null,
-                        null,
-                        onPosBtnClicked = {
-                            shownDialogInfoVOMbr = null
-
-                            // 권한 설정 화면으로 이동
-                            val intent =
-                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                            intent.data = Uri.fromParts("package", packageName, null)
-
-                            resultLauncherCallbackMbr = {
-                                // 설정 페이지 복귀시 콜백
-                                var isPermissionAllGranted1 = true
-                                for (activityPermission in activityPermissionArrayMbr) {
-                                    if (ActivityCompat.checkSelfPermission(
-                                            this,
-                                            activityPermission
-                                        ) != PackageManager.PERMISSION_GRANTED
-                                    ) { // 거부된 필수 권한이 존재
-                                        // 권한 클리어 플래그를 변경하고 break
-                                        isPermissionAllGranted1 = false
-                                        break
-                                    }
-                                }
-
-                                if (isPermissionAllGranted1) { // 권한 승인
-                                    allPermissionsGranted()
-                                } else { // 권한 거부
-                                    shownDialogInfoVOMbr =
-                                        DialogConfirm.DialogInfoVO(
-                                            true,
-                                            "권한 요청",
-                                            "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
-                                            "뒤로가기",
-                                            onCheckBtnClicked = {
-                                                shownDialogInfoVOMbr =
-                                                    null
-                                                finish()
-                                            },
-                                            onCanceled = {
-                                                shownDialogInfoVOMbr =
-                                                    null
-                                                finish()
-                                            }
-                                        )
-                                }
-                            }
-                            resultLauncherMbr.launch(intent)
-                        },
-                        onNegBtnClicked = {
-                            shownDialogInfoVOMbr = null
-
-                            shownDialogInfoVOMbr =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "권한 요청",
-                                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
-                                    "뒤로가기",
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                        finish()
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                        finish()
-                                    }
-                                )
-                        },
-                        onCanceled = {
-                            shownDialogInfoVOMbr = null
-
-                            shownDialogInfoVOMbr =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "권한 요청",
-                                    "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
-                                    "뒤로가기",
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                        finish()
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                        finish()
-                                    }
-                                )
-                        }
-                    )
-
-            }
         }
-
-        permissionRequestMbr.launch(activityPermissionArrayMbr)
     }
 
     override fun onDestroy() {
@@ -359,6 +408,8 @@ class ActivityJniSampleList : AppCompatActivity() {
 
     // (액티비티 진입 권한이 클리어 된 시점)
     // : 실질적인 액티비티 로직 실행구역
+    private var doItAlreadyMbr = false
+    private var currentUserSessionTokenMbr: String? = null
     private fun allPermissionsGranted() {
         if (!doItAlreadyMbr) {
             // (권한이 충족된 onCreate)
