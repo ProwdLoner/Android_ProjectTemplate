@@ -57,6 +57,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 권한 체크 시점에 카메라가 실행되지 않음
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
