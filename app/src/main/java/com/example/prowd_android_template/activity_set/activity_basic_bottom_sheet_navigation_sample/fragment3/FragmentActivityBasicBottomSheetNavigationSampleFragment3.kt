@@ -11,6 +11,7 @@ import com.example.prowd_android_template.activity_set.activity_basic_bottom_she
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
 
+// todo : 신코드 적용
 class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     // <멤버 상수 공간>
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용

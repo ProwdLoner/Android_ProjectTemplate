@@ -11,6 +11,7 @@ import com.example.prowd_android_template.activity_set.activity_basic_bottom_she
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment1Binding
 
+// todo : 신코드 적용
 // 플래그먼트 필수 권한은 이를 사용하는 액티비티에서 처리를 할 것 = 권한 충족이 되었다고 가정
 class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     // <멤버 변수 공간>
