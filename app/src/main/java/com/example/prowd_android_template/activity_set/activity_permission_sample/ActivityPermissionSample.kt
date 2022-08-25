@@ -361,86 +361,6 @@ class ActivityPermissionSample : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    // (권한 요청 함수)
-    // permissionArray 한묶음에 대한 권한 요청과 처리.
-    fun requestDevicePermissions(
-        permissionArray: Array<String>,
-        onComplete: (isAllPermissionsGranted: Boolean) -> Unit
-    ) {
-        // 권한 요청 콜백
-        permissionRequestCallbackMbr = { permissions ->
-            // (거부된 권한 리스트)
-            var isPermissionAllGranted = true // 모든 권한 승인여부
-            var neverAskAgain = false // 다시묻지 않기 체크 여부
-            for (activityPermission in permissionArray) {
-                if (!permissions[activityPermission]!!) { // 필수 권한 거부
-                    // 모든 권한 승인여부 플래그를 변경하고 break
-                    isPermissionAllGranted = false
-                    neverAskAgain =
-                        !shouldShowRequestPermissionRationale(activityPermission)
-                    break
-                }
-            }
-
-            if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
-                onComplete(true)
-            } else if (!neverAskAgain) { // 단순 거부
-                onComplete(false)
-            } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
-                shownDialogInfoVOMbr =
-                    DialogBinaryChoose.DialogInfoVO(
-                        false,
-                        "권한 요청",
-                        "해당 서비스를 이용하기 위해선\n" +
-                                "필수 권한 승인이 필요합니다.\n" +
-                                "권한 설정 화면으로 이동하시겠습니까?",
-                        null,
-                        null,
-                        onPosBtnClicked = {
-                            shownDialogInfoVOMbr = null
-
-                            // 권한 설정 화면으로 이동
-                            val intent =
-                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = Uri.fromParts("package", packageName, null)
-                                }
-
-                            resultLauncherCallbackMbr = {
-                                // 설정 페이지 복귀시 콜백
-                                var isPermissionAllGranted1 = true
-                                for (activityPermission in permissionArray) {
-                                    if (ActivityCompat.checkSelfPermission(
-                                            this,
-                                            activityPermission
-                                        ) != PackageManager.PERMISSION_GRANTED
-                                    ) { // 거부된 필수 권한이 존재
-                                        // 권한 클리어 플래그를 변경하고 break
-                                        isPermissionAllGranted1 = false
-                                        break
-                                    }
-                                }
-
-                                if (isPermissionAllGranted1) { // 권한 승인
-                                    onComplete(true)
-                                } else { // 권한 거부
-                                    onComplete(false)
-                                }
-                            }
-                            resultLauncherMbr.launch(intent)
-                        },
-                        onNegBtnClicked = {
-                            shownDialogInfoVOMbr = null
-
-                            onComplete(false)
-                        },
-                        onCanceled = {}
-                    )
-            }
-        }
-
-        // 권한 요청
-        permissionRequestMbr.launch(permissionArray)
-    }
 
 
     // ---------------------------------------------------------------------------------------------
@@ -495,24 +415,8 @@ class ActivityPermissionSample : AppCompatActivity() {
                     onPosBtnClicked = { // 권한 승인
                         shownDialogInfoVOMbr = null
 
+                        // 변경 상태저장
                         customPermissionSpwMbr.pushPermissionGranted = true
-
-                        shownDialogInfoVOMbr =
-                            DialogConfirm.DialogInfoVO(
-                                true,
-                                "서비스 알림 수신 권한",
-                                "서비스 알림 권한이 승인 되었습니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr =
-                                        null
-
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr =
-                                        null
-                                }
-                            )
                     },
                     onNegBtnClicked = {
                         shownDialogInfoVOMbr = null
@@ -533,8 +437,10 @@ class ActivityPermissionSample : AppCompatActivity() {
                         null,
                         null,
                         onPosBtnClicked = {
-                            customPermissionSpwMbr.pushPermissionGranted = false
                             shownDialogInfoVOMbr = null
+
+                            // 변경 상태저장
+                            customPermissionSpwMbr.pushPermissionGranted = false
                         },
                         onNegBtnClicked = {
                             shownDialogInfoVOMbr = null
@@ -551,39 +457,68 @@ class ActivityPermissionSample : AppCompatActivity() {
         bindingMbr.externalStorageReadPermissionSwitch.setOnClickListener {
             if (bindingMbr.externalStorageReadPermissionSwitch.isChecked) { // 체크시
                 // 권한 요청
-                requestDevicePermissions(
-                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                    onComplete = { isAllPermissionsGranted ->
-                        if (isAllPermissionsGranted) {
-                            shownDialogInfoVOMbr =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "외부 저장소 읽기 권한",
-                                    "외부 저장소 읽기 권한이 승인 되었습니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                    }
-                                )
-                        } else {
-                            // 뷰 상태 되돌리기
-                            bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
+                // 권한 요청 콜백
+                val permissionArray: Array<String> =
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                permissionRequestCallbackMbr = { permissions ->
+                    // (거부된 권한 리스트)
+                    var isPermissionAllGranted = true // 모든 권한 승인여부
+                    var neverAskAgain = false // 다시묻지 않기 체크 여부
+                    for (permission in permissionArray) {
+                        if (!permissions[permission]!!) { // 필수 권한 거부
+                            // 모든 권한 승인여부 플래그를 변경하고 break
+                            isPermissionAllGranted = false
+                            neverAskAgain = !shouldShowRequestPermissionRationale(permission)
+                            break
                         }
                     }
-                )
+
+                    if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+
+                    } else if (!neverAskAgain) { // 단순 거부
+                        // 뷰 상태 되돌리기
+                        bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
+                    } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                        shownDialogInfoVOMbr =
+                            DialogBinaryChoose.DialogInfoVO(
+                                false,
+                                "권한 요청",
+                                "권한 설정 화면으로 이동하시겠습니까?",
+                                null,
+                                null,
+                                onPosBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+
+                                    // 권한 설정 화면으로 이동
+                                    val intent =
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                            data = Uri.fromParts("package", packageName, null)
+                                        }
+
+                                    resultLauncherCallbackMbr = {}
+                                    resultLauncherMbr.launch(intent)
+                                },
+                                onNegBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+
+                                    // 뷰 상태 되돌리기
+                                    bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
+                                },
+                                onCanceled = {}
+                            )
+                    }
+                }
+
+                // 권한 요청
+                permissionRequestMbr.launch(permissionArray)
             } else {
                 // 체크 해제시
                 // 권한 해제 다이얼로그
                 shownDialogInfoVOMbr =
                     DialogBinaryChoose.DialogInfoVO(
                         false,
-                        "외부 저장소 읽기 권한 해제",
-                        "외부 저장소 읽기 권한을 해제하시겠습니까?\n(권한 설정 화면으로 이동합니다.)",
+                        "권한 해제",
+                        "권한 해제를 위해 설정 화면으로 이동하시겠습니까?",
                         null,
                         null,
                         onPosBtnClicked = {
@@ -612,39 +547,68 @@ class ActivityPermissionSample : AppCompatActivity() {
         bindingMbr.cameraPermissionSwitch.setOnClickListener {
             if (bindingMbr.cameraPermissionSwitch.isChecked) { // 체크시
                 // 권한 요청
-                requestDevicePermissions(
-                    arrayOf(Manifest.permission.CAMERA),
-                    onComplete = { isAllPermissionsGranted ->
-                        if (isAllPermissionsGranted) {
-                            shownDialogInfoVOMbr =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "카메라 사용 권한",
-                                    "카메라 사용 권한이 승인 되었습니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                    }
-                                )
-                        } else {
-                            // 뷰 상태 되돌리기
-                            bindingMbr.cameraPermissionSwitch.isChecked = false
+                // 권한 요청 콜백
+                val permissionArray: Array<String> =
+                    arrayOf(Manifest.permission.CAMERA)
+                permissionRequestCallbackMbr = { permissions ->
+                    // (거부된 권한 리스트)
+                    var isPermissionAllGranted = true // 모든 권한 승인여부
+                    var neverAskAgain = false // 다시묻지 않기 체크 여부
+                    for (permission in permissionArray) {
+                        if (!permissions[permission]!!) { // 필수 권한 거부
+                            // 모든 권한 승인여부 플래그를 변경하고 break
+                            isPermissionAllGranted = false
+                            neverAskAgain = !shouldShowRequestPermissionRationale(permission)
+                            break
                         }
                     }
-                )
+
+                    if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+
+                    } else if (!neverAskAgain) { // 단순 거부
+                        // 뷰 상태 되돌리기
+                        bindingMbr.cameraPermissionSwitch.isChecked = false
+                    } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                        shownDialogInfoVOMbr =
+                            DialogBinaryChoose.DialogInfoVO(
+                                false,
+                                "권한 요청",
+                                "권한 설정 화면으로 이동하시겠습니까?",
+                                null,
+                                null,
+                                onPosBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+
+                                    // 권한 설정 화면으로 이동
+                                    val intent =
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                            data = Uri.fromParts("package", packageName, null)
+                                        }
+
+                                    resultLauncherCallbackMbr = {}
+                                    resultLauncherMbr.launch(intent)
+                                },
+                                onNegBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+
+                                    // 뷰 상태 되돌리기
+                                    bindingMbr.cameraPermissionSwitch.isChecked = false
+                                },
+                                onCanceled = {}
+                            )
+                    }
+                }
+
+                // 권한 요청
+                permissionRequestMbr.launch(permissionArray)
             } else {
                 // 체크 해제시
                 // 권한 해제 다이얼로그
                 shownDialogInfoVOMbr =
                     DialogBinaryChoose.DialogInfoVO(
                         false,
-                        "카메라 사용 권한 해제",
-                        "카메라 사용 권한을 해제하시겠습니까?\n(권한 설정 화면으로 이동합니다.)",
+                        "권한 해제",
+                        "권한 해제를 위해 설정 화면으로 이동하시겠습니까?",
                         null,
                         null,
                         onPosBtnClicked = {
@@ -673,39 +637,68 @@ class ActivityPermissionSample : AppCompatActivity() {
         bindingMbr.audioRecordPermissionSwitch.setOnClickListener {
             if (bindingMbr.audioRecordPermissionSwitch.isChecked) { // 체크시
                 // 권한 요청
-                requestDevicePermissions(
-                    arrayOf(Manifest.permission.RECORD_AUDIO),
-                    onComplete = { isAllPermissionsGranted ->
-                        if (isAllPermissionsGranted) {
-                            shownDialogInfoVOMbr =
-                                DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "오디오 녹음 권한",
-                                    "오디오 녹음 권한이 승인 되었습니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr =
-                                            null
-                                    }
-                                )
-                        } else {
-                            // 뷰 상태 되돌리기
-                            bindingMbr.audioRecordPermissionSwitch.isChecked = false
+                // 권한 요청 콜백
+                val permissionArray: Array<String> =
+                    arrayOf(Manifest.permission.RECORD_AUDIO)
+                permissionRequestCallbackMbr = { permissions ->
+                    // (거부된 권한 리스트)
+                    var isPermissionAllGranted = true // 모든 권한 승인여부
+                    var neverAskAgain = false // 다시묻지 않기 체크 여부
+                    for (permission in permissionArray) {
+                        if (!permissions[permission]!!) { // 필수 권한 거부
+                            // 모든 권한 승인여부 플래그를 변경하고 break
+                            isPermissionAllGranted = false
+                            neverAskAgain = !shouldShowRequestPermissionRationale(permission)
+                            break
                         }
                     }
-                )
+
+                    if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+
+                    } else if (!neverAskAgain) { // 단순 거부
+                        // 뷰 상태 되돌리기
+                        bindingMbr.audioRecordPermissionSwitch.isChecked = false
+                    } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                        shownDialogInfoVOMbr =
+                            DialogBinaryChoose.DialogInfoVO(
+                                false,
+                                "권한 요청",
+                                "권한 설정 화면으로 이동하시겠습니까?",
+                                null,
+                                null,
+                                onPosBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+
+                                    // 권한 설정 화면으로 이동
+                                    val intent =
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                            data = Uri.fromParts("package", packageName, null)
+                                        }
+
+                                    resultLauncherCallbackMbr = {}
+                                    resultLauncherMbr.launch(intent)
+                                },
+                                onNegBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+
+                                    // 뷰 상태 되돌리기
+                                    bindingMbr.audioRecordPermissionSwitch.isChecked = false
+                                },
+                                onCanceled = {}
+                            )
+                    }
+                }
+
+                // 권한 요청
+                permissionRequestMbr.launch(permissionArray)
             } else {
                 // 체크 해제시
                 // 권한 해제 다이얼로그
                 shownDialogInfoVOMbr =
                     DialogBinaryChoose.DialogInfoVO(
                         false,
-                        "오디오 녹음 권한 해제",
-                        "오디오 녹음 권한을 해제하시겠습니까?\n(권한 설정 화면으로 이동합니다.)",
+                        "권한 해제",
+                        "권한 해제를 위해 설정 화면으로 이동하시겠습니까?",
                         null,
                         null,
                         onPosBtnClicked = {
@@ -734,6 +727,11 @@ class ActivityPermissionSample : AppCompatActivity() {
         bindingMbr.locationPermissionSwitch.setOnClickListener {
             if (bindingMbr.locationPermissionSwitch.isChecked) { // 체크시
                 // 권한 요청
+                val permissionArray: Array<String> =
+                    arrayOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
                 permissionRequestCallbackMbr = { permissions ->
                     // 위치 권한
                     val isFineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION]!!
@@ -745,58 +743,23 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                     if (isFineGranted || isCoarseGranted) { // 권한 승인
 
-                        shownDialogInfoVOMbr =
-                            DialogConfirm.DialogInfoVO(
-                                true,
-                                "위치 정보 조회 권한",
-                                "위치 정보 조회 권한이 승인 되었습니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr =
-                                        null
-
-                                    when {
-                                        isFineGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
-                                            bindingMbr.locationPermissionSwitch.isChecked = true
-                                            bindingMbr.locationPermissionDetailSwitch.isChecked =
-                                                true
-                                            bindingMbr.locationPermissionDetailContainer.visibility =
-                                                View.GONE
-                                        }
-                                        isCoarseGranted -> {// 위치 권한 coarse 만 승인
-                                            // 정확도 보정 설정 보여주기
-                                            bindingMbr.locationPermissionSwitch.isChecked = true
-                                            bindingMbr.locationPermissionDetailSwitch.isChecked =
-                                                false
-                                            bindingMbr.locationPermissionDetailContainer.visibility =
-                                                View.VISIBLE
-                                        }
-                                    }
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr =
-                                        null
-
-                                    when {
-                                        isFineGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
-                                            bindingMbr.locationPermissionSwitch.isChecked = true
-                                            bindingMbr.locationPermissionDetailSwitch.isChecked =
-                                                true
-                                            bindingMbr.locationPermissionDetailContainer.visibility =
-                                                View.GONE
-                                        }
-                                        isCoarseGranted -> {// 위치 권한 coarse 만 승인
-                                            // 정확도 보정 설정 보여주기
-                                            bindingMbr.locationPermissionSwitch.isChecked = true
-                                            bindingMbr.locationPermissionDetailSwitch.isChecked =
-                                                false
-                                            bindingMbr.locationPermissionDetailContainer.visibility =
-                                                View.VISIBLE
-                                        }
-                                    }
-                                }
-                            )
-
+                        when {
+                            isFineGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
+                                bindingMbr.locationPermissionSwitch.isChecked = true
+                                bindingMbr.locationPermissionDetailSwitch.isChecked =
+                                    true
+                                bindingMbr.locationPermissionDetailContainer.visibility =
+                                    View.GONE
+                            }
+                            isCoarseGranted -> {// 위치 권한 coarse 만 승인
+                                // 정확도 보정 설정 보여주기
+                                bindingMbr.locationPermissionSwitch.isChecked = true
+                                bindingMbr.locationPermissionDetailSwitch.isChecked =
+                                    false
+                                bindingMbr.locationPermissionDetailContainer.visibility =
+                                    View.VISIBLE
+                            }
+                        }
                     } else { // 권한 거부
                         if (!neverAskAgain) {
                             // 단순 거부
@@ -839,20 +802,15 @@ class ActivityPermissionSample : AppCompatActivity() {
                         }
                     }
                 }
-                permissionRequestMbr.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    )
-                )
+                permissionRequestMbr.launch(permissionArray)
             } else {
                 // 체크 해제시
                 // 권한 해제 다이얼로그
                 shownDialogInfoVOMbr =
                     DialogBinaryChoose.DialogInfoVO(
                         false,
-                        "위치 정보 조회 권한 해제",
-                        "위치 정보 조회 권한을 해제하시겠습니까?\n(권한 설정 화면으로 이동합니다.)",
+                        "권한 요청",
+                        "권한 설정 화면으로 이동하시겠습니까?",
                         null,
                         null,
                         onPosBtnClicked = {
@@ -881,6 +839,8 @@ class ActivityPermissionSample : AppCompatActivity() {
         bindingMbr.locationPermissionDetailSwitch.setOnClickListener {
             if (bindingMbr.locationPermissionDetailSwitch.isChecked) { // 체크시
                 // 권한 요청
+                val permissionArray: Array<String> =
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
                 permissionRequestCallbackMbr = { permissions ->
                     // 위치 권한 정확성 향상
                     val isGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION]!!
@@ -888,30 +848,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                         !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
 
                     if (isGranted) { // 권한 승인
-                        shownDialogInfoVOMbr =
-                            DialogConfirm.DialogInfoVO(
-                                true,
-                                "위치 권한 정확성 향상",
-                                "위치 권한 정확성이 향상 되었습니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr =
-                                        null
-
-                                    // 향상 메뉴 숨기기
-                                    bindingMbr.locationPermissionDetailContainer.visibility =
-                                        View.GONE
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr =
-                                        null
-
-                                    // 향상 메뉴 숨기기
-                                    bindingMbr.locationPermissionDetailContainer.visibility =
-                                        View.GONE
-                                }
-                            )
-
+                        // 향상 메뉴 숨기기
+                        bindingMbr.locationPermissionDetailContainer.visibility =
+                            View.GONE
                     } else { // 권한 거부
                         if (!neverAskAgain) {
                             // 단순 거부
@@ -955,11 +894,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                         }
                     }
                 }
-                permissionRequestMbr.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    )
-                )
+                permissionRequestMbr.launch(permissionArray)
             } else {
                 // 체크 해제시
                 // 정확도 향상시엔 항목을 숨길 것이기에 해제 불가
