@@ -33,13 +33,13 @@ class ActivityATemplate : AppCompatActivity() {
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
     //     ex : Manifest.permission.INTERNET
-    val activityPermissionArrayMbr: Array<String> = arrayOf()
+    private val activityPermissionArrayMbr: Array<String> = arrayOf()
 
 
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
-    // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지
-    private lateinit var bindingMbr: ActivityATemplateBinding
+    // (뷰 바인더 객체)
+    lateinit var bindingMbr: ActivityATemplateBinding
 
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
@@ -114,10 +114,10 @@ class ActivityATemplate : AppCompatActivity() {
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
     // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
-    var doItAlreadyMbr = false
+    private var doItAlreadyMbr = false
 
     // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
-    var currentUserSessionTokenMbr: String? = null
+    private var currentUserSessionTokenMbr: String? = null
 
 
     // ---------------------------------------------------------------------------------------------
