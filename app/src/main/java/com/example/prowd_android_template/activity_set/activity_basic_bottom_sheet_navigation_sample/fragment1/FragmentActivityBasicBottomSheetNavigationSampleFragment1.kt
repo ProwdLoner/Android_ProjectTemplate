@@ -48,7 +48,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
     }
 
     private var doItAlreadyMbr = false
-    private var currentUserSessionTokenMbr: String? = null
+    private var currentUserUidMbr: String? = null // 유저 식별가능 정보 - null 이라면 비회원
     override fun onResume() {
         super.onResume()
 
@@ -56,7 +56,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
             doItAlreadyMbr = true
 
             // (초기 데이터 수집)
-            currentUserSessionTokenMbr = parentActivityMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            currentUserUidMbr = parentActivityMbr.currentLoginSessionInfoSpwMbr.sessionToken
             getScreenDataAndShow()
 
             // (알고리즘)
@@ -66,9 +66,9 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
             // (유저별 데이터 갱신)
             // : 유저 정보가 갱신된 상태에서 다시 현 액티비티로 복귀하면 자동으로 데이터를 다시 갱신합니다.
             val sessionToken = parentActivityMbr.currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            if (sessionToken != currentUserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
-                currentUserSessionTokenMbr = sessionToken
+                currentUserUidMbr = sessionToken
 
                 // (데이터 수집)
                 getScreenDataAndShow()

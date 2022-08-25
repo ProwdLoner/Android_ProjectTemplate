@@ -20,9 +20,7 @@ import java.io.FileOutputStream
 
 
 // todo : 신코드 적용
-// Todo : wide 외의 필터도 적용
 // todo : easy lut 라이브러리 코드 정리
-// todo : 선택된 필터 화면 회전 처리
 // todo : recyclerview 정리
 class ActivityEasyLutSample : AppCompatActivity() {
     // <멤버 변수 공간>

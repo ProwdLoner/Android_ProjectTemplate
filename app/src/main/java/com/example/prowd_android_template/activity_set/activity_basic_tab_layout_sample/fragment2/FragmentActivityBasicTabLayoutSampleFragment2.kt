@@ -1,6 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.fragment2
 
-import android.app.Application
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -9,25 +9,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.ActivityBasicTabLayoutSample
-import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
-import com.example.prowd_android_template.databinding.FragmentActivityBasicTabLayoutSample2Binding
-import com.example.prowd_android_template.repository.RepositorySet
-import java.util.concurrent.ExecutorService
+import com.example.prowd_android_template.databinding.FragmentActivityBasicTabLayoutSampleFragment2Binding
 
-// todo : 신코드 적용
 class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
     // <멤버 변수 공간>
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
-    private lateinit var parentActivityMbr: ActivityBasicTabLayoutSample
+    lateinit var parentActivityMbr: ActivityBasicTabLayoutSample
+
+    // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지
+    private lateinit var bindingMbr: FragmentActivityBasicTabLayoutSampleFragment2Binding
 
     // (Ui 스레드 핸들러 객체) handler.post{}
-    private val uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
+    val uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
 
-    // (뷰 바인더 객체)
-    lateinit var bindingMbr: FragmentActivityBasicTabLayoutSample2Binding
-
-    // (뷰 모델 객체)
-    lateinit var viewModelMbr: FragmentViewModel
+    // (SharedPreference 객체)
 
 
     // ---------------------------------------------------------------------------------------------
@@ -36,8 +31,6 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
     //     플래그먼트 일시정지 후 재실행 = onPause() → ... -> onResume()
     //     플래그먼트 정지 후 재실행 = onPause() → onStop() -> ... -> onStart() → onResume()
     //     플래그먼트 종료 = onPause() → onStop() → onDestroyView() → onDestroy() → onDetach()
-    //     플래그먼트 화면 회전 = onPause() → onSaveInstanceState() → onStop() → onDestroyView() → onDestroy() →
-    //         onDetach() → onAttach() → onCreate() → onCreateView() → onActivityCreated() → onStart() → onResume()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -48,37 +41,55 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
         // (초기 뷰 설정)
         onCreateViewInitView()
 
-        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
-        onCreateViewSetLiveData()
-
         return bindingMbr.root
     }
 
+    private var doItAlreadyMbr = false
+    private var currentUserUidMbr: String? = null // 유저 식별가능 정보 - null 이라면 비회원
     override fun onResume() {
         super.onResume()
 
-        if (!viewModelMbr.doItAlreadyMbr) {
-            // (액티비티 실행시 처음 한번만 실행되는 로직)
-            viewModelMbr.doItAlreadyMbr = true
+        if (!doItAlreadyMbr) {
+            doItAlreadyMbr = true
 
             // (초기 데이터 수집)
+            currentUserUidMbr = parentActivityMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            getScreenDataAndShow()
 
             // (알고리즘)
         } else {
-            // (회전이 아닌 onResume 로직) : 권한 클리어
-            // (뷰 데이터 로딩)
-            // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            // (onResume - (onCreate + permissionGrant)) : 권한 클리어
+
+            // (유저별 데이터 갱신)
+            // : 유저 정보가 갱신된 상태에서 다시 현 액티비티로 복귀하면 자동으로 데이터를 다시 갱신합니다.
+            val sessionToken = parentActivityMbr.currentLoginSessionInfoSpwMbr.sessionToken
+            if (sessionToken != currentUserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+                currentUserUidMbr = sessionToken
 
-                // 데이터 수집
-
-                // (알고리즘)
+                // (데이터 수집)
+                getScreenDataAndShow()
             }
+        }
 
-            // (알고리즘)
+        // (onResume)
+        if (parentActivityMbr.fragmentClickedPositionMbr == null){
+            bindingMbr.clickedByValueTxt.text = "클릭 없음"
+        }else{
+            val textMsg = "${parentActivityMbr.fragmentClickedPositionMbr}번 플래그먼트"
+            bindingMbr.clickedByValueTxt.text = textMsg
+        }
+    }
+
+    // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
+    // : 해당 이벤트 발생시 처리할 로직을 작성
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) { // 화면회전 landscape
+
+        } else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { // 화면회전 portrait
+
         }
     }
 
@@ -96,62 +107,30 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
 
         // (뷰 바인딩)
         bindingMbr =
-            FragmentActivityBasicTabLayoutSample2Binding.inflate(layoutInflater)
-
-        // (플래그먼트 뷰모델)
-        viewModelMbr = parentActivityMbr.viewModelMbr.fragment2DataMbr
+            FragmentActivityBasicTabLayoutSampleFragment2Binding.inflate(layoutInflater)
     }
 
     // (초기 뷰 설정)
     private fun onCreateViewInitView() {
         bindingMbr.fragmentClickBtn.setOnClickListener {
-            parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.value = 2
+            parentActivityMbr.fragmentClickedPositionMbr = 2
+            if (parentActivityMbr.fragmentClickedPositionMbr == null){
+                bindingMbr.clickedByValueTxt.text = "클릭 없음"
+            }else{
+                val textMsg = "${parentActivityMbr.fragmentClickedPositionMbr}번 플래그먼트"
+                bindingMbr.clickedByValueTxt.text = textMsg
+            }
         }
 
     }
 
-    // (라이브 데이터 설정)
-    private fun onCreateViewSetLiveData() {
-        // 공유되는 부모 뷰모델 정보 반영 예시
-        parentActivityMbr.viewModelMbr.fragmentClickedPositionLiveDataMbr.observe(parentActivityMbr) {
-            if (null == it) {
-                bindingMbr.clickedByValueTxt.text = "클릭 없음"
-            } else {
-                val textMsg = "${it}번 플래그먼트"
-                bindingMbr.clickedByValueTxt.text = textMsg
-            }
-        }
+    // (화면 구성용 데이터를 가져오기)
+    // : 네트워크 등 레포지토리에서 데이터를 가져오고 이를 뷰에 반영
+    private fun getScreenDataAndShow() {
+
     }
 
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    class FragmentViewModel(
-        application: Application,
-        val repositorySetMbr: RepositorySet,
-        val executorServiceMbr: ExecutorService
-    ) {
-        // <멤버 상수 공간>
-        // (SharedPreference 객체)
-        // 현 로그인 정보 접근 객체
-        val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
-            CurrentLoginSessionInfoSpw(application)
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <멤버 변수 공간>
-        // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
-        var doItAlreadyMbr = false
-
-        // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
-        var currentUserSessionTokenMbr: String? = null
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <뷰모델 라이브데이터 공간>
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <중첩 클래스 공간>
-    }
 }
