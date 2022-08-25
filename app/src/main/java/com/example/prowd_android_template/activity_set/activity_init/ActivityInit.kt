@@ -514,19 +514,23 @@ class ActivityInit : AppCompatActivity() {
 
     // (앱 버전 체크)
     private fun checkAppVersion() {
-        // 현재 버전 = ex : "1.0.0"
-        val currentVersion = packageManager.getPackageInfo(packageName, 0).versionName
-        val currVersionSplit = currentVersion.split(".")
-
         // (정보 요청 콜백)
+        // 네트워크 요청 부분을 구현할 때에는, 아직 API 명세도 정해지지 않은 상황을 가정.
+        //     현재 화면을 구현하는데 필요한 정보를 추려내서 임시로 콜백을 만들어두고,
+        //     추후 실제 API 가 제공되면 이 응답을 미리 만들어둔 뷰 모델에 맞춰서 콜백을 실행시키면 됨
         // statusCode : 서버 반환 상태값. 1이라면 정상 동작 -1 이라면 타임아웃
-        // minUpdateVersion : 최소 요청 버전. 이것에 미치지 못하면 업데이트 필요.
-        val onComplete: (statusCode: Int, minUpdateVersion: String) -> Unit =
+        // minUpdateVersion : 최소 요청 버전. 이것에 미치지 못하면 업데이트 필요. 정상 응답이 아니면 null.
+        val onComplete: (statusCode: Int, minUpdateVersion: String?) -> Unit =
             { statusCode, minUpdateVersion ->
                 runOnUiThread {
                     when (statusCode) {
                         1 -> {// 정상 동작
-                            val minUpdateVersionSplit = minUpdateVersion.split(".")
+                            // 현재 버전 = ex : "1.0.0"
+                            val currentVersion =
+                                packageManager.getPackageInfo(packageName, 0).versionName
+                            val currVersionSplit = currentVersion.split(".")
+
+                            val minUpdateVersionSplit = minUpdateVersion!!.split(".")
 
                             // 현재 버전이 서버 업데이트 기준 미달일 때에 강제 업데이트 수행
                             val needUpdate =
@@ -624,7 +628,7 @@ class ActivityInit : AppCompatActivity() {
         // 네트워크 요청
         executorServiceMbr.execute {
             // 네트워크 대기시간 가정
-            Thread.sleep(500)
+            Thread.sleep(300)
             onComplete(1, "1.0.0")
         }
     }
@@ -635,10 +639,6 @@ class ActivityInit : AppCompatActivity() {
             currentLoginSessionInfoSpwMbr.isAutoLogin
         val loginType: Int =
             currentLoginSessionInfoSpwMbr.loginType
-        val serverId: String? =
-            currentLoginSessionInfoSpwMbr.loginId
-        val serverPw: String? =
-            currentLoginSessionInfoSpwMbr.loginPw
 
         if (isAutoLogin && loginType != 0) { // 로그인 검증 필요
             // (정보 요청 콜백)
@@ -653,9 +653,6 @@ class ActivityInit : AppCompatActivity() {
                                 currentLoginSessionInfoSpwMbr.isAutoLogin = true
                                 currentLoginSessionInfoSpwMbr.sessionToken = sessionToken
                                 currentLoginSessionInfoSpwMbr.userNickName = userNickName
-                                currentLoginSessionInfoSpwMbr.loginId = serverId
-                                currentLoginSessionInfoSpwMbr.loginPw = serverPw
-                                currentLoginSessionInfoSpwMbr.loginType = loginType
 
                                 goToNextActivitySemaphoreMbr.acquire()
                                 checkLoginCompletedMbr = true
@@ -665,12 +662,7 @@ class ActivityInit : AppCompatActivity() {
                             }
                             2 -> { // 로그인 정보 불일치
                                 // 비회원 처리
-                                currentLoginSessionInfoSpwMbr.isAutoLogin = false
-                                currentLoginSessionInfoSpwMbr.sessionToken = null
-                                currentLoginSessionInfoSpwMbr.userNickName = null
-                                currentLoginSessionInfoSpwMbr.loginId = null
-                                currentLoginSessionInfoSpwMbr.loginPw = null
-                                currentLoginSessionInfoSpwMbr.loginType = 0
+                                currentLoginSessionInfoSpwMbr.setLogout()
 
                                 goToNextActivitySemaphoreMbr.acquire()
                                 checkLoginCompletedMbr = true
@@ -719,18 +711,20 @@ class ActivityInit : AppCompatActivity() {
                     }
                 }
 
-            // 네트워크 비동기 요청을 가정
+            // (네트워크 요청)
+            val serverId: String? =
+                currentLoginSessionInfoSpwMbr.loginId
+            val serverPw: String? =
+                currentLoginSessionInfoSpwMbr.loginPw
+
             executorServiceMbr.execute {
+                // 네트워크 비동기 요청을 가정
+                Thread.sleep(500)
                 onComplete(1, "##ADRE_DRTG_1234", "행복한 너구리")
             }
         } else { // 로그인 검증 불필요
             // 비회원 처리
-            currentLoginSessionInfoSpwMbr.isAutoLogin = false
-            currentLoginSessionInfoSpwMbr.sessionToken = null
-            currentLoginSessionInfoSpwMbr.userNickName = null
-            currentLoginSessionInfoSpwMbr.loginId = null
-            currentLoginSessionInfoSpwMbr.loginPw = null
-            currentLoginSessionInfoSpwMbr.loginType = 0
+            currentLoginSessionInfoSpwMbr.setLogout()
 
             goToNextActivitySemaphoreMbr.acquire()
             checkLoginCompletedMbr = true

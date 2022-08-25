@@ -32,19 +32,20 @@ class CurrentLoginSessionInfoSpw(application: Application) {
             }
         }
 
-    // (sessionToken)
-    // 서버에서 발급한 고유 식별자. 비회원 상태라면 null
-    var sessionToken: String?
+    // (loginType)
+    // 코드
+    // 0 : 비회원, 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
+    var loginType: Int
         get() {
-            return spMbr.getString(
-                "sessionToken",
-                null
+            return spMbr.getInt(
+                "loginType",
+                0
             )
         }
         set(value) {
             with(spMbr.edit()) {
-                putString(
-                    "sessionToken",
+                putInt(
+                    "loginType",
                     value
                 )
                 apply()
@@ -63,26 +64,6 @@ class CurrentLoginSessionInfoSpw(application: Application) {
             with(spMbr.edit()) {
                 putString(
                     "userNickName",
-                    value
-                )
-                apply()
-            }
-        }
-
-    // (loginType)
-    // 코드
-    // 0 : 비회원, 1 : 자체 서버, 2 : google, 3 : kakao, 4 : naver
-    var loginType: Int
-        get() {
-            return spMbr.getInt(
-                "loginType",
-                0
-            )
-        }
-        set(value) {
-            with(spMbr.edit()) {
-                putInt(
-                    "loginType",
                     value
                 )
                 apply()
@@ -126,6 +107,42 @@ class CurrentLoginSessionInfoSpw(application: Application) {
                 apply()
             }
         }
+
+    // (sessionToken)
+    // 서버에서 발급한 고유 식별자. 비회원 상태라면 null
+    var sessionToken: String?
+        get() {
+            return spMbr.getString(
+                "sessionToken",
+                null
+            )
+        }
+        set(value) {
+            with(spMbr.edit()) {
+                putString(
+                    "sessionToken",
+                    value
+                )
+                apply()
+            }
+        }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <공개 메소드 공간>
+    // (현 앱 상태를 로그아웃으로 만드는 함수)
+    fun setLogout() {
+        isAutoLogin = false
+        loginType = 0
+        userNickName = null
+        loginId = null
+        loginPw = null
+        sessionToken = null
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // <비공개 메소드 공간>
 
 
     // ---------------------------------------------------------------------------------------------
