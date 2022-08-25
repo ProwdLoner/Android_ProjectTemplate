@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-
 // todo : 시스템 카메라 코드 정리
 class ActivitySystemCameraPhotoSample : AppCompatActivity() {
     // <설정 변수 공간>
