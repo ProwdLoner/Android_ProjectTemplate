@@ -2,17 +2,4 @@
     <!-- 앱 아이콘 이름 -->
     <string name="app_name">템플릿</string>
 
-    <!-- layout_dialog_binary_choose -->
-    <string name="layout_dialog_binary_choose_positive_btn_text">예</string>
-    <string name="layout_dialog_binary_choose_negative_btn_text">아니요</string>
-
-    <!-- layout_dialog_confirm -->
-    <string name="layout_dialog_confirm_confirm_button_text">확인</string>
-
-    <!-- layout_dialog_progress_loading -->
-    <string name="layout_dialog_progress_loading_loading_gif_img_description">로딩 아이콘</string>
-
-    <!-- layout_activity_init -->
-    <string name="layout_activity_init_splash_logo_content_description">대표 아이콘</string>
-    <string name="layout_activity_init_welcome_message_text">모두의 오픈 소스!</string>
 </resources>
