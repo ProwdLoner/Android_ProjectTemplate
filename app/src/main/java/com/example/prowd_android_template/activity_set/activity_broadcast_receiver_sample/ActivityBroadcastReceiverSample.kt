@@ -406,15 +406,6 @@ class ActivityBroadcastReceiverSample : AppCompatActivity() {
             serviceIntent.action = "start"
             startService(serviceIntent)
         }
-
-        // (브로드 캐스트 설정)
-        val filter = IntentFilter() // 브로트캐스트 액션 필터
-        filter.addAction("ActivityBroadcastReceiverSample")
-        registerReceiver(object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                bindingMbr.broadcastValue.text = intent?.getStringExtra("value")
-            }
-        }, filter)
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -430,6 +421,14 @@ class ActivityBroadcastReceiverSample : AppCompatActivity() {
             currentUserSessionTokenMbr = currentLoginSessionInfoSpwMbr.sessionToken
             getScreenDataAndShow()
 
+            // (브로드 캐스트 설정)
+            val filter = IntentFilter() // 브로트캐스트 액션 필터
+            filter.addAction("ActivityBroadcastReceiverSample")
+            registerReceiver(object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    bindingMbr.broadcastValue.text = intent?.getStringExtra("value")
+                }
+            }, filter)
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
