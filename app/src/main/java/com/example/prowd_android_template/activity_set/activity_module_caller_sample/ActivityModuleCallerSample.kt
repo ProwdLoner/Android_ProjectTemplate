@@ -404,6 +404,7 @@ class ActivityModuleCallerSample : AppCompatActivity() {
             doItAlreadyMbr = true
 
             // (초기 데이터 수집)
+            currentUserSessionTokenMbr = currentLoginSessionInfoSpwMbr.sessionToken
             getScreenDataAndShow()
 
             // (알고리즘)

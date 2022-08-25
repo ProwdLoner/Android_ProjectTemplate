@@ -679,6 +679,7 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
             doItAlreadyMbr = true
 
             // (초기 데이터 수집)
+            currentUserSessionTokenMbr = currentLoginSessionInfoSpwMbr.sessionToken
             getScreenDataAndShow()
 
         } else {
