@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-
 // todo : do complete
 // 세로 리사이클러 뷰 예시
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
@@ -410,11 +409,11 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     private fun onCreateInitView() {
         // 화면 리플레시
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
-            if (refreshScreenDataOnProgressMbr) {
+            if (refreshWholeScreenDataOnProgressMbr) {
                 bindingMbr.screenRefreshLayout.isRefreshing = false
             }
 
-            refreshScreenData(onComplete = {
+            refreshWholeScreenData(onComplete = {
                 bindingMbr.screenRefreshLayout.isRefreshing = false
             })
         }
@@ -424,26 +423,22 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 //            postRecyclerViewAdapterItemList("추가 아이템", onComplete = {})
 //        }
 //
-//        // 아이템 셔플 테스트
-//        bindingMbr.doShuffleBtn.setOnClickListener {
-//            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-//            if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
-//                viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-//                return@setOnClickListener
-//            }
-//            viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
-//            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-//
-//            // 아이템 셔플
-//            val item =
-//                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-//            item.shuffle()
-//            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = item
-//
-//            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-//            viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-//            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-//        }
+        // 아이템 셔플 테스트
+        bindingMbr.doShuffleBtn.setOnClickListener {
+            executorServiceMbr.execute {
+                screenDataSemaphoreMbr.acquire()
+
+                // 아이템 셔플
+                val item =
+                    adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+                item.shuffle()
+                runOnUiThread {
+                    adapterSetMbr.recyclerViewAdapter.setItemList(item)
+                }
+
+                screenDataSemaphoreMbr.release()
+            }
+        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -457,7 +452,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
             // (초기 데이터 수집)
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
-            refreshScreenData(onComplete = {})
+            refreshWholeScreenData(onComplete = {})
 
         } else {
             // (onResume - (권한이 충족된 onCreate))
@@ -470,7 +465,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 currentUserUidMbr = userUid
 
                 // (데이터 수집)
-                refreshScreenData(onComplete = {})
+                refreshWholeScreenData(onComplete = {})
             }
 
         }
@@ -483,13 +478,13 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // (화면 구성용 데이터를 가져오기)
     // : 네트워크 등 레포지토리에서 데이터를 가져오고 이를 뷰에 반영
     //     onComplete = 네트워크 실패든 성공이든 데이터 요청 후 응답을 받아와 해당 상태에 따라 스크린 뷰 처리를 완료한 시점
-    private var refreshScreenDataOnProgressMbr = false
-    private fun refreshScreenData(onComplete: () -> Unit) {
+    private var refreshWholeScreenDataOnProgressMbr = false
+    private fun refreshWholeScreenData(onComplete: () -> Unit) {
         executorServiceMbr.execute {
             screenDataSemaphoreMbr.acquire()
 
             // (로딩 처리)
-            refreshScreenDataOnProgressMbr = true
+            refreshWholeScreenDataOnProgressMbr = true
 
             // 리스트 초기화
             val cloneItemList =
@@ -533,7 +528,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                     adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
                                 }
 
-                                refreshScreenDataOnProgressMbr = false
+                                refreshWholeScreenDataOnProgressMbr = false
                                 screenDataSemaphoreMbr.release()
                                 onComplete()
                             } else {
@@ -544,7 +539,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                     bindingMbr.recyclerView.scrollToPosition(0)
                                 }
 
-                                refreshScreenDataOnProgressMbr = false
+                                refreshWholeScreenDataOnProgressMbr = false
                                 screenDataSemaphoreMbr.release()
                                 onComplete()
                             }
@@ -564,7 +559,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
                             }
 
-                            refreshScreenDataOnProgressMbr = false
+                            refreshWholeScreenDataOnProgressMbr = false
                             screenDataSemaphoreMbr.release()
                             onComplete()
                         }
@@ -583,7 +578,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
                             }
 
-                            refreshScreenDataOnProgressMbr = false
+                            refreshWholeScreenDataOnProgressMbr = false
                             screenDataSemaphoreMbr.release()
                             onComplete()
                         }
@@ -591,8 +586,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 }
 
             // 네트워크 요청
-            // lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
-            // 데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
             executorServiceMbr.execute {
                 // 요청 대기시간 가정
                 Thread.sleep(1000)

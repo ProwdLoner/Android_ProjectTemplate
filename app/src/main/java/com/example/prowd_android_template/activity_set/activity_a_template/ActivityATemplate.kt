@@ -403,7 +403,7 @@ class ActivityATemplate : AppCompatActivity() {
 
             // (초기 데이터 수집)
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
-            getScreenDataAndShow()
+            refreshWholeScreenData(onComplete = {})
 
         } else {
             // (onResume - (권한이 충족된 onCreate))
@@ -416,7 +416,7 @@ class ActivityATemplate : AppCompatActivity() {
                 currentUserUidMbr = userUid
 
                 // (데이터 수집)
-                getScreenDataAndShow()
+                refreshWholeScreenData(onComplete = {})
             }
 
         }
@@ -424,10 +424,23 @@ class ActivityATemplate : AppCompatActivity() {
         // (onResume)
     }
 
+    // 화면 데이터 갱신관련 세마포어
+    private val screenDataSemaphoreMbr = Semaphore(1)
+
     // (화면 구성용 데이터를 가져오기)
     // : 네트워크 등 레포지토리에서 데이터를 가져오고 이를 뷰에 반영
-    private fun getScreenDataAndShow() {
+    //     onComplete = 네트워크 실패든 성공이든 데이터 요청 후 응답을 받아와 해당 상태에 따라 스크린 뷰 처리를 완료한 시점
+    private var refreshWholeScreenDataOnProgressMbr = false
+    private fun refreshWholeScreenData(onComplete: () -> Unit) {
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
+            refreshWholeScreenDataOnProgressMbr = true
 
+            // 데이터 요청 및 뷰 갱신 완료 후 아래와 같이 처리
+            refreshWholeScreenDataOnProgressMbr = false
+            screenDataSemaphoreMbr.release()
+            onComplete()
+        }
     }
 
 
