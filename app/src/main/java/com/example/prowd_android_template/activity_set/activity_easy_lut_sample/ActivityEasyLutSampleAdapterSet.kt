@@ -214,7 +214,7 @@ class ActivityEasyLutSampleAdapterSet(
                             // 원본 이미지1
                             val originBitmap1 = ((AppCompatResources.getDrawable(
                                 parentViewMbr,
-                                R.drawable.img_activity_easy_lut_sample_image1
+                                R.drawable.img_layout_activity_easy_lut_sample_image1
                             )) as BitmapDrawable).bitmap
 
                             val filterBitmap1 = lutFilter?.apply(originBitmap1)
@@ -222,7 +222,7 @@ class ActivityEasyLutSampleAdapterSet(
                             // 원본 이미지2
                             val originBitmap2 = ((AppCompatResources.getDrawable(
                                 parentViewMbr,
-                                R.drawable.img_activity_easy_lut_sample_image2
+                                R.drawable.img_layout_activity_easy_lut_sample_image2
                             )) as BitmapDrawable).bitmap
 
                             val filterBitmap2 = lutFilter?.apply(originBitmap2)
@@ -230,7 +230,7 @@ class ActivityEasyLutSampleAdapterSet(
                             // 원본 이미지3
                             val originBitmap3 = ((AppCompatResources.getDrawable(
                                 parentViewMbr,
-                                R.drawable.img_activity_easy_lut_sample_image3
+                                R.drawable.img_layout_activity_easy_lut_sample_image3
                             )) as BitmapDrawable).bitmap
 
                             val filterBitmap3 = lutFilter?.apply(originBitmap3)

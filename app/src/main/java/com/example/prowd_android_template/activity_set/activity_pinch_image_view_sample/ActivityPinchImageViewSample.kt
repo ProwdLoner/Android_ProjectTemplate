@@ -398,7 +398,7 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
         // (혹은 drawable 폴더 각 해상도에 맞게 각 사이즈 이미지를 분배하는 것도 좋음)
         if (!isFinishing && !isDestroyed) {
             Glide.with(this)
-                .load(R.drawable.img_activity_pinch_image_view_sample)
+                .load(R.drawable.img_layout_activity_pinch_image_view_sample)
                 .transform(CenterCrop())
                 .into(bindingMbr.sampleImage)
         }
@@ -415,7 +415,7 @@ class ActivityPinchImageViewSample : AppCompatActivity() {
                 // 비트맵 추출
                 val bitmap = (AppCompatResources.getDrawable(
                     this,
-                    R.drawable.img_activity_pinch_image_view_sample
+                    R.drawable.img_layout_activity_pinch_image_view_sample
                 ) as BitmapDrawable).bitmap
 
                 // 비트맵을 파일로 저장

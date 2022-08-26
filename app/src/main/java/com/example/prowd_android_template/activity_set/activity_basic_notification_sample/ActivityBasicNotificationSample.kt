@@ -458,7 +458,7 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
                     style.bigPicture(
                         BitmapFactory.decodeResource(
                             resources,
-                            R.drawable.img_activity_basic_notification_sample_big_picture_notification
+                            R.drawable.img_layout_activity_basic_notification_sample_big_picture_notification
                         )
                     )
                     it.setStyle(style)
