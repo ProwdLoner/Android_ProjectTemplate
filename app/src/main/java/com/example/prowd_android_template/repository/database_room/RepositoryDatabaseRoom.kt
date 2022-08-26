@@ -4,6 +4,8 @@ import android.content.Context
 import com.example.prowd_android_template.util_class.LogObj
 import java.util.concurrent.Semaphore
 
+// 데이터베이스 객체를 생성하고 제공하는 역할
+// : 데이터베이스 1개당 Database 객체 1개를 생성하여 (Database 객체) 공간에 추가하여 사용
 class RepositoryDatabaseRoom private constructor(context: Context) {
     // <멤버 변수 공간>
     // (Database 객체)

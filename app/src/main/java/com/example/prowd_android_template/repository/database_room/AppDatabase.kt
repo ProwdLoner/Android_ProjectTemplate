@@ -2,14 +2,15 @@ package com.example.prowd_android_template.repository.database_room
 
 import android.content.Context
 import androidx.room.*
-import com.example.prowd_android_template.repository.database_room.table_set.test_info.TestInfoDao
-import com.example.prowd_android_template.repository.database_room.table_set.test_info.TestInfoTable
-import com.example.prowd_android_template.util_class.LogObj
+import com.example.prowd_android_template.repository.database_room.tables.TestInfoTable
 import java.util.concurrent.Semaphore
 
+// 테이블 객체를 생성하고 제공하는 역할
+// : 테이블 1개당 Table 객체를 하나 만들어서, VO 객체를 @Database 어노테이션에,
+//     DAO 객체를 (Table DAO 객체) 공간에 추가하기
 @Database(
     entities = [
-        TestInfoTable::class
+        TestInfoTable.TestInfoTableVO::class
     ],
     version = 1,
     exportSchema = false
@@ -17,7 +18,7 @@ import java.util.concurrent.Semaphore
 abstract class AppDatabase : RoomDatabase() {
     // <멤버 변수 공간>
     // (Table DAO 객체)
-    abstract fun deviceConfigTableDao(): TestInfoDao
+    abstract fun deviceConfigTableDao(): TestInfoTable.TestInfoDao
 
 
     // ---------------------------------------------------------------------------------------------
