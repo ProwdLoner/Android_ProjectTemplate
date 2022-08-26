@@ -433,7 +433,7 @@ class ActivityInit : AppCompatActivity() {
             doItAlreadyMbr = true
 
             // (초기 데이터 수집)
-            currentUserUidMbr = currentLoginSessionInfoSpwMbr.sessionToken
+            currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             getScreenDataAndShow()
 
             // (알고리즘)
@@ -444,10 +444,10 @@ class ActivityInit : AppCompatActivity() {
 
             // (유저별 데이터 갱신)
             // : 유저 정보가 갱신된 상태에서 다시 현 액티비티로 복귀하면 자동으로 데이터를 다시 갱신합니다.
-            val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != currentUserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            val userUid = currentLoginSessionInfoSpwMbr.userUid
+            if (userUid != currentUserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
-                currentUserUidMbr = sessionToken
+                currentUserUidMbr = userUid
 
                 // (데이터 수집)
                 getScreenDataAndShow()
@@ -689,15 +689,15 @@ class ActivityInit : AppCompatActivity() {
 
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-        // sessionToken : 로그인 완료시 반환되는 세션토큰
-        val onComplete: (statusCode: Int, sessionToken: String?, userNickName: String?) -> Unit =
-            { statusCode, sessionToken, userNickName ->
+        // userUid : 로그인 완료시 반환되는 세션토큰
+        val onComplete: (statusCode: Int, userUid: String?, userNickName: String?) -> Unit =
+            { statusCode, userUid, userNickName ->
                 runOnUiThread {
                     when (statusCode) {
                         1 -> {// 로그인 완료
                             // 회원 처리
                             currentLoginSessionInfoSpwMbr.isAutoLogin = true
-                            currentLoginSessionInfoSpwMbr.sessionToken = sessionToken
+                            currentLoginSessionInfoSpwMbr.userUid = userUid
                             currentLoginSessionInfoSpwMbr.userNickName = userNickName
 
                             goToNextActivitySemaphoreMbr.acquire()

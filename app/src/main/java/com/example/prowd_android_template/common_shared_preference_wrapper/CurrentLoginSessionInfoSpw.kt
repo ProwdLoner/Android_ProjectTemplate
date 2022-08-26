@@ -52,24 +52,6 @@ class CurrentLoginSessionInfoSpw(application: Application) {
             }
         }
 
-    // (userNickName)
-    var userNickName: String?
-        get() {
-            return spMbr.getString(
-                "userNickName",
-                null
-            )
-        }
-        set(value) {
-            with(spMbr.edit()) {
-                putString(
-                    "userNickName",
-                    value
-                )
-                apply()
-            }
-        }
-
     // (loginId)
     // 자체서버라면 서버 아이디, SNS 로그인이라면 각 식별 아이디
     var loginId: String?
@@ -108,19 +90,38 @@ class CurrentLoginSessionInfoSpw(application: Application) {
             }
         }
 
-    // (sessionToken)
-    // 서버에서 발급한 고유 식별자. 비회원 상태라면 null
-    var sessionToken: String?
+    // (userUid)
+    // : 서버에서 발급한 유저 고유 식별자. 비회원 상태라면 null
+    //     화면 갱신 여부 판단용으로 사용
+    var userUid: String?
         get() {
             return spMbr.getString(
-                "sessionToken",
+                "userUid",
                 null
             )
         }
         set(value) {
             with(spMbr.edit()) {
                 putString(
-                    "sessionToken",
+                    "userUid",
+                    value
+                )
+                apply()
+            }
+        }
+
+    // (userNickName)
+    var userNickName: String?
+        get() {
+            return spMbr.getString(
+                "userNickName",
+                null
+            )
+        }
+        set(value) {
+            with(spMbr.edit()) {
+                putString(
+                    "userNickName",
                     value
                 )
                 apply()
@@ -134,10 +135,10 @@ class CurrentLoginSessionInfoSpw(application: Application) {
     fun setLogout() {
         isAutoLogin = false
         loginType = 0
-        userNickName = null
         loginId = null
         loginPw = null
-        sessionToken = null
+        userUid = null
+        userNickName = null
     }
 
 

@@ -73,7 +73,7 @@ class ActivityEasyLutSample : AppCompatActivity() {
         super.onResume()
 
         // (데이터 갱신 시점 적용)
-        val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
+        val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.userUid
 
         if (viewModelMbr.isDataFirstLoadingMbr || // 데이터 최초 로딩 시점일 때 혹은,
             sessionToken != viewModelMbr.currentUserSessionTokenMbr // 액티비티 유저와 세션 유저가 다를 때

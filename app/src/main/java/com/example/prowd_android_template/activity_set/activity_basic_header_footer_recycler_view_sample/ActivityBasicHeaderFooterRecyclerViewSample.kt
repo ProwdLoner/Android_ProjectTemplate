@@ -336,10 +336,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             // (회전이 아닌 onResume 로직) : 권한 클리어
             // (뷰 데이터 로딩)
             // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val sessionToken = viewModelMbr.currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != viewModelMbr.currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            val userUid = viewModelMbr.currentLoginSessionInfoSpwMbr.userUid
+            if (userUid != viewModelMbr.currentUseruserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
-                viewModelMbr.currentUserSessionTokenMbr = sessionToken
+                viewModelMbr.currentUseruserUidMbr = userUid
 
                 // (데이터 수집)
                 getRecyclerViewAdapterHeader(true, onComplete = {})
@@ -381,7 +381,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-        // sessionToken : 로그인 완료시 반환되는 세션토큰
+        // userUid : 로그인 완료시 반환되는 세션토큰
         val networkOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
             { statusCode, item ->
                 runOnUiThread {
@@ -466,7 +466,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-        // sessionToken : 로그인 완료시 반환되는 세션토큰
+        // userUid : 로그인 완료시 반환되는 세션토큰
         val networkOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
             { statusCode, item ->
                 runOnUiThread {
@@ -559,7 +559,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-        // sessionToken : 로그인 완료시 반환되는 세션토큰
+        // userUid : 로그인 완료시 반환되는 세션토큰
         val networkOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
             { statusCode, itemList ->
                 runOnUiThread {
@@ -868,7 +868,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
         var doItAlreadyMbr = false
 
         // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
-        var currentUserSessionTokenMbr: String? = null
+        var currentUseruserUidMbr: String? = null
 
         // 중복 요청 금지를 위한 상태 플래그
         var getRecyclerViewAdapterItemListOnProgressMbr = false

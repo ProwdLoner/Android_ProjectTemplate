@@ -1097,14 +1097,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (액티비티 진입 권한이 클리어 된 시점)
     // : 실질적인 액티비티 로직 실행구역
     private var doItAlreadyMbr = false
-    private var currentUserSessionTokenMbr: String? = null
+    private var currentUserUidMbr: String? = null
     private fun allPermissionsGranted() {
         if (!doItAlreadyMbr) {
             // (권한이 충족된 onCreate)
             doItAlreadyMbr = true
 
             // (초기 데이터 수집)
-            currentUserSessionTokenMbr = currentLoginSessionInfoSpwMbr.sessionToken
+            currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             getScreenDataAndShow()
 
         } else {
@@ -1112,10 +1112,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // (유저별 데이터 갱신)
             // : 유저 정보가 갱신된 상태에서 다시 현 액티비티로 복귀하면 자동으로 데이터를 다시 갱신합니다.
-            val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
-            if (sessionToken != currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            val userUid = currentLoginSessionInfoSpwMbr.userUid
+            if (userUid != currentUserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
-                currentUserSessionTokenMbr = sessionToken
+                currentUserUidMbr = userUid
 
                 // (데이터 수집)
                 getScreenDataAndShow()
@@ -1130,10 +1130,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // (알고리즘)
         // (뷰 데이터 로딩)
         // : 데이터 갱신은 유저 정보가 변경된 것을 기준으로 함.
-        val sessionToken = currentLoginSessionInfoSpwMbr.sessionToken
-        if (sessionToken != currentUserSessionTokenMbr) { // 액티비티 유저와 세션 유저가 다를 때
+        val userUid = currentLoginSessionInfoSpwMbr.userUid
+        if (userUid != currentUserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
             // 진입 플래그 변경
-            currentUserSessionTokenMbr = sessionToken
+            currentUserUidMbr = userUid
 
             // (데이터 수집)
 
