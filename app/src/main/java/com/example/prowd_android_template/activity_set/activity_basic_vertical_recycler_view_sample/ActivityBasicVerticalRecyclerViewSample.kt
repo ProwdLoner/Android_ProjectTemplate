@@ -417,11 +417,13 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             })
         }
 
-//        // 아이템 추가
-//        bindingMbr.addItemBtn.setOnClickListener {
-//            postRecyclerViewAdapterItemList("추가 아이템", onComplete = {})
-//        }
-//
+        // 아이템 추가
+        bindingMbr.addItemBtn.setOnClickListener {
+            postActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+                "추가 아이템",
+                onComplete = {})
+        }
+
         // 아이템 셔플 테스트
         bindingMbr.doShuffleBtn.setOnClickListener {
             executorServiceMbr.execute {
@@ -737,6 +739,126 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         }
     }
 
+    // (아이템 추가)
+    private var postActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+        false
+
+    private fun postActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+        text: String,
+        onComplete: () -> Unit
+    ) {
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
+            postActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                true
+
+            val cloneItemList =
+                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+            // 로더 추가
+            runOnUiThread {
+                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "저장중입니다. 잠시만 기다려주세요.",
+                    onCanceled = {}
+                )
+            }
+
+            val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr + 1
+
+            // (정보 요청 콜백)
+            // statusCode
+            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     serverUid = 해당 아이템에 대한 서버 Uid
+            val networkOnComplete: (statusCode: Int, serverUid: Long?) -> Unit =
+                { statusCode, serverUid ->
+                    when (statusCode) {
+                        1 -> {// 완료
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                            }
+
+                            // 입력한 데이터 객체
+                            val addedItem =
+                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                    serverUid!!,
+                                    text
+                                )
+
+                            // 받아온 아이템 추가
+                            cloneItemList.add(addedItem)
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                                bindingMbr.recyclerView.scrollToPosition(lastItemIdx)
+                            }
+
+                            postActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            postActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            postActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                    }
+                }
+
+            // 네트워크 요청
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+                val lastItemUid =
+                    (adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.last() as
+                            ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
+                networkOnComplete(1, lastItemUid + 1)
+            }
+        }
+    }
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
