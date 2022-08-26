@@ -635,89 +635,7 @@ class ActivityInit : AppCompatActivity() {
         val loginType: Int =
             currentLoginSessionInfoSpwMbr.loginType
 
-        if (isAutoLogin && loginType != 0) { // 로그인 검증 필요
-            // (정보 요청 콜백)
-            // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-            // sessionToken : 로그인 완료시 반환되는 세션토큰
-            val onComplete: (statusCode: Int, sessionToken: String?, userNickName: String?) -> Unit =
-                { statusCode, sessionToken, userNickName ->
-                    runOnUiThread {
-                        when (statusCode) {
-                            1 -> {// 로그인 완료
-                                // 회원 처리
-                                currentLoginSessionInfoSpwMbr.isAutoLogin = true
-                                currentLoginSessionInfoSpwMbr.sessionToken = sessionToken
-                                currentLoginSessionInfoSpwMbr.userNickName = userNickName
-
-                                goToNextActivitySemaphoreMbr.acquire()
-                                checkLoginCompletedMbr = true
-                                goToNextActivitySemaphoreMbr.release()
-
-                                goToNextActivity()
-                            }
-                            2 -> { // 로그인 정보 불일치
-                                // 비회원 처리
-                                currentLoginSessionInfoSpwMbr.setLogout()
-
-                                goToNextActivitySemaphoreMbr.acquire()
-                                checkLoginCompletedMbr = true
-                                goToNextActivitySemaphoreMbr.release()
-
-                                goToNextActivity()
-                            }
-                            -1 -> { // 네트워크 에러
-                                shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
-                                    false,
-                                    "네트워크 불안정",
-                                    "현재 네트워크 연결이 불안정합니다.",
-                                    "다시시도",
-                                    "종료",
-                                    onPosBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-                                        checkLogin()
-                                    },
-                                    onNegBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-
-                                        finish()
-                                    },
-                                    onCanceled = {}
-                                )
-                            }
-                            else -> { // 그외 서버 에러
-                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "기술적 문제",
-                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-
-                                        finish()
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr = null
-
-                                        finish()
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-            // (네트워크 요청)
-            val serverId: String? =
-                currentLoginSessionInfoSpwMbr.loginId
-            val serverPw: String? =
-                currentLoginSessionInfoSpwMbr.loginPw
-
-            executorServiceMbr.execute {
-                // 네트워크 비동기 요청을 가정
-                Thread.sleep(500)
-                onComplete(1, "##ADRE_DRTG_1234", "행복한 너구리")
-            }
-        } else { // 로그인 검증 불필요
+        if (!isAutoLogin || loginType == 0) { // 로그인 검증 불필요
             // 비회원 처리
             currentLoginSessionInfoSpwMbr.setLogout()
 
@@ -726,6 +644,122 @@ class ActivityInit : AppCompatActivity() {
             goToNextActivitySemaphoreMbr.release()
 
             goToNextActivity()
+            return
+        }
+
+        // 로그인 검증 필요
+        // 검증용 정보 가져오기 (SNS 로그인이라면 OAuth 로그인 검증 후 반환되는 id, 토큰을 반환)
+        val serverId: String?
+        val serverPw: String?
+
+        when (loginType) {
+            1 -> { // 저장된 이메일 아이디를 가져와 사용
+                serverId = currentLoginSessionInfoSpwMbr.loginId
+                serverPw = currentLoginSessionInfoSpwMbr.loginPw
+            }
+            2 -> {
+                serverId = "구글 SNS Id 실패시 null"
+                serverPw = "구글 SNS Token 실패시 null"
+            }
+            3 -> {
+                serverId = "카카오 SNS Id 실패시 null"
+                serverPw = "카카오 SNS Token 실패시 null"
+            }
+            4 -> {
+                serverId = "네이버 SNS Id 실패시 null"
+                serverPw = "네이버 SNS Token 실패시 null"
+            }
+            else -> {
+                serverId = null
+                serverPw = null
+            }
+        }
+
+        if (serverId == null || serverPw == null) { // 로그인 불가
+            // 비회원 처리
+            currentLoginSessionInfoSpwMbr.setLogout()
+
+            goToNextActivitySemaphoreMbr.acquire()
+            checkLoginCompletedMbr = true
+            goToNextActivitySemaphoreMbr.release()
+
+            goToNextActivity()
+            return
+        }
+
+        // (정보 요청 콜백)
+        // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
+        // sessionToken : 로그인 완료시 반환되는 세션토큰
+        val onComplete: (statusCode: Int, sessionToken: String?, userNickName: String?) -> Unit =
+            { statusCode, sessionToken, userNickName ->
+                runOnUiThread {
+                    when (statusCode) {
+                        1 -> {// 로그인 완료
+                            // 회원 처리
+                            currentLoginSessionInfoSpwMbr.isAutoLogin = true
+                            currentLoginSessionInfoSpwMbr.sessionToken = sessionToken
+                            currentLoginSessionInfoSpwMbr.userNickName = userNickName
+
+                            goToNextActivitySemaphoreMbr.acquire()
+                            checkLoginCompletedMbr = true
+                            goToNextActivitySemaphoreMbr.release()
+
+                            goToNextActivity()
+                        }
+                        2 -> { // 로그인 정보 불일치
+                            // 비회원 처리
+                            currentLoginSessionInfoSpwMbr.setLogout()
+
+                            goToNextActivitySemaphoreMbr.acquire()
+                            checkLoginCompletedMbr = true
+                            goToNextActivitySemaphoreMbr.release()
+
+                            goToNextActivity()
+                        }
+                        -1 -> { // 네트워크 에러
+                            shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
+                                false,
+                                "네트워크 불안정",
+                                "현재 네트워크 연결이 불안정합니다.",
+                                "다시시도",
+                                "종료",
+                                onPosBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                    checkLogin()
+                                },
+                                onNegBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                    finish()
+                                },
+                                onCanceled = {}
+                            )
+                        }
+                        else -> { // 그외 서버 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "기술적 문제",
+                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+
+                                    finish()
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+
+                                    finish()
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+        executorServiceMbr.execute {
+            // 네트워크 비동기 요청을 가정
+            Thread.sleep(500)
+            onComplete(1, "##ADRE_DRTG_1234", "행복한 너구리")
         }
     }
 
