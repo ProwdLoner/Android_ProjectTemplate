@@ -646,6 +646,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         bindingMbr.screenRefreshLayout.setOnRefreshListener {
             if (refreshWholeScreenDataOnProgressMbr) {
                 bindingMbr.screenRefreshLayout.isRefreshing = false
+                return@setOnRefreshListener
             }
 
             refreshWholeScreenData(onComplete = {
