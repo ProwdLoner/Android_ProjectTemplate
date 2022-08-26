@@ -163,10 +163,4 @@ object CustomUtil {
     // 최소공배수
     fun getLcm(a: Int, b: Int): Int =
         (a * b) / getGcd(a, b)
-
-    // (현 화면상 dp 를 px 로 변환해주는 함수)
-    fun convertDPtoPX(context: Context, dp: Int): Int {
-        val density = context.resources.displayMetrics.density
-        return (dp.toFloat() * density).roundToInt()
-    }
 }
