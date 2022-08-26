@@ -352,6 +352,243 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
+    // (아이템 내용 변경)
+    var putActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+        false
+
+    fun putActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+        serverUid: Long,
+        text: String,
+        onComplete: () -> Unit
+    ) {
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
+            putActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                true
+
+            // 로더 추가
+            runOnUiThread {
+                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "저장중입니다. 잠시만 기다려주세요.",
+                    onCanceled = {}
+                )
+            }
+
+            val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr + 1
+
+            // (정보 요청 콜백)
+            // statusCode
+            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            val networkOnComplete: (statusCode: Int) -> Unit =
+                { statusCode ->
+                    when (statusCode) {
+                        1 -> {// 완료
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                            }
+
+                            val cloneItemList =
+                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+                            // 데이터 화면 변경
+                            val idx =
+                                cloneItemList.indexOfFirst {
+                                    (it as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
+                                        .serverItemUid == serverUid
+                                }
+
+                            (cloneItemList[idx] as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).title =
+                                text
+
+                            // 받아온 아이템 추가
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                                bindingMbr.recyclerView.scrollToPosition(lastItemIdx)
+                            }
+
+                            putActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            putActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            putActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                    }
+                }
+
+            // 네트워크 요청
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+
+                networkOnComplete(1)
+            }
+        }
+    }
+
+    // (아이템 삭제)
+    var deleteActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+        false
+
+    fun deleteActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+        serverUid: Long,
+        onComplete: () -> Unit
+    ) {
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
+            deleteActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                true
+
+            // 로더 추가
+            runOnUiThread {
+                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "삭제중입니다. 잠시만 기다려주세요.",
+                    onCanceled = {}
+                )
+            }
+
+            val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr + 1
+
+            // (정보 요청 콜백)
+            // statusCode
+            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            val networkOnComplete: (statusCode: Int) -> Unit =
+                { statusCode ->
+                    when (statusCode) {
+                        1 -> {// 완료
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                            }
+
+                            val cloneItemList =
+                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+                            // 데이터 화면 변경
+                            val idx =
+                                cloneItemList.indexOfFirst {
+                                    (it as ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
+                                        .serverItemUid == serverUid
+                                }
+
+                            cloneItemList.removeAt(idx)
+
+                            // 받아온 아이템 추가
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                                bindingMbr.recyclerView.scrollToPosition(lastItemIdx)
+                            }
+
+                            deleteActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            deleteActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // 로더 제거
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            deleteActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterDataOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                    }
+                }
+
+            // 네트워크 요청
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+
+                networkOnComplete(1)
+            }
+        }
+    }
 
 
     // ---------------------------------------------------------------------------------------------

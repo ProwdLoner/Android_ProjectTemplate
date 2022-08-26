@@ -194,27 +194,27 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     binding.title.text = copyEntity.title
 
                     // 아이템 변경
-//                    binding.root.setOnClickListener {
-//                        parentViewMbr.putRecyclerViewItemData(
-//                            copyEntity.serverItemUid,
-//                            "(Item Clicked!)",
-//                            onComplete = {})
-//                    }
-//
-//                    // 아이템 제거 버튼
-//                    binding.deleteBtn.setOnClickListener {
-//                        parentViewMbr.deleteRecyclerViewItemData(
-//                            copyEntity.serverItemUid,
-//                            onComplete = {})
-//                    }
+                    binding.root.setOnClickListener {
+                        parentViewMbr.putActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+                            copyEntity.serverItemUid,
+                            "(Item Clicked!)",
+                            onComplete = {})
+                    }
+
+                    // 아이템 제거 버튼
+                    binding.deleteBtn.setOnClickListener {
+                        parentViewMbr.deleteActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+                            copyEntity.serverItemUid,
+                            onComplete = {})
+                    }
 
                 }
 
-                is NetworkError.ViewHolder ->{}
+                is NetworkError.ViewHolder -> {}
 
-                is ServerError.ViewHolder ->{}
+                is ServerError.ViewHolder -> {}
 
-                is NoItem.ViewHolder ->{}
+                is NoItem.ViewHolder -> {}
 
                 // 아이템이 늘어나면 추가
             }
