@@ -375,10 +375,9 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 true, // 세로 스크롤인지 가로 스크롤인지
                 1, // 이 개수를 늘리면 그리드 레이아웃으로 변화
                 onScrollReachTheEnd = {
-                    // todo
-//                    getRecyclerViewAdapterItemList(
-//                        false,
-//                        onComplete = {})
+                    getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataList(
+                        onComplete = {}
+                    )
                 }
             )
         )
@@ -482,13 +481,12 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     private fun refreshWholeScreenData(onComplete: () -> Unit) {
         executorServiceMbr.execute {
             screenDataSemaphoreMbr.acquire()
-
-            // (로딩 처리)
             refreshWholeScreenDataOnProgressMbr = true
 
-            // 리스트 초기화
             val cloneItemList =
                 adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+            // 리스트 초기화
             cloneItemList.clear()
             runOnUiThread {
                 adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
@@ -596,6 +594,134 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                     arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
 
                 for (idx in 0L..10L) {
+                    val title = "item$idx"
+                    resultObj.add(
+                        ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                            idx,
+                            title
+                        )
+                    )
+                }
+
+                networkOnComplete(1, resultObj)
+            }
+        }
+    }
+
+    // ActivityBasicVerticalRecyclerViewSampleAdapterSet - RecyclerViewAdapter 의 다음 페이지 데이터 리스트 가져오기
+    // : serverItemUid 를 네트워크 요청에 입력하면 서버에선 해당 uid 이후의 데이터 리스트를 반환
+    private var getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+        false
+
+    private fun getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataList(
+        onComplete: () -> Unit
+    ) {
+        executorServiceMbr.execute {
+            if (getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr) {
+                return@execute
+            }
+            getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                true
+            screenDataSemaphoreMbr.acquire()
+
+            val cloneItemList =
+                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+            // 로더 추가
+            cloneItemList.add(
+                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
+                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
+                )
+            )
+
+            val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr + 1
+
+            runOnUiThread {
+                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+
+                // 로더 추가시 스크롤을 내리기
+                bindingMbr.recyclerView.smoothScrollToPosition(lastItemIdx)
+            }
+
+            // (정보 요청 콜백)
+            // statusCode
+            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 itemList 는 null
+            val networkOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
+                { statusCode, itemList ->
+                    when (statusCode) {
+                        1 -> {// 완료
+                            // 로더 제거
+                            cloneItemList.removeLast()
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                            }
+
+                            if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
+                                getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                                    false
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            } else {
+                                // 받아온 아이템 추가
+                                cloneItemList.addAll(itemList)
+                                runOnUiThread {
+                                    adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                                    bindingMbr.recyclerView.scrollToPosition(lastItemIdx)
+                                }
+
+                                getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                                    false
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            }
+                        }
+                        -1 -> { // 네트워크 에러
+                            // 로더 제거
+                            cloneItemList.removeLast()
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                            }
+
+                            getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // 로더 제거
+                            cloneItemList.removeLast()
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                            }
+
+                            getActivityBasicVerticalRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                    }
+                }
+
+            // 네트워크 요청
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+
+                val lastItemServerUid = if (cloneItemList.size < 1) { // 아이템 리스트에 실질적인 아이템이 없을 때,
+                    -1
+                } else {
+                    (cloneItemList[cloneItemList.lastIndex - 1] as
+                            ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
+                }
+
+                val resultObj =
+                    arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+
+                for (idx in lastItemServerUid + 1..lastItemServerUid + 11) {
                     val title = "item$idx"
                     resultObj.add(
                         ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
