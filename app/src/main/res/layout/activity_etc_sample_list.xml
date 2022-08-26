@@ -168,7 +168,7 @@
                     android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_broadcast_receiver_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_basic_notification_sample_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>
