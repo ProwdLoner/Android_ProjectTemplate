@@ -28,11 +28,15 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:usesCleartextTraffic="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Application"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".activity_set.activity_touch_delegate_sample.ActivityTouchDelegateSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
         <activity
             android:name=".activity_set.activity_bitmap_and_opencv_jni_sample.ActivityBitmapAndOpencvJniSample"
             android:configChanges="keyboardHidden|orientation|screenSize"

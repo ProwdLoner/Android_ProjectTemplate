@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_etc_sample_list
+package com.example.prowd_android_template.activity_set.activity_touch_delegate_sample
 
 import android.app.Dialog
 import android.content.Intent
@@ -13,27 +13,18 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
-import com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_basic_notification_sample.ActivityBasicNotificationSample
-import com.example.prowd_android_template.activity_set.activity_basic_service_sample.ActivityBasicServiceSample
-import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample
-import com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
-import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
-import com.example.prowd_android_template.activity_set.activity_touch_delegate_sample.ActivityTouchDelegateSample
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityEtcSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityTouchDelegateSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-class ActivityEtcSampleList : AppCompatActivity() {
+class ActivityTouchDelegateSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
@@ -44,7 +35,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityEtcSampleListBinding
+    lateinit var bindingMbr: ActivityTouchDelegateSampleBinding
 
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
@@ -363,7 +354,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // : 클래스에서 사용할 객체를 초기 생성
     private fun onCreateInitObject() {
         // 뷰 객체
-        bindingMbr = ActivityEtcSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityTouchDelegateSampleBinding.inflate(layoutInflater)
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
@@ -394,88 +385,8 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        // 권한 샘플 이동 버튼
-        bindingMbr.goToPermissionSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityPermissionSample::class.java
-                )
-            startActivity(intent)
-        }
+        // todo 버튼 1, 2 확장
 
-        // 다이얼로그 샘플 이동 버튼
-        bindingMbr.goToDialogSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityDialogSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBrightnessChangeSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBrightnessChangeSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityAarModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityAarModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBasicServiceSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicServiceSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBroadcastReceiverSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBroadcastReceiverSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBasicNotificationSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicNotificationSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityTouchDelegateSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityTouchDelegateSample::class.java
-                )
-            startActivity(intent)
-        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
