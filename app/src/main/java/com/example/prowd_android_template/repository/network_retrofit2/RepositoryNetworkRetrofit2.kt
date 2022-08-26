@@ -1,15 +1,16 @@
 package com.example.prowd_android_template.repository.network_retrofit2
 
-import com.example.prowd_android_template.repository.network_retrofit2.request_api_set.test.TestRequestApi
+import com.example.prowd_android_template.repository.network_retrofit2.request_apis.RequestApiTest
 import java.util.concurrent.Semaphore
 
-// Retrofit2 함수 처리는 데이터 접근에 시간이 걸리기에 내부적으로 모두 Async 처리가 되어있음
+// Retrofit2 함수 네트워크 URL 과 API 객체를 이어주고 제공하는 역할
+// : 주소 1개당 API 객체 1개를 생성하여 (Network Request Api 객체) 공간에 추가하여 사용
 class RepositoryNetworkRetrofit2 private constructor() {
     // <멤버 변수 공간>
     // (Network Request Api 객체)
-    val testRequestApiMbr: TestRequestApi =
+    val testRequestApiMbr: RequestApiTest =
         (RetrofitClientBuilder.getRetrofitClient("https://www.google.com/"))
-            .create(TestRequestApi::class.java)
+            .create(RequestApiTest::class.java)
 
 
     // ---------------------------------------------------------------------------------------------
