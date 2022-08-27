@@ -187,7 +187,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                     // 아이템 변경
                     binding.root.setOnClickListener {
-                        parentViewMbr.putRecyclerViewItemData(
+                        parentViewMbr.putActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
                             copyEntity.serverItemUid,
                             "(Item Clicked!)",
                             onComplete = {})
@@ -195,7 +195,7 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
 
                     // 아이템 제거 버튼
                     binding.deleteBtn.setOnClickListener {
-                        parentViewMbr.deleteRecyclerViewItemData(
+                        parentViewMbr.deleteActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
                             copyEntity.serverItemUid,
                             onComplete = {})
                     }

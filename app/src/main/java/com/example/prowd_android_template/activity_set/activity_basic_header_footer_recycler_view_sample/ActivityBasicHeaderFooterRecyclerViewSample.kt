@@ -1,18 +1,19 @@
 package com.example.prowd_android_template.activity_set.activity_basic_header_footer_recycler_view_sample
 
-import android.app.Application
 import android.app.Dialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
-import android.view.View
+import android.provider.Settings
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModelProvider
+import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
+import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -24,24 +25,89 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-// todo : 신코드 적용
 class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
+    // <설정 변수 공간>
+    // (앱 진입 필수 권한 배열)
+    // : 앱 진입에 필요한 권한 배열.
+    //     ex : Manifest.permission.INTERNET
+    private val activityPermissionArrayMbr: Array<String> = arrayOf()
+
+
+    // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
     lateinit var bindingMbr: ActivityBasicHeaderFooterRecyclerViewSampleBinding
 
-    // (뷰 모델 객체)
-    lateinit var viewModelMbr: ViewModel
+    // (repository 모델)
+    lateinit var repositorySetMbr: RepositorySet
 
     // (어뎁터 객체)
     lateinit var adapterSetMbr: ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet
 
+    // (SharedPreference 객체)
+    // 현 로그인 정보 접근 객체
+    lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
+
+    // (스레드 풀)
+    val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
+
     // (다이얼로그 객체)
     var dialogMbr: Dialog? = null
+    var shownDialogInfoVOMbr: InterfaceDialogInfoVO? = null
+        set(value) {
+            when (value) {
+                is DialogBinaryChoose.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogBinaryChoose(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogConfirm.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogConfirm(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogProgressLoading.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogProgressLoading(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                is DialogRadioButtonChoose.DialogInfoVO -> {
+                    dialogMbr?.dismiss()
+
+                    dialogMbr = DialogRadioButtonChoose(
+                        this,
+                        value
+                    )
+                    dialogMbr?.show()
+                }
+                else -> {
+                    dialogMbr?.dismiss()
+                    dialogMbr = null
+
+                    field = null
+                    return
+                }
+            }
+            field = value
+        }
 
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
     var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
+    private var permissionRequestOnProgressMbr = false
+    private val permissionRequestOnProgressSemaphoreMbr = Semaphore(1)
 
     // (ActivityResultLauncher 객체)
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
@@ -55,8 +121,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
     //     액티비티 일시정지 후 재실행 = onPause() → ... -> onResume()
     //     액티비티 정지 후 재실행 = onPause() → onStop() -> ... -> onStart() → onResume()
     //     액티비티 종료 = onPause() → onStop() → onDestroy()
-    //     앨티비티 화면 회전 = onPause() → onSaveInstanceState() → onStop() → onDestroy() →
-    //         onCreate(savedInstanceState) → onStart() → onResume()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -65,49 +129,203 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
         // (초기 뷰 설정)
         onCreateInitView()
-
-        // (라이브 데이터 설정 : 뷰모델 데이터 반영 작업)
-        onCreateSetLiveData()
     }
 
     override fun onResume() {
         super.onResume()
 
-        // (액티비티 진입 필수 권한 확인)
-        // 진입 필수 권한이 클리어 되어야 로직이 실행
-        permissionRequestCallbackMbr = { permissions ->
-            var isPermissionAllGranted = true
-            for (activityPermission in viewModelMbr.activityPermissionArrayMbr) {
-                if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
-                    viewModelMbr.confirmDialogInfoLiveDataMbr.value = DialogConfirm.DialogInfoVO(
-                        true,
-                        "권한 필요",
-                        "서비스를 실행하기 위해 필요한 권한이 거부되었습니다.",
-                        "뒤로가기",
-                        onCheckBtnClicked = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
+        executorServiceMbr.execute {
+            permissionRequestOnProgressSemaphoreMbr.acquire()
+            runOnUiThread {
+                if (!permissionRequestOnProgressMbr) { // 현재 권한 요청중이 아님
+                    permissionRequestOnProgressMbr = true
+                    permissionRequestOnProgressSemaphoreMbr.release()
+                    // (액티비티 진입 필수 권한 확인)
+                    // 진입 필수 권한이 클리어 되어야 로직이 실행
 
-                            finish()
-                        },
-                        onCanceled = {
-                            viewModelMbr.confirmDialogInfoLiveDataMbr.value = null
-
-                            finish()
+                    // 권한 요청 콜백
+                    permissionRequestCallbackMbr = { permissions ->
+                        var isPermissionAllGranted = true
+                        var neverAskAgain = false
+                        for (activityPermission in activityPermissionArrayMbr) {
+                            if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
+                                // 권한 클리어 플래그를 변경하고 break
+                                neverAskAgain =
+                                    !shouldShowRequestPermissionRationale(activityPermission)
+                                isPermissionAllGranted = false
+                                break
+                            }
                         }
-                    )
 
-                    // 권한 클리어 플래그를 변경하고 break
-                    isPermissionAllGranted = false
-                    break
+                        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                            permissionRequestOnProgressSemaphoreMbr.acquire()
+                            permissionRequestOnProgressMbr = false
+                            permissionRequestOnProgressSemaphoreMbr.release()
+
+                            allPermissionsGranted()
+                        } else if (!neverAskAgain) { // 단순 거부
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "권한 필요",
+                                "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                "뒤로가기",
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                    permissionRequestOnProgressMbr = false
+                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                    finish()
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                    permissionRequestOnProgressMbr = false
+                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                    finish()
+                                }
+                            )
+
+                        } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                            shownDialogInfoVOMbr =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "해당 서비스를 이용하기 위해선\n" +
+                                            "필수 권한 승인이 필요합니다.\n" +
+                                            "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 권한 설정 화면으로 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        intent.data = Uri.fromParts("package", packageName, null)
+
+                                        resultLauncherCallbackMbr = {
+                                            // 설정 페이지 복귀시 콜백
+                                            var isPermissionAllGranted1 = true
+                                            for (activityPermission in activityPermissionArrayMbr) {
+                                                if (ActivityCompat.checkSelfPermission(
+                                                        this,
+                                                        activityPermission
+                                                    ) != PackageManager.PERMISSION_GRANTED
+                                                ) { // 거부된 필수 권한이 존재
+                                                    // 권한 클리어 플래그를 변경하고 break
+                                                    isPermissionAllGranted1 = false
+                                                    break
+                                                }
+                                            }
+
+                                            if (isPermissionAllGranted1) { // 권한 승인
+                                                permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                permissionRequestOnProgressMbr = false
+                                                permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                allPermissionsGranted()
+                                            } else { // 권한 거부
+                                                shownDialogInfoVOMbr =
+                                                    DialogConfirm.DialogInfoVO(
+                                                        true,
+                                                        "권한 요청",
+                                                        "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                                        "뒤로가기",
+                                                        onCheckBtnClicked = {
+                                                            shownDialogInfoVOMbr =
+                                                                null
+                                                            permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                            permissionRequestOnProgressMbr = false
+                                                            permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                            finish()
+                                                        },
+                                                        onCanceled = {
+                                                            shownDialogInfoVOMbr =
+                                                                null
+                                                            permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                            permissionRequestOnProgressMbr = false
+                                                            permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                            finish()
+                                                        }
+                                                    )
+                                            }
+                                        }
+                                        resultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        shownDialogInfoVOMbr =
+                                            DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "권한 요청",
+                                                "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                                "뒤로가기",
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr =
+                                                        null
+                                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                    permissionRequestOnProgressMbr = false
+                                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                    finish()
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr =
+                                                        null
+                                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                    permissionRequestOnProgressMbr = false
+                                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                    finish()
+                                                }
+                                            )
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+
+                                        shownDialogInfoVOMbr =
+                                            DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "권한 요청",
+                                                "서비스를 실행하기 위한 필수 권한이 거부되었습니다.",
+                                                "뒤로가기",
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr =
+                                                        null
+                                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                    permissionRequestOnProgressMbr = false
+                                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                    finish()
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr =
+                                                        null
+                                                    permissionRequestOnProgressSemaphoreMbr.acquire()
+                                                    permissionRequestOnProgressMbr = false
+                                                    permissionRequestOnProgressSemaphoreMbr.release()
+
+                                                    finish()
+                                                }
+                                            )
+                                    }
+                                )
+
+                        }
+                    }
+
+                    // 권한 요청
+                    permissionRequestMbr.launch(activityPermissionArrayMbr)
+                } else { // 현재 권한 요청중
+                    permissionRequestOnProgressSemaphoreMbr.release()
                 }
             }
-
-            if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
-                allPermissionsGranted()
-            }
         }
-
-        permissionRequestMbr.launch(viewModelMbr.activityPermissionArrayMbr)
     }
 
     override fun onDestroy() {
@@ -117,22 +335,253 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
         super.onDestroy()
     }
 
+    // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
+    // : 해당 이벤트 발생시 처리할 로직을 작성
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) { // 화면회전 landscape
+
+        } else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { // 화면회전 portrait
+
+        }
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
+    // (아이템 내용 변경)
+    fun putActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+        serverUid: Long,
+        text: String,
+        onComplete: () -> Unit
+    ) {
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
+
+            // 로더 추가
+            runOnUiThread {
+                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "저장중입니다. 잠시만 기다려주세요.",
+                    onCanceled = {}
+                )
+            }
+
+            // (정보 요청 콜백)
+            // statusCode
+            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            val putItemOnComplete: (statusCode: Int) -> Unit =
+                { statusCode ->
+                    // 로더 제거
+                    runOnUiThread {
+                        shownDialogInfoVOMbr = null
+                    }
+
+                    when (statusCode) {
+                        1 -> {// 완료
+                            val cloneItemList =
+                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+                            // 데이터 화면 변경
+                            val idx =
+                                cloneItemList.indexOfFirst {
+                                    (it as ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
+                                        .serverItemUid == serverUid
+                                }
+
+                            (cloneItemList[idx] as ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).title =
+                                text
+
+                            // 받아온 아이템 추가
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                    }
+                }
+
+            // 네트워크 요청
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+
+                putItemOnComplete(1)
+            }
+        }
+    }
+
+    // (아이템 삭제)
+    fun deleteActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+        serverUid: Long,
+        onComplete: () -> Unit
+    ) {
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
+
+            // 로더 추가
+            runOnUiThread {
+                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "삭제중입니다. 잠시만 기다려주세요.",
+                    onCanceled = {}
+                )
+            }
+
+            // (정보 요청 콜백)
+            // statusCode
+            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            val deleteItemOnComplete: (statusCode: Int) -> Unit =
+                { statusCode ->
+                    // 로더 제거
+                    runOnUiThread {
+                        shownDialogInfoVOMbr = null
+                    }
+
+                    when (statusCode) {
+                        1 -> {// 완료
+                            val cloneItemList =
+                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+                            // 데이터 화면 변경
+                            val idx =
+                                cloneItemList.indexOfFirst {
+                                    (it as ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
+                                        .serverItemUid == serverUid
+                                }
+
+                            cloneItemList.removeAt(idx)
+
+                            // 받아온 아이템 추가
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                    }
+                }
+
+            // 네트워크 요청
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+
+                deleteItemOnComplete(1)
+            }
+        }
+    }
 
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
     // (초기 객체 생성)
+    // : 클래스에서 사용할 객체를 초기 생성
     private fun onCreateInitObject() {
         // 뷰 객체
         bindingMbr = ActivityBasicHeaderFooterRecyclerViewSampleBinding.inflate(layoutInflater)
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
-        // 뷰 모델 객체 생성
-        viewModelMbr = ViewModelProvider(this)[ViewModel::class.java]
+        // 레포지토리 객체
+        repositorySetMbr = RepositorySet.getInstance(application)
+
+        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
+        adapterSetMbr = ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
+            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter(
+                this,
+                bindingMbr.recyclerView,
+                true, // 세로 스크롤인지 가로 스크롤인지
+                1, // 이 개수를 늘리면 그리드 레이아웃으로 변화
+                onScrollReachTheEnd = {
+                    getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataList(
+                        onComplete = {}
+                    )
+                }
+            )
+        )
+
+        currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
         permissionRequestMbr =
@@ -151,489 +600,269 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             resultLauncherCallbackMbr = null
         }
 
-        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
-            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter(
-                this,
-                bindingMbr.recyclerView,
-                true, // 세로 스크롤인지 가로 스크롤인지
-                1, // 이 개수를 늘리면 그리드 레이아웃으로 변화
-                onScrollReachTheEnd = {
-                    getRecyclerViewAdapterItemList(
-                        false,
-                        onComplete = {})
-                }
-            )
-        )
     }
 
     // (초기 뷰 설정)
+    // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
+        // 화면 리플레시
+        bindingMbr.screenRefreshLayout.setOnRefreshListener {
+            refreshWholeScreenData(onComplete = {
+                bindingMbr.screenRefreshLayout.isRefreshing = false
+            })
+        }
+
         // 아이템 추가
         bindingMbr.addItemBtn.setOnClickListener {
-            postRecyclerViewAdapterItemList("추가 아이템", onComplete = {})
+            postActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
+                "추가 아이템",
+                onComplete = {})
         }
 
         // 아이템 셔플 테스트
         bindingMbr.doShuffleBtn.setOnClickListener {
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-            if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
-                viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                return@setOnClickListener
-            }
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+            executorServiceMbr.execute {
+                screenDataSemaphoreMbr.acquire()
 
-            // 아이템 셔플
-            val item =
-                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-            item.shuffle()
-            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = item
-
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-        }
-
-        // 화면 리플레시
-        bindingMbr.screenRefreshLayout.setOnRefreshListener {
-            viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = true
-            getRecyclerViewAdapterHeader(false, onComplete = {})
-            getRecyclerViewAdapterItemList(true, onComplete = {
-                viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.value = false
-            })
-            getRecyclerViewAdapterFooter(false, onComplete = {})
-        }
-    }
-
-    // (라이브 데이터 설정)
-    private fun onCreateSetLiveData() {
-        // 로딩 다이얼로그 출력 플래그
-        viewModelMbr.progressLoadingDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogProgressLoading) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
+                // 아이템 셔플
+                val item =
+                    adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+                item.shuffle()
+                runOnUiThread {
+                    adapterSetMbr.recyclerViewAdapter.setItemList(item)
                 }
-            } else {
-                dialogMbr?.dismiss()
 
-                dialogMbr = DialogProgressLoading(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
+                screenDataSemaphoreMbr.release()
             }
-        }
-
-        // progressSample2 진행도
-        viewModelMbr.progressDialogSample2ProgressValue.observe(this) {
-            if (it != -1) {
-                val loadingText = "로딩중 $it%"
-                if (dialogMbr != null) {
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressMessageTxt.text =
-                        loadingText
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.visibility =
-                        View.VISIBLE
-                    (dialogMbr as DialogProgressLoading).bindingMbr.progressBar.progress = it
-                }
-            }
-        }
-
-        // 선택 다이얼로그 출력 플래그
-        viewModelMbr.binaryChooseDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogBinaryChoose) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogBinaryChoose(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // 확인 다이얼로그 출력 플래그
-        viewModelMbr.confirmDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogConfirm) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogConfirm(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // 라디오 버튼 선택 다이얼로그 출력 플래그
-        viewModelMbr.radioButtonChooseDialogInfoLiveDataMbr.observe(this) {
-            if (it == null) {
-                if (dialogMbr is DialogRadioButtonChoose) {
-                    dialogMbr?.dismiss()
-                    dialogMbr = null
-                }
-            } else {
-                dialogMbr?.dismiss()
-
-                dialogMbr = DialogRadioButtonChoose(
-                    this,
-                    it
-                )
-                dialogMbr?.show()
-            }
-        }
-
-        // 리사이클러 뷰 어뎁터 데이터 바인딩
-        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.setItemList(it)
-        }
-
-        viewModelMbr.screenRefreshLayoutOnLoadingLiveDataMbr.observe(this) {
-            bindingMbr.screenRefreshLayout.isRefreshing = it
-        }
-
-        viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.setHeader(it)
-        }
-
-        viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.setFooter(it)
-        }
-
-        viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.isHeaderLoadingMbr = it
-        }
-
-        viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.observe(this) {
-            adapterSetMbr.recyclerViewAdapter.isFooterLoadingMbr = it
         }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
+    // : 실질적인 액티비티 로직 실행구역
+    private var doItAlreadyMbr = false
+    private var currentUserUidMbr: String? = null // 유저 식별가능 정보 - null 이라면 비회원
     private fun allPermissionsGranted() {
-        if (!viewModelMbr.doItAlreadyMbr) {
-            // (액티비티 실행시 처음 한번만 실행되는 로직)
-            viewModelMbr.doItAlreadyMbr = true
+        if (!doItAlreadyMbr) {
+            // (권한이 충족된 onCreate)
+            doItAlreadyMbr = true
 
             // (초기 데이터 수집)
-            getRecyclerViewAdapterHeader(true, onComplete = {})
-            getRecyclerViewAdapterItemList(true, onComplete = {})
-            getRecyclerViewAdapterFooter(true, onComplete = {})
+            currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
+            refreshWholeScreenData(onComplete = {})
 
-            // (알고리즘)
         } else {
-            // (회전이 아닌 onResume 로직) : 권한 클리어
-            // (뷰 데이터 로딩)
-            // : 유저가 변경되면 해당 유저에 대한 데이터로 재구축
-            val userUid = viewModelMbr.currentLoginSessionInfoSpwMbr.userUid
-            if (userUid != viewModelMbr.currentUseruserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
+            // (onResume - (권한이 충족된 onCreate))
+
+            // (유저별 데이터 갱신)
+            // : 유저 정보가 갱신된 상태에서 다시 현 액티비티로 복귀하면 자동으로 데이터를 다시 갱신합니다.
+            val userUid = currentLoginSessionInfoSpwMbr.userUid
+            if (userUid != currentUserUidMbr) { // 액티비티 유저와 세션 유저가 다를 때
                 // 진입 플래그 변경
-                viewModelMbr.currentUseruserUidMbr = userUid
+                currentUserUidMbr = userUid
 
                 // (데이터 수집)
-                getRecyclerViewAdapterHeader(true, onComplete = {})
-                getRecyclerViewAdapterItemList(true, onComplete = {})
-                getRecyclerViewAdapterFooter(true, onComplete = {})
-
-                // (알고리즘)
+                refreshWholeScreenData(onComplete = {})
             }
 
-            // (알고리즘)
         }
+
+        // (onResume)
     }
 
-    // (데이터 요청 함수)
-    private fun getRecyclerViewAdapterHeader(
-        requestCleanAndRefresh: Boolean,
-        onComplete: () -> Unit
-    ) {
-        viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.acquire()
-        if (viewModelMbr.getRecyclerViewAdapterHeaderOnProgressMbr) {
-            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.release()
-            onComplete()
-            return
-        }
-        viewModelMbr.getRecyclerViewAdapterHeaderOnProgressMbr = true
-        viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.release()
+    private val screenDataSemaphoreMbr = Semaphore(1)
 
-        // (로딩 처리)
-        viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value = true
+    // (화면 구성용 데이터를 가져오기)
+    // : 네트워크 등 레포지토리에서 데이터를 가져오고 이를 뷰에 반영
+    //     onComplete = 네트워크 실패든 성공이든 데이터 요청 후 응답을 받아와 해당 상태에 따라 스크린 뷰 처리를 완료한 시점
+    private fun refreshWholeScreenData(onComplete: () -> Unit) {
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
 
-        // 리스트 초기화 여부
-        if (requestCleanAndRefresh) {
-            // 리스트 초기화
-            viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value =
-                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
-                    null
+            runOnUiThread {
+                // (리스트 초기화)
+                adapterSetMbr.recyclerViewAdapter.setHeader(
+                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                        null
+                    )
                 )
-        }
+                adapterSetMbr.recyclerViewAdapter.setFooter(
+                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                        null
+                    )
+                )
+                adapterSetMbr.recyclerViewAdapter.setItemList(ArrayList())
 
-        // (정보 요청 콜백)
-        // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-        // userUid : 로그인 완료시 반환되는 세션토큰
-        val networkOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
-            { statusCode, item ->
-                runOnUiThread {
-                    when (statusCode) {
-                        1 -> {// 완료
-                            // 로더 제거
-                            viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value = false
+                // (로더 추가)
+                adapterSetMbr.recyclerViewAdapter.isHeaderLoadingMbr = true
+                adapterSetMbr.recyclerViewAdapter.isFooterLoadingMbr = true
+                adapterSetMbr.recyclerViewAdapter.setItemList(
+                    arrayListOf(
+                        ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
+                        )
+                    )
+                )
+            }
 
-                            if (item != null) {
-                                viewModelMbr.recyclerViewAdapterHeaderLiveDataMbr.value = item
-                            }
-
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.acquire()
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressMbr = false
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        -1 -> { // 네트워크 에러
-                            // 로더 제거
-                            viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value = false
-                            // todo
-
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.acquire()
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressMbr = false
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        else -> { // 그외 서버 에러
-                            // 로더 제거
-                            viewModelMbr.screenRefreshLayoutHeaderOnLoadingLiveDataMbr.value = false
-                            // todo
-
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.acquire()
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressMbr = false
-                            viewModelMbr.getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr.release()
-                            onComplete()
-                        }
+            // (정보 요청 콜백)
+            // 아이템 리스트
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 itemList 는 null
+            val getItemListOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
+                { statusCode, itemList ->
+                    // 로더 제거
+                    runOnUiThread {
+                        adapterSetMbr.recyclerViewAdapter.setItemList(ArrayList())
                     }
-                }
-            }
 
-
-        // 네트워크 비동기 요청을 가정
-        // lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
-        // 데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
-        viewModelMbr.executorServiceMbr.execute {
-            Thread.sleep(1500)
-
-            networkOnComplete(
-                1,
-                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
-                    "헤더입니다."
-                )
-            )
-        }
-    }
-
-    private fun getRecyclerViewAdapterFooter(
-        requestCleanAndRefresh: Boolean,
-        onComplete: () -> Unit
-    ) {
-        viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.acquire()
-        if (viewModelMbr.getRecyclerViewAdapterFooterOnProgressMbr) {
-            viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.release()
-            onComplete()
-            return
-        }
-        viewModelMbr.getRecyclerViewAdapterFooterOnProgressMbr = true
-        viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.release()
-
-        // (로딩 처리)
-        viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value = true
-
-        // 리스트 초기화 여부
-        if (requestCleanAndRefresh) {
-            // 리스트 초기화
-            viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value =
-                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
-                    null
-                )
-        }
-
-        // (정보 요청 콜백)
-        // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-        // userUid : 로그인 완료시 반환되는 세션토큰
-        val networkOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
-            { statusCode, item ->
-                runOnUiThread {
                     when (statusCode) {
                         1 -> {// 완료
-                            // 로더 제거
-                            viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value = false
+                            if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
+                                // todo
+//                                runOnUiThread {
+//                                    bindingMbr.errorContainer.visibility = View.VISIBLE
+//                                    bindingMbr.errorMsg.text = "데이터가 없습니다."
+//                                }
 
-                            if (item != null) {
-                                viewModelMbr.recyclerViewAdapterFooterLiveDataMbr.value = item
-                            }
-
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.acquire()
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressMbr = false
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        -1 -> { // 네트워크 에러
-                            // 로더 제거
-                            viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value = false
-                            // todo
-
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.acquire()
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressMbr = false
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        else -> { // 그외 서버 에러
-                            // 로더 제거
-                            viewModelMbr.screenRefreshLayoutFooterOnLoadingLiveDataMbr.value = false
-                            // todo
-
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.acquire()
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressMbr = false
-                            viewModelMbr.getRecyclerViewAdapterFooterOnProgressSemaphoreMbr.release()
-                            onComplete()
-                        }
-                    }
-                }
-            }
-
-
-        // 네트워크 비동기 요청을 가정
-        // lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
-        // 데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
-        viewModelMbr.executorServiceMbr.execute {
-            Thread.sleep(1500)
-
-            networkOnComplete(
-                1,
-                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
-                    "푸터입니다."
-                )
-            )
-        }
-
-    }
-
-    private fun getRecyclerViewAdapterItemList(requestRefresh: Boolean, onComplete: () -> Unit) {
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-        if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-            onComplete()
-            return
-        }
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-
-        // (로딩 처리)
-        val cloneItemList =
-            adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-
-        // 리스트 초기화 여부
-        if (requestRefresh) {
-            // 리스트 초기화
-            cloneItemList.clear()
-            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = cloneItemList
-        }
-
-        // 아이템 리스트 마지막에 로더 추가
-        cloneItemList.add(
-            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
-            )
-        )
-        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value = cloneItemList
-
-        // 로더 추가시 스크롤을 내리기
-        bindingMbr.recyclerView.smoothScrollToPosition(adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr)
-
-        // (정보 요청 콜백)
-        // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-        // userUid : 로그인 완료시 반환되는 세션토큰
-        val networkOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
-            { statusCode, itemList ->
-                runOnUiThread {
-                    when (statusCode) {
-                        1 -> {// 완료
-                            // 로더 제거
-                            cloneItemList.removeLast()
-                            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                cloneItemList
-
-                            if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있다면 그냥 멈추기
-                                viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                                viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                                viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                                screenDataSemaphoreMbr.release()
                                 onComplete()
                             } else {
                                 // 받아온 아이템 추가
-                                cloneItemList.addAll(itemList)
-                                viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                    cloneItemList
+                                runOnUiThread {
+                                    adapterSetMbr.recyclerViewAdapter.setItemList(itemList)
+                                    // todo : 제거 고려
+                                    bindingMbr.recyclerView.scrollToPosition(0)
+                                }
 
-                                viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                                viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                                viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                                // todo 헤더, 푸터 고려
+                                screenDataSemaphoreMbr.release()
                                 onComplete()
                             }
                         }
                         -1 -> { // 네트워크 에러
                             // todo
-                            // 로더 제거
-                            cloneItemList.removeLast()
-                            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                cloneItemList
+//                            runOnUiThread {
+//                                bindingMbr.errorContainer.visibility = View.VISIBLE
+//                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
+//                            }
 
-                            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                            viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                            screenDataSemaphoreMbr.release()
                             onComplete()
                         }
                         else -> { // 그외 서버 에러
                             // todo
-                            // 로더 제거
-                            cloneItemList.removeLast()
-                            viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                                cloneItemList
+//                            runOnUiThread {
+//                                bindingMbr.errorContainer.visibility = View.VISIBLE
+//                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
+//                            }
 
-                            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                            viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+                            screenDataSemaphoreMbr.release()
                             onComplete()
                         }
                     }
                 }
-            }
 
-        // 네트워크 비동기 요청을 가정
-        // lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
-        // 데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
-        viewModelMbr.executorServiceMbr.execute {
-            Thread.sleep(1000)
+            // 헤더 아이템
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 item 은 null
+            val getHeaderItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
+                { statusCode, item ->
+                    // 로더 제거
+                    runOnUiThread {
+                        adapterSetMbr.recyclerViewAdapter.isHeaderLoadingMbr = false
+                    }
 
-            val clone = adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-            val firstAddedItemUid =
-                if (clone.isNotEmpty() && clone.size > 1) {
-                    (clone[clone.lastIndex - 1] as
-                            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid + 1
-                } else {
-                    0
+                    when (statusCode) {
+                        1 -> {// 완료
+                            // 받아온 아이템 추가
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setHeader(item!!)
+                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // todo
+//                            runOnUiThread {
+//                                bindingMbr.errorContainer.visibility = View.VISIBLE
+//                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
+//                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // todo
+//                            runOnUiThread {
+//                                bindingMbr.errorContainer.visibility = View.VISIBLE
+//                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
+//                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                    }
                 }
 
-            val resultObj = arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+            // 푸터 아이템
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 item 은 null
+            val getFooterItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
+                { statusCode, item ->
+                    // 로더 제거
+                    runOnUiThread {
+                        adapterSetMbr.recyclerViewAdapter.isFooterLoadingMbr = false
+                    }
 
-            if (firstAddedItemUid < 30) {
-                for (idx in firstAddedItemUid..firstAddedItemUid + 10) {
+                    when (statusCode) {
+                        1 -> {// 완료
+                            // 받아온 아이템 추가
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setFooter(item!!)
+                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // todo
+//                            runOnUiThread {
+//                                bindingMbr.errorContainer.visibility = View.VISIBLE
+//                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
+//                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // todo
+//                            runOnUiThread {
+//                                bindingMbr.errorContainer.visibility = View.VISIBLE
+//                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
+//                            }
+
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                    }
+                }
+
+            // (네트워크 요청)
+            // 아이템 리스트
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+
+                val resultObj =
+                    arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+
+                for (idx in 0L..10L) {
                     val title = "item$idx"
                     resultObj.add(
                         ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
@@ -643,292 +872,276 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                         )
                     )
                 }
+
+                getItemListOnComplete(1, resultObj)
             }
 
-            networkOnComplete(1, resultObj)
+            // 헤더
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(500)
+
+                val resultObj =
+                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
+                        "헤더입니다."
+                    )
+
+                getHeaderItemOnComplete(1, resultObj)
+            }
+
+            // 푸터
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(500)
+
+                val resultObj =
+                    ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
+                        "푸터입니다."
+                    )
+
+                getFooterItemOnComplete(1, resultObj)
+            }
         }
     }
 
-    // todo : 로딩 처리
-    private fun postRecyclerViewAdapterItemList(text: String, onComplete: () -> Unit) {
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-        if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-            onComplete()
+    // ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet - RecyclerViewAdapter 의 다음 페이지 데이터 리스트 가져오기
+    // : serverItemUid 를 네트워크 요청에 입력하면 서버에선 해당 uid 이후의 데이터 리스트를 반환
+    // todo 삭제 보류
+    private var getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+        false
+
+    private fun getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataList(
+        onComplete: () -> Unit
+    ) {
+        if (getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr) {
             return
         }
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+        getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+            true
 
-        val networkOnComplete: (Int, Long) -> Unit = { statusCode, serverUid ->
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
+
+            val cloneItemList1 =
+                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+            // 로더 추가
+            cloneItemList1.add(
+                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
+                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
+                )
+            )
+
             runOnUiThread {
-                when (statusCode) {
-                    1 -> {// 완료
-                        val cloneItemList =
-                            adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList1)
 
-                        cloneItemList.add(
-                            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                                serverUid,
-                                text
-                            )
-                        )
+                // todo : 위치검증
+                val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr
 
-                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                            cloneItemList
+                // 로더 추가시 스크롤을 내리기
+                bindingMbr.recyclerView.smoothScrollToPosition(lastItemIdx)
+            }
 
-                        bindingMbr.recyclerView.scrollToPosition(adapterSetMbr.recyclerViewAdapter.currentItemListLastIndexMbr)
+            // (정보 요청 콜백)
+            // statusCode
+            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 itemList 는 null
+            val networkOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
+                { statusCode, itemList ->
+                    val cloneItemList2 =
+                        adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+                    val beforeLastItemIdx =
+                        adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr
 
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
+                    // 로더 제거
+                    cloneItemList2.removeLast()
+                    runOnUiThread {
+                        adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList2)
                     }
-                    -1 -> { // 네트워크 에러
-                        // todo
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
-                    }
-                    else -> { // 그외 서버 에러
-                        // todo
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
+
+                    when (statusCode) {
+                        1 -> {// 완료
+                            if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
+                                getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                                    false
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            } else {
+                                // 받아온 아이템 추가
+                                cloneItemList2.addAll(itemList)
+                                runOnUiThread {
+                                    adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList2)
+                                    // todo
+                                    bindingMbr.recyclerView.scrollToPosition(beforeLastItemIdx)
+                                }
+
+                                getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                                    false
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            }
+                        }
+                        -1 -> { // 네트워크 에러
+
+                            getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+
+                            getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
+                                false
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
                     }
                 }
-            }
-        }
 
-        // 네트워크 비동기 요청을 가정
-        viewModelMbr.executorServiceMbr.execute {
-            Thread.sleep(1000)
-            val lastItemUid =
-                (adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.last() as
-                        ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
-            networkOnComplete(1, lastItemUid + 1)
+            // 네트워크 요청
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+
+                val lastItemServerUid = if (cloneItemList1.size < 1) { // 아이템 리스트에 실질적인 아이템이 없을 때,
+                    -1
+                } else {
+                    (cloneItemList1[cloneItemList1.lastIndex - 1] as
+                            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
+                }
+
+                val resultObj =
+                    arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+
+                for (idx in lastItemServerUid + 1..lastItemServerUid + 11) {
+                    val title = "item$idx"
+                    resultObj.add(
+                        ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                            idx,
+                            title
+                        )
+                    )
+                }
+
+                networkOnComplete(1, resultObj)
+            }
         }
     }
 
-    // todo : 로딩 처리
-    // 아이템 데이터 변경 요청
-    fun putRecyclerViewItemData(
-        serverUid: Long,
+    // (아이템 추가)
+    private fun postActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterData(
         text: String,
         onComplete: () -> Unit
     ) {
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-        if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-            onComplete()
-            return
-        }
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
 
-        val networkOnComplete: (Int) -> Unit = { statusCode ->
+            // 로더 추가
             runOnUiThread {
-                when (statusCode) {
-                    1 -> {// 완료
-                        val cloneItemList =
-                            adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-                        val idx =
-                            cloneItemList.indexOfFirst {
-                                (it as ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
-                                    .serverItemUid == serverUid
+                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "저장중입니다. 잠시만 기다려주세요.",
+                    onCanceled = {}
+                )
+            }
+
+            val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr + 1
+
+            // (정보 요청 콜백)
+            // statusCode
+            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     serverUid = 해당 아이템에 대한 서버 Uid
+            val networkOnComplete: (statusCode: Int, serverUid: Long?) -> Unit =
+                { statusCode, serverUid ->
+                    val cloneItemList =
+                        adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
+
+                    // 로더 제거
+                    runOnUiThread {
+                        shownDialogInfoVOMbr = null
+                    }
+
+                    when (statusCode) {
+                        1 -> {// 완료
+                            // 입력한 데이터 객체
+                            val addedItem =
+                                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                    serverUid!!,
+                                    text
+                                )
+
+                            // 받아온 아이템 추가
+                            cloneItemList.add(addedItem)
+                            runOnUiThread {
+                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                                // todo
+                                bindingMbr.recyclerView.scrollToPosition(lastItemIdx)
                             }
 
-                        (cloneItemList[idx] as ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).title =
-                            text
-
-                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                            cloneItemList
-
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
-                    }
-                    -1 -> { // 네트워크 에러
-                        // todo
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
-                    }
-                    else -> { // 그외 서버 에러
-                        // todo
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
-                    }
-                }
-            }
-        }
-
-        // 네트워크 비동기 요청을 가정
-        viewModelMbr.executorServiceMbr.execute {
-            networkOnComplete(1)
-        }
-    }
-
-    // todo : 로딩 처리
-    // 아이템 데이터 제거 요청
-    fun deleteRecyclerViewItemData(
-        serverUid: Long,
-        onComplete: () -> Unit
-    ) {
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-        if (viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr) {
-            viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-            onComplete()
-            return
-        }
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = true
-        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-
-        val networkOnComplete: (Int) -> Unit = { statusCode ->
-            runOnUiThread {
-                when (statusCode) {
-                    1 -> {// 완료
-                        val cloneItemList =
-                            adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-                        val idx =
-                            cloneItemList.indexOfFirst {
-                                (it as ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
-                                    .serverItemUid == serverUid
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
                             }
 
-                        cloneItemList.removeAt(idx)
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
 
-                        viewModelMbr.recyclerViewAdapterItemListLiveDataMbr.value =
-                            cloneItemList
-
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
-                    }
-                    -1 -> { // 네트워크 에러
-                        // todo
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
-                    }
-                    else -> { // 그외 서버 에러
-                        // todo
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.acquire()
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressMbr = false
-                        viewModelMbr.getRecyclerViewAdapterItemListOnProgressSemaphoreMbr.release()
-                        onComplete()
+                            screenDataSemaphoreMbr.release()
+                            onComplete()
+                        }
                     }
                 }
+
+            // 네트워크 요청
+            executorServiceMbr.execute {
+                // 요청 대기시간 가정
+                Thread.sleep(1000)
+                val lastItemUid =
+                    (adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.last() as
+                            ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
+                networkOnComplete(1, lastItemUid + 1)
             }
         }
-
-        // 네트워크 비동기 요청을 가정
-        viewModelMbr.executorServiceMbr.execute {
-            networkOnComplete(1)
-        }
     }
-
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    // (뷰모델 객체)
-    // : 액티비티 reCreate 이후에도 남아있는 데이터 묶음 = 뷰의 데이터 모델
-    //     뷰모델이 맡은 것은 화면 회전시에도 불변할 데이터의 저장
-    class ViewModel(application: Application) : AndroidViewModel(application) {
-        // <멤버 상수 공간>
-        // (repository 모델)
-        val repositorySetMbr: RepositorySet = RepositorySet.getInstance(application)
-
-        // (스레드 풀)
-        val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
-
-        // (SharedPreference 객체)
-        // 현 로그인 정보 접근 객체
-        val currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw =
-            CurrentLoginSessionInfoSpw(application)
-
-        // (앱 진입 필수 권한 배열)
-        // : 앱 진입에 필요한 권한 배열.
-        //     ex : Manifest.permission.INTERNET
-        val activityPermissionArrayMbr: Array<String> = arrayOf()
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <멤버 변수 공간>
-        // (최초 실행 플래그) : 액티비티가 실행되고, 권한 체크가 끝난 후의 최초 로직이 실행되었는지 여부
-        var doItAlreadyMbr = false
-
-        // (이 화면에 도달한 유저 계정 고유값) : 세션 토큰이 없다면 비회원 상태
-        var currentUseruserUidMbr: String? = null
-
-        // 중복 요청 금지를 위한 상태 플래그
-        var getRecyclerViewAdapterItemListOnProgressMbr = false
-        val getRecyclerViewAdapterItemListOnProgressSemaphoreMbr = Semaphore(1)
-
-        var getRecyclerViewAdapterHeaderOnProgressMbr = false
-        val getRecyclerViewAdapterHeaderOnProgressSemaphoreMbr = Semaphore(1)
-
-        var getRecyclerViewAdapterFooterOnProgressMbr = false
-        val getRecyclerViewAdapterFooterOnProgressSemaphoreMbr = Semaphore(1)
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <뷰모델 라이브데이터 공간>
-        // 로딩 다이얼로그 출력 정보
-        val progressLoadingDialogInfoLiveDataMbr: MutableLiveData<DialogProgressLoading.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        val progressDialogSample2ProgressValue: MutableLiveData<Int> =
-            MutableLiveData(-1)
-
-        // 선택 다이얼로그 출력 정보
-        val binaryChooseDialogInfoLiveDataMbr: MutableLiveData<DialogBinaryChoose.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        // 확인 다이얼로그 출력 정보
-        val confirmDialogInfoLiveDataMbr: MutableLiveData<DialogConfirm.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        // 라디오 버튼 선택 다이얼로그 출력 정보
-        val radioButtonChooseDialogInfoLiveDataMbr: MutableLiveData<DialogRadioButtonChoose.DialogInfoVO?> =
-            MutableLiveData(null)
-
-        // recyclerView 내에서 사용되는 뷰모델 데이터
-        val recyclerViewAdapterItemListLiveDataMbr: MutableLiveData<ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>> =
-            MutableLiveData(ArrayList())
-
-        val screenRefreshLayoutOnLoadingLiveDataMbr: MutableLiveData<Boolean> =
-            MutableLiveData(false)
-
-        val recyclerViewAdapterHeaderLiveDataMbr: MutableLiveData<AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO> =
-            MutableLiveData(
-                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO(
-                    null
-                )
-            )
-        val recyclerViewAdapterFooterLiveDataMbr: MutableLiveData<AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO> =
-            MutableLiveData(
-                ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO(
-                    null
-                )
-            )
-
-        val screenRefreshLayoutHeaderOnLoadingLiveDataMbr: MutableLiveData<Boolean> =
-            MutableLiveData(false)
-        val screenRefreshLayoutFooterOnLoadingLiveDataMbr: MutableLiveData<Boolean> =
-            MutableLiveData(false)
-
-
-        // ---------------------------------------------------------------------------------------------
-        // <중첩 클래스 공간>
-    }
 }
