@@ -8,6 +8,7 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -729,6 +730,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             cloneItemList.clear()
             runOnUiThread {
                 adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                bindingMbr.errorMsg.text = ""
+                bindingMbr.errorContainer.visibility = View.GONE
             }
 
             // 로더 추가
@@ -756,13 +759,9 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             }
 
                             if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
-                                cloneItemList.add(
-                                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.NoItem.ItemVO(
-                                        adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
-                                    )
-                                )
                                 runOnUiThread {
-                                    adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                                    bindingMbr.errorContainer.visibility = View.VISIBLE
+                                    bindingMbr.errorMsg.text = "데이터가 없습니다."
                                 }
 
                                 refreshWholeScreenDataOnProgressMbr = false
@@ -774,6 +773,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                 runOnUiThread {
                                     adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
                                     bindingMbr.recyclerView.scrollToPosition(0)
+                                    bindingMbr.errorMsg.text = ""
+                                    bindingMbr.errorContainer.visibility = View.GONE
                                 }
 
                                 refreshWholeScreenDataOnProgressMbr = false
@@ -786,14 +787,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             cloneItemList.removeLast()
                             runOnUiThread {
                                 adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
-                            }
-                            cloneItemList.add(
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.NetworkError.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
-                                )
-                            )
-                            runOnUiThread {
-                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                                bindingMbr.errorContainer.visibility = View.VISIBLE
+                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
                             }
 
                             refreshWholeScreenDataOnProgressMbr = false
@@ -805,14 +800,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             cloneItemList.removeLast()
                             runOnUiThread {
                                 adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
-                            }
-                            cloneItemList.add(
-                                ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.ServerError.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
-                                )
-                            )
-                            runOnUiThread {
-                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
+                                bindingMbr.errorContainer.visibility = View.VISIBLE
+                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
                             }
 
                             refreshWholeScreenDataOnProgressMbr = false

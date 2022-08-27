@@ -51,18 +51,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     Item1::class.hashCode()
                 }
 
-                is NetworkError.ItemVO -> {
-                    NetworkError::class.hashCode()
-                }
-
-                is ServerError.ItemVO -> {
-                    ServerError::class.hashCode()
-                }
-
-                is NoItem.ItemVO -> {
-                    NoItem::class.hashCode()
-                }
-
                 else -> {
                     Item1::class.hashCode()
                 }
@@ -112,39 +100,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                         LayoutInflater.from(parent.context)
                             .inflate(
                                 R.layout.item_activity_basic_vertical_recycler_view_sample_adapter_recycler_view_item1,
-                                parent,
-                                false
-                            )
-                    )
-                }
-
-                NetworkError::class.hashCode() -> {
-                    NetworkError.ViewHolder(
-                        LayoutInflater.from(parent.context)
-                            .inflate(
-                                R.layout.item_activity_basic_vertical_recycler_view_sample_adapter_recycler_view_network_connection_error,
-                                parent,
-                                false
-                            )
-                    )
-                }
-
-                ServerError::class.hashCode() -> {
-                    ServerError.ViewHolder(
-                        LayoutInflater.from(parent.context)
-                            .inflate(
-                                R.layout.item_activity_basic_vertical_recycler_view_sample_adapter_recycler_view_server_error,
-                                parent,
-                                false
-                            )
-                    )
-                }
-
-                NoItem::class.hashCode() -> {
-                    NoItem.ViewHolder(
-                        LayoutInflater.from(parent.context)
-                            .inflate(
-                                R.layout.item_activity_basic_vertical_recycler_view_sample_adapter_recycler_view_no_item,
                                 parent,
                                 false
                             )
@@ -210,12 +165,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
 
                 }
 
-                is NetworkError.ViewHolder -> {}
-
-                is ServerError.ViewHolder -> {}
-
-                is NoItem.ViewHolder -> {}
-
                 // 아이템이 늘어나면 추가
             }
         }
@@ -266,36 +215,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                     }
                 }
 
-                is NetworkError.ItemVO -> {
-                    if (newItem is NetworkError.ItemVO) { // 아이템 서로 타입이 같으면,
-                        // 내용 비교
-                        oldItem == newItem
-                    } else { // 아이템 서로 타입이 다르면,
-                        // 무조건 다른 아이템
-                        false
-                    }
-                }
-
-                is ServerError.ItemVO -> {
-                    if (newItem is ServerError.ItemVO) { // 아이템 서로 타입이 같으면,
-                        // 내용 비교
-                        oldItem == newItem
-                    } else { // 아이템 서로 타입이 다르면,
-                        // 무조건 다른 아이템
-                        false
-                    }
-                }
-
-                is NoItem.ItemVO -> {
-                    if (newItem is NoItem.ItemVO) { // 아이템 서로 타입이 같으면,
-                        // 내용 비교
-                        oldItem == newItem
-                    } else { // 아이템 서로 타입이 다르면,
-                        // 무조건 다른 아이템
-                        false
-                    }
-                }
-
                 // 아이템이 늘어나면 추가
 
                 else -> {
@@ -320,18 +239,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                 }
 
                 is Item1.ItemVO -> {
-                    newItem.copy()
-                }
-
-                is NetworkError.ItemVO -> {
-                    newItem.copy()
-                }
-
-                is ServerError.ItemVO -> {
-                    newItem.copy()
-                }
-
-                is NoItem.ItemVO -> {
                     newItem.copy()
                 }
 
@@ -415,48 +322,6 @@ class ActivityBasicVerticalRecyclerViewSampleAdapterSet(
                 override val itemUid: Long,
                 val serverItemUid: Long,
                 var title: String
-            ) : AdapterItemAbstractVO(itemUid)
-        }
-
-        class NetworkError {
-            data class ViewHolder(
-                val view: View,
-                val binding: ItemActivityBasicVerticalRecyclerViewSampleAdapterRecyclerViewNetworkConnectionErrorBinding =
-                    ItemActivityBasicVerticalRecyclerViewSampleAdapterRecyclerViewNetworkConnectionErrorBinding.bind(
-                        view
-                    )
-            ) : RecyclerView.ViewHolder(view)
-
-            data class ItemVO(
-                override val itemUid: Long
-            ) : AdapterItemAbstractVO(itemUid)
-        }
-
-        class ServerError {
-            data class ViewHolder(
-                val view: View,
-                val binding: ItemActivityBasicVerticalRecyclerViewSampleAdapterRecyclerViewServerErrorBinding =
-                    ItemActivityBasicVerticalRecyclerViewSampleAdapterRecyclerViewServerErrorBinding.bind(
-                        view
-                    )
-            ) : RecyclerView.ViewHolder(view)
-
-            data class ItemVO(
-                override val itemUid: Long
-            ) : AdapterItemAbstractVO(itemUid)
-        }
-
-        class NoItem {
-            data class ViewHolder(
-                val view: View,
-                val binding: ItemActivityBasicVerticalRecyclerViewSampleAdapterRecyclerViewNoItemBinding =
-                    ItemActivityBasicVerticalRecyclerViewSampleAdapterRecyclerViewNoItemBinding.bind(
-                        view
-                    )
-            ) : RecyclerView.ViewHolder(view)
-
-            data class ItemVO(
-                override val itemUid: Long
             ) : AdapterItemAbstractVO(itemUid)
         }
 
