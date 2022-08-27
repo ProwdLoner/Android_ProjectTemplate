@@ -725,8 +725,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 //                                    bindingMbr.errorMsg.text = "데이터가 없습니다."
 //                                }
 
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
+                                refreshWholeScreenDataAllClear(onComplete = {
+                                    screenDataSemaphoreMbr.release()
+                                    onComplete()
+                                })
                             } else {
                                 // 받아온 아이템 추가
                                 runOnUiThread {
@@ -735,9 +737,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                     bindingMbr.recyclerView.scrollToPosition(0)
                                 }
 
-                                // todo 헤더, 푸터 고려
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
+                                refreshWholeScreenDataAllClear(onComplete = {
+                                    screenDataSemaphoreMbr.release()
+                                    onComplete()
+                                })
                             }
                         }
                         -1 -> { // 네트워크 에러
@@ -747,8 +750,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 //                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
 //                            }
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+                            refreshWholeScreenDataAllClear(onComplete = {
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            })
                         }
                         else -> { // 그외 서버 에러
                             // todo
@@ -757,8 +762,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 //                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
 //                            }
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+                            refreshWholeScreenDataAllClear(onComplete = {
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            })
                         }
                     }
                 }
@@ -781,8 +788,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.recyclerViewAdapter.setHeader(item!!)
                             }
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+                            refreshWholeScreenDataAllClear(onComplete = {
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            })
                         }
                         -1 -> { // 네트워크 에러
                             // todo
@@ -791,8 +800,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 //                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
 //                            }
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+                            refreshWholeScreenDataAllClear(onComplete = {
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            })
                         }
                         else -> { // 그외 서버 에러
                             // todo
@@ -801,8 +812,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 //                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
 //                            }
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+                            refreshWholeScreenDataAllClear(onComplete = {
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            })
                         }
                     }
                 }
@@ -825,8 +838,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.recyclerViewAdapter.setFooter(item!!)
                             }
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+                            refreshWholeScreenDataAllClear(onComplete = {
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            })
                         }
                         -1 -> { // 네트워크 에러
                             // todo
@@ -835,8 +850,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 //                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
 //                            }
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+                            refreshWholeScreenDataAllClear(onComplete = {
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            })
                         }
                         else -> { // 그외 서버 에러
                             // todo
@@ -845,8 +862,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 //                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
 //                            }
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+                            refreshWholeScreenDataAllClear(onComplete = {
+                                screenDataSemaphoreMbr.release()
+                                onComplete()
+                            })
                         }
                     }
                 }
@@ -905,6 +924,22 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                 getFooterItemOnComplete(1, resultObj)
             }
+        }
+    }
+
+    // todo : 패턴 정리
+    private val refreshWholeScreenDataAllClearSemaphoreMbr = Semaphore(1)
+    private val refreshWholeScreenDataAllClearCountMaxMbr = 3
+    private var refreshWholeScreenDataAllClearCountMbr = 0
+    private fun refreshWholeScreenDataAllClear(onComplete: () -> Unit){
+        executorServiceMbr.execute {
+            refreshWholeScreenDataAllClearSemaphoreMbr.acquire()
+            if (++refreshWholeScreenDataAllClearCountMbr < refreshWholeScreenDataAllClearCountMaxMbr){
+                refreshWholeScreenDataAllClearSemaphoreMbr.release()
+                return@execute
+            }
+            refreshWholeScreenDataAllClearSemaphoreMbr.release()
+            onComplete()
         }
     }
 
