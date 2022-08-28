@@ -21,6 +21,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityBasicHeaderFooterRecyclerViewSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -704,6 +705,16 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                 )
             }
 
+            // (스레드 합류 객체)
+            val threadConfluenceObj =
+                ThreadConfluenceObj(
+                    3,
+                    onComplete = {
+                        screenDataSemaphoreMbr.release()
+                        onComplete()
+                    }
+                )
+
             // (정보 요청 콜백)
             // 아이템 리스트
             // : statusCode
@@ -719,53 +730,25 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                     when (statusCode) {
                         1 -> {// 완료
                             if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
-                                // todo
-//                                runOnUiThread {
-//                                    bindingMbr.errorContainer.visibility = View.VISIBLE
-//                                    bindingMbr.errorMsg.text = "데이터가 없습니다."
-//                                }
 
-                                refreshWholeScreenDataAllClear(onComplete = {
-                                    screenDataSemaphoreMbr.release()
-                                    onComplete()
-                                })
+                                threadConfluenceObj.threadComplete()
                             } else {
                                 // 받아온 아이템 추가
                                 runOnUiThread {
                                     adapterSetMbr.recyclerViewAdapter.setItemList(itemList)
-                                    // todo : 제거 고려
                                     bindingMbr.recyclerView.scrollToPosition(0)
                                 }
 
-                                refreshWholeScreenDataAllClear(onComplete = {
-                                    screenDataSemaphoreMbr.release()
-                                    onComplete()
-                                })
+                                threadConfluenceObj.threadComplete()
                             }
                         }
                         -1 -> { // 네트워크 에러
-                            // todo
-//                            runOnUiThread {
-//                                bindingMbr.errorContainer.visibility = View.VISIBLE
-//                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
-//                            }
 
-                            refreshWholeScreenDataAllClear(onComplete = {
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            })
+                            threadConfluenceObj.threadComplete()
                         }
                         else -> { // 그외 서버 에러
-                            // todo
-//                            runOnUiThread {
-//                                bindingMbr.errorContainer.visibility = View.VISIBLE
-//                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
-//                            }
 
-                            refreshWholeScreenDataAllClear(onComplete = {
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            })
+                            threadConfluenceObj.threadComplete()
                         }
                     }
                 }
@@ -788,34 +771,15 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.recyclerViewAdapter.setHeader(item!!)
                             }
 
-                            refreshWholeScreenDataAllClear(onComplete = {
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            })
+                            threadConfluenceObj.threadComplete()
                         }
                         -1 -> { // 네트워크 에러
-                            // todo
-//                            runOnUiThread {
-//                                bindingMbr.errorContainer.visibility = View.VISIBLE
-//                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
-//                            }
 
-                            refreshWholeScreenDataAllClear(onComplete = {
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            })
+                            threadConfluenceObj.threadComplete()
                         }
                         else -> { // 그외 서버 에러
-                            // todo
-//                            runOnUiThread {
-//                                bindingMbr.errorContainer.visibility = View.VISIBLE
-//                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
-//                            }
 
-                            refreshWholeScreenDataAllClear(onComplete = {
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            })
+                            threadConfluenceObj.threadComplete()
                         }
                     }
                 }
@@ -838,34 +802,15 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 adapterSetMbr.recyclerViewAdapter.setFooter(item!!)
                             }
 
-                            refreshWholeScreenDataAllClear(onComplete = {
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            })
+                            threadConfluenceObj.threadComplete()
                         }
                         -1 -> { // 네트워크 에러
-                            // todo
-//                            runOnUiThread {
-//                                bindingMbr.errorContainer.visibility = View.VISIBLE
-//                                bindingMbr.errorMsg.text = "네트워크 연결이 원활하지 않습니다."
-//                            }
 
-                            refreshWholeScreenDataAllClear(onComplete = {
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            })
+                            threadConfluenceObj.threadComplete()
                         }
                         else -> { // 그외 서버 에러
-                            // todo
-//                            runOnUiThread {
-//                                bindingMbr.errorContainer.visibility = View.VISIBLE
-//                                bindingMbr.errorMsg.text = "기숧적 문제가 발생했습니다."
-//                            }
 
-                            refreshWholeScreenDataAllClear(onComplete = {
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            })
+                            threadConfluenceObj.threadComplete()
                         }
                     }
                 }
@@ -924,22 +869,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                 getFooterItemOnComplete(1, resultObj)
             }
-        }
-    }
-
-    // todo : 패턴 정리
-    private val refreshWholeScreenDataAllClearSemaphoreMbr = Semaphore(1)
-    private val refreshWholeScreenDataAllClearCountMaxMbr = 3
-    private var refreshWholeScreenDataAllClearCountMbr = 0
-    private fun refreshWholeScreenDataAllClear(onComplete: () -> Unit) {
-        executorServiceMbr.execute {
-            refreshWholeScreenDataAllClearSemaphoreMbr.acquire()
-            if (++refreshWholeScreenDataAllClearCountMbr < refreshWholeScreenDataAllClearCountMaxMbr) {
-                refreshWholeScreenDataAllClearSemaphoreMbr.release()
-                return@execute
-            }
-            refreshWholeScreenDataAllClearSemaphoreMbr.release()
-            onComplete()
         }
     }
 
