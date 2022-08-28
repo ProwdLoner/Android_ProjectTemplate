@@ -14,6 +14,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.common_shared_preference_wrapper.CustomPermissionSpw
@@ -23,11 +24,11 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityPermissionSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-// todo : 신코드 적용
 // 권한 규칙 :
 // 1. 서비스 필수 권한은 해당 서비스 사용 액티비티 진입시 요청하기 (모듈단위 개발을 위해)
 // 2. 서버에 권한상태를 전할 필요는 없음.
@@ -53,12 +54,16 @@ class ActivityPermissionSample : AppCompatActivity() {
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
 
+    // (어뎁터 객체)
+    lateinit var adapterSetMbr: ActivityPermissionSampleAdapterSet
+
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
     // 커스텀 권한 정보 접근 객체
     lateinit var customPermissionSpwMbr: CustomPermissionSpw
+
 
     // (스레드 풀)
     val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
@@ -377,6 +382,10 @@ class ActivityPermissionSample : AppCompatActivity() {
         // 레포지토리 객체
         repositorySetMbr = RepositorySet.getInstance(application)
 
+        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
+        adapterSetMbr = ActivityPermissionSampleAdapterSet()
+
+        // SPW 객체 생성
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
         customPermissionSpwMbr = CustomPermissionSpw(application)
 
@@ -405,6 +414,9 @@ class ActivityPermissionSample : AppCompatActivity() {
         // (리스너 설정)
         // 푸시 알람 권한
         bindingMbr.pushPermissionSwitch.setOnClickListener {
+            bindingMbr.pushPermissionSwitch.isEnabled = false
+            bindingMbr.pushPermissionSwitch.isClickable = false
+
             if (bindingMbr.pushPermissionSwitch.isChecked) { // 체크시
                 // 권한 승인 여부 다이얼로그
                 shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
@@ -418,12 +430,18 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                         // 변경 상태저장
                         customPermissionSpwMbr.pushPermissionGranted = true
+
+                        bindingMbr.pushPermissionSwitch.isEnabled = true
+                        bindingMbr.pushPermissionSwitch.isClickable = true
                     },
                     onNegBtnClicked = {
                         shownDialogInfoVOMbr = null
 
                         // 뷰 상태 되돌리기
                         bindingMbr.pushPermissionSwitch.isChecked = false
+
+                        bindingMbr.pushPermissionSwitch.isEnabled = true
+                        bindingMbr.pushPermissionSwitch.isClickable = true
                     },
                     onCanceled = {}
                 )
@@ -442,12 +460,18 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                             // 변경 상태저장
                             customPermissionSpwMbr.pushPermissionGranted = false
+
+                            bindingMbr.pushPermissionSwitch.isEnabled = true
+                            bindingMbr.pushPermissionSwitch.isClickable = true
                         },
                         onNegBtnClicked = {
                             shownDialogInfoVOMbr = null
 
                             // 뷰 상태 되돌리기
                             bindingMbr.pushPermissionSwitch.isChecked = true
+
+                            bindingMbr.pushPermissionSwitch.isEnabled = true
+                            bindingMbr.pushPermissionSwitch.isClickable = true
                         },
                         onCanceled = {}
                     )
@@ -456,6 +480,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
         // 외부 저장소 읽기 권한
         bindingMbr.externalStorageReadPermissionSwitch.setOnClickListener {
+            bindingMbr.externalStorageReadPermissionSwitch.isEnabled = false
+            bindingMbr.externalStorageReadPermissionSwitch.isClickable = false
+
             if (bindingMbr.externalStorageReadPermissionSwitch.isChecked) { // 체크시
                 // 권한 요청
                 // 권한 요청 콜백
@@ -476,9 +503,14 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                     if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
 
+                        bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                        bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
                     } else if (!neverAskAgain) { // 단순 거부
                         // 뷰 상태 되돌리기
                         bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
+
+                        bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                        bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
                     } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
                         shownDialogInfoVOMbr =
                             DialogBinaryChoose.DialogInfoVO(
@@ -496,6 +528,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             data = Uri.fromParts("package", packageName, null)
                                         }
 
+                                    bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                                    bindingMbr.externalStorageReadPermissionSwitch.isClickable =
+                                        true
                                     resultLauncherCallbackMbr = {}
                                     resultLauncherMbr.launch(intent)
                                 },
@@ -504,6 +539,10 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                                     // 뷰 상태 되돌리기
                                     bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
+
+                                    bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                                    bindingMbr.externalStorageReadPermissionSwitch.isClickable =
+                                        true
                                 },
                                 onCanceled = {}
                             )
@@ -529,6 +568,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
+
+                            bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                            bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
                             resultLauncherCallbackMbr = {}
                             resultLauncherMbr.launch(intent)
                         },
@@ -536,6 +578,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             shownDialogInfoVOMbr = null
 
                             bindingMbr.externalStorageReadPermissionSwitch.isChecked = true
+
+                            bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                            bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
                         },
                         onCanceled = {
                             // 취소 불가
@@ -546,6 +591,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
         // 카메라 사용 권한
         bindingMbr.cameraPermissionSwitch.setOnClickListener {
+            bindingMbr.cameraPermissionSwitch.isEnabled = false
+            bindingMbr.cameraPermissionSwitch.isClickable = false
+
             if (bindingMbr.cameraPermissionSwitch.isChecked) { // 체크시
                 // 권한 요청
                 // 권한 요청 콜백
@@ -566,9 +614,14 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                     if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
 
+                        bindingMbr.cameraPermissionSwitch.isEnabled = true
+                        bindingMbr.cameraPermissionSwitch.isClickable = true
                     } else if (!neverAskAgain) { // 단순 거부
                         // 뷰 상태 되돌리기
                         bindingMbr.cameraPermissionSwitch.isChecked = false
+
+                        bindingMbr.cameraPermissionSwitch.isEnabled = true
+                        bindingMbr.cameraPermissionSwitch.isClickable = true
                     } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
                         shownDialogInfoVOMbr =
                             DialogBinaryChoose.DialogInfoVO(
@@ -586,6 +639,8 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             data = Uri.fromParts("package", packageName, null)
                                         }
 
+                                    bindingMbr.cameraPermissionSwitch.isEnabled = true
+                                    bindingMbr.cameraPermissionSwitch.isClickable = true
                                     resultLauncherCallbackMbr = {}
                                     resultLauncherMbr.launch(intent)
                                 },
@@ -594,6 +649,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                                     // 뷰 상태 되돌리기
                                     bindingMbr.cameraPermissionSwitch.isChecked = false
+
+                                    bindingMbr.cameraPermissionSwitch.isEnabled = true
+                                    bindingMbr.cameraPermissionSwitch.isClickable = true
                                 },
                                 onCanceled = {}
                             )
@@ -619,6 +677,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
+
+                            bindingMbr.cameraPermissionSwitch.isEnabled = true
+                            bindingMbr.cameraPermissionSwitch.isClickable = true
                             resultLauncherCallbackMbr = {}
                             resultLauncherMbr.launch(intent)
                         },
@@ -626,6 +687,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             shownDialogInfoVOMbr = null
 
                             bindingMbr.cameraPermissionSwitch.isChecked = true
+
+                            bindingMbr.cameraPermissionSwitch.isEnabled = true
+                            bindingMbr.cameraPermissionSwitch.isClickable = true
                         },
                         onCanceled = {
                             // 취소 불가
@@ -636,6 +700,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
         // 오디오 녹음 권한
         bindingMbr.audioRecordPermissionSwitch.setOnClickListener {
+            bindingMbr.audioRecordPermissionSwitch.isEnabled = false
+            bindingMbr.audioRecordPermissionSwitch.isClickable = false
+
             if (bindingMbr.audioRecordPermissionSwitch.isChecked) { // 체크시
                 // 권한 요청
                 // 권한 요청 콜백
@@ -656,9 +723,14 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                     if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
 
+                        bindingMbr.audioRecordPermissionSwitch.isEnabled = true
+                        bindingMbr.audioRecordPermissionSwitch.isClickable = true
                     } else if (!neverAskAgain) { // 단순 거부
                         // 뷰 상태 되돌리기
                         bindingMbr.audioRecordPermissionSwitch.isChecked = false
+
+                        bindingMbr.audioRecordPermissionSwitch.isEnabled = true
+                        bindingMbr.audioRecordPermissionSwitch.isClickable = true
                     } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
                         shownDialogInfoVOMbr =
                             DialogBinaryChoose.DialogInfoVO(
@@ -676,6 +748,8 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             data = Uri.fromParts("package", packageName, null)
                                         }
 
+                                    bindingMbr.audioRecordPermissionSwitch.isEnabled = true
+                                    bindingMbr.audioRecordPermissionSwitch.isClickable = true
                                     resultLauncherCallbackMbr = {}
                                     resultLauncherMbr.launch(intent)
                                 },
@@ -684,6 +758,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                                     // 뷰 상태 되돌리기
                                     bindingMbr.audioRecordPermissionSwitch.isChecked = false
+
+                                    bindingMbr.audioRecordPermissionSwitch.isEnabled = true
+                                    bindingMbr.audioRecordPermissionSwitch.isClickable = true
                                 },
                                 onCanceled = {}
                             )
@@ -709,6 +786,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
+
+                            bindingMbr.audioRecordPermissionSwitch.isEnabled = true
+                            bindingMbr.audioRecordPermissionSwitch.isClickable = true
                             resultLauncherCallbackMbr = {}
                             resultLauncherMbr.launch(intent)
                         },
@@ -716,6 +796,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             shownDialogInfoVOMbr = null
 
                             bindingMbr.audioRecordPermissionSwitch.isChecked = true
+
+                            bindingMbr.audioRecordPermissionSwitch.isEnabled = true
+                            bindingMbr.audioRecordPermissionSwitch.isClickable = true
                         },
                         onCanceled = {
                             // 취소 불가
@@ -726,6 +809,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
         // 위치 정보 조회 권한
         bindingMbr.locationPermissionSwitch.setOnClickListener {
+            bindingMbr.locationPermissionSwitch.isEnabled = false
+            bindingMbr.locationPermissionSwitch.isClickable = false
+
             if (bindingMbr.locationPermissionSwitch.isChecked) { // 체크시
                 // 권한 요청
                 val permissionArray: Array<String> =
@@ -751,6 +837,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                     true
                                 bindingMbr.locationPermissionDetailContainer.visibility =
                                     View.GONE
+
+                                bindingMbr.locationPermissionSwitch.isEnabled = true
+                                bindingMbr.locationPermissionSwitch.isClickable = true
                             }
                             isCoarseGranted -> {// 위치 권한 coarse 만 승인
                                 // 정확도 보정 설정 보여주기
@@ -759,6 +848,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                     false
                                 bindingMbr.locationPermissionDetailContainer.visibility =
                                     View.VISIBLE
+
+                                bindingMbr.locationPermissionSwitch.isEnabled = true
+                                bindingMbr.locationPermissionSwitch.isClickable = true
                             }
                         }
                     } else { // 권한 거부
@@ -768,6 +860,8 @@ class ActivityPermissionSample : AppCompatActivity() {
                             bindingMbr.locationPermissionDetailSwitch.isChecked = false
                             bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
 
+                            bindingMbr.locationPermissionSwitch.isEnabled = true
+                            bindingMbr.locationPermissionSwitch.isClickable = true
                         } else {
                             // 다시 묻지 않기 선택
                             shownDialogInfoVOMbr =
@@ -785,6 +879,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
+
+                                        bindingMbr.locationPermissionSwitch.isEnabled = true
+                                        bindingMbr.locationPermissionSwitch.isClickable = true
                                         resultLauncherCallbackMbr = {}
                                         resultLauncherMbr.launch(intent)
                                     },
@@ -795,6 +892,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                         bindingMbr.locationPermissionDetailSwitch.isChecked = false
                                         bindingMbr.locationPermissionDetailContainer.visibility =
                                             View.GONE
+
+                                        bindingMbr.locationPermissionSwitch.isEnabled = true
+                                        bindingMbr.locationPermissionSwitch.isClickable = true
                                     },
                                     onCanceled = {
                                         // 취소 불가
@@ -821,6 +921,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                             val uri = Uri.fromParts("package", packageName, null)
                             intent.data = uri
+
+                            bindingMbr.locationPermissionSwitch.isEnabled = true
+                            bindingMbr.locationPermissionSwitch.isClickable = true
                             resultLauncherCallbackMbr = {}
                             resultLauncherMbr.launch(intent)
                         },
@@ -828,6 +931,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                             shownDialogInfoVOMbr = null
 
                             bindingMbr.locationPermissionSwitch.isChecked = true
+
+                            bindingMbr.locationPermissionSwitch.isEnabled = true
+                            bindingMbr.locationPermissionSwitch.isClickable = true
                         },
                         onCanceled = {
                             // 취소 불가
@@ -838,6 +944,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
         // 위치 정보 조회 권한 (정확)
         bindingMbr.locationPermissionDetailSwitch.setOnClickListener {
+            bindingMbr.locationPermissionDetailSwitch.isEnabled = false
+            bindingMbr.locationPermissionDetailSwitch.isClickable = false
+
             if (bindingMbr.locationPermissionDetailSwitch.isChecked) { // 체크시
                 // 권한 요청
                 val permissionArray: Array<String> =
@@ -852,6 +961,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                         // 향상 메뉴 숨기기
                         bindingMbr.locationPermissionDetailContainer.visibility =
                             View.GONE
+
+                        bindingMbr.locationPermissionDetailSwitch.isEnabled = true
+                        bindingMbr.locationPermissionDetailSwitch.isClickable = true
                     } else { // 권한 거부
                         if (!neverAskAgain) {
                             // 단순 거부
@@ -860,6 +972,8 @@ class ActivityPermissionSample : AppCompatActivity() {
                             bindingMbr.locationPermissionDetailSwitch.isChecked = false
                             bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
 
+                            bindingMbr.locationPermissionDetailSwitch.isEnabled = true
+                            bindingMbr.locationPermissionDetailSwitch.isClickable = true
                         } else {
                             // 다시 묻지 않기 선택
                             shownDialogInfoVOMbr =
@@ -877,6 +991,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                         val uri = Uri.fromParts("package", packageName, null)
                                         intent.data = uri
+
+                                        bindingMbr.locationPermissionDetailSwitch.isEnabled = true
+                                        bindingMbr.locationPermissionDetailSwitch.isClickable = true
                                         resultLauncherCallbackMbr = {}
                                         resultLauncherMbr.launch(intent)
                                     },
@@ -887,6 +1004,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                         bindingMbr.locationPermissionDetailSwitch.isChecked = false
                                         bindingMbr.locationPermissionDetailContainer.visibility =
                                             View.VISIBLE
+
+                                        bindingMbr.locationPermissionDetailSwitch.isEnabled = true
+                                        bindingMbr.locationPermissionDetailSwitch.isClickable = true
                                     },
                                     onCanceled = {
                                         // 취소 불가
@@ -899,11 +1019,16 @@ class ActivityPermissionSample : AppCompatActivity() {
             } else {
                 // 체크 해제시
                 // 정확도 향상시엔 항목을 숨길 것이기에 해제 불가
+                bindingMbr.locationPermissionDetailSwitch.isEnabled = true
+                bindingMbr.locationPermissionDetailSwitch.isClickable = true
             }
         }
 
         // 시스템 설정 변경 권한
         bindingMbr.writeSettingPermissionSwitch.setOnClickListener {
+            bindingMbr.writeSettingPermissionSwitch.isEnabled = false
+            bindingMbr.writeSettingPermissionSwitch.isClickable = false
+
             if (bindingMbr.writeSettingPermissionSwitch.isChecked) { // 체크시
                 shownDialogInfoVOMbr =
                     DialogBinaryChoose.DialogInfoVO(
@@ -920,6 +1045,9 @@ class ActivityPermissionSample : AppCompatActivity() {
                                 Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
                             intent.data = Uri.parse("package:" + this.packageName)
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                            bindingMbr.writeSettingPermissionSwitch.isEnabled = true
+                            bindingMbr.writeSettingPermissionSwitch.isClickable = true
                             resultLauncherCallbackMbr = {}
                             resultLauncherMbr.launch(intent)
                         },
@@ -928,6 +1056,9 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                             // 뷰 상태 되돌리기
                             bindingMbr.writeSettingPermissionSwitch.isChecked = false
+
+                            bindingMbr.writeSettingPermissionSwitch.isEnabled = true
+                            bindingMbr.writeSettingPermissionSwitch.isClickable = true
                         },
                         onCanceled = {
                             // 취소 불가
@@ -944,6 +1075,8 @@ class ActivityPermissionSample : AppCompatActivity() {
                         onPosBtnClicked = {
                             shownDialogInfoVOMbr = null
 
+                            bindingMbr.writeSettingPermissionSwitch.isEnabled = true
+                            bindingMbr.writeSettingPermissionSwitch.isClickable = true
                             // 권한 설정 페이지 이동
                             // ACTION_MANAGE_WRITE_SETTINGS 는 ActivityResultLauncher 가 통하지 않으므로,
                             // onResume 시에 체크해서 판단하도록
@@ -959,12 +1092,14 @@ class ActivityPermissionSample : AppCompatActivity() {
 
                             // 뷰 상태 되돌리기
                             bindingMbr.writeSettingPermissionSwitch.isChecked = true
+
+                            bindingMbr.writeSettingPermissionSwitch.isEnabled = true
+                            bindingMbr.writeSettingPermissionSwitch.isClickable = true
                         },
                         onCanceled = {
                             // 취소 불가
                         }
                     )
-
             }
         }
     }
@@ -980,7 +1115,7 @@ class ActivityPermissionSample : AppCompatActivity() {
 
             // (초기 데이터 수집)
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
-            getScreenDataAndShow()
+            refreshWholeScreenData(onComplete = {})
 
         } else {
             // (onResume - (권한이 충족된 onCreate))
@@ -993,7 +1128,7 @@ class ActivityPermissionSample : AppCompatActivity() {
                 currentUserUidMbr = userUid
 
                 // (데이터 수집)
-                getScreenDataAndShow()
+                refreshWholeScreenData(onComplete = {})
             }
 
         }
@@ -1003,11 +1138,165 @@ class ActivityPermissionSample : AppCompatActivity() {
         setSwitchView()
     }
 
+    // 화면 데이터 갱신관련 세마포어
+    private val screenDataSemaphoreMbr = Semaphore(1)
+
     // (화면 구성용 데이터를 가져오기)
     // : 네트워크 등 레포지토리에서 데이터를 가져오고 이를 뷰에 반영
-    private fun getScreenDataAndShow() {
+    //     onComplete = 네트워크 실패든 성공이든 데이터 요청 후 응답을 받아와 해당 상태에 따라 스크린 뷰 처리를 완료한 시점
+    //     'c숫자' 로 표기된 부분은 원하는대로 커스텀
+    private fun refreshWholeScreenData(onComplete: () -> Unit) {
+        executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
 
+            runOnUiThread {
+                // (c1. 리스트 초기화)
+
+                // (c2. 로더 추가)
+            }
+
+            // (스레드 합류 객체 생성)
+            // : 헤더, 푸터, 아이템 리스트의 각 데이터를 비동기적으로 요청했을 때, 그 합류용으로 사용되는 객체
+            //     numberOfThreadsBeingJoinedMbr 에 비동기 처리 개수를 적고,
+            //     각 처리 완료시마다 threadComplete 를 호출하면 됨
+            val threadConfluenceObj =
+                ThreadConfluenceObj(
+                    3,
+                    onComplete = {
+                        screenDataSemaphoreMbr.release()
+                        onComplete()
+                    }
+                )
+
+            // (정보 요청 콜백)
+            // 아이템 리스트
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 itemList 는 null
+            val getItemListOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
+                { statusCode, itemList ->
+                    runOnUiThread {
+                        // (c3. 로더 제거)
+                    }
+
+                    when (statusCode) {
+                        1 -> { // 완료
+                            if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
+                                // (c4. 빈 리스트 처리)
+
+                                threadConfluenceObj.threadComplete()
+                            } else {
+                                runOnUiThread {
+                                    // (c5. 받아온 아이템 추가)
+
+                                    // (c6. 스크롤을 가장 앞으로 이동)
+                                }
+
+                                threadConfluenceObj.threadComplete()
+                            }
+                        }
+                        -1 -> { // 네트워크 에러
+                            // (c7. 네트워크 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        else -> { // 그외 서버 에러그외 서버 에러
+                            // (c8. 그외 서버 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                    }
+                }
+
+            // 헤더 아이템
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 item 은 null
+            val getHeaderItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
+                { statusCode, item ->
+                    runOnUiThread {
+                        // (c9. 로더 제거)
+                    }
+
+                    when (statusCode) {
+                        1 -> { // 완료
+                            runOnUiThread {
+                                // (c10. 받아온 아이템 추가)
+                            }
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // (c11. 네트워크 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // (c12. 그외 서버 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                    }
+                }
+
+            // 푸터 아이템
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 item 은 null
+            val getFooterItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
+                { statusCode, item ->
+                    runOnUiThread {
+                        // (c13. 로더 제거)
+                    }
+
+                    when (statusCode) {
+                        1 -> {// 완료
+                            runOnUiThread {
+                                // (c14. 받아온 아이템 추가)
+                            }
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // (c15. 네트워크 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // (c16. 그외 서버 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                    }
+                }
+
+            // (네트워크 요청)
+            // (c17. 아이템 리스트 가져오기)
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            executorServiceMbr.execute {
+                getItemListOnComplete(-2, null)
+            }
+
+            // (c18. 헤더 데이터 가져오기)
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            executorServiceMbr.execute {
+                getHeaderItemOnComplete(-2, null)
+            }
+
+            // (c19. 푸터 데이터 가져오기)
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            executorServiceMbr.execute {
+                getFooterItemOnComplete(-2, null)
+            }
+
+            // (c20. 그외 스크린 데이터 가져오기)
+
+        }
     }
+
 
     // (권한에 따라 스위치 반영)
     private fun setSwitchView() {
