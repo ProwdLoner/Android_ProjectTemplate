@@ -931,10 +931,10 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
     private val refreshWholeScreenDataAllClearSemaphoreMbr = Semaphore(1)
     private val refreshWholeScreenDataAllClearCountMaxMbr = 3
     private var refreshWholeScreenDataAllClearCountMbr = 0
-    private fun refreshWholeScreenDataAllClear(onComplete: () -> Unit){
+    private fun refreshWholeScreenDataAllClear(onComplete: () -> Unit) {
         executorServiceMbr.execute {
             refreshWholeScreenDataAllClearSemaphoreMbr.acquire()
-            if (++refreshWholeScreenDataAllClearCountMbr < refreshWholeScreenDataAllClearCountMaxMbr){
+            if (++refreshWholeScreenDataAllClearCountMbr < refreshWholeScreenDataAllClearCountMaxMbr) {
                 refreshWholeScreenDataAllClearSemaphoreMbr.release()
                 return@execute
             }
@@ -945,7 +945,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
     // ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet - RecyclerViewAdapter 의 다음 페이지 데이터 리스트 가져오기
     // : serverItemUid 를 네트워크 요청에 입력하면 서버에선 해당 uid 이후의 데이터 리스트를 반환
-    // todo 삭제 보류
     private var getActivityBasicHeaderFooterRecyclerViewSampleAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
         false
 
@@ -974,7 +973,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             runOnUiThread {
                 adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList1)
 
-                // todo : 위치검증
                 val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr
 
                 // 로더 추가시 스크롤을 내리기
@@ -1010,7 +1008,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                                 cloneItemList2.addAll(itemList)
                                 runOnUiThread {
                                     adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList2)
-                                    // todo
                                     bindingMbr.recyclerView.scrollToPosition(beforeLastItemIdx)
                                 }
 
@@ -1087,8 +1084,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                 )
             }
 
-            val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr + 1
-
             // (정보 요청 콜백)
             // statusCode
             // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
@@ -1117,7 +1112,9 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
                             cloneItemList.add(addedItem)
                             runOnUiThread {
                                 adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
-                                // todo
+
+                                val lastItemIdx =
+                                    adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr
                                 bindingMbr.recyclerView.scrollToPosition(lastItemIdx)
                             }
 
