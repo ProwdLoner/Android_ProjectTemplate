@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 신코드 적용
 // 권한 규칙 :
 // 1. 서비스 필수 권한은 해당 서비스 사용 액티비티 진입시 요청하기 (모듈단위 개발을 위해)
 // 2. 서버에 권한상태를 전할 필요는 없음.

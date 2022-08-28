@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 신코드 적용
 // 모듈 내 액티비티 호출 샘플
 // 모듈로 작성한 액티비티를 실행시킨 후 바로 종료되는 액티비티
 // build.gradle(:app) 에, implementation project(path: ':test_module') 와 같이 모듈을 넣어주고 호출

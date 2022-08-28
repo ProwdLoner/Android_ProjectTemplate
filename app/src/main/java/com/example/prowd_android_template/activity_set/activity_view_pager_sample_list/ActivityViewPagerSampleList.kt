@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 신코드 적용
 class ActivityViewPagerSampleList : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)

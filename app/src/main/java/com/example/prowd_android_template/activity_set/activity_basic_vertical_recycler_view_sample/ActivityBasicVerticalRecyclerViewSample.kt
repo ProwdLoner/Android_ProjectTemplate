@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 신코드 적용
 // 세로 리사이클러 뷰 예시
 class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // <설정 변수 공간>

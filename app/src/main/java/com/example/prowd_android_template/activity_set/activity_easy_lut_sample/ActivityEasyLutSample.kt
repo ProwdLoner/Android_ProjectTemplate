@@ -18,7 +18,6 @@ import com.example.prowd_android_template.databinding.ActivityEasyLutSampleBindi
 import java.io.File
 import java.io.FileOutputStream
 
-
 // todo : 신코드 적용
 // todo : easy lut 라이브러리 코드 정리
 // todo : recyclerview 정리

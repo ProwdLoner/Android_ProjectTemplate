@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 신코드 적용
 // 액티비티 밝기 조절 샘플
 // 밝기 조절은 시스템 밝기 변화가 아닌 해당 액티비티에만 적용됨
 class ActivityBrightnessChangeSample : AppCompatActivity() {
