@@ -2,14 +2,15 @@ package com.example.prowd_android_template.activity_set.activity_basic_bottom_sh
 
 import android.content.res.Configuration
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
 import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
+import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import java.util.concurrent.Semaphore
 
 class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     // <멤버 변수 공간>
@@ -19,8 +20,8 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지
     private lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
 
-    // (Ui 스레드 핸들러 객체) handler.post{}
-    val uiThreadHandlerMbr: Handler = Handler(Looper.getMainLooper())
+    // (어뎁터 객체)
+    lateinit var adapterSetMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3AdapterSet
 
     // (SharedPreference 객체)
 
@@ -54,7 +55,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
 
             // (초기 데이터 수집)
             currentUserUidMbr = parentActivityMbr.currentLoginSessionInfoSpwMbr.userUid
-            getScreenDataAndShow()
+            refreshWholeScreenData(onComplete = {})
 
             // (알고리즘)
         } else {
@@ -68,7 +69,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
                 currentUserUidMbr = userUid
 
                 // (데이터 수집)
-                getScreenDataAndShow()
+                refreshWholeScreenData(onComplete = {})
             }
         }
 
@@ -108,6 +109,9 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
         // (뷰 바인딩)
         bindingMbr =
             FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding.inflate(layoutInflater)
+
+        // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
+        adapterSetMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment3AdapterSet()
     }
 
     // (초기 뷰 설정)
@@ -124,10 +128,163 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
 
     }
 
+    // 화면 데이터 갱신관련 세마포어
+    private val screenDataSemaphoreMbr = Semaphore(1)
+
     // (화면 구성용 데이터를 가져오기)
     // : 네트워크 등 레포지토리에서 데이터를 가져오고 이를 뷰에 반영
-    private fun getScreenDataAndShow() {
+    //     onComplete = 네트워크 실패든 성공이든 데이터 요청 후 응답을 받아와 해당 상태에 따라 스크린 뷰 처리를 완료한 시점
+    //     'c숫자' 로 표기된 부분은 원하는대로 커스텀
+    private fun refreshWholeScreenData(onComplete: () -> Unit) {
+        parentActivityMbr.executorServiceMbr.execute {
+            screenDataSemaphoreMbr.acquire()
 
+            parentActivityMbr.runOnUiThread {
+                // (c1. 리스트 초기화)
+
+                // (c2. 로더 추가)
+            }
+
+            // (스레드 합류 객체 생성)
+            // : 헤더, 푸터, 아이템 리스트의 각 데이터를 비동기적으로 요청했을 때, 그 합류용으로 사용되는 객체
+            //     numberOfThreadsBeingJoinedMbr 에 비동기 처리 개수를 적고,
+            //     각 처리 완료시마다 threadComplete 를 호출하면 됨
+            val threadConfluenceObj =
+                ThreadConfluenceObj(
+                    3,
+                    onComplete = {
+                        screenDataSemaphoreMbr.release()
+                        onComplete()
+                    }
+                )
+
+            // (정보 요청 콜백)
+            // 아이템 리스트
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 itemList 는 null
+            val getItemListOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
+                { statusCode, itemList ->
+                    parentActivityMbr.runOnUiThread {
+                        // (c3. 로더 제거)
+                    }
+
+                    when (statusCode) {
+                        1 -> { // 완료
+                            if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
+                                // (c4. 빈 리스트 처리)
+
+                                threadConfluenceObj.threadComplete()
+                            } else {
+                                parentActivityMbr.runOnUiThread {
+                                    // (c5. 받아온 아이템 추가)
+
+                                    // (c6. 스크롤을 가장 앞으로 이동)
+                                }
+
+                                threadConfluenceObj.threadComplete()
+                            }
+                        }
+                        -1 -> { // 네트워크 에러
+                            // (c7. 네트워크 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        else -> { // 그외 서버 에러그외 서버 에러
+                            // (c8. 그외 서버 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                    }
+                }
+
+            // 헤더 아이템
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 item 은 null
+            val getHeaderItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
+                { statusCode, item ->
+                    parentActivityMbr.runOnUiThread {
+                        // (c9. 로더 제거)
+                    }
+
+                    when (statusCode) {
+                        1 -> { // 완료
+                            parentActivityMbr.runOnUiThread {
+                                // (c10. 받아온 아이템 추가)
+                            }
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // (c11. 네트워크 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // (c12. 그외 서버 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                    }
+                }
+
+            // 푸터 아이템
+            // : statusCode
+            //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
+            //     1 이외의 상태값에서 item 은 null
+            val getFooterItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
+                { statusCode, item ->
+                    parentActivityMbr.runOnUiThread {
+                        // (c13. 로더 제거)
+                    }
+
+                    when (statusCode) {
+                        1 -> {// 완료
+                            parentActivityMbr.runOnUiThread {
+                                // (c14. 받아온 아이템 추가)
+                            }
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        -1 -> { // 네트워크 에러
+                            // (c15. 네트워크 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                        else -> { // 그외 서버 에러
+                            // (c16. 그외 서버 에러 처리)
+
+                            threadConfluenceObj.threadComplete()
+                        }
+                    }
+                }
+
+            // (네트워크 요청)
+            // (c17. 아이템 리스트 가져오기)
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            parentActivityMbr.executorServiceMbr.execute {
+                getItemListOnComplete(-2, null)
+            }
+
+            // (c18. 헤더 데이터 가져오기)
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            parentActivityMbr.executorServiceMbr.execute {
+                getHeaderItemOnComplete(-2, null)
+            }
+
+            // (c19. 푸터 데이터 가져오기)
+            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
+            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
+            parentActivityMbr.executorServiceMbr.execute {
+                getFooterItemOnComplete(-2, null)
+            }
+
+            // (c20. 그외 스크린 데이터 가져오기)
+
+        }
     }
 
 
