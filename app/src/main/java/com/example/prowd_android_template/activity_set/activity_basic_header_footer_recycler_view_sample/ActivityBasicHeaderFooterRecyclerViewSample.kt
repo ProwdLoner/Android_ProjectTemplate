@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-// todo : 신코드 적용
 class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -678,6 +677,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
     // (화면 구성용 데이터를 가져오기)
     // : 네트워크 등 레포지토리에서 데이터를 가져오고 이를 뷰에 반영
     //     onComplete = 네트워크 실패든 성공이든 데이터 요청 후 응답을 받아와 해당 상태에 따라 스크린 뷰 처리를 완료한 시점
+    //     'c숫자' 로 표기된 부분은 원하는대로 커스텀
     private fun refreshWholeScreenData(onComplete: () -> Unit) {
         executorServiceMbr.execute {
             screenDataSemaphoreMbr.acquire()
@@ -1105,6 +1105,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             }
         }
     }
+
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>

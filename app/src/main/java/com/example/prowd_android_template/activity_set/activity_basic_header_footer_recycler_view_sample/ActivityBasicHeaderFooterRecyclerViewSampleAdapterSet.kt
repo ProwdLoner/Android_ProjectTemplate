@@ -143,7 +143,6 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     val copyEntity = currentDataListCloneMbr[position]
                     // super 어뎁터 생성시 추상 클래스로 생성되므로 타입 확인
                     if (copyEntity is Header.ItemVO) {
-                        // todo 로더 확인
                         if (isHeaderLoadingMbr) {
                             binding.loaderContainer.visibility = View.VISIBLE
                             binding.title.visibility = View.INVISIBLE
@@ -161,7 +160,6 @@ class ActivityBasicHeaderFooterRecyclerViewSampleAdapterSet(
                     val copyEntity = currentDataListCloneMbr[position]
                     // super 어뎁터 생성시 추상 클래스로 생성되므로 타입 확인
                     if (copyEntity is Footer.ItemVO) {
-                        // todo 로더 확인
                         if (isFooterLoadingMbr) {
                             binding.loaderContainer.visibility = View.VISIBLE
                             binding.title.visibility = View.INVISIBLE
