@@ -582,6 +582,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             )
         )
 
+        // SPW 객체 생성
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -670,6 +671,7 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
         // (onResume)
     }
 
+    // 화면 데이터 갱신관련 세마포어
     private val screenDataSemaphoreMbr = Semaphore(1)
 
     // (화면 구성용 데이터를 가져오기)
@@ -733,8 +735,8 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
 
                                 threadConfluenceObj.threadComplete()
                             } else {
-                                // 받아온 아이템 추가
                                 runOnUiThread {
+                                    // 받아온 아이템 추가
                                     adapterSetMbr.recyclerViewAdapter.setItemList(itemList)
                                     bindingMbr.recyclerView.scrollToPosition(0)
                                 }
