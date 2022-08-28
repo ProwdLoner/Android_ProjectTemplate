@@ -1,5 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_dp_and_px_calculator
 
+import android.R
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -8,10 +9,14 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.widget.addTextChangedListener
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -22,11 +27,11 @@ import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityDpAndPxCalculatorBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import com.example.prowd_android_template.util_object.ScreenDensityCalcUtil
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-// todo : 완성
 class ActivityDpAndPxCalculator : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -115,6 +120,16 @@ class ActivityDpAndPxCalculator : AppCompatActivity() {
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+
+    val densityListMbr: ArrayList<String> =
+        arrayListOf(
+            "ldpi", // 120
+            "mdpi", // 160, dp 기준
+            "hdpi", // 240
+            "xdpi", // 320
+            "xxdpi", // 480
+            "xxxdpi" // 640
+        )
 
 
     // ---------------------------------------------------------------------------------------------
@@ -395,6 +410,155 @@ class ActivityDpAndPxCalculator : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
+        bindingMbr.dpToPxDpDensitySpinner.adapter = ArrayAdapter(
+            this,
+            R.layout.simple_spinner_dropdown_item,
+            densityListMbr
+        )
+
+        // density 스피너 변경 리스너
+        bindingMbr.dpToPxDpDensitySpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>,
+                    view: View,
+                    position: Int,
+                    id: Long
+                ) {
+                    val density: ScreenDensityCalcUtil.Density? = when (position) {
+                        0 -> { // ldpi(120)
+                            ScreenDensityCalcUtil.Density.LDPI
+                        }
+                        1 -> { // mdpi(160)
+                            ScreenDensityCalcUtil.Density.MDPI
+                        }
+                        2 -> { // hdpi(240)
+                            ScreenDensityCalcUtil.Density.HDPI
+                        }
+                        3 -> { // xdpi(320)
+                            ScreenDensityCalcUtil.Density.XDPI
+                        }
+                        4 -> { // xxdpi(480)
+                            ScreenDensityCalcUtil.Density.XXDPI
+                        }
+                        5 -> { // xxxdpi(640)
+                            ScreenDensityCalcUtil.Density.XXXDPI
+                        }
+                        else -> {
+                            null
+                        }
+                    }
+
+                    if (density != null) {
+                        if (bindingMbr.dpToPxEdit.text.isNotEmpty()) {
+                            val dp = bindingMbr.dpToPxEdit.text.toString().toDouble()
+                            val resultPx = ScreenDensityCalcUtil.dpToPx(
+                                density,
+                                dp
+                            )
+
+                            bindingMbr.dpToPxResult.text = resultPx.toString()
+                        }
+
+                        if (bindingMbr.pxToDpEdit.text.isNotEmpty()) {
+                            val px = bindingMbr.pxToDpEdit.text.toString().toInt()
+                            val resultDp = ScreenDensityCalcUtil.pxToDp(
+                                density,
+                                px
+                            )
+
+                            bindingMbr.pxToDpResult.text = resultDp.toString()
+                        }
+                    }
+                }
+
+                override fun onNothingSelected(p0: AdapterView<*>?) {
+                }
+            }
+
+        // dp to px 리스너
+        bindingMbr.dpToPxEdit.addTextChangedListener {
+            val density: ScreenDensityCalcUtil.Density? = when (
+                bindingMbr.dpToPxDpDensitySpinner.selectedItemPosition
+            ) {
+                0 -> { // ldpi(120)
+                    ScreenDensityCalcUtil.Density.LDPI
+                }
+                1 -> { // mdpi(160)
+                    ScreenDensityCalcUtil.Density.MDPI
+                }
+                2 -> { // hdpi(240)
+                    ScreenDensityCalcUtil.Density.HDPI
+                }
+                3 -> { // xdpi(320)
+                    ScreenDensityCalcUtil.Density.XDPI
+                }
+                4 -> { // xxdpi(480)
+                    ScreenDensityCalcUtil.Density.XXDPI
+                }
+                5 -> { // xxxdpi(640)
+                    ScreenDensityCalcUtil.Density.XXXDPI
+                }
+                else -> {
+                    null
+                }
+            }
+
+            if (density != null && bindingMbr.dpToPxEdit.text.isNotEmpty()) {
+                val dp: Double = bindingMbr.dpToPxEdit.text.toString().toDouble()
+
+                val resultPx: Int = ScreenDensityCalcUtil.dpToPx(
+                    density,
+                    dp
+                )
+
+                bindingMbr.dpToPxResult.text = resultPx.toString()
+            } else {
+                bindingMbr.dpToPxResult.text = ""
+            }
+        }
+
+        // px to dp 리스너
+        bindingMbr.pxToDpEdit.addTextChangedListener {
+            val density: ScreenDensityCalcUtil.Density? = when (
+                bindingMbr.dpToPxDpDensitySpinner.selectedItemPosition
+            ) {
+                0 -> { // ldpi(120)
+                    ScreenDensityCalcUtil.Density.LDPI
+                }
+                1 -> { // mdpi(160)
+                    ScreenDensityCalcUtil.Density.MDPI
+                }
+                2 -> { // hdpi(240)
+                    ScreenDensityCalcUtil.Density.HDPI
+                }
+                3 -> { // xdpi(320)
+                    ScreenDensityCalcUtil.Density.XDPI
+                }
+                4 -> { // xxdpi(480)
+                    ScreenDensityCalcUtil.Density.XXDPI
+                }
+                5 -> { // xxxdpi(640)
+                    ScreenDensityCalcUtil.Density.XXXDPI
+                }
+                else -> {
+                    null
+                }
+            }
+
+            if (density != null && bindingMbr.pxToDpEdit.text.isNotEmpty()) {
+                val px: Int = bindingMbr.pxToDpEdit.text.toString().toInt()
+
+                val resultDp: Double = ScreenDensityCalcUtil.pxToDp(
+                    density,
+                    px
+                )
+
+                bindingMbr.pxToDpResult.text = resultDp.toString()
+            } else {
+                bindingMbr.pxToDpResult.text = ""
+            }
+        }
 
     }
 

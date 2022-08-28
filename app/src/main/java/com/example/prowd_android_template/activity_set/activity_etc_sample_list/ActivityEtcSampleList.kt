@@ -20,6 +20,8 @@ import com.example.prowd_android_template.activity_set.activity_basic_service_sa
 import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample
 import com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
+import com.example.prowd_android_template.activity_set.activity_dp_and_px_calculator.ActivityDpAndPxCalculator
+import com.example.prowd_android_template.activity_set.activity_dp_and_px_calculator.ActivityDpAndPxCalculatorAdapterSet
 import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
 import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
 import com.example.prowd_android_template.activity_set.activity_touch_delegate_sample.ActivityTouchDelegateSample
@@ -482,6 +484,15 @@ class ActivityEtcSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityTouchDelegateSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToActivityDpAndPxCalculatorBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityDpAndPxCalculator::class.java
                 )
             startActivity(intent)
         }

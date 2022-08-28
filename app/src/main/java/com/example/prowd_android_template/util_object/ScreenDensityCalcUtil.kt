@@ -4,13 +4,13 @@ import kotlin.math.roundToInt
 
 object ScreenDensityCalcUtil {
     // 해상도 density 에서 dp 가 몇 px 인지
-    fun dpToPx(density: Density, dp: Float): Int {
-        return (dp * (density.dpi.toFloat() / Density.MDPI.dpi.toFloat())).roundToInt()
+    fun dpToPx(density: Density, dp: Double): Int {
+        return (dp * (density.dpi.toDouble() / Density.MDPI.dpi.toDouble())).roundToInt()
     }
 
     // 해상도 density 에서 px 가 몇 dp 인지
-    fun pxToDp(density: Density, px: Int): Float {
-        return px.toFloat() / (density.dpi.toFloat() / Density.MDPI.dpi.toFloat())
+    fun pxToDp(density: Density, px: Int): Double {
+        return px.toDouble() / (density.dpi.toDouble() / Density.MDPI.dpi.toDouble())
     }
 
     enum class Density(val dpi: Int) {
