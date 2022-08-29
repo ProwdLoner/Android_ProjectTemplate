@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -22,11 +23,11 @@ import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityTouchDelegateSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import com.example.prowd_android_template.util_object.TouchDelegateUtil
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-// todo : 완성
 class ActivityTouchDelegateSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -395,7 +396,21 @@ class ActivityTouchDelegateSample : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-
+        // 터치 영역 확장
+        TouchDelegateUtil.expandViewHitArea(
+            this,
+            bindingMbr.touchContainer,
+            arrayListOf(
+                Pair(
+                    bindingMbr.btn1,
+                    Rect(1000, 1000, 0, 0)
+                ),
+                Pair(
+                    bindingMbr.btn2,
+                    Rect(0, 0, 1000, 1000)
+                )
+            )
+        )
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)

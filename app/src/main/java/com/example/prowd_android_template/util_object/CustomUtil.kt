@@ -8,15 +8,12 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.util.Size
-import android.view.Display
-import android.view.WindowManager
+import android.view.*
 import java.io.InputStream
 import java.nio.ByteBuffer
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
-
 
 object CustomUtil {
     // 현재 실행 환경이 디버그 모드인지 파악하는 함수
