@@ -41,15 +41,16 @@ struct MyException : public std::exception {
 
 
 // [functions]
-// todo rgb565 비트맵 동작 확인
-// Bitmap jobject(RGBA_8888 or RGB_565) 을 rgbMatrix 로 변환
+// Bitmap jobject(RGBA_8888) 을 rgbMatrix 로 변환
 bool jBitmapToRgbCvMatrix(JNIEnv *env, jobject obj_bitmap, cv::Mat &matrix) {
     void *bitmapPixels;
     AndroidBitmapInfo bitmapInfo;
 
     ASSERT_FALSE(AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo) >= 0)
-    ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888
-                 || bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565)
+    if (bitmapInfo.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        LOGE("bitmap type must be RGBA_8888");
+    }
+    ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888)
     ASSERT_FALSE(AndroidBitmap_lockPixels(env, obj_bitmap, &bitmapPixels) >= 0)
     ASSERT_FALSE(bitmapPixels)
 
@@ -67,15 +68,16 @@ bool jBitmapToRgbCvMatrix(JNIEnv *env, jobject obj_bitmap, cv::Mat &matrix) {
     return true;
 }
 
-// todo rgb565 비트맵 동작 확인
-// Bitmap jobject(RGBA_8888 or RGB_565) 을 grayMatrix 로 변환
+// Bitmap jobject(RGBA_8888) 을 grayMatrix 로 변환
 bool jBitmapToGrayCvMatrix(JNIEnv *env, jobject obj_bitmap, cv::Mat &matrix) {
     void *bitmapPixels;
     AndroidBitmapInfo bitmapInfo;
 
     ASSERT_FALSE(AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo) >= 0)
-    ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888
-                 || bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565)
+    if (bitmapInfo.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        LOGE("bitmap type must be RGBA_8888");
+    }
+    ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888)
     ASSERT_FALSE(AndroidBitmap_lockPixels(env, obj_bitmap, &bitmapPixels) >= 0)
     ASSERT_FALSE(bitmapPixels)
 
@@ -99,9 +101,8 @@ bool matrixToJbitmap(JNIEnv *env, cv::Mat &matrix, jobject obj_bitmap) {
 
     ASSERT_FALSE(AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo) >=
                  0);        // Get picture parameters
-    ASSERT_FALSE(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888
-                 || bitmapInfo.format ==
-                    ANDROID_BITMAP_FORMAT_RGB_565);          // Only ARGB? 8888 and RGB? 565 are supported
+    ASSERT_FALSE(bitmapInfo.format ==
+                 ANDROID_BITMAP_FORMAT_RGBA_8888);          // Only ARGB? 8888 and RGB? 565 are supported
     ASSERT_FALSE(matrix.dims == 2
                  && bitmapInfo.height == (uint32_t) matrix.rows
                  && bitmapInfo.width ==
