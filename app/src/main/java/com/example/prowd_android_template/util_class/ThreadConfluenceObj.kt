@@ -7,7 +7,7 @@ import java.util.concurrent.Semaphore
 // (스레드 합류 객체)
 class ThreadConfluenceObj(
     private val numberOfThreadsBeingJoinedMbr: Int, // 합쳐지는 스레드 총개수
-    private val onComplete: () -> Unit
+    private val onComplete: () -> Unit // 스레드 합류가 모두 끝나면 실행할 콜백 함수
 ) {
     // <멤버 변수 공간>
     // (스레드 풀)
