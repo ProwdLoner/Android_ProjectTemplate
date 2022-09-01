@@ -23,6 +23,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -407,6 +408,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     override fun onPause() {
+        super.onPause()
+
+        if (permissionRequestOnProgressMbr){
+            return
+        }
+        Log.e("op", "np")
+
         if (cameraObjMbr.mediaRecorderStatusCodeMbr == 3 ||
             cameraObjMbr.mediaRecorderStatusCodeMbr == 4
         ) { // 레코딩 중이라면 기존 레코딩 세션 중지 후 녹화 파일 제거 하고 프리뷰 세션 준비상태로 전환
@@ -506,8 +514,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         } else {
             cameraObjMbr.stopRepeatingRequest(onCameraPause = {}, onError = {})
         }
-
-        super.onPause()
     }
 
     override fun onDestroy() {

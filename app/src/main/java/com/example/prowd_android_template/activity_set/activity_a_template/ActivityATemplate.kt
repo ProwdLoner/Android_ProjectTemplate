@@ -139,6 +139,26 @@ class ActivityATemplate : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        // (권한 체크 후 함수 실행)
+        // : requestPermission 시에 onPause 되고, onResume 이 다시 실행되므로 리퀘스트 복귀 시엔 여기를 지나게 되어있음
+        var isPermissionAllGranted = true
+        for (activityPermission in activityPermissionArrayMbr) {
+            if (checkSelfPermission(activityPermission)
+                == PackageManager.PERMISSION_DENIED
+            ) { // 거부된 필수 권한이 존재
+                // 권한 클리어 플래그를 변경하고 break
+                isPermissionAllGranted = false
+                break
+            }
+        }
+
+        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+            allPermissionsGranted()
+            return
+        }
+
+        // (권한 비충족으로 인한 권한 요청)
+        // : 권한 요청시엔 onPause 되었다가 다시 onResume 으로 복귀함
         executorServiceMbr.execute {
             permissionRequestOnProgressSemaphoreMbr.acquire()
             runOnUiThread {
@@ -150,24 +170,23 @@ class ActivityATemplate : AppCompatActivity() {
 
                     // 권한 요청 콜백
                     permissionRequestCallbackMbr = { permissions ->
-                        var isPermissionAllGranted = true
+                        var isPermissionAllGranted1 = true
                         var neverAskAgain = false
                         for (activityPermission in activityPermissionArrayMbr) {
                             if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
                                 // 권한 클리어 플래그를 변경하고 break
                                 neverAskAgain =
                                     !shouldShowRequestPermissionRationale(activityPermission)
-                                isPermissionAllGranted = false
+                                isPermissionAllGranted1 = false
                                 break
                             }
                         }
 
-                        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                        if (isPermissionAllGranted1) { // 모든 권한이 클리어된 상황
                             permissionRequestOnProgressSemaphoreMbr.acquire()
                             permissionRequestOnProgressMbr = false
                             permissionRequestOnProgressSemaphoreMbr.release()
 
-                            allPermissionsGranted()
                         } else if (!neverAskAgain) { // 단순 거부
                             shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
                                 true,
@@ -212,7 +231,7 @@ class ActivityATemplate : AppCompatActivity() {
 
                                         resultLauncherCallbackMbr = {
                                             // 설정 페이지 복귀시 콜백
-                                            var isPermissionAllGranted1 = true
+                                            var isPermissionAllGranted2 = true
                                             for (activityPermission in activityPermissionArrayMbr) {
                                                 if (ActivityCompat.checkSelfPermission(
                                                         this,
@@ -220,17 +239,16 @@ class ActivityATemplate : AppCompatActivity() {
                                                     ) != PackageManager.PERMISSION_GRANTED
                                                 ) { // 거부된 필수 권한이 존재
                                                     // 권한 클리어 플래그를 변경하고 break
-                                                    isPermissionAllGranted1 = false
+                                                    isPermissionAllGranted2 = false
                                                     break
                                                 }
                                             }
 
-                                            if (isPermissionAllGranted1) { // 권한 승인
+                                            if (isPermissionAllGranted2) { // 권한 승인
                                                 permissionRequestOnProgressSemaphoreMbr.acquire()
                                                 permissionRequestOnProgressMbr = false
                                                 permissionRequestOnProgressSemaphoreMbr.release()
 
-                                                allPermissionsGranted()
                                             } else { // 권한 거부
                                                 shownDialogInfoVOMbr =
                                                     DialogConfirm.DialogInfoVO(
@@ -333,11 +351,21 @@ class ActivityATemplate : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+
+        if (permissionRequestOnProgressMbr) {
+            // 권한 요청중엔 onPause 가 실행될 수 있기에 아래에 위치할 정상 pause 로직 도달 방지
+            return
+        }
+
+    }
+
     override fun onDestroy() {
+        super.onDestroy()
+
         // 다이얼로그 객체 해소
         dialogMbr?.dismiss()
-
-        super.onDestroy()
     }
 
     // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
