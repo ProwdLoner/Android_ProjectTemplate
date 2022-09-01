@@ -59,6 +59,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// todo : 녹음 권한 처리 및 고도화
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)

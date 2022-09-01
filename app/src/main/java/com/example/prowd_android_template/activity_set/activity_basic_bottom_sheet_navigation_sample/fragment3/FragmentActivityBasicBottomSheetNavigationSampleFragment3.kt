@@ -82,19 +82,6 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-
-        parentActivityMbr.permissionRequestOnProgressSemaphoreMbr.acquire()
-        if (parentActivityMbr.permissionRequestOnProgressMbr) {
-            parentActivityMbr.permissionRequestOnProgressSemaphoreMbr.release()
-            // 권한 요청중엔 onPause 가 실행될 수 있기에 아래에 위치할 정상 pause 로직 도달 방지
-            return
-        }
-        parentActivityMbr.permissionRequestOnProgressSemaphoreMbr.release()
-
-    }
-
     // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
     // : 해당 이벤트 발생시 처리할 로직을 작성
     override fun onConfigurationChanged(newConfig: Configuration) {
