@@ -111,8 +111,8 @@ class ActivityATemplate : AppCompatActivity() {
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
     var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
-    private var permissionRequestOnProgressMbr = false
-    private val permissionRequestOnProgressSemaphoreMbr = Semaphore(1)
+    var permissionRequestOnProgressMbr = false
+    val permissionRequestOnProgressSemaphoreMbr = Semaphore(1)
 
     // (ActivityResultLauncher 객체)
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
@@ -353,11 +353,13 @@ class ActivityATemplate : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-
+        permissionRequestOnProgressSemaphoreMbr.acquire()
         if (permissionRequestOnProgressMbr) {
+            permissionRequestOnProgressSemaphoreMbr.release()
             // 권한 요청중엔 onPause 가 실행될 수 있기에 아래에 위치할 정상 pause 로직 도달 방지
             return
         }
+        permissionRequestOnProgressSemaphoreMbr.release()
 
     }
 
