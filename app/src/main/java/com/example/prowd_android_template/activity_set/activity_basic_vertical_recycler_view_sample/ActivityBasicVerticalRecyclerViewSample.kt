@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
+import com.example.prowd_android_template.activity_set.activity_basic_horizontal_recycler_view_sample.ActivityBasicHorizontalRecyclerViewSampleAdapterSet
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -108,8 +109,8 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
     var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
-    private var permissionRequestOnProgressMbr = false
-    private val permissionRequestOnProgressSemaphoreMbr = Semaphore(1)
+    var permissionRequestOnProgressMbr = false
+    val permissionRequestOnProgressSemaphoreMbr = Semaphore(1)
 
     // (ActivityResultLauncher 객체)
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
@@ -136,6 +137,26 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        // (권한 체크 후 함수 실행)
+        // : requestPermission 시에 onPause 되고, onResume 이 다시 실행되므로 리퀘스트 복귀 시엔 여기를 지나게 되어있음
+        var isPermissionAllGranted = true
+        for (activityPermission in activityPermissionArrayMbr) {
+            if (checkSelfPermission(activityPermission)
+                == PackageManager.PERMISSION_DENIED
+            ) { // 거부된 필수 권한이 존재
+                // 권한 클리어 플래그를 변경하고 break
+                isPermissionAllGranted = false
+                break
+            }
+        }
+
+        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+            allPermissionsGranted()
+            return
+        }
+
+        // (권한 비충족으로 인한 권한 요청)
+        // : 권한 요청시엔 onPause 되었다가 다시 onResume 으로 복귀함
         executorServiceMbr.execute {
             permissionRequestOnProgressSemaphoreMbr.acquire()
             runOnUiThread {
@@ -147,24 +168,23 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
                     // 권한 요청 콜백
                     permissionRequestCallbackMbr = { permissions ->
-                        var isPermissionAllGranted = true
+                        var isPermissionAllGranted1 = true
                         var neverAskAgain = false
                         for (activityPermission in activityPermissionArrayMbr) {
                             if (!permissions[activityPermission]!!) { // 거부된 필수 권한이 존재
                                 // 권한 클리어 플래그를 변경하고 break
                                 neverAskAgain =
                                     !shouldShowRequestPermissionRationale(activityPermission)
-                                isPermissionAllGranted = false
+                                isPermissionAllGranted1 = false
                                 break
                             }
                         }
 
-                        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                        if (isPermissionAllGranted1) { // 모든 권한이 클리어된 상황
                             permissionRequestOnProgressSemaphoreMbr.acquire()
                             permissionRequestOnProgressMbr = false
                             permissionRequestOnProgressSemaphoreMbr.release()
 
-                            allPermissionsGranted()
                         } else if (!neverAskAgain) { // 단순 거부
                             shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
                                 true,
@@ -209,7 +229,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
                                         resultLauncherCallbackMbr = {
                                             // 설정 페이지 복귀시 콜백
-                                            var isPermissionAllGranted1 = true
+                                            var isPermissionAllGranted2 = true
                                             for (activityPermission in activityPermissionArrayMbr) {
                                                 if (ActivityCompat.checkSelfPermission(
                                                         this,
@@ -217,17 +237,16 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                                                     ) != PackageManager.PERMISSION_GRANTED
                                                 ) { // 거부된 필수 권한이 존재
                                                     // 권한 클리어 플래그를 변경하고 break
-                                                    isPermissionAllGranted1 = false
+                                                    isPermissionAllGranted2 = false
                                                     break
                                                 }
                                             }
 
-                                            if (isPermissionAllGranted1) { // 권한 승인
+                                            if (isPermissionAllGranted2) { // 권한 승인
                                                 permissionRequestOnProgressSemaphoreMbr.acquire()
                                                 permissionRequestOnProgressMbr = false
                                                 permissionRequestOnProgressSemaphoreMbr.release()
 
-                                                allPermissionsGranted()
                                             } else { // 권한 거부
                                                 shownDialogInfoVOMbr =
                                                     DialogConfirm.DialogInfoVO(
@@ -330,11 +349,23 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        permissionRequestOnProgressSemaphoreMbr.acquire()
+        if (permissionRequestOnProgressMbr) {
+            permissionRequestOnProgressSemaphoreMbr.release()
+            // 권한 요청중엔 onPause 가 실행될 수 있기에 아래에 위치할 정상 pause 로직 도달 방지
+            return
+        }
+        permissionRequestOnProgressSemaphoreMbr.release()
+
+    }
+
     override fun onDestroy() {
+        super.onDestroy()
+
         // 다이얼로그 객체 해소
         dialogMbr?.dismiss()
-
-        super.onDestroy()
     }
 
     // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
@@ -685,12 +716,6 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
 
             runOnUiThread {
                 // (리스트 초기화)
-                adapterSetMbr.recyclerViewAdapter.setHeader(
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO()
-                )
-                adapterSetMbr.recyclerViewAdapter.setFooter(
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO()
-                )
                 adapterSetMbr.recyclerViewAdapter.setItemList(ArrayList())
 
                 // (로더 추가)
@@ -703,7 +728,10 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 )
             }
 
-            // (스레드 합류 객체)
+            // (스레드 합류 객체 생성)
+            // : 헤더, 푸터, 아이템 리스트의 각 데이터를 비동기적으로 요청했을 때, 그 합류용으로 사용되는 객체
+            //     numberOfThreadsBeingJoinedMbr 에 비동기 처리 개수를 적고,
+            //     각 처리 완료시마다 threadComplete 를 호출하면 됨
             val threadConfluenceObj =
                 ThreadConfluenceObj(
                     3,
@@ -720,20 +748,22 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             //     1 이외의 상태값에서 itemList 는 null
             val getItemListOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
                 { statusCode, itemList ->
-                    // 로더 제거
                     runOnUiThread {
+                        // (c3. 로더 제거)
                         adapterSetMbr.recyclerViewAdapter.setItemList(ArrayList())
                     }
 
                     when (statusCode) {
-                        1 -> {// 완료
+                        1 -> { // 완료
                             if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
-
+                                // (c4. 빈 리스트 처리)
                                 threadConfluenceObj.threadComplete()
                             } else {
                                 runOnUiThread {
-                                    // 받아온 아이템 추가
+                                    // (c5. 받아온 아이템 추가)
                                     adapterSetMbr.recyclerViewAdapter.setItemList(itemList)
+
+                                    // (c6. 스크롤을 가장 앞으로 이동)
                                     bindingMbr.recyclerView.scrollToPosition(0)
                                 }
 
@@ -741,10 +771,12 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                             }
                         }
                         -1 -> { // 네트워크 에러
+                            // (c7. 네트워크 에러 처리)
 
                             threadConfluenceObj.threadComplete()
                         }
-                        else -> { // 그외 서버 에러
+                        else -> { // 그외 서버 에러그외 서버 에러
+                            // (c8. 그외 서버 에러 처리)
 
                             threadConfluenceObj.threadComplete()
                         }
@@ -758,23 +790,24 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             val getHeaderItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
                 { statusCode, item ->
                     runOnUiThread {
-                        // 로더 제거
+                        // (c9. 로더 제거)
                     }
 
                     when (statusCode) {
-                        1 -> {// 완료
-                            // 받아온 아이템 추가
+                        1 -> { // 완료
                             runOnUiThread {
-                                adapterSetMbr.recyclerViewAdapter.setHeader(item!!)
+                                // (c10. 받아온 아이템 추가)
                             }
 
                             threadConfluenceObj.threadComplete()
                         }
                         -1 -> { // 네트워크 에러
+                            // (c11. 네트워크 에러 처리)
 
                             threadConfluenceObj.threadComplete()
                         }
                         else -> { // 그외 서버 에러
+                            // (c12. 그외 서버 에러 처리)
 
                             threadConfluenceObj.threadComplete()
                         }
@@ -788,23 +821,24 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
             val getFooterItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
                 { statusCode, item ->
                     runOnUiThread {
-                        // 로더 제거
+                        // (c13. 로더 제거)
                     }
 
                     when (statusCode) {
                         1 -> {// 완료
-                            // 받아온 아이템 추가
                             runOnUiThread {
-                                adapterSetMbr.recyclerViewAdapter.setFooter(item!!)
+                                // (c14. 받아온 아이템 추가)
                             }
 
                             threadConfluenceObj.threadComplete()
                         }
                         -1 -> { // 네트워크 에러
+                            // (c15. 네트워크 에러 처리)
 
                             threadConfluenceObj.threadComplete()
                         }
                         else -> { // 그외 서버 에러
+                            // (c16. 그외 서버 에러 처리)
 
                             threadConfluenceObj.threadComplete()
                         }
@@ -812,7 +846,7 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 }
 
             // (네트워크 요청)
-            // 아이템 리스트
+            // (c17. 아이템 리스트 가져오기)
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
             //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
             executorServiceMbr.execute {
@@ -836,31 +870,22 @@ class ActivityBasicVerticalRecyclerViewSample : AppCompatActivity() {
                 getItemListOnComplete(1, resultObj)
             }
 
-            // 헤더
+            // (c18. 헤더 데이터 가져오기)
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
             //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
             executorServiceMbr.execute {
-                // 요청 대기시간 가정
-                Thread.sleep(500)
-
-                val resultObj =
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Header.ItemVO()
-
-                getHeaderItemOnComplete(1, resultObj)
+                getHeaderItemOnComplete(-2, null)
             }
 
-            // 푸터
+            // (c19. 푸터 데이터 가져오기)
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
             //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
             executorServiceMbr.execute {
-                // 요청 대기시간 가정
-                Thread.sleep(500)
-
-                val resultObj =
-                    ActivityBasicVerticalRecyclerViewSampleAdapterSet.RecyclerViewAdapter.Footer.ItemVO()
-
-                getFooterItemOnComplete(1, resultObj)
+                getFooterItemOnComplete(-2, null)
             }
+
+            // (c20. 그외 스크린 데이터 가져오기)
+
         }
     }
 
