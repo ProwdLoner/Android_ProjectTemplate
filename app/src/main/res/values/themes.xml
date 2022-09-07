@@ -36,12 +36,15 @@
 
     <!-- 스플래시 화면 테마 -->
     <style name="Theme.ActivityInit" parent="Theme.Application">
+        <!-- 상태바 -->
+        <item name="android:statusBarColor" >#FF3D7DDC</item>
+        <item name="colorPrimaryVariant">#FF3D7DDC</item>
+
+        <!-- 배경 색 -->
+        <item name="android:windowBackground">#FF3D7DDC</item>
 
         <!-- 소프트 네비게이션 바 색 -->
         <item name="android:navigationBarColor">#FF3D7DDC</item>
-
-        <!-- 배경 색 -->
-<!--        <item name="android:windowBackground">#FF3D7DDC</item>-->
     </style>
 
     <!-- 카메라 화면 테마 -->
