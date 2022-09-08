@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_home
+package com.example.prowd_android_template.activity_set.activity_user_sample_list
 
 import android.app.Dialog
 import android.content.Intent
@@ -14,27 +14,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
-import com.example.prowd_android_template.activity_set.activity_camera_sample_list.ActivityCameraSampleList
-import com.example.prowd_android_template.activity_set.activity_etc_sample_list.ActivityEtcSampleList
-import com.example.prowd_android_template.activity_set.activity_image_processing_sample_list.ActivityImageProcessingSampleList
-import com.example.prowd_android_template.activity_set.activity_jni_sample_list.ActivityJniSampleList
-import com.example.prowd_android_template.activity_set.activity_media_player_sample_list.ActivityMediaPlayerSampleList
-import com.example.prowd_android_template.activity_set.activity_recycler_view_sample_list.ActivityRecyclerViewSampleList
-import com.example.prowd_android_template.activity_set.activity_user_sample_list.ActivityUserSampleList
-import com.example.prowd_android_template.activity_set.activity_view_pager_sample_list.ActivityViewPagerSampleList
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityHomeBinding
+import com.example.prowd_android_template.databinding.ActivityUserSampleListBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-class ActivityHome : AppCompatActivity() {
+class ActivityUserSampleList : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
@@ -45,13 +37,13 @@ class ActivityHome : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityHomeBinding
+    lateinit var bindingMbr: ActivityUserSampleListBinding
 
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
 
     // (어뎁터 객체)
-    lateinit var adapterSetMbr: ActivityHomeAdapterSet
+    lateinit var adapterSetMbr: ActivityUserSampleListAdapterSet
 
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
@@ -397,7 +389,7 @@ class ActivityHome : AppCompatActivity() {
     // : 클래스에서 사용할 객체를 초기 생성
     private fun onCreateInitObject() {
         // 뷰 객체
-        bindingMbr = ActivityHomeBinding.inflate(layoutInflater)
+        bindingMbr = ActivityUserSampleListBinding.inflate(layoutInflater)
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
@@ -405,7 +397,7 @@ class ActivityHome : AppCompatActivity() {
         repositorySetMbr = RepositorySet.getInstance(application)
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityHomeAdapterSet()
+        adapterSetMbr = ActivityUserSampleListAdapterSet()
 
         // SPW 객체 생성
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
@@ -432,81 +424,7 @@ class ActivityHome : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        // 리사이클러 뷰 샘플 목록 이동 버튼
-        bindingMbr.goToRecyclerViewSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityRecyclerViewSampleList::class.java
-                )
-            startActivity(intent)
-        }
 
-        // 뷰 페이저 샘플 목록 이동 버튼
-        bindingMbr.goToViewPagerSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityViewPagerSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 카메라 샘플 목록 이동 버튼
-        bindingMbr.goToCameraSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityCameraSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 미디어 플레이어 샘플 목록 이동 버튼
-        bindingMbr.goToMediaPlayerSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityMediaPlayerSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        // 이미지 처리 샘플 목록 이동 버튼
-        bindingMbr.goToImageProcessingSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityImageProcessingSampleList::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToJniSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityJniSampleList::class.java
-                )
-            startActivity(intent)
-        }
-        bindingMbr.goToUserSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityUserSampleList::class.java
-                )
-            startActivity(intent)
-        }
-        // 기타 샘플 목록 이동 버튼
-        bindingMbr.goToEtcSampleListBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityEtcSampleList::class.java
-                )
-            startActivity(intent)
-        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
