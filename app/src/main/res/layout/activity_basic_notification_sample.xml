@@ -7,6 +7,7 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#FFFFFFFF"
         android:paddingBottom="0.3dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -63,7 +64,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/basic_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -75,7 +76,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/big_text_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -87,7 +88,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/basic_notification_btn" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/big_picture_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -99,7 +100,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/big_text_notification_btn" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/inbox_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -111,7 +112,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/big_picture_notification_btn" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/messaging_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -123,7 +124,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/inbox_notification_btn" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/media_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -135,7 +136,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/messaging_notification_btn" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/inline_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -147,7 +148,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/media_notification_btn" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/head_up_notification_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

@@ -7,6 +7,7 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#FFFFFFFF"
         android:paddingBottom="0.3dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -98,9 +99,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="5dp"
                         android:background="#d86527"
-                        android:textColor="#FFFFFFFF"
                         android:fontFamily="@font/apple_sd_gothic_neo_r"
                         android:text="인증 발송"
+                        android:textColor="#FFFFFFFF"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/email_id_text_input_layout"
                         app:layout_constraintTop_toTopOf="@id/email_id_text_input_layout" />

@@ -74,9 +74,9 @@ class FragmentActivityBasicTabLayoutSampleFragment1 : Fragment() {
         }
 
         // (onResume)
-        if (parentActivityMbr.fragmentClickedPositionMbr == null){
+        if (parentActivityMbr.fragmentClickedPositionMbr == null) {
             bindingMbr.clickedByValueTxt.text = "클릭 없음"
-        }else{
+        } else {
             val textMsg = "${parentActivityMbr.fragmentClickedPositionMbr}번 플래그먼트"
             bindingMbr.clickedByValueTxt.text = textMsg
         }
@@ -118,9 +118,9 @@ class FragmentActivityBasicTabLayoutSampleFragment1 : Fragment() {
     private fun onCreateViewInitView() {
         bindingMbr.fragmentClickBtn.setOnClickListener {
             parentActivityMbr.fragmentClickedPositionMbr = 1
-            if (parentActivityMbr.fragmentClickedPositionMbr == null){
+            if (parentActivityMbr.fragmentClickedPositionMbr == null) {
                 bindingMbr.clickedByValueTxt.text = "클릭 없음"
-            }else{
+            } else {
                 val textMsg = "${parentActivityMbr.fragmentClickedPositionMbr}번 플래그먼트"
                 bindingMbr.clickedByValueTxt.text = textMsg
             }

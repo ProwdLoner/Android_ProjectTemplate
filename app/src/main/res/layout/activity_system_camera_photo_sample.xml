@@ -7,6 +7,7 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#FFFFFFFF"
         android:paddingBottom="0.3dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -63,7 +64,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/system_camera_test_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -113,7 +114,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/file_img_title" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/add_to_gallery_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -124,7 +125,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/file_img" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/go_to_gallery_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

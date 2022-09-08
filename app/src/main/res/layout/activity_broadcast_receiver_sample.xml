@@ -7,6 +7,7 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#FFFFFFFF"
         android:paddingBottom="0.3dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -75,7 +76,7 @@
             app:layout_constraintStart_toEndOf="@id/broadcast_label"
             app:layout_constraintTop_toTopOf="@id/broadcast_label" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/activity_broadcast"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -86,7 +87,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/broadcast_label" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/service_broadcast"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

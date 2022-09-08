@@ -473,7 +473,10 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
                 bindingMbr.screenViewPager.adapter =
                     adapterSetMbr.screenViewPagerFragmentStateAdapter
 
-                TabLayoutMediator(bindingMbr.screenTabLayout, bindingMbr.screenViewPager) { tab, position ->
+                TabLayoutMediator(
+                    bindingMbr.screenTabLayout,
+                    bindingMbr.screenViewPager
+                ) { tab, position ->
                     if (0 == position) {
                         tab.text = "1번"
                     } else if (1 == position) {

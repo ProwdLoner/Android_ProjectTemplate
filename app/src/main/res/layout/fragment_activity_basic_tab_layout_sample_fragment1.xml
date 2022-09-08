@@ -40,7 +40,7 @@
         app:layout_constraintStart_toStartOf="@id/clicked_by_label_txt"
         app:layout_constraintTop_toBottomOf="@id/clicked_by_label_txt" />
 
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/fragment_click_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

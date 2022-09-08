@@ -65,7 +65,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
     //     ex : Manifest.permission.INTERNET
-    private val activityPermissionArrayMbr: Array<String> = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+    private val activityPermissionArrayMbr: Array<String> =
+        arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
 
 
     // ---------------------------------------------------------------------------------------------
