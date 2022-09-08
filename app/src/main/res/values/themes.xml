@@ -3,14 +3,16 @@
     <style name="Theme.Application" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- 상태바 -->
         <item name="android:statusBarColor">#FF3D7DDC</item>
-        <item name="colorPrimaryVariant">#FF3D7DDC</item>
+
+        <!-- 어플리케이션 중심 색 -->
+        <item name="colorPrimary">#FF3D7DDC</item>
 
         <!-- 소프트 네비게이션 바 색 -->
         <item name="android:navigationBarColor">#FF000000</item>
     </style>
 
     <!-- 스플래시 화면 테마 -->
-    <style name="Theme.ActivityInit" parent="Theme.Application">
+    <style name="Theme_AndroidManifest_ActivityInit" parent="Theme.Application">
         <!-- 상태바 -->
         <item name="android:statusBarColor">#FF3D7DDC</item>
         <item name="colorPrimaryVariant">#FF3D7DDC</item>
@@ -20,10 +22,11 @@
     </style>
 
     <!-- 카메라 화면 테마 -->
-    <style name="Theme.ActivityBasicCamera2ApiSample" parent="Theme.Application">
+    <style name="Theme_AndroidManifest_ActivityBasicCamera2ApiSample" parent="Theme.Application">
         <item name="android:immersive">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
     </style>
+
 </resources>

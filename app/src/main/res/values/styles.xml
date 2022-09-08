@@ -1,56 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <style name="window_enter_fade_in_exit_fade_out">
         <item name="android:windowEnterAnimation">@anim/anim_screen_fade_in</item>
         <item name="android:windowExitAnimation">@anim/anim_screen_fade_out</item>
     </style>
-
-    <!-- (style_activity_user_join_sample_text_input_layout) -->
-    <style name="style_activity_user_join_sample_text_input_layout" parent="Widget.MaterialComponents.TextInputLayout.FilledBox">
-        <!-- parent FilledBox 는 밑줄, OutlinedBox 는 박스-->
-
-        <item name="boxStrokeColor">#868686</item> <!--FilledBox일 경우 밑줄 색상, OutlinedBox일 경우 테두리 색상-->
-        <!--Counter-->
-        <item name="counterTextAppearance">@style/style_activity_user_join_sample_text_input_layout_counterTextAppearance</item>
-        <!--EditText에 있을때의 Hint-->
-        <item name="android:textColorHint">#FF9c9b9b</item>
-        <!--상단에 있을때의 Hint-->
-        <item name="hintTextColor">#FF000000</item>
-        <item name="hintTextAppearance">@style/style_activity_user_join_sample_text_input_layout_hintTextAppearance</item>
-        <!--Helper-->
-        <item name="helperTextTextAppearance">@style/style_activity_user_join_sample_text_input_layout_helperTextTextAppearance</item>
-        <!--Error-->
-        <item name="errorEnabled">true</item>
-        <item name="colorError">#FFFF0000</item>
-        <item name="errorIconDrawable">@android:color/transparent</item>
-        <item name="errorTextAppearance">@style/style_activity_user_join_sample_text_input_layout_errorTextAppearance</item>
-    </style>
-
-    <style name="style_activity_user_join_sample_text_input_layout_counterTextAppearance">
-        <item name="android:textStyle">normal</item>
-        <item name="android:includeFontPadding">false</item>
-        <item name="android:textSize">12sp</item>
-    </style>
-
-    <style name="style_activity_user_join_sample_text_input_layout_hintTextAppearance">
-        <item name="android:fontFamily">@font/apple_sd_gothic_neo_r</item>
-        <item name="android:textStyle">normal</item>
-        <item name="android:includeFontPadding">false</item>
-        <item name="android:textSize">12sp</item>
-    </style>
-
-    <style name="style_activity_user_join_sample_text_input_layout_helperTextTextAppearance">
-        <item name="android:textStyle">normal</item>
-        <item name="android:includeFontPadding">false</item>
-        <item name="android:textSize">12sp</item>
-    </style>
-
-    <style name="style_activity_user_join_sample_text_input_layout_errorTextAppearance">
-        <item name="android:textStyle">normal</item>
-        <item name="android:includeFontPadding">false</item>
-        <item name="android:textSize">12sp</item>
-    </style>
-
-    <!--  -->
 
 </resources>
