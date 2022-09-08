@@ -7,7 +7,6 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FFFFFFFF"
         android:paddingBottom="0.3dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -36,7 +35,7 @@
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
                 android:text="뷰 페이저 샘플 목록"
-                android:textColor="#FF000000"
+                android:textColor="#FFFFFFFF"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -64,25 +63,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <androidx.appcompat.widget.AppCompatButton
+                <Button
                     android:id="@+id/go_to_basic_bottom_sheet_navigation_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
                     android:text="기본 바텀 네비게이터 샘플"
-                    android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <androidx.appcompat.widget.AppCompatButton
+                <Button
                     android:id="@+id/go_to_basic_tab_layout_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
                     android:text="기본 탭 레이아웃 샘플"
-                    android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/go_to_basic_bottom_sheet_navigation_sample_btn" />

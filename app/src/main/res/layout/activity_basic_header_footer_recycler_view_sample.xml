@@ -7,7 +7,6 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FFFFFFFF"
         android:paddingBottom="0.3dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -30,7 +29,7 @@
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
                 android:gravity="center"
                 android:text="기본 리사이클러 뷰 샘플\n(헤더, 푸터)"
-                android:textColor="#FF000000"
+                android:textColor="#FFFFFFFF"
                 android:textSize="20sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

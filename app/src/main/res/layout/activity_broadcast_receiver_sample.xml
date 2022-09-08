@@ -7,7 +7,6 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FFFFFFFF"
         android:paddingBottom="0.3dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -36,7 +35,7 @@
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
                 android:text="브로드캐스트 리시버 샘플"
-                android:textColor="#FF000000"
+                android:textColor="#FFFFFFFF"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -76,7 +75,7 @@
             app:layout_constraintStart_toEndOf="@id/broadcast_label"
             app:layout_constraintTop_toTopOf="@id/broadcast_label" />
 
-        <androidx.appcompat.widget.AppCompatButton
+        <Button
             android:id="@+id/activity_broadcast"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -87,7 +86,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/broadcast_label" />
 
-        <androidx.appcompat.widget.AppCompatButton
+        <Button
             android:id="@+id/service_broadcast"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
