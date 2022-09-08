@@ -113,7 +113,7 @@
             android:name=".activity_set.activity_basic_camera2_api_sample.ActivityBasicCamera2ApiSample"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false"
-            android:theme="@style/Theme.Camera" />
+            android:theme="@style/Theme.ActivityBasicCamera2ApiSample" />
         <activity
             android:name=".activity_set.activity_basic_header_footer_recycler_view_sample.ActivityBasicHeaderFooterRecyclerViewSample"
             android:configChanges="keyboardHidden|orientation|screenSize"

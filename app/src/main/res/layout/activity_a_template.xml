@@ -6,6 +6,7 @@
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
+        android:background="#FFFFFFFF"
         android:layout_height="wrap_content"
         android:paddingBottom="0.3dp">
 
