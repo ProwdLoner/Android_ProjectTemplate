@@ -16,6 +16,7 @@ import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.activity_set.activity_user_join_sample.ActivityUserJoinSample
+import com.example.prowd_android_template.activity_set.activity_user_login_sample.ActivityUserLoginSample
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -434,6 +435,15 @@ class ActivityUserSampleList : AppCompatActivity() {
                 )
             startActivity(intent)
         }
+
+        bindingMbr.goToUserLoginSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityUserLoginSample::class.java
+                )
+            startActivity(intent)
+        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -453,13 +463,13 @@ class ActivityUserSampleList : AppCompatActivity() {
             if (currentUserUidMbr == null) { // 비회원 상태
                 bindingMbr.goToUserJoinSampleBtn.visibility = View.VISIBLE
                 bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
-                bindingMbr.goToUserLogoutSampleBtn.visibility = View.GONE
+                bindingMbr.userLogoutBtn.visibility = View.GONE
                 bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
                 bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
             } else { // 회원 상태
                 bindingMbr.goToUserJoinSampleBtn.visibility = View.GONE
                 bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
-                bindingMbr.goToUserLogoutSampleBtn.visibility = View.VISIBLE
+                bindingMbr.userLogoutBtn.visibility = View.VISIBLE
                 bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
                 bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
             }
@@ -480,13 +490,13 @@ class ActivityUserSampleList : AppCompatActivity() {
                 if (currentUserUidMbr == null) { // 비회원 상태
                     bindingMbr.goToUserJoinSampleBtn.visibility = View.VISIBLE
                     bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
-                    bindingMbr.goToUserLogoutSampleBtn.visibility = View.GONE
+                    bindingMbr.userLogoutBtn.visibility = View.GONE
                     bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
                     bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
                 } else { // 회원 상태
                     bindingMbr.goToUserJoinSampleBtn.visibility = View.GONE
                     bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
-                    bindingMbr.goToUserLogoutSampleBtn.visibility = View.VISIBLE
+                    bindingMbr.userLogoutBtn.visibility = View.VISIBLE
                     bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
                     bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
                 }

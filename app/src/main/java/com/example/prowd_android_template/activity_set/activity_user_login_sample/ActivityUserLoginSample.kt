@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_user_join_sample
+package com.example.prowd_android_template.activity_set.activity_user_login_sample
 
 import android.app.Dialog
 import android.content.Intent
@@ -8,30 +8,25 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.text.Editable
-import android.text.TextWatcher
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
-import com.example.prowd_android_template.activity_set.activity_user_login_sample.ActivityUserLoginSample
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityUserJoinSampleBinding
+import com.example.prowd_android_template.databinding.ActivityUserLoginSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
-import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
-import java.util.regex.Pattern
 
-class ActivityUserJoinSample : AppCompatActivity() {
+class ActivityUserLoginSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
@@ -42,13 +37,13 @@ class ActivityUserJoinSample : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityUserJoinSampleBinding
+    lateinit var bindingMbr: ActivityUserLoginSampleBinding
 
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
 
     // (어뎁터 객체)
-    lateinit var adapterSetMbr: ActivityUserJoinSampleAdapterSet
+    lateinit var adapterSetMbr: ActivityUserLoginSampleAdapterSet
 
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
@@ -394,7 +389,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
     // : 클래스에서 사용할 객체를 초기 생성
     private fun onCreateInitObject() {
         // 뷰 객체
-        bindingMbr = ActivityUserJoinSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityUserLoginSampleBinding.inflate(layoutInflater)
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
@@ -402,7 +397,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
         repositorySetMbr = RepositorySet.getInstance(application)
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityUserJoinSampleAdapterSet()
+        adapterSetMbr = ActivityUserLoginSampleAdapterSet()
 
         // SPW 객체 생성
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
@@ -429,370 +424,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        bindingMbr.goToUserLoginSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityUserLoginSample::class.java
-                )
-            startActivity(intent)
-        }
 
-        // 회원가입 버튼 비활성화
-        //     적합성 검증 완료시 활성
-        bindingMbr.joinBtn.isEnabled = false
-        bindingMbr.joinBtn.isFocusable = false
-
-        // (적합성 검증)
-        var idClear = false
-        var nickNameClear = false
-        var pwClear = false
-        var pwCheckClear = false
-        bindingMbr.idTextInputEditTxt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.idTextInputLayout.error = null
-                bindingMbr.idTextInputLayout.isErrorEnabled = false
-            }
-
-            override fun afterTextChanged(s: Editable) {
-                val id = s.toString()
-
-                when {
-                    // 문자 입력 전
-                    "" == id -> {
-                        bindingMbr.idTextInputLayout.error = null
-                        bindingMbr.idTextInputLayout.isErrorEnabled = false
-                        idClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 2자 미만
-                    id.length < 2 -> {
-                        bindingMbr.idTextInputLayout.error = "2자 이상 입력해주세요."
-                        idClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 16자 초과
-                    id.length > 16 -> {
-                        bindingMbr.idTextInputLayout.error = "16자 이하로 입력해주세요."
-                        idClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 공백 존재
-                    id.contains(" ") -> {
-                        bindingMbr.idTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
-                        idClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 영문, 숫자 외의 특수문자 존재
-                    !Pattern.compile("^[0-9a-zA-Z]+$").matcher(id).matches() -> {
-                        bindingMbr.idTextInputLayout.error = "유효하지 않은 아이디입니다."
-                        idClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    else -> {
-                        bindingMbr.idTextInputLayout.error = null
-                        bindingMbr.idTextInputLayout.isErrorEnabled = false
-                        idClear = true
-
-                        if (idClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.joinBtn.isEnabled = true
-                            bindingMbr.joinBtn.isFocusable = true
-                        }
-                    }
-                }
-            }
-        })
-
-        bindingMbr.nickNameTextInputEditTxt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.nickNameTextInputLayout.error = null
-                bindingMbr.nickNameTextInputLayout.isErrorEnabled = false
-            }
-
-            override fun afterTextChanged(s: Editable) {
-                val nickName = s.toString()
-
-                when {
-                    // 문자 입력 전
-                    "" == nickName -> {
-                        bindingMbr.nickNameTextInputLayout.error = null
-                        bindingMbr.nickNameTextInputLayout.isErrorEnabled = false
-                        nickNameClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 16자 초과
-                    nickName.length > 16 -> {
-                        bindingMbr.nickNameTextInputLayout.error = "16자 이하로 입력해주세요."
-                        nickNameClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // trim 검사
-                    nickName.first() == ' ' || nickName.last() == ' ' -> {
-                        bindingMbr.nickNameTextInputLayout.error = "문장 앞뒤 공백 문자는 입력할 수 없습니다."
-                        nickNameClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 영문, 숫자, 한글 외의 특수문자 존재
-                    !Pattern.compile("^[0-9a-zA-Zㄱ-ㅎ가-힣 ]+$").matcher(nickName).matches() -> {
-                        bindingMbr.nickNameTextInputLayout.error = "유효하지 않은 닉네임입니다."
-                        nickNameClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    else -> {
-                        bindingMbr.nickNameTextInputLayout.error = null
-                        bindingMbr.nickNameTextInputLayout.isErrorEnabled = false
-                        nickNameClear = true
-
-                        if (idClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.joinBtn.isEnabled = true
-                            bindingMbr.joinBtn.isFocusable = true
-                        }
-                    }
-                }
-            }
-        })
-
-        bindingMbr.pwTextInputEditTxt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.pwTextInputLayout.error = null
-                bindingMbr.pwTextInputLayout.isErrorEnabled = false
-
-                bindingMbr.pwTextCheckInputLayout.error = null
-                bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
-                pwCheckClear = false
-                bindingMbr.pwTextCheckInputEditTxt.setText("")
-            }
-
-            override fun afterTextChanged(s: Editable) {
-                val pw = s.toString()
-
-                when {
-                    "" == pw -> {
-                        bindingMbr.pwTextInputLayout.error = null
-                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
-                        pwClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 8자 미만
-                    pw.length < 8 -> {
-                        bindingMbr.pwTextInputLayout.error = "8자 이상 입력해주세요."
-                        pwClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 16자 초과
-                    pw.length > 16 -> {
-                        bindingMbr.pwTextInputLayout.error = "16자 이하로 입력해주세요."
-                        pwClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 공백 존재
-                    pw.contains(" ") -> {
-                        bindingMbr.pwTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
-                        pwClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 비밀번호 작성 규칙 : 영문, 숫자, 특수문자 혼합
-                    !Pattern.compile("^.*(?=^.{8,16}\$)(?=.*\\d)(?=.*[a-zA-Z])(?=.*[!@#\$%^&+=]).*\$")
-                        .matcher(pw).matches() -> {
-                        bindingMbr.pwTextInputLayout.error = "유효하지 않은 비밀번호입니다."
-                        pwClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    else -> {
-                        bindingMbr.pwTextInputLayout.error = null
-                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
-                        pwClear = true
-
-                        if (idClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.joinBtn.isEnabled = true
-                            bindingMbr.joinBtn.isFocusable = true
-                        }
-                    }
-                }
-            }
-        })
-
-        bindingMbr.pwTextCheckInputEditTxt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.pwTextCheckInputLayout.error = null
-                bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
-            }
-
-            override fun afterTextChanged(s: Editable) {
-                val pwCheck = s.toString()
-                val pw = bindingMbr.pwTextInputEditTxt.text.toString()
-
-                when {
-                    // 문자 입력 전
-                    "" == pwCheck -> {
-                        bindingMbr.pwTextCheckInputLayout.error = null
-                        bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
-                        pwCheckClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    pw != pwCheck -> {
-                        bindingMbr.pwTextCheckInputLayout.error = "비밀번호가 일치하지 않습니다."
-                        pwCheckClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-                    else -> {
-                        bindingMbr.pwTextCheckInputLayout.error = null
-                        bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
-                        pwCheckClear = true
-
-                        if (idClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.joinBtn.isEnabled = true
-                            bindingMbr.joinBtn.isFocusable = true
-                        }
-                    }
-                }
-            }
-        })
-
-        // 적합성 검증 완료를 가정
-        bindingMbr.joinBtn.setOnClickListener {
-            val id: String = bindingMbr.idTextInputEditTxt.text.toString()
-            val nickName: String = bindingMbr.nickNameTextInputEditTxt.text.toString()
-            val pw: String = bindingMbr.pwTextInputEditTxt.text.toString()
-
-            shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
-                false,
-                "회원 가입 요청 중입니다.",
-                onCanceled = {}
-            )
-
-            // 회원가입 콜백
-            val signInCallback = { statusCode: Int ->
-                runOnUiThread {
-                    shownDialogInfoVOMbr = null
-
-                    when (statusCode) {
-                        1 -> { // 회원 가입 완료
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "회원가입 완료",
-                                "회원가입을 완료했습니다.",
-                                "닫기",
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                }
-                            )
-                        }
-                        2 -> { // 아이디 중복
-                            bindingMbr.idTextInputLayout.error = "현재 사용중인 아이디입니다."
-                            bindingMbr.idTextInputEditTxt.requestFocus()
-                            idClear = false
-
-                            bindingMbr.joinBtn.isEnabled = false
-                            bindingMbr.joinBtn.isFocusable = false
-                        }
-                        -1 -> { // 네트워크 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "네트워크 불안정",
-                                "현재 네트워크 연결이 불안정합니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
-                        }
-                        else -> { // 그외 서버 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "기술적 문제",
-                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 회원가입 요청
-            executorServiceMbr.execute {
-                // 아래는 원래 네트워크 서버에서 처리하는 로직
-                // 아이디 중복겁사
-                val idCount = repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                    .getIdCount(id)
-
-                if (idCount != 0) { // 아이디 중복
-                    signInCallback(2)
-                } else {
-                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao().insert(
-                        TestUserInfoTable.TableVo(
-                            id, nickName, pw
-                        )
-                    )
-                    signInCallback(1)
-                }
-            }
-        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -808,10 +440,6 @@ class ActivityUserJoinSample : AppCompatActivity() {
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             refreshWholeScreenData(onComplete = {})
 
-            // 로그인 된 상태라면 진입 금지
-            if (currentUserUidMbr != null) {
-                finish()
-            }
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -824,11 +452,6 @@ class ActivityUserJoinSample : AppCompatActivity() {
 
                 // (데이터 수집)
                 refreshWholeScreenData(onComplete = {})
-
-                // 로그인 된 상태라면 진입 금지
-                if (currentUserUidMbr != null) {
-                    finish()
-                }
             }
 
         }
