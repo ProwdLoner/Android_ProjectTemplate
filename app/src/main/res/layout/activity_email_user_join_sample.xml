@@ -34,7 +34,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="회원가입 샘플"
+                android:text="이메일 회원가입 샘플"
                 android:textColor="#FFFFFFFF"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -63,35 +63,58 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/id_text_input_layout"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/email_container"
                     android:layout_width="300dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    app:boxBackgroundColor="@android:color/transparent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/id_text_input_edit_txt"
-                        android:layout_width="match_parent"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/email_text_input_layout"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:hint="아이디 입력"
-                        android:singleLine="true"
-                        android:textCursorDrawable="@null" />
+                        app:boxBackgroundColor="@android:color/transparent"
+                        app:layout_constraintEnd_toStartOf="@id/email_check_btn"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
 
-                </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/email_text_input_edit_txt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/apple_sd_gothic_neo_r"
+                            android:hint="이메일 입력"
+                            android:inputType="textEmailAddress"
+                            android:singleLine="true"
+                            android:textCursorDrawable="@null" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <Button
+                        android:id="@+id/email_check_btn"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:padding="3dp"
+                        android:text="인증\n발송"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/email_text_input_layout"
+                        app:layout_constraintTop_toTopOf="@id/email_text_input_layout" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <TextView
-                    android:id="@+id/id_rule_msg"
+                    android:id="@+id/email_rule_msg"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="(2~16자, 영문, 숫자)"
-                    app:layout_constraintStart_toStartOf="@id/id_text_input_layout"
-                    app:layout_constraintTop_toBottomOf="@id/id_text_input_layout" />
+                    android:text="이메일 인증이 필요합니다."
+                    app:layout_constraintEnd_toEndOf="@id/email_container"
+                    app:layout_constraintStart_toStartOf="@id/email_container"
+                    app:layout_constraintTop_toBottomOf="@id/email_container" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/nick_name_text_input_layout"
@@ -101,12 +124,13 @@
                     app:boxBackgroundColor="@android:color/transparent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/id_rule_msg">
+                    app:layout_constraintTop_toBottomOf="@id/email_rule_msg">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/nick_name_text_input_edit_txt"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
                         android:hint="닉네임 입력"
                         android:singleLine="true"
                         android:textCursorDrawable="@null" />
@@ -137,6 +161,7 @@
                         android:id="@+id/pw_text_input_edit_txt"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
                         android:hint="비밀번호 입력"
                         android:inputType="textPassword"
                         android:singleLine="true"
@@ -168,6 +193,7 @@
                         android:id="@+id/pw_text_check_input_edit_txt"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
                         android:hint="비밀번호 확인"
                         android:inputType="textPassword"
                         android:singleLine="true"

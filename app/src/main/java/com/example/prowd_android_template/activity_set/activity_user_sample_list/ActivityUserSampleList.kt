@@ -15,7 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
-import com.example.prowd_android_template.activity_set.activity_user_join_sample.ActivityUserJoinSample
+import com.example.prowd_android_template.activity_set.activity_user_join_sample.ActivityEmailUserJoinSample
 import com.example.prowd_android_template.activity_set.activity_user_login_sample.ActivityUserLoginSample
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -427,11 +427,11 @@ class ActivityUserSampleList : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        bindingMbr.goToUserJoinSampleBtn.setOnClickListener {
+        bindingMbr.goToEmailUserJoinSampleBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
-                    ActivityUserJoinSample::class.java
+                    ActivityEmailUserJoinSample::class.java
                 )
             startActivity(intent)
         }
@@ -461,13 +461,13 @@ class ActivityUserSampleList : AppCompatActivity() {
 
             // (비회원 / 회원 상태에 따른 버튼 여부 처리)
             if (currentUserUidMbr == null) { // 비회원 상태
-                bindingMbr.goToUserJoinSampleBtn.visibility = View.VISIBLE
+                bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.VISIBLE
                 bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
                 bindingMbr.userLogoutBtn.visibility = View.GONE
                 bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
                 bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
             } else { // 회원 상태
-                bindingMbr.goToUserJoinSampleBtn.visibility = View.GONE
+                bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.GONE
                 bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
                 bindingMbr.userLogoutBtn.visibility = View.VISIBLE
                 bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
@@ -488,13 +488,13 @@ class ActivityUserSampleList : AppCompatActivity() {
 
                 // (비회원 / 회원 상태에 따른 버튼 여부 처리)
                 if (currentUserUidMbr == null) { // 비회원 상태
-                    bindingMbr.goToUserJoinSampleBtn.visibility = View.VISIBLE
+                    bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.VISIBLE
                     bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
                     bindingMbr.userLogoutBtn.visibility = View.GONE
                     bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
                     bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
                 } else { // 회원 상태
-                    bindingMbr.goToUserJoinSampleBtn.visibility = View.GONE
+                    bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.GONE
                     bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
                     bindingMbr.userLogoutBtn.visibility = View.VISIBLE
                     bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE

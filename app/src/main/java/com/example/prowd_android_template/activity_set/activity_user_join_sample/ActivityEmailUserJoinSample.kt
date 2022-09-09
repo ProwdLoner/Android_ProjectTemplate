@@ -22,7 +22,7 @@ import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityUserJoinSampleBinding
+import com.example.prowd_android_template.databinding.ActivityEmailUserJoinSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
@@ -31,7 +31,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import java.util.regex.Pattern
 
-class ActivityUserJoinSample : AppCompatActivity() {
+class ActivityEmailUserJoinSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
@@ -42,7 +42,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityUserJoinSampleBinding
+    lateinit var bindingMbr: ActivityEmailUserJoinSampleBinding
 
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
@@ -394,7 +394,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
     // : 클래스에서 사용할 객체를 초기 생성
     private fun onCreateInitObject() {
         // 뷰 객체
-        bindingMbr = ActivityUserJoinSampleBinding.inflate(layoutInflater)
+        bindingMbr = ActivityEmailUserJoinSampleBinding.inflate(layoutInflater)
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
@@ -444,73 +444,73 @@ class ActivityUserJoinSample : AppCompatActivity() {
         bindingMbr.joinBtn.isFocusable = false
 
         // (적합성 검증)
-        var idClear = false
+        var emailClear = false
         var nickNameClear = false
         var pwClear = false
         var pwCheckClear = false
-        bindingMbr.idTextInputEditTxt.addTextChangedListener(object : TextWatcher {
+        bindingMbr.emailTextInputEditTxt.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.idTextInputLayout.error = null
-                bindingMbr.idTextInputLayout.isErrorEnabled = false
+                bindingMbr.emailTextInputLayout.error = null
+                bindingMbr.emailTextInputLayout.isErrorEnabled = false
             }
 
             override fun afterTextChanged(s: Editable) {
-                val id = s.toString()
+                val email = s.toString()
 
                 when {
                     // 문자 입력 전
-                    "" == id -> {
-                        bindingMbr.idTextInputLayout.error = null
-                        bindingMbr.idTextInputLayout.isErrorEnabled = false
-                        idClear = false
+                    "" == email -> {
+                        bindingMbr.emailTextInputLayout.error = null
+                        bindingMbr.emailTextInputLayout.isErrorEnabled = false
+                        emailClear = false
 
                         bindingMbr.joinBtn.isEnabled = false
                         bindingMbr.joinBtn.isFocusable = false
                     }
 
                     // 2자 미만
-                    id.length < 2 -> {
-                        bindingMbr.idTextInputLayout.error = "2자 이상 입력해주세요."
-                        idClear = false
+                    email.length < 2 -> {
+                        bindingMbr.emailTextInputLayout.error = "2자 이상 입력해주세요."
+                        emailClear = false
 
                         bindingMbr.joinBtn.isEnabled = false
                         bindingMbr.joinBtn.isFocusable = false
                     }
 
                     // 16자 초과
-                    id.length > 16 -> {
-                        bindingMbr.idTextInputLayout.error = "16자 이하로 입력해주세요."
-                        idClear = false
+                    email.length > 16 -> {
+                        bindingMbr.emailTextInputLayout.error = "16자 이하로 입력해주세요."
+                        emailClear = false
 
                         bindingMbr.joinBtn.isEnabled = false
                         bindingMbr.joinBtn.isFocusable = false
                     }
 
                     // 공백 존재
-                    id.contains(" ") -> {
-                        bindingMbr.idTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
-                        idClear = false
+                    email.contains(" ") -> {
+                        bindingMbr.emailTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
+                        emailClear = false
 
                         bindingMbr.joinBtn.isEnabled = false
                         bindingMbr.joinBtn.isFocusable = false
                     }
 
                     // 영문, 숫자 외의 특수문자 존재
-                    !Pattern.compile("^[0-9a-zA-Z]+$").matcher(id).matches() -> {
-                        bindingMbr.idTextInputLayout.error = "유효하지 않은 아이디입니다."
-                        idClear = false
+                    !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                        bindingMbr.emailTextInputLayout.error = "이메일을 입력해주세요."
+                        emailClear = false
 
                         bindingMbr.joinBtn.isEnabled = false
                         bindingMbr.joinBtn.isFocusable = false
                     }
 
                     else -> {
-                        bindingMbr.idTextInputLayout.error = null
-                        bindingMbr.idTextInputLayout.isErrorEnabled = false
-                        idClear = true
+                        bindingMbr.emailTextInputLayout.error = null
+                        bindingMbr.emailTextInputLayout.isErrorEnabled = false
+                        emailClear = true
 
-                        if (idClear && nickNameClear && pwClear && pwCheckClear) {
+                        if (emailClear && nickNameClear && pwClear && pwCheckClear) {
                             bindingMbr.joinBtn.isEnabled = true
                             bindingMbr.joinBtn.isFocusable = true
                         }
@@ -572,7 +572,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
                         bindingMbr.nickNameTextInputLayout.isErrorEnabled = false
                         nickNameClear = true
 
-                        if (idClear && nickNameClear && pwClear && pwCheckClear) {
+                        if (emailClear && nickNameClear && pwClear && pwCheckClear) {
                             bindingMbr.joinBtn.isEnabled = true
                             bindingMbr.joinBtn.isFocusable = true
                         }
@@ -648,7 +648,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
                         bindingMbr.pwTextInputLayout.isErrorEnabled = false
                         pwClear = true
 
-                        if (idClear && nickNameClear && pwClear && pwCheckClear) {
+                        if (emailClear && nickNameClear && pwClear && pwCheckClear) {
                             bindingMbr.joinBtn.isEnabled = true
                             bindingMbr.joinBtn.isFocusable = true
                         }
@@ -691,7 +691,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
                         bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
                         pwCheckClear = true
 
-                        if (idClear && nickNameClear && pwClear && pwCheckClear) {
+                        if (emailClear && nickNameClear && pwClear && pwCheckClear) {
                             bindingMbr.joinBtn.isEnabled = true
                             bindingMbr.joinBtn.isFocusable = true
                         }
@@ -702,7 +702,7 @@ class ActivityUserJoinSample : AppCompatActivity() {
 
         // 적합성 검증 완료를 가정
         bindingMbr.joinBtn.setOnClickListener {
-            val id: String = bindingMbr.idTextInputEditTxt.text.toString()
+            val id: String = bindingMbr.emailTextInputEditTxt.text.toString()
             val nickName: String = bindingMbr.nickNameTextInputEditTxt.text.toString()
             val pw: String = bindingMbr.pwTextInputEditTxt.text.toString()
 
@@ -735,9 +735,9 @@ class ActivityUserJoinSample : AppCompatActivity() {
                             )
                         }
                         2 -> { // 아이디 중복
-                            bindingMbr.idTextInputLayout.error = "현재 사용중인 아이디입니다."
-                            bindingMbr.idTextInputEditTxt.requestFocus()
-                            idClear = false
+                            bindingMbr.emailTextInputLayout.error = "현재 사용중인 아이디입니다."
+                            bindingMbr.emailTextInputEditTxt.requestFocus()
+                            emailClear = false
 
                             bindingMbr.joinBtn.isEnabled = false
                             bindingMbr.joinBtn.isFocusable = false
