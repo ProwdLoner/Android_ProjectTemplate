@@ -8,6 +8,7 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -448,6 +449,20 @@ class ActivityUserSampleList : AppCompatActivity() {
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             refreshWholeScreenData(onComplete = {})
 
+            // (비회원 / 회원 상태에 따른 버튼 여부 처리)
+            if (currentUserUidMbr == null) { // 비회원 상태
+                bindingMbr.goToUserJoinSampleBtn.visibility = View.VISIBLE
+                bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
+                bindingMbr.goToUserLogoutSampleBtn.visibility = View.GONE
+                bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
+                bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
+            } else { // 회원 상태
+                bindingMbr.goToUserJoinSampleBtn.visibility = View.GONE
+                bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
+                bindingMbr.goToUserLogoutSampleBtn.visibility = View.VISIBLE
+                bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
+                bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
+            }
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -460,6 +475,21 @@ class ActivityUserSampleList : AppCompatActivity() {
 
                 // (데이터 수집)
                 refreshWholeScreenData(onComplete = {})
+
+                // (비회원 / 회원 상태에 따른 버튼 여부 처리)
+                if (currentUserUidMbr == null) { // 비회원 상태
+                    bindingMbr.goToUserJoinSampleBtn.visibility = View.VISIBLE
+                    bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
+                    bindingMbr.goToUserLogoutSampleBtn.visibility = View.GONE
+                    bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
+                    bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
+                } else { // 회원 상태
+                    bindingMbr.goToUserJoinSampleBtn.visibility = View.GONE
+                    bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
+                    bindingMbr.goToUserLogoutSampleBtn.visibility = View.VISIBLE
+                    bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
+                    bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
+                }
             }
 
         }
