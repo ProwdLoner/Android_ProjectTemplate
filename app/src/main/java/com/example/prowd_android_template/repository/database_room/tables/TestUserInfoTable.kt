@@ -7,8 +7,8 @@ class TestUserInfoTable {
     // (테이블 구조)
     @Entity(tableName = "test_user")
     data class TableVo(
-        @ColumnInfo(name = "id")
-        val id: String,
+        @ColumnInfo(name = "email")
+        val email: String,
 
         @ColumnInfo(name = "nick_name")
         val nickName: String,
@@ -30,9 +30,9 @@ class TestUserInfoTable {
                     "FROM " +
                     "test_user " +
                     "where " +
-                    "id = :id"
+                    "email = :email"
         )
-        fun getIdCount(id: String): Int
+        fun getEmailCount(email: String): Int
 
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         fun insert(vararg inputTable: TableVo)

@@ -4,12 +4,16 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.MotionEvent
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -383,6 +387,24 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
         }
     }
 
+    // 키보드 바깥을 누르면 키보드를 숨김
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        val focusView: View? = currentFocus
+        if (focusView != null) {
+            val rect = Rect()
+            focusView.getGlobalVisibleRect(rect)
+            val x = ev.x.toInt()
+            val y = ev.y.toInt()
+            if (!rect.contains(x, y)) {
+                val imm: InputMethodManager =
+                    getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(focusView.windowToken, 0)
+                focusView.clearFocus()
+            }
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
@@ -443,6 +465,12 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
         bindingMbr.joinBtn.isEnabled = false
         bindingMbr.joinBtn.isFocusable = false
 
+        var emailVerificationRequestUid: Long? = null
+        bindingMbr.emailCheckBtn.isEnabled = false
+        bindingMbr.emailCheckBtn.isFocusable = false
+        bindingMbr.emailCheckBtn.text = "인증\n발송"
+        bindingMbr.emailRuleMsg.text = "이메일 인증이 필요합니다."
+
         // (적합성 검증)
         var emailClear = false
         var nickNameClear = false
@@ -453,6 +481,17 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                 bindingMbr.emailTextInputLayout.error = null
                 bindingMbr.emailTextInputLayout.isErrorEnabled = false
+
+                bindingMbr.emailCheckBtn.isEnabled = false
+                bindingMbr.emailCheckBtn.isFocusable = false
+                bindingMbr.emailCheckBtn.text = "인증\n발송"
+                bindingMbr.emailRuleMsg.text = "이메일 인증이 필요합니다."
+                emailVerificationRequestUid = null
+
+                emailClear = false
+
+                bindingMbr.joinBtn.isEnabled = false
+                bindingMbr.joinBtn.isFocusable = false
             }
 
             override fun afterTextChanged(s: Editable) {
@@ -463,24 +502,6 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                     "" == email -> {
                         bindingMbr.emailTextInputLayout.error = null
                         bindingMbr.emailTextInputLayout.isErrorEnabled = false
-                        emailClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 2자 미만
-                    email.length < 2 -> {
-                        bindingMbr.emailTextInputLayout.error = "2자 이상 입력해주세요."
-                        emailClear = false
-
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-
-                    // 16자 초과
-                    email.length > 16 -> {
-                        bindingMbr.emailTextInputLayout.error = "16자 이하로 입력해주세요."
                         emailClear = false
 
                         bindingMbr.joinBtn.isEnabled = false
@@ -498,7 +519,7 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
 
                     // 영문, 숫자 외의 특수문자 존재
                     !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-                        bindingMbr.emailTextInputLayout.error = "이메일을 입력해주세요."
+                        bindingMbr.emailTextInputLayout.error = "이메일 형태가 아닙니다."
                         emailClear = false
 
                         bindingMbr.joinBtn.isEnabled = false
@@ -508,16 +529,131 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                     else -> {
                         bindingMbr.emailTextInputLayout.error = null
                         bindingMbr.emailTextInputLayout.isErrorEnabled = false
-                        emailClear = true
 
-                        if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.joinBtn.isEnabled = true
-                            bindingMbr.joinBtn.isFocusable = true
-                        }
+                        bindingMbr.emailCheckBtn.isEnabled = true
+                        bindingMbr.emailCheckBtn.isFocusable = true
+                        bindingMbr.emailRuleMsg.text = "이메일 인증이 필요합니다."
                     }
                 }
             }
         })
+
+        // 이메일 본인 확인
+        // : 본인 이메일인지 확인하기 위해 버튼을 누르면 확인 이메일이 발송됨
+        // 이메일 검증 알고리즘 정리
+        // 1. 유저가 인증요청 버튼을 누르면 서버에 인증 요청을 보내고, 요청이 완료되었는지를 확인하기 위한 요청 번호를 받음.
+        //      동시에 인증 요청 버튼은 인증 확인 버튼이 됨
+        // 2. 서버측에선 발송 요청이 오면 먼저 해당 이메일 가입여부를 판단
+        //     가입된 이메일이 없다면 랜덤번호를 생성하여 인증 요청 테이블을 작성
+        //     인증 요청 테이블은 "요청 번호", "이메일", "비밀번호", "검증여부", "요청일시", "활성 비활성 여부"를 가짐
+        //     요청이 오면 먼저 해당 이메일로 온 요청이 있는지를 확인하고 있다면 해당 요청을 비활성화.
+        //     고유값 요청번호를 생성하고, 받아온 이메일, 생성한 비밀번호, 현재시간을 넣고 검증여부는 검증안됨으로 추가
+        //     정보 저장이 끝나면 해당 이메일에 요청번호, 요청 비밀번호를 파라미터로 하는 검증용 링크를 가진 버튼을 생성하여 보냄
+        //     발송 요청을 보낸 유저에겐 생성된 요청번호를 전달함.
+        // 3. 사용자가 이메일을 확인하고 이메일에서 해당 링크를 송신하는 버튼을 누르면 서버에 검증 완료 요청을 송신
+        // 4. 서버는 검증 완료 요청을 받으면, DB를 탐색하여 해당 요청번호와 비밀번호에 맞는 정보를 탐색하고, 요청일시로 만료시간
+        //     검증을 한 후 정보가 존재하며 만료되지 않았을 시엔 테이블의 검증여부를 검증상태로 변경
+        //     만료되었다면 만료되었다는 화면을 반환. 혹시나 비밀번호가 맞지 않는 해킹시도가 있으면 이를 처리
+        // 5. 유저는 이메일 인증을 한 후 앱으로 돌아와 요청확인 버튼을 눌러 서버에 요청번호를 전달하여 확인 요청을 함.
+        // 6. 서버는 요청확인 요청이 오면 인증 요청 테이블을 검색해서 해당 요청 번호가 만료되지 않았고, 검증 완료되었는지를 확인 후 결과 반환
+        bindingMbr.emailCheckBtn.setOnClickListener {
+            val email: String = bindingMbr.emailTextInputEditTxt.text.toString()
+
+            if (bindingMbr.emailCheckBtn.text == "인증\n발송") { // 인증 발송 버튼을 눌렀을 때
+                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                    false,
+                    "검증 요청을 하는 중입니다.",
+                    onCanceled = {}
+                )
+                val postEmailVerificationRequestCallback =
+                    { statusCode: Int, emailVerificationRequestUid1: Long? ->
+                        runOnUiThread {
+                            shownDialogInfoVOMbr = null
+
+                            // todo
+                            when (statusCode) {
+                                1 -> { // 검증 요청 완료
+                                    bindingMbr.emailCheckBtn.text = "인증\n확인"
+                                    bindingMbr.emailRuleMsg.text =
+                                        "인증용 이메일이 발송되었습니다.\n발송된 이메일을 확인해주세요."
+                                    emailVerificationRequestUid = emailVerificationRequestUid1
+                                }
+                                2 -> { // 아이디 중복
+                                    bindingMbr.emailTextInputLayout.error = "현재 사용중인 아이디입니다."
+                                    bindingMbr.emailTextInputEditTxt.requestFocus()
+                                    emailClear = false
+
+                                    bindingMbr.joinBtn.isEnabled = false
+                                    bindingMbr.joinBtn.isFocusable = false
+
+                                    bindingMbr.emailCheckBtn.isEnabled = false
+                                    bindingMbr.emailCheckBtn.isFocusable = false
+                                    bindingMbr.emailCheckBtn.text = "인증\n발송"
+                                    bindingMbr.emailRuleMsg.text = "이메일 인증이 필요합니다."
+                                    emailVerificationRequestUid = null
+                                }
+                                -1 -> { // 네트워크 에러
+                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "네트워크 불안정",
+                                        "현재 네트워크 연결이 불안정합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                        },
+                                        onCanceled = {
+                                            shownDialogInfoVOMbr = null
+                                        }
+                                    )
+                                }
+                                else -> { // 그외 서버 에러
+                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "기술적 문제",
+                                        "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                        },
+                                        onCanceled = {
+                                            shownDialogInfoVOMbr = null
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                // todo 이메일 검증 요청
+                executorServiceMbr.execute {
+                    // 아래는 원래 네트워크 서버에서 처리하는 로직
+                    // 이메일 중복검사
+                    val emailCount =
+                        repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                            .getEmailCount(email)
+
+                    if (emailCount != 0) { // 아이디 중복
+                        postEmailVerificationRequestCallback(2, null)
+                    } else {
+                        // 12 라는 반환값은 검증 리퀘스트 고유값을 가정. 실제론 서버에서 생성해서 반환해줌
+                        postEmailVerificationRequestCallback(1, 12)
+                    }
+                }
+            } else { // 인증 확인 버튼을 눌렀을 때
+                // 서버에 인증 확인을 보내고 확인이 되면 아래 로직 실행
+
+                bindingMbr.emailCheckBtn.isEnabled = false
+                bindingMbr.emailCheckBtn.isFocusable = false
+                bindingMbr.emailRuleMsg.text = "이메일 인증이 완료되었습니다."
+
+                emailClear = true
+
+                if (emailClear && nickNameClear && pwClear && pwCheckClear) {
+                    bindingMbr.joinBtn.isEnabled = true
+                    bindingMbr.joinBtn.isFocusable = true
+                }
+            }
+        }
 
         bindingMbr.nickNameTextInputEditTxt.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -702,7 +838,7 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
 
         // 적합성 검증 완료를 가정
         bindingMbr.joinBtn.setOnClickListener {
-            val id: String = bindingMbr.emailTextInputEditTxt.text.toString()
+            val email: String = bindingMbr.emailTextInputEditTxt.text.toString()
             val nickName: String = bindingMbr.nickNameTextInputEditTxt.text.toString()
             val pw: String = bindingMbr.pwTextInputEditTxt.text.toString()
 
@@ -777,16 +913,17 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
             // 회원가입 요청
             executorServiceMbr.execute {
                 // 아래는 원래 네트워크 서버에서 처리하는 로직
-                // 아이디 중복겁사
-                val idCount = repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                    .getIdCount(id)
+                // 이메일 중복검사
+                val emailCount =
+                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                        .getEmailCount(email)
 
-                if (idCount != 0) { // 아이디 중복
+                if (emailCount != 0) { // 아이디 중복
                     signInCallback(2)
                 } else {
                     repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao().insert(
                         TestUserInfoTable.TableVo(
-                            id, nickName, pw
+                            email, nickName, pw
                         )
                     )
                     signInCallback(1)

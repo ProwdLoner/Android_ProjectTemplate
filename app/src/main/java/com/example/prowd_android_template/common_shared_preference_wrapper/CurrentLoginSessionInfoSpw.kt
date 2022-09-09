@@ -34,7 +34,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
 
     // (loginType)
     // 코드
-    // 0 : 비회원, 1 : 자체 회원, 2 : google, 3 : kakao, 4 : naver
+    // 0 : 비회원, 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
     var loginType: Int
         get() {
             return spMbr.getInt(
@@ -53,7 +53,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
         }
 
     // (loginId)
-    // 자체 회원이라면 서버 아이디, SNS 로그인이라면 각 식별 아이디, 비회원이라면 null
+    // 이메일 회원이라면 이메일, SNS 로그인이라면 각 식별 아이디, 비회원이라면 null
     var loginId: String?
         get(): String? {
             return spMbr.getString(
@@ -72,7 +72,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
         }
 
     // (loginPw)
-    // 자체 회원 로그인 처럼 필요한 곳이 아니라면 null
+    // 이메일 회원 로그인 처럼 필요한 곳이 아니라면 null
     var loginPw: String?
         get(): String? {
             return spMbr.getString(
