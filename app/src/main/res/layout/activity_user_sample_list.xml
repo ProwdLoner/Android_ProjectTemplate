@@ -64,7 +64,7 @@
                 android:layout_height="wrap_content">
 
                 <Button
-                    android:id="@+id/go_to_join_sample_btn"
+                    android:id="@+id/go_to_user_join_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
@@ -74,7 +74,7 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <Button
-                    android:id="@+id/go_to_login_sample_btn"
+                    android:id="@+id/go_to_user_login_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
@@ -82,10 +82,21 @@
                     android:text="로그인 샘플"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_join_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/go_to_user_join_sample_btn" />
 
                 <Button
-                    android:id="@+id/go_to_find_password_sample_btn"
+                    android:id="@+id/go_to_user_logout_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="로그아웃 샘플"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_user_login_sample_btn" />
+
+                <Button
+                    android:id="@+id/go_to_find_user_password_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
@@ -93,7 +104,7 @@
                     android:text="비밀번호 찾기 샘플"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_login_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/go_to_user_logout_sample_btn" />
 
                 <Button
                     android:id="@+id/go_to_user_info_sample_btn"
@@ -104,7 +115,18 @@
                     android:text="회원 정보 샘플"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_find_password_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/go_to_find_user_password_sample_btn" />
+
+                <Button
+                    android:id="@+id/go_to_user_sign_out_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="회원 탈퇴 샘플"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_user_info_sample_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>

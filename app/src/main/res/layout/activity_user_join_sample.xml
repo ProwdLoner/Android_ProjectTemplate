@@ -77,11 +77,30 @@
                         android:id="@+id/email_id_text_input_edit_txt"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="이메일 입력"
+                        android:hint="아이디 입력"
                         android:inputType="textEmailAddress"
                         android:singleLine="true"
                         android:textCursorDrawable="@null" />
 
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/nick_name_text_input_layout"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:boxBackgroundColor="@android:color/transparent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/email_id_text_input_layout">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/nick_name_text_input_edit_txt"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="닉네임 입력"
+                        android:singleLine="true"
+                        android:textCursorDrawable="@null" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -92,7 +111,7 @@
                     app:boxBackgroundColor="@android:color/transparent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/email_id_text_input_layout"
+                    app:layout_constraintTop_toBottomOf="@id/nick_name_text_input_layout"
                     app:passwordToggleEnabled="true">
 
                     <com.google.android.material.textfield.TextInputEditText

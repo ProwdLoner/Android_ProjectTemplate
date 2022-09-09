@@ -34,7 +34,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
 
     // (loginType)
     // 코드
-    // 0 : 비회원, 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
+    // 0 : 비회원, 1 : 자체 회원, 2 : google, 3 : kakao, 4 : naver
     var loginType: Int
         get() {
             return spMbr.getInt(
@@ -53,7 +53,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
         }
 
     // (loginId)
-    // 자체서버라면 서버 아이디, SNS 로그인이라면 각 식별 아이디
+    // 자체 회원이라면 서버 아이디, SNS 로그인이라면 각 식별 아이디, 비회원이라면 null
     var loginId: String?
         get(): String? {
             return spMbr.getString(
@@ -72,7 +72,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
         }
 
     // (loginPw)
-    // 서버 로그인 처럼 필요한 곳이 아니라면 null
+    // 자체 회원 로그인 처럼 필요한 곳이 아니라면 null
     var loginPw: String?
         get(): String? {
             return spMbr.getString(
@@ -91,7 +91,8 @@ class CurrentLoginSessionInfoSpw(application: Application) {
         }
 
     // (userUid)
-    // : 서버에서 발급한 유저 고유 식별자. 비회원 상태라면 null
+    // : 서버에서 발급한 유저 고유 식별자.(개별 식별이 가능한 고유 값을 string 으로 바꾸어 사용)
+    //     비회원 상태라면 null
     //     화면 갱신 여부 판단용으로 사용
     var userUid: String?
         get() {

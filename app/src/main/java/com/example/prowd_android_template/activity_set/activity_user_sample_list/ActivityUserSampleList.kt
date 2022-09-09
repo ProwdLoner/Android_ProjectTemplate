@@ -426,7 +426,7 @@ class ActivityUserSampleList : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        bindingMbr.goToJoinSampleBtn.setOnClickListener {
+        bindingMbr.goToUserJoinSampleBtn.setOnClickListener {
             val intent =
                 Intent(
                     this,
