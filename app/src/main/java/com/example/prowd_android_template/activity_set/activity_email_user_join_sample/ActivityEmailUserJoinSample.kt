@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_user_join_sample
+package com.example.prowd_android_template.activity_set.activity_email_user_join_sample
 
 import android.app.Dialog
 import android.content.Intent
@@ -52,7 +52,7 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
     lateinit var repositorySetMbr: RepositorySet
 
     // (어뎁터 객체)
-    lateinit var adapterSetMbr: ActivityUserJoinSampleAdapterSet
+    lateinit var adapterSetMbr: ActivityEmailUserJoinSampleAdapterSet
 
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
@@ -424,7 +424,7 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
         repositorySetMbr = RepositorySet.getInstance(application)
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityUserJoinSampleAdapterSet()
+        adapterSetMbr = ActivityEmailUserJoinSampleAdapterSet()
 
         // SPW 객체 생성
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
