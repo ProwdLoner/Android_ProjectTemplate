@@ -5,7 +5,7 @@ import androidx.room.*
 class TestInfoTable {
     // (테이블 구조)
     @Entity(tableName = "test_info")
-    data class TestInfoTableVO(
+    data class TableVo(
         @ColumnInfo(name = "name")
         val name: String,
 
@@ -19,7 +19,7 @@ class TestInfoTable {
 
     // (테이블 Dao)
     @Dao
-    interface TestInfoDao {
+    interface TableDao {
         @Query(
             "SELECT " +
                     "* " +
@@ -28,7 +28,7 @@ class TestInfoTable {
                     "where " +
                     "uid = :uid"
         )
-        fun selectTestInfoColAll(uid: Int): TestInfoTableVO
+        fun selectColAll(uid: Int): TableVo
 
         @Query(
             "SELECT " +
@@ -36,16 +36,16 @@ class TestInfoTable {
                     "FROM " +
                     "test_info"
         )
-        fun selectTestInfoColAll2(): List<TestInfoTableVO>
+        fun selectColAll2(): List<TableVo>
 
         @Insert(onConflict = OnConflictStrategy.REPLACE)
-        fun insertDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
+        fun insert(vararg inputTable: TableVo)
 
         @Update
-        fun updateDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
+        fun update(vararg inputTable: TableVo)
 
         @Delete
-        fun deleteDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
+        fun delete(vararg inputTable: TableVo)
     }
 
 }

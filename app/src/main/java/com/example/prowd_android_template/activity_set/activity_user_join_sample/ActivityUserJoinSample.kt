@@ -23,6 +23,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityUserJoinSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -691,6 +692,9 @@ class ActivityUserJoinSample : AppCompatActivity() {
 
         // 적합성 검증 완료를 가정
         bindingMbr.joinBtn.setOnClickListener {
+            val id: String = bindingMbr.idTextInputEditTxt.text.toString()
+            val nickName: String = bindingMbr.nickNameTextInputEditTxt.text.toString()
+            val pw: String = bindingMbr.pwTextInputEditTxt.text.toString()
 
             shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
                 false,
@@ -700,65 +704,84 @@ class ActivityUserJoinSample : AppCompatActivity() {
 
             // 회원가입 콜백
             val signInCallback = { statusCode: Int ->
-                shownDialogInfoVOMbr = null
+                runOnUiThread {
+                    shownDialogInfoVOMbr = null
 
-                when (statusCode) {
-                    1 -> { // 회원 가입 완료
-                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                            true,
-                            "회원가입 완료",
-                            "회원가입을 완료했습니다.",
-                            "닫기",
-                            onCheckBtnClicked = {
-                                shownDialogInfoVOMbr = null
-                                finish()
-                            },
-                            onCanceled = {
-                                shownDialogInfoVOMbr = null
-                                finish()
-                            }
-                        )
-                    }
-                    2 -> { // 아이디 중복
-                        bindingMbr.idTextInputLayout.error = "현재 사용중인 아이디입니다."
-                        bindingMbr.idTextInputEditTxt.requestFocus()
-                        idClear = false
+                    when (statusCode) {
+                        1 -> { // 회원 가입 완료
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "회원가입 완료",
+                                "회원가입을 완료했습니다.",
+                                "닫기",
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                    finish()
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                    finish()
+                                }
+                            )
+                        }
+                        2 -> { // 아이디 중복
+                            bindingMbr.idTextInputLayout.error = "현재 사용중인 아이디입니다."
+                            bindingMbr.idTextInputEditTxt.requestFocus()
+                            idClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
-                    }
-                    -1 -> { // 네트워크 에러
-                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                            true,
-                            "네트워크 불안정",
-                            "현재 네트워크 연결이 불안정합니다.",
-                            null,
-                            onCheckBtnClicked = {
-                                shownDialogInfoVOMbr = null
-                            },
-                            onCanceled = {
-                                shownDialogInfoVOMbr = null
-                            }
-                        )
-                    }
-                    else -> { // 그외 서버 에러
-                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                            true,
-                            "기술적 문제",
-                            "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                            null,
-                            onCheckBtnClicked = {
-                                shownDialogInfoVOMbr = null
-                            },
-                            onCanceled = {
-                                shownDialogInfoVOMbr = null
-                            }
-                        )
+                            bindingMbr.joinBtn.isEnabled = false
+                            bindingMbr.joinBtn.isFocusable = false
+                        }
+                        -1 -> { // 네트워크 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "네트워크 불안정",
+                                "현재 네트워크 연결이 불안정합니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
+                        else -> { // 그외 서버 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "기술적 문제",
+                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
                     }
                 }
             }
 
-            // todo 회원가입 요청
+            // 회원가입 요청
+            executorServiceMbr.execute {
+                // 아래는 원래 네트워크 서버에서 처리하는 로직
+                // 아이디 중복겁사
+                val idCount = repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                    .getIdCount(id)
+
+                if (idCount != 0) { // 아이디 중복
+                    signInCallback(2)
+                } else {
+                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao().insert(
+                        TestUserInfoTable.TableVo(
+                            id, nickName, pw
+                        )
+                    )
+                    signInCallback(1)
+                }
+            }
         }
     }
 
