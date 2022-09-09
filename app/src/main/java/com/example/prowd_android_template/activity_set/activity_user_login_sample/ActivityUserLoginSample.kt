@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
+import com.example.prowd_android_template.activity_set.activity_email_user_join_sample.ActivityEmailUserJoinSample
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -26,6 +27,11 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// 유저 로그인 샘플
+// : SNS OAuth 로그인은 서비스시 따로 구현이 필요
+//     구글 OAuth 의 경우 Firebase 다른 서비스도 같이 구현하는 것을 추천
+//     SNS 로그인의 경우 요청을 보내서 회원가입이 되어있다면 로그인,
+//     회원가입되지 않았단 응답이 오면 곧바로 회원가입 절차에 들어가기.
 class ActivityUserLoginSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -424,6 +430,23 @@ class ActivityUserLoginSample : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
+        bindingMbr.goToJoinBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityEmailUserJoinSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToFindPwBtn.setOnClickListener {
+            // todo
+        }
+
+        // 로그인 버튼 비활성화
+        //     적합성 검증 완료시 활성
+        bindingMbr.loginBtn.isEnabled = false
+        bindingMbr.loginBtn.isFocusable = false
 
     }
 
@@ -440,6 +463,11 @@ class ActivityUserLoginSample : AppCompatActivity() {
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             refreshWholeScreenData(onComplete = {})
 
+            // todo : 로그인 구현 후 성능확인
+            // 로그인 된 상태라면 진입 금지
+            if (currentUserUidMbr != null) {
+                finish()
+            }
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -452,6 +480,11 @@ class ActivityUserLoginSample : AppCompatActivity() {
 
                 // (데이터 수집)
                 refreshWholeScreenData(onComplete = {})
+
+                // 로그인 된 상태라면 진입 금지
+                if (currentUserUidMbr != null) {
+                    finish()
+                }
             }
 
         }
