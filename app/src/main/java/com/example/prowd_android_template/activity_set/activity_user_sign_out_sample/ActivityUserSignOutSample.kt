@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_user_sample_list
+package com.example.prowd_android_template.activity_set.activity_user_sign_out_sample
 
 import android.app.Dialog
 import android.content.Intent
@@ -8,29 +8,25 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
-import com.example.prowd_android_template.activity_set.activity_user_sign_out_sample.ActivityUserSignOutSample
-import com.example.prowd_android_template.activity_set.activity_email_user_join_sample.ActivityEmailUserJoinSample
-import com.example.prowd_android_template.activity_set.activity_user_login_sample.ActivityUserLoginSample
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityUserSampleListBinding
+import com.example.prowd_android_template.databinding.ActivityUserSignOutSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-class ActivityUserSampleList : AppCompatActivity() {
+class ActivityUserSignOutSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
@@ -41,13 +37,13 @@ class ActivityUserSampleList : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityUserSampleListBinding
+    lateinit var bindingMbr: ActivityUserSignOutSampleBinding
 
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
 
     // (어뎁터 객체)
-    lateinit var adapterSetMbr: ActivityUserSampleListAdapterSet
+    lateinit var adapterSetMbr: ActivityUserSignOutSampleAdapterSet
 
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
@@ -393,7 +389,7 @@ class ActivityUserSampleList : AppCompatActivity() {
     // : 클래스에서 사용할 객체를 초기 생성
     private fun onCreateInitObject() {
         // 뷰 객체
-        bindingMbr = ActivityUserSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivityUserSignOutSampleBinding.inflate(layoutInflater)
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
@@ -401,7 +397,7 @@ class ActivityUserSampleList : AppCompatActivity() {
         repositorySetMbr = RepositorySet.getInstance(application)
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityUserSampleListAdapterSet()
+        adapterSetMbr = ActivityUserSignOutSampleAdapterSet()
 
         // SPW 객체 생성
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
@@ -428,37 +424,37 @@ class ActivityUserSampleList : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        bindingMbr.goToEmailUserJoinSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityEmailUserJoinSample::class.java
-                )
-            startActivity(intent)
+        bindingMbr.signOutBtn.isEnabled = false
+        bindingMbr.signOutBtn.isFocusable = false
+
+        bindingMbr.acceptCheckBoxContainer.setOnClickListener {
+            bindingMbr.signOutConfirmCheckBox.isChecked =
+                !bindingMbr.signOutConfirmCheckBox.isChecked
         }
 
-        bindingMbr.goToUserLoginSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityUserLoginSample::class.java
-                )
-            startActivity(intent)
+        bindingMbr.signOutConfirmCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            bindingMbr.signOutBtn.isEnabled = isChecked
+            bindingMbr.signOutBtn.isFocusable = isChecked
         }
 
-        bindingMbr.userLogoutBtn.setOnClickListener {
-            currentLoginSessionInfoSpwMbr.setLogout()
-            setUserBtn()
-            setUserInfo()
-        }
+        bindingMbr.signOutBtn.setOnClickListener {
+            shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
+                true,
+                "회원 탈퇴",
+                "회원 탈퇴 동의 버튼을 누르시면 회원 정보가 삭제됩니다.",
+                "동의",
+                "취소",
+                onPosBtnClicked = {
+                    // todo 회원 탈퇴 후 로그아웃 처리 및 종료
 
-        bindingMbr.goToUserSignOutSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityUserSignOutSample::class.java
-                )
-            startActivity(intent)
+                },
+                onNegBtnClicked = {
+                    shownDialogInfoVOMbr = null
+                },
+                onCanceled = {
+                    shownDialogInfoVOMbr = null
+                }
+            )
         }
     }
 
@@ -475,9 +471,6 @@ class ActivityUserSampleList : AppCompatActivity() {
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             refreshWholeScreenData(onComplete = {})
 
-            // (비회원 / 회원 상태에 따른 버튼 여부 처리)
-            setUserBtn()
-            setUserInfo()
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -490,61 +483,11 @@ class ActivityUserSampleList : AppCompatActivity() {
 
                 // (데이터 수집)
                 refreshWholeScreenData(onComplete = {})
-
-                // (비회원 / 회원 상태에 따른 버튼 여부 처리)
-                setUserBtn()
-                setUserInfo()
             }
 
         }
 
         // (onResume)
-    }
-
-    // (비회원 / 회원 상태에 따른 버튼 여부 처리)
-    private fun setUserBtn() {
-        if (currentLoginSessionInfoSpwMbr.userUid == null) { // 비회원 상태
-            bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.VISIBLE
-            bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
-            bindingMbr.userLogoutBtn.visibility = View.GONE
-            bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
-        } else { // 회원 상태
-            bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.GONE
-            bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
-            bindingMbr.userLogoutBtn.visibility = View.VISIBLE
-            bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
-        }
-    }
-
-    private fun setUserInfo() {
-        val loginType = currentLoginSessionInfoSpwMbr.loginType
-        val userUid = currentLoginSessionInfoSpwMbr.userUid
-        val userId = currentLoginSessionInfoSpwMbr.loginId
-        val nickName = currentLoginSessionInfoSpwMbr.userNickName
-        val pw = currentLoginSessionInfoSpwMbr.loginPw
-
-        bindingMbr.loginType.text = when (loginType) {
-            1 -> {
-                "이메일"
-            }
-            2 -> {
-                "구글"
-            }
-            3 -> {
-                "카카오"
-            }
-            4 -> {
-                "네이버"
-            }
-            else -> {
-                "비회원"
-            }
-        }
-
-        bindingMbr.userUid.text = userUid ?: "NULL"
-        bindingMbr.userId.text = userId ?: "NULL"
-        bindingMbr.userNickName.text = nickName ?: "NULL"
-        bindingMbr.pw.text = pw ?: "NULL"
     }
 
     // 화면 데이터 갱신관련 세마포어
