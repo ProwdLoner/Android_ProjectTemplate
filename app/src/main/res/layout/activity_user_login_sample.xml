@@ -118,6 +118,21 @@
                         android:textCursorDrawable="@null" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="자동 로그인"
+                    app:layout_constraintBottom_toBottomOf="@id/auto_login_check_box"
+                    app:layout_constraintEnd_toStartOf="@id/auto_login_check_box"
+                    app:layout_constraintTop_toTopOf="@id/auto_login_check_box" />
+
+                <CheckBox
+                    android:id="@+id/auto_login_check_box"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintEnd_toEndOf="@id/pw_text_input_layout"
+                    app:layout_constraintTop_toBottomOf="@id/pw_text_input_layout" />
+
                 <LinearLayout
                     android:id="@+id/login_container"
                     android:layout_width="wrap_content"
@@ -126,7 +141,7 @@
                     android:orientation="horizontal"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/pw_text_input_layout">
+                    app:layout_constraintTop_toBottomOf="@id/auto_login_check_box">
 
                     <TextView
                         android:id="@+id/go_to_find_pw_btn"
@@ -163,7 +178,7 @@
                 </LinearLayout>
 
                 <Button
-                    android:id="@+id/login_btn"
+                    android:id="@+id/email_login_btn"
                     android:layout_width="300dp"
                     android:layout_height="45dp"
                     android:layout_marginTop="25dp"
@@ -184,7 +199,7 @@
                     android:background="@drawable/layer_list_layout_activity_user_login_sample_kakao_login_btn"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/login_btn">
+                    app:layout_constraintTop_toBottomOf="@id/email_login_btn">
 
                     <com.example.prowd_android_template.custom_view.CircleImageView
                         android:layout_width="25dp"

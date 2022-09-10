@@ -444,6 +444,11 @@ class ActivityUserSampleList : AppCompatActivity() {
                 )
             startActivity(intent)
         }
+
+        bindingMbr.userLogoutBtn.setOnClickListener {
+            currentLoginSessionInfoSpwMbr.setLogout()
+            setUserBtn()
+        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -460,19 +465,7 @@ class ActivityUserSampleList : AppCompatActivity() {
             refreshWholeScreenData(onComplete = {})
 
             // (비회원 / 회원 상태에 따른 버튼 여부 처리)
-            if (currentUserUidMbr == null) { // 비회원 상태
-                bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.VISIBLE
-                bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
-                bindingMbr.userLogoutBtn.visibility = View.GONE
-                bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
-                bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
-            } else { // 회원 상태
-                bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.GONE
-                bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
-                bindingMbr.userLogoutBtn.visibility = View.VISIBLE
-                bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
-                bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
-            }
+            setUserBtn()
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -487,24 +480,29 @@ class ActivityUserSampleList : AppCompatActivity() {
                 refreshWholeScreenData(onComplete = {})
 
                 // (비회원 / 회원 상태에 따른 버튼 여부 처리)
-                if (currentUserUidMbr == null) { // 비회원 상태
-                    bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.VISIBLE
-                    bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
-                    bindingMbr.userLogoutBtn.visibility = View.GONE
-                    bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
-                    bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
-                } else { // 회원 상태
-                    bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.GONE
-                    bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
-                    bindingMbr.userLogoutBtn.visibility = View.VISIBLE
-                    bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
-                    bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
-                }
+                setUserBtn()
             }
 
         }
 
         // (onResume)
+    }
+
+    // (비회원 / 회원 상태에 따른 버튼 여부 처리)
+    private fun setUserBtn(){
+        if (currentLoginSessionInfoSpwMbr.userUid == null) { // 비회원 상태
+            bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.VISIBLE
+            bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
+            bindingMbr.userLogoutBtn.visibility = View.GONE
+            bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
+            bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
+        } else { // 회원 상태
+            bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.GONE
+            bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
+            bindingMbr.userLogoutBtn.visibility = View.VISIBLE
+            bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
+            bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
+        }
     }
 
     // 화면 데이터 갱신관련 세마포어

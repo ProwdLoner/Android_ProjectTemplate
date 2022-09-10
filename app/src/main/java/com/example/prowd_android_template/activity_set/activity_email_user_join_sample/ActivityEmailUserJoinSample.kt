@@ -517,7 +517,6 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.joinBtn.isFocusable = false
                     }
 
-                    // 영문, 숫자 외의 특수문자 존재
                     !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                         bindingMbr.emailTextInputLayout.error = "이메일 형태가 아닙니다."
                         emailClear = false
@@ -570,7 +569,6 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         runOnUiThread {
                             shownDialogInfoVOMbr = null
 
-                            // todo
                             when (statusCode) {
                                 1 -> { // 검증 요청 완료
                                     bindingMbr.emailCheckBtn.text = "인증\n확인"
@@ -624,15 +622,15 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         }
                     }
 
-                // todo 이메일 검증 요청
+                // 이메일 검증 요청
                 executorServiceMbr.execute {
                     // 아래는 원래 네트워크 서버에서 처리하는 로직
                     // 이메일 중복검사
-                    val emailCount =
+                    val idCount =
                         repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getEmailCount(email)
+                            .getIdCount(email, 1)
 
-                    if (emailCount != 0) { // 아이디 중복
+                    if (idCount != 0) { // 아이디 중복
                         postEmailVerificationRequestCallback(2, null)
                     } else {
                         // 12 라는 반환값은 검증 리퀘스트 고유값을 가정. 실제론 서버에서 생성해서 반환해줌
@@ -836,8 +834,12 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
             }
         })
 
-        // 적합성 검증 완료를 가정
         bindingMbr.joinBtn.setOnClickListener {
+            // 적합성 검증 완료를 가정
+            if (!emailClear || !nickNameClear || !pwClear || !pwCheckClear) {
+                return@setOnClickListener
+            }
+
             val email: String = bindingMbr.emailTextInputEditTxt.text.toString()
             val nickName: String = bindingMbr.nickNameTextInputEditTxt.text.toString()
             val pw: String = bindingMbr.pwTextInputEditTxt.text.toString()
@@ -916,14 +918,14 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                 // 이메일 중복검사
                 val emailCount =
                     repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                        .getEmailCount(email)
+                        .getIdCount(email, 1)
 
                 if (emailCount != 0) { // 아이디 중복
                     signInCallback(2)
                 } else {
                     repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao().insert(
                         TestUserInfoTable.TableVo(
-                            email, nickName, pw
+                            1, email, nickName, pw
                         )
                     )
                     signInCallback(1)

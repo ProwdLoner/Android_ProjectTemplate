@@ -4,10 +4,16 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.MotionEvent
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +38,7 @@ import java.util.concurrent.Semaphore
 //     구글 OAuth 의 경우 Firebase 다른 서비스도 같이 구현하는 것을 추천
 //     SNS 로그인의 경우 요청을 보내서 회원가입이 되어있다면 로그인,
 //     회원가입되지 않았단 응답이 오면 곧바로 회원가입 절차에 들어가기.
+//     비밀번호 찾기 버튼의 경우는 이메일 입력 화면이 나오고, 이메일 입력하면 해당 이메일에 초기화 버튼이 있어서 누르면 초기화된 비밀번호가 반환됨
 class ActivityUserLoginSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -384,6 +391,24 @@ class ActivityUserLoginSample : AppCompatActivity() {
         }
     }
 
+    // 키보드 바깥을 누르면 키보드를 숨김
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        val focusView: View? = currentFocus
+        if (focusView != null) {
+            val rect = Rect()
+            focusView.getGlobalVisibleRect(rect)
+            val x = ev.x.toInt()
+            val y = ev.y.toInt()
+            if (!rect.contains(x, y)) {
+                val imm: InputMethodManager =
+                    getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(focusView.windowToken, 0)
+                focusView.clearFocus()
+            }
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
@@ -439,15 +464,225 @@ class ActivityUserLoginSample : AppCompatActivity() {
             startActivity(intent)
         }
 
-        bindingMbr.goToFindPwBtn.setOnClickListener {
-            // todo
-        }
+        // (이메일 로그인 버튼 처리 관련)
+        // : SNS 로그인은 따로 버튼 처리 필요
 
         // 로그인 버튼 비활성화
         //     적합성 검증 완료시 활성
-        bindingMbr.loginBtn.isEnabled = false
-        bindingMbr.loginBtn.isFocusable = false
+        bindingMbr.emailLoginBtn.isEnabled = false
+        bindingMbr.emailLoginBtn.isFocusable = false
 
+
+        // (적합성 검증)
+        var emailClear = false
+        var pwClear = false
+
+        bindingMbr.emailTextInputEditTxt.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                bindingMbr.emailTextInputLayout.error = null
+                bindingMbr.emailTextInputLayout.isErrorEnabled = false
+            }
+
+            override fun afterTextChanged(s: Editable) {
+                val email = s.toString()
+
+                when {
+                    // 문자 입력 전
+                    "" == email -> {
+                        bindingMbr.emailTextInputLayout.error = null
+                        bindingMbr.emailTextInputLayout.isErrorEnabled = false
+                        emailClear = false
+
+                        bindingMbr.emailLoginBtn.isEnabled = false
+                        bindingMbr.emailLoginBtn.isFocusable = false
+                    }
+
+                    // 공백 존재
+                    email.contains(" ") -> {
+                        bindingMbr.emailTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
+                        emailClear = false
+
+                        bindingMbr.emailLoginBtn.isEnabled = false
+                        bindingMbr.emailLoginBtn.isFocusable = false
+                    }
+
+                    !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                        bindingMbr.emailTextInputLayout.error = "이메일 형태가 아닙니다."
+                        emailClear = false
+
+                        bindingMbr.emailLoginBtn.isEnabled = false
+                        bindingMbr.emailLoginBtn.isFocusable = false
+                    }
+
+                    else -> {
+                        bindingMbr.emailTextInputLayout.error = null
+                        bindingMbr.emailTextInputLayout.isErrorEnabled = false
+
+                        emailClear = true
+                        if (emailClear && pwClear) {
+                            bindingMbr.emailLoginBtn.isEnabled = true
+                            bindingMbr.emailLoginBtn.isFocusable = true
+                        }
+                    }
+                }
+            }
+        })
+
+        bindingMbr.pwTextInputEditTxt.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                bindingMbr.pwTextInputLayout.error = null
+                bindingMbr.pwTextInputLayout.isErrorEnabled = false
+            }
+
+            override fun afterTextChanged(s: Editable) {
+                val pw = s.toString()
+
+                when {
+                    "" == pw -> {
+                        bindingMbr.pwTextInputLayout.error = null
+                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
+                        pwClear = false
+
+                        bindingMbr.emailLoginBtn.isEnabled = false
+                        bindingMbr.emailLoginBtn.isFocusable = false
+                    }
+
+                    // 공백 존재
+                    pw.contains(" ") -> {
+                        bindingMbr.pwTextInputLayout.error = "공백 문자가 들어갔습니다."
+                        pwClear = false
+
+                        bindingMbr.emailLoginBtn.isEnabled = false
+                        bindingMbr.emailLoginBtn.isFocusable = false
+                    }
+
+                    else -> {
+                        bindingMbr.pwTextInputLayout.error = null
+                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
+                        pwClear = true
+
+                        if (emailClear && pwClear) {
+                            bindingMbr.emailLoginBtn.isEnabled = true
+                            bindingMbr.emailLoginBtn.isFocusable = true
+                        }
+                    }
+                }
+            }
+        })
+
+        bindingMbr.emailLoginBtn.setOnClickListener {
+            // 적합성 검증 완료를 가정
+            if (!emailClear || !pwClear) {
+                return@setOnClickListener
+            }
+
+            val email: String = bindingMbr.emailTextInputEditTxt.text.toString()
+            val pw: String = bindingMbr.pwTextInputEditTxt.text.toString()
+
+            shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                false,
+                "로그인 중입니다.",
+                onCanceled = {}
+            )
+
+            // 로그인 콜백
+            val logInCallback = { statusCode: Int, userUid: Long?, userNickName: String? ->
+                runOnUiThread {
+                    shownDialogInfoVOMbr = null
+
+                    when (statusCode) {
+                        1 -> { // 로그인 완료
+                            // 정보 저장
+                            currentLoginSessionInfoSpwMbr.userUid = userUid!!.toString()
+                            currentLoginSessionInfoSpwMbr.loginId = email
+                            currentLoginSessionInfoSpwMbr.loginPw = pw
+                            currentLoginSessionInfoSpwMbr.loginType = 1
+                            currentLoginSessionInfoSpwMbr.userNickName = userNickName!!
+                            currentLoginSessionInfoSpwMbr.isAutoLogin =
+                                bindingMbr.autoLoginCheckBox.isChecked
+
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "로그인 완료",
+                                "로그인 되었습니다.",
+                                "닫기",
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                    finish()
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                    finish()
+                                }
+                            )
+                        }
+                        2 -> { // 아이디 or 비번 틀림
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "로그인 실패",
+                                "로그인 정보가 일치하지 않습니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
+                        -1 -> { // 네트워크 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "네트워크 불안정",
+                                "현재 네트워크 연결이 불안정합니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
+                        else -> { // 그외 서버 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "기술적 문제",
+                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 로그인 요청
+            executorServiceMbr.execute {
+                // 아래는 원래 네트워크 서버에서 처리하는 로직
+
+                // 이메일과 비번으로 검색
+                val userInfoList =
+                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                        .getUserInfoForLogin(email, pw, 1)
+
+                if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
+                    logInCallback(2, null, null)
+                } else {
+                    val uid = userInfoList[0].uid
+                    val nickname = userInfoList[0].nickName
+
+                    logInCallback(1, uid, nickname)
+                }
+            }
+        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)

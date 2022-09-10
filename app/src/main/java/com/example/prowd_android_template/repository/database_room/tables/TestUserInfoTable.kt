@@ -7,49 +7,68 @@ class TestUserInfoTable {
     // (테이블 구조)
     @Entity(tableName = "test_user")
     data class TableVo(
-        @ColumnInfo(name = "email")
-        val email: String,
+        @ColumnInfo(name = "user_type")
+        val userType: Int, // 0 : 비회원, 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
+
+        @ColumnInfo(name = "id")
+        val id: String, // 이메일 로그인이면 이메일, SNS 로그인이면 SNS Id
 
         @ColumnInfo(name = "nick_name")
         val nickName: String,
 
         @ColumnInfo(name = "password")
-        val password: String
+        val password: String // SNS 로그인이면 토큰
     ) {
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = "uid")
-        var uid: Int = 0
+        var uid: Long = 0
     }
 
     // (테이블 Dao)
     @Dao
     interface TableDao {
+
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        fun insert(vararg inputTable: TableVo)
+
+//        @Update
+//        fun updateDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
+//
+//        @Delete
+//        fun deleteDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
+
         @Query(
             "SELECT " +
                     "COUNT(*) " +
                     "FROM " +
                     "test_user " +
                     "where " +
-                    "email = :email"
+                    "id = :id " +
+                    "and " +
+                    "user_type = :userType"
         )
-        fun getEmailCount(email: String): Int
+        fun getIdCount(id: String, userType: Int): Int
 
-        @Insert(onConflict = OnConflictStrategy.REPLACE)
-        fun insert(vararg inputTable: TableVo)
+        @Query(
+            "SELECT " +
+                    "uid, nick_name " +
+                    "FROM " +
+                    "test_user " +
+                    "where " +
+                    "id = :id " +
+                    "and " +
+                    "password = :password " +
+                    "and " +
+                    "user_type = :userType"
+        )
+        fun getUserInfoForLogin(id: String, password: String, userType: Int): List<GetUserInfoForLoginOutput>
 
-//        @Query(
-//            "SELECT " +
-//                    "* " +
-//                    "FROM " +
-//                    "test_info"
-//        )
-//        fun selectTestInfoColAll2(): List<TestInfoTableVO>
-//
-//        @Update
-//        fun updateDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
-//
-//        @Delete
-//        fun deleteDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
+        data class GetUserInfoForLoginOutput(
+            @ColumnInfo(name = "uid")
+            val uid: Long,
+            @ColumnInfo(name = "nick_name")
+            val nickName: String
+        )
     }
 
 }

@@ -837,33 +837,33 @@ class ActivityInit : AppCompatActivity() {
 
         // 로그인 검증 필요
         // 검증용 정보 가져오기 (SNS 로그인이라면 OAuth 로그인 검증 후 반환되는 id, 토큰을 반환)
-        val serverId: String?
-        val serverPw: String?
+        val loginId: String?
+        val loginPw: String?
 
         when (loginType) {
             1 -> { // 저장된 이메일 아이디를 가져와 사용
-                serverId = currentLoginSessionInfoSpwMbr.loginId
-                serverPw = currentLoginSessionInfoSpwMbr.loginPw
+                loginId = currentLoginSessionInfoSpwMbr.loginId
+                loginPw = currentLoginSessionInfoSpwMbr.loginPw
             }
             2 -> {
-                serverId = "구글 SNS Id 실패시 null"
-                serverPw = "구글 SNS Token 실패시 null"
+                loginId = "구글 SNS Id 실패시 null"
+                loginPw = "구글 SNS Token 실패시 null"
             }
             3 -> {
-                serverId = "카카오 SNS Id 실패시 null"
-                serverPw = "카카오 SNS Token 실패시 null"
+                loginId = "카카오 SNS Id 실패시 null"
+                loginPw = "카카오 SNS Token 실패시 null"
             }
             4 -> {
-                serverId = "네이버 SNS Id 실패시 null"
-                serverPw = "네이버 SNS Token 실패시 null"
+                loginId = "네이버 SNS Id 실패시 null"
+                loginPw = "네이버 SNS Token 실패시 null"
             }
             else -> {
-                serverId = null
-                serverPw = null
+                loginId = null
+                loginPw = null
             }
         }
 
-        if (serverId == null || serverPw == null) { // 로그인 불가
+        if (loginId == null || loginPw == null) { // 로그인 불가
             // 비회원 처리
             currentLoginSessionInfoSpwMbr.setLogout()
 
@@ -878,14 +878,14 @@ class ActivityInit : AppCompatActivity() {
         // (정보 요청 콜백)
         // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
         // userUid : 로그인 완료시 반환되는 세션토큰
-        val onComplete: (statusCode: Int, userUid: String?, userNickName: String?) -> Unit =
+        val loginCompleteCallback: (statusCode: Int, userUid: Long?, userNickName: String?) -> Unit =
             { statusCode, userUid, userNickName ->
                 runOnUiThread {
                     when (statusCode) {
                         1 -> {// 로그인 완료
                             // 회원 처리
                             currentLoginSessionInfoSpwMbr.isAutoLogin = true
-                            currentLoginSessionInfoSpwMbr.userUid = userUid
+                            currentLoginSessionInfoSpwMbr.userUid = userUid.toString()
                             currentLoginSessionInfoSpwMbr.userNickName = userNickName
 
                             goToNextActivitySemaphoreMbr.acquire()
@@ -945,9 +945,21 @@ class ActivityInit : AppCompatActivity() {
             }
 
         executorServiceMbr.execute {
-            // 네트워크 비동기 요청을 가정
-            Thread.sleep(500)
-            onComplete(1, "##ADRE_DRTG_1234", "행복한 너구리")
+            // 아래는 원래 네트워크 서버에서 처리하는 로직
+
+            // 이메일과 비번으로 검색
+            val userInfoList =
+                repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                    .getUserInfoForLogin(loginId, loginPw, loginType)
+
+            if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
+                loginCompleteCallback(2, null, null)
+            } else {
+                val uid = userInfoList[0].uid
+                val nickname = userInfoList[0].nickName
+
+                loginCompleteCallback(1, uid, nickname)
+            }
         }
     }
 
