@@ -698,7 +698,6 @@ class ActivityUserLoginSample : AppCompatActivity() {
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             refreshWholeScreenData(onComplete = {})
 
-            // todo : 로그인 구현 후 성능확인
             // 로그인 된 상태라면 진입 금지
             if (currentUserUidMbr != null) {
                 finish()

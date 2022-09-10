@@ -31,11 +31,14 @@ class TestUserInfoTable {
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         fun insert(vararg inputTable: TableVo)
 
-//        @Update
-//        fun updateDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
-//
-//        @Delete
-//        fun deleteDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
+        @Query(
+            "DELETE " +
+                    "FROM " +
+                    "test_user " +
+                    "where " +
+                    "uid = :uid"
+        )
+        fun delete(uid: Long)
 
         @Query(
             "SELECT " +
@@ -61,7 +64,11 @@ class TestUserInfoTable {
                     "and " +
                     "user_type = :userType"
         )
-        fun getUserInfoForLogin(id: String, password: String, userType: Int): List<GetUserInfoForLoginOutput>
+        fun getUserInfoForLogin(
+            id: String,
+            password: String,
+            userType: Int
+        ): List<GetUserInfoForLoginOutput>
 
         data class GetUserInfoForLoginOutput(
             @ColumnInfo(name = "uid")
@@ -69,6 +76,9 @@ class TestUserInfoTable {
             @ColumnInfo(name = "nick_name")
             val nickName: String
         )
+
+//        @Update
+//        fun updateDeviceConfigInfo(vararg inputTable: TestInfoTableVO)
     }
 
 }

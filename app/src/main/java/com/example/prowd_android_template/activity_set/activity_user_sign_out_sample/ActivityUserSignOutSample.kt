@@ -4,10 +4,16 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.MotionEvent
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +27,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityUserSignOutSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -378,6 +385,24 @@ class ActivityUserSignOutSample : AppCompatActivity() {
         }
     }
 
+    // 키보드 바깥을 누르면 키보드를 숨김
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        val focusView: View? = currentFocus
+        if (focusView != null) {
+            val rect = Rect()
+            focusView.getGlobalVisibleRect(rect)
+            val x = ev.x.toInt()
+            val y = ev.y.toInt()
+            if (!rect.contains(x, y)) {
+                val imm: InputMethodManager =
+                    getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(focusView.windowToken, 0)
+                focusView.clearFocus()
+            }
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
@@ -433,11 +458,63 @@ class ActivityUserSignOutSample : AppCompatActivity() {
         }
 
         bindingMbr.signOutConfirmCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            bindingMbr.signOutBtn.isEnabled = isChecked
-            bindingMbr.signOutBtn.isFocusable = isChecked
+            bindingMbr.pwTextInputEditTxt.setText("")
+            if (isChecked) {
+                bindingMbr.pwTextInputLayout.visibility = View.VISIBLE
+            } else {
+                bindingMbr.pwTextInputLayout.visibility = View.GONE
+            }
         }
 
+        var pwClear = false
+        bindingMbr.pwTextInputEditTxt.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                bindingMbr.pwTextInputLayout.error = null
+                bindingMbr.pwTextInputLayout.isErrorEnabled = false
+            }
+
+            override fun afterTextChanged(s: Editable) {
+                val pw = s.toString()
+
+                when {
+                    "" == pw -> {
+                        bindingMbr.pwTextInputLayout.error = null
+                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
+
+                        pwClear = false
+                        bindingMbr.signOutBtn.isEnabled = false
+                        bindingMbr.signOutBtn.isFocusable = false
+                    }
+
+                    // 공백 존재
+                    pw.contains(" ") -> {
+                        bindingMbr.pwTextInputLayout.error = "공백 문자가 들어갔습니다."
+
+                        pwClear = false
+                        bindingMbr.signOutBtn.isEnabled = false
+                        bindingMbr.signOutBtn.isFocusable = false
+                    }
+
+                    else -> {
+                        bindingMbr.pwTextInputLayout.error = null
+                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
+                        pwClear = true
+
+                        if (pwClear) {
+                            bindingMbr.signOutBtn.isEnabled = true
+                            bindingMbr.signOutBtn.isFocusable = true
+                        }
+                    }
+                }
+            }
+        })
+
         bindingMbr.signOutBtn.setOnClickListener {
+            if (!pwClear) {
+                return@setOnClickListener
+            }
+
             shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
                 true,
                 "회원 탈퇴",
@@ -445,8 +522,93 @@ class ActivityUserSignOutSample : AppCompatActivity() {
                 "동의",
                 "취소",
                 onPosBtnClicked = {
-                    // todo 회원 탈퇴 후 로그아웃 처리 및 종료
+                    shownDialogInfoVOMbr = null
 
+                    shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                        false,
+                        "처리 중입니다.",
+                        onCanceled = {}
+                    )
+
+                    // 회원탈퇴 처리
+                    // 입력한 비밀번호와 같이 회원탈퇴 요청 후 비번이 맞다면 탈퇴처리
+                    val signOutCallback = { statusCode: Int ->
+                        runOnUiThread {
+                            shownDialogInfoVOMbr = null
+
+                            when (statusCode) {
+                                1 -> { // 탈퇴 완료
+                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                        false,
+                                        "회원탈퇴",
+                                        "회원탈퇴가 완료되었습니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                            currentLoginSessionInfoSpwMbr.setLogout()
+                                            finish()
+                                        },
+                                        onCanceled = { }
+                                    )
+                                }
+                                2 -> { // 비밀번호 불일치
+                                    bindingMbr.pwTextInputLayout.error = "비밀번호가 일치하지 않습니다."
+                                    bindingMbr.pwTextInputEditTxt.requestFocus()
+
+                                }
+                                -1 -> { // 네트워크 에러
+                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "네트워크 불안정",
+                                        "현재 네트워크 연결이 불안정합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                        },
+                                        onCanceled = {
+                                            shownDialogInfoVOMbr = null
+                                        }
+                                    )
+                                }
+                                else -> { // 그외 서버 에러
+                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "기술적 문제",
+                                        "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                        },
+                                        onCanceled = {
+                                            shownDialogInfoVOMbr = null
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // 회원탈퇴 요청
+                    executorServiceMbr.execute {
+                        // 아래는 서버에서 처리해야 하는 로직
+                        val type = currentLoginSessionInfoSpwMbr.loginType
+                        val id = currentLoginSessionInfoSpwMbr.loginId
+                        val pw = bindingMbr.pwTextInputEditTxt.text.toString()
+
+                        val userInfo =
+                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                .getUserInfoForLogin(
+                                    id!!, pw, type
+                                )
+
+                        if (userInfo.isEmpty()) { // 회원정보 조회 불가능
+                            signOutCallback(2)
+                        } else { // 회원정보 조회 완료
+                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                .delete(userInfo[0].uid)
+                            signOutCallback(1)
+                        }
+                    }
                 },
                 onNegBtnClicked = {
                     shownDialogInfoVOMbr = null
@@ -471,6 +633,10 @@ class ActivityUserSignOutSample : AppCompatActivity() {
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             refreshWholeScreenData(onComplete = {})
 
+            // 로그아웃 된 상태라면 진입 금지
+            if (currentUserUidMbr == null) {
+                finish()
+            }
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -483,6 +649,11 @@ class ActivityUserSignOutSample : AppCompatActivity() {
 
                 // (데이터 수집)
                 refreshWholeScreenData(onComplete = {})
+
+                // 로그아웃 된 상태라면 진입 금지
+                if (currentUserUidMbr == null) {
+                    finish()
+                }
             }
 
         }
