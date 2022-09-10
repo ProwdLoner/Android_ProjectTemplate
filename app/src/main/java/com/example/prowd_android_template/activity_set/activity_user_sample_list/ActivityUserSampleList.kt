@@ -530,7 +530,7 @@ class ActivityUserSampleList : AppCompatActivity() {
                 "비회원"
             }
         }
-        
+
         bindingMbr.userUid.text = userUid ?: "NULL"
         bindingMbr.userId.text = userId ?: "NULL"
         bindingMbr.userNickName.text = nickName ?: "NULL"

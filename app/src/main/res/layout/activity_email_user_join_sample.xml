@@ -142,7 +142,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="(2~16자, 영문, 숫자, 한글)"
+                    android:text="(1~16자, 영문, 숫자, 한글)"
                     app:layout_constraintStart_toStartOf="@id/nick_name_text_input_layout"
                     app:layout_constraintTop_toBottomOf="@id/nick_name_text_input_layout" />
 
