@@ -78,10 +78,10 @@ class CameraObj private constructor(
     // 포커스 거리 :
     // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
     // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
-    // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-    // -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+    // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO (자연스런 포커싱)
+    // -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE (빠른 포커싱)
     // 기본 값은 객체 생성시 결정되어, 카메라 지원 정보에 따라 -2 or -1 or 0 의 순서대로 적용 가능한 설정을 결정
-    var focusDistanceMbr: Float = -2f
+    var focusDistanceMbr: Float = -1f
         private set
 
     // 센서 노출 시간 :

@@ -361,6 +361,7 @@ class ActivityATemplate : AppCompatActivity() {
         }
         permissionRequestOnProgressSemaphoreMbr.release()
 
+        // (onPause 알고리즘)
     }
 
     override fun onDestroy() {
