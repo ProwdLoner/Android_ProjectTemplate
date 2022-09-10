@@ -63,15 +63,154 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/user_info_container"
+                    android:layout_width="250dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/layer_list_activity_user_sample_list_user_info_container"
+                    android:paddingStart="20dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="20dp"
+                    android:layout_marginTop="10dp"
+                    android:paddingBottom="10dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:id="@+id/user_info_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="[현재 로그인한 유저 정보]"
+                        android:textColor="#FF000000"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/login_type_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="로그인 타입 : "
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/user_info_title" />
+
+                    <TextView
+                        android:id="@+id/login_type"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:textColor="#FF000000"
+                        app:layout_constraintBottom_toBottomOf="@id/login_type_label"
+                        app:layout_constraintStart_toEndOf="@id/login_type_label"
+                        app:layout_constraintTop_toTopOf="@id/login_type_label" />
+
+                    <TextView
+                        android:id="@+id/user_uid_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="회원번호 : "
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/login_type_label" />
+
+                    <TextView
+                        android:id="@+id/user_uid"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:textColor="#FF000000"
+                        app:layout_constraintBottom_toBottomOf="@id/user_uid_label"
+                        app:layout_constraintStart_toEndOf="@id/user_uid_label"
+                        app:layout_constraintTop_toTopOf="@id/user_uid_label" />
+
+                    <TextView
+                        android:id="@+id/user_id_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="아이디 : "
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/user_uid_label" />
+
+                    <TextView
+                        android:id="@+id/user_id"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:textColor="#FF000000"
+                        app:layout_constraintBottom_toBottomOf="@id/user_id_label"
+                        app:layout_constraintStart_toEndOf="@id/user_id_label"
+                        app:layout_constraintTop_toTopOf="@id/user_id_label" />
+
+                    <TextView
+                        android:id="@+id/user_nick_name_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="닉네임 : "
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/user_id_label" />
+
+                    <TextView
+                        android:id="@+id/user_nick_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:textColor="#FF000000"
+                        app:layout_constraintBottom_toBottomOf="@id/user_nick_name_label"
+                        app:layout_constraintStart_toEndOf="@id/user_nick_name_label"
+                        app:layout_constraintTop_toTopOf="@id/user_nick_name_label" />
+
+                    <TextView
+                        android:id="@+id/pw_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_sb"
+                        android:text="비밀번호 : "
+                        android:textColor="#FF000000"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/user_nick_name_label" />
+
+                    <TextView
+                        android:id="@+id/pw"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:textColor="#FF000000"
+                        app:layout_constraintBottom_toBottomOf="@id/pw_label"
+                        app:layout_constraintStart_toEndOf="@id/pw_label"
+                        app:layout_constraintTop_toTopOf="@id/pw_label" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
                 <Button
                     android:id="@+id/go_to_email_user_join_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
                     android:text="이메일 회원가입 샘플"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toBottomOf="@id/user_info_container" />
 
                 <Button
                     android:id="@+id/go_to_user_login_sample_btn"
@@ -96,17 +235,6 @@
                     app:layout_constraintTop_toBottomOf="@id/go_to_user_login_sample_btn" />
 
                 <Button
-                    android:id="@+id/go_to_user_info_sample_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="회원 정보 샘플"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/user_logout_btn" />
-
-                <Button
                     android:id="@+id/go_to_user_sign_out_sample_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -115,7 +243,7 @@
                     android:text="회원 탈퇴 샘플"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_user_info_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/user_logout_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </ScrollView>

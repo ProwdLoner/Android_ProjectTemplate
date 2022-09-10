@@ -448,6 +448,7 @@ class ActivityUserSampleList : AppCompatActivity() {
         bindingMbr.userLogoutBtn.setOnClickListener {
             currentLoginSessionInfoSpwMbr.setLogout()
             setUserBtn()
+            setUserInfo()
         }
     }
 
@@ -466,6 +467,7 @@ class ActivityUserSampleList : AppCompatActivity() {
 
             // (비회원 / 회원 상태에 따른 버튼 여부 처리)
             setUserBtn()
+            setUserInfo()
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -481,6 +483,7 @@ class ActivityUserSampleList : AppCompatActivity() {
 
                 // (비회원 / 회원 상태에 따른 버튼 여부 처리)
                 setUserBtn()
+                setUserInfo()
             }
 
         }
@@ -489,20 +492,49 @@ class ActivityUserSampleList : AppCompatActivity() {
     }
 
     // (비회원 / 회원 상태에 따른 버튼 여부 처리)
-    private fun setUserBtn(){
+    private fun setUserBtn() {
         if (currentLoginSessionInfoSpwMbr.userUid == null) { // 비회원 상태
             bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.VISIBLE
             bindingMbr.goToUserLoginSampleBtn.visibility = View.VISIBLE
             bindingMbr.userLogoutBtn.visibility = View.GONE
-            bindingMbr.goToUserInfoSampleBtn.visibility = View.GONE
             bindingMbr.goToUserSignOutSampleBtn.visibility = View.GONE
         } else { // 회원 상태
             bindingMbr.goToEmailUserJoinSampleBtn.visibility = View.GONE
             bindingMbr.goToUserLoginSampleBtn.visibility = View.GONE
             bindingMbr.userLogoutBtn.visibility = View.VISIBLE
-            bindingMbr.goToUserInfoSampleBtn.visibility = View.VISIBLE
             bindingMbr.goToUserSignOutSampleBtn.visibility = View.VISIBLE
         }
+    }
+
+    private fun setUserInfo() {
+        val loginType = currentLoginSessionInfoSpwMbr.loginType
+        val userUid = currentLoginSessionInfoSpwMbr.userUid
+        val userId = currentLoginSessionInfoSpwMbr.loginId
+        val nickName = currentLoginSessionInfoSpwMbr.userNickName
+        val pw = currentLoginSessionInfoSpwMbr.loginPw
+
+        bindingMbr.loginType.text = when (loginType) {
+            1 -> {
+                "이메일"
+            }
+            2 -> {
+                "구글"
+            }
+            3 -> {
+                "카카오"
+            }
+            4 -> {
+                "네이버"
+            }
+            else -> {
+                "비회원"
+            }
+        }
+        
+        bindingMbr.userUid.text = userUid ?: "NULL"
+        bindingMbr.userId.text = userId ?: "NULL"
+        bindingMbr.userNickName.text = nickName ?: "NULL"
+        bindingMbr.pw.text = pw ?: "NULL"
     }
 
     // 화면 데이터 갱신관련 세마포어
