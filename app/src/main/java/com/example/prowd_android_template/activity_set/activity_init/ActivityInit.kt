@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
+// 로그인 처리의 경우는 내부 DB를 사용한 상황으로, 실 서비스 개발시엔 이 부분을 서버에서 처리하도록 설계할 것
 class ActivityInit : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)

@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName
 import retrofit2.Call
 import retrofit2.http.*
 
+// (한 주소에 대한 API 요청명세)
+// 사용법은 아래 기본 사용 샘플을 참고하여 추상함수를 작성하여 사용
 interface RequestApiTest {
     @GET("search")
     @Headers("Content-Type: application/json")

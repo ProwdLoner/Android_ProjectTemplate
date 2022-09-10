@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit
 
 
 // [레트로핏 빌더] : 한 IP 에 대한 접근 객체
+// 레트로핏 설정 커스텀 가능
 object RetrofitClientBuilder {
     // <멤버 변수 공간>
     private const val connectTimeOutMilliSecondMbr = 5000L

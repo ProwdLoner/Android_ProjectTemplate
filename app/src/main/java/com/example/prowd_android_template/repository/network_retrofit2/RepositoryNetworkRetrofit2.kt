@@ -4,7 +4,7 @@ import com.example.prowd_android_template.repository.network_retrofit2.request_a
 import java.util.concurrent.Semaphore
 
 // Retrofit2 함수 네트워크 URL 과 API 객체를 이어주고 제공하는 역할
-// : 주소 1개당 API 객체 1개를 생성하여 (Network Request Api 객체) 공간에 추가하여 사용
+// : 주소 1개당 API 객체 1개를 request_apis 안에 생성하여 아래 (Network Request Api 객체) 공간에 변수를 추가하여 사용
 class RepositoryNetworkRetrofit2 private constructor() {
     // <멤버 변수 공간>
     // (Network Request Api 객체)
