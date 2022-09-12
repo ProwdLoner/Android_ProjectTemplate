@@ -14,20 +14,17 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
-import android.os.SystemClock
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.*
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.custom_view.AutoFitTextureView
-import com.example.prowd_android_template.util_object.CustomUtil
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.io.File
 import java.util.concurrent.Semaphore
-import kotlin.math.abs
-import kotlin.math.sqrt
 
 
+// todo : 각 수치 조정은 setter 로 처리
 // todo : auto 설정일 때 focus distance 등의 현재 수치 가져오기
 // todo :( repeatingRequest / capture) on manual 제공
 // todo : af, ae, awb, iso area 설정
@@ -45,303 +42,364 @@ import kotlin.math.sqrt
 // todo : still capture 시 stopRepeating -> abortCaptures 를 먼저 한 후  capture 를 하여 그 결과 콜백 내에서 기존 repeat 재개
 
 // <Camera 객체>
-// 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체 (생성시 카메라 아이디를 주입)
-// 생성시엔 생성 함수 getInstance 를 사용하고, 카메라 사용이 필요 없어지면 destroyCameraObject 를 사용할것
-// Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더는 2개, 미디어 리코더는 1개만 설정 가능
-// 이미지 리더 중 한개는 캡쳐용, 다른 하나는 분석용으로, 분석용은 반복 리퀘스트가 가능하지만 캡쳐용은 캡쳐 시점 일순간만 실행됨
-// 내부 제공 함수들은 대다수 Ui 스레드와 별도의 카메라 스레드에서 비동기 동작을 수행합니다.
-// 카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
-// 연산량이 많은 작업은 카메라 스레드에서 처리하되, 프리뷰와 같이 UI를 사용하는 작업은 Ui 스레드를 적절히 사용하여 내부 처리
-class CameraObj private constructor(
+// : 디바이스에 붙어있는 카메라 센서 하나에 대한 조작 객체 (생성시 카메라 아이디를 주입) 및 카메라 관련 함수 라이브러리
+//     생성시엔 생성 함수 getInstance 를 사용하고, 카메라 사용이 필요 없어지면 destroyCameraObject 를 사용할것
+//     Output Surface 에서 프리뷰는 복수 설정이 가능, 이미지 리더는 2개, 미디어 리코더는 1개만 설정 가능
+//     이미지 리더 중 한개는 캡쳐용, 다른 하나는 분석용으로, 분석용은 반복 리퀘스트가 가능하지만 캡쳐용은 캡쳐 시점 일순간만 실행됨
+//     내부 제공 함수들은 대다수 Ui 스레드와 별도의 카메라 스레드에서 비동기 동작을 수행합니다.
+//     카메라 동작 관련 함수들 모두 세마포어로 뮤텍스가 되어있으므로 이 경우 꼭 완료 콜백을 통하지 않아도 선행 후행의 싱크가 어긋나지 않습니다.
+//     연산량이 많은 작업은 카메라 스레드에서 처리하되, 프리뷰와 같이 UI를 사용하는 작업은 Ui 스레드를 적절히 사용하여 내부 처리
+
+// (카메라 지원 모드 종류) :
+// 1~5 기본 모드 개별 지원여부
+//     1 : preview - preview 가 존재 (SurfaceTexture 지원여부)
+//     2 : capture - captureImageReader 가 존재 (ImageFormat.JPEG 지원여부)
+//     3 : mediaRecord - mediaRecorder 가 존재 (MediaRecorder 지원여부)
+//     4 : analysis - analysisImageReader 가 존재 (ImageFormat.YUV_420_888 지원여부)
+//     5 : highSpeed - highSpeed 가 존재 (cameraConfig.highSpeedVideoSizes 지원여부)
+
+// 6~16 각 개별모드를 같이 사용할 때 동일 서페이스 비율을 제공하는지 여부 (동일 서페이스 비율이 있으면 사이즈 등의 계산이 편함)
+// highSpeed 는 이미지 리더와 프리뷰 모두 동일한 소스에서 나오므로 지원만 되면 아래 콤비네이션과 상관없음
+//     6 : preview and capture - 동일 서페이스 비율 제공
+//     7 : preview and mediaRecord - 동일 서페이스 비율 제공
+//     8 : preview and analysis - 동일 서페이스 비율 제공
+//     9 : capture and mediaRecord - 동일 서페이스 비율 제공
+//     10 : capture and analysis - 동일 서페이스 비율 제공
+//     11 : mediaRecord and analysis - 동일 서페이스 비율 제공
+//     12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
+//     13 : preview and capture and analysis - 동일 서페이스 비율 제공
+//     14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
+//     15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
+//     16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
+
+class Camera2Obj private constructor(
     private val parentActivityMbr: Activity,
     private val cameraManagerMbr: CameraManager,
     private val onCameraDisconnectedMbr: (() -> Unit)
 ) {
-    // <멤버 변수 공간>
-    // (스레드 풀)
-    // 카메라 API 사용 스레드 세트
-    private lateinit var cameraThreadVoMbr: CameraIdThreadVo
-
-
-    // [카메라 지원 정보]
-    // 현 카메라 정보
-    lateinit var cameraInfoVoMbr: CameraInfoVo
-        private set
-
-    // 현 카메라 제공 사이즈 정보
-    lateinit var cameraSurfacesSizeListInfoVoMbr: CameraSurfacesSizeListInfoVo
-        private set
-
-
-    // [카메라 설정 정보]
-    // (3A 설정)
-    // 포커스 거리 :
-    // 거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
-    // 0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
-    // -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO (자연스런 포커싱)
-    // -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE (빠른 포커싱)
-    // 기본 값은 객체 생성시 결정되어, 카메라 지원 정보에 따라 -2 or -1 or 0 의 순서대로 적용 가능한 설정을 결정
-    var focusDistanceMbr: Float = -1f
-        private set
-
-    // 센서 노출 시간 :
-    // 나노초 == 초/1000000000
-    // 한 프레임에 대한 노출 시간
-    // null 이라면 Auto Exposure ON
-    // ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
-    var exposureTimeNsMbr: Long? = null
-        private set
-
-    // 화이트 밸런스 색온도
-    // null 이라면 Auto WhiteBalance ON
-    // 화이트 밸런스는 0 ~ 100 사이의 정수값
-    // 0이면 파란색으로 차가운 색, 100이면 노란색으로 따뜻한 색
-    // 템플릿 적용 파라미터
-    // -1 : CONTROL_AWB_MODE_CLOUDY_DAYLIGHT
-    // -2 : CONTROL_AWB_MODE_DAYLIGHT
-    // -3 : CONTROL_AWB_MODE_FLUORESCENT
-    // -4 : CONTROL_AWB_MODE_INCANDESCENT
-    // -5 : CONTROL_AWB_MODE_SHADE
-    // -6 : CONTROL_AWB_MODE_TWILIGHT
-    // -7 : CONTROL_AWB_MODE_WARM_FLUORESCENT
-    var whiteBalanceColorTemperatureMbr: Int? = null
-
-    // (수동 조작 설정)
-    // 떨림 보정 기능 적용 여부
-    // 0 : 적용 안함, 1 : 기계적 떨림 보정, 2 : 소프트웨어 떨림 보정
-    // 기계적 떨림 보정 적용을 해보고, 안되면 소프트웨어 떨림 보정 적용
-    var cameraStabilizationSetMbr: Int = 0
-        private set
-
-    // 카메라 현재 줌 배수
-    // 1f 부터 cameraInfoVoMbr.maxZoom 까지
-    var zoomFactorMbr: Float = 1.0f
-        private set
-
-
-    // [카메라 상태 정보]
-    // 카메라 현 상태 코드
-    // 각 상태 코드별 절차 순서를 나타냄
-    // 큰 숫자의 코드는 작은 숫자 프로세싱이 완료되어야 전환이 가능
-    // -1 : 카메라 객체 파괴
-    // 0 : 카메라 객체 초기 상태
-    // 1 : surface output 세팅 완료
-    // 2 : request repeating
-    var cameraStatusCodeMbr: Int = 0
-
-    // 미디어 레코더 현 상태 코드
-    // 0 : media recorder surface set 이전
-    // 1 : media recorder surface set (cameraStatusCodeMbr == 1 and mediaRecorderConfig)
-    // 2 : media recorder ready (cameraStatusCodeMbr == 2 and requestForMediaRecorder)
-    // 3 : media recording (cameraStatusCodeMbr == 2 and startRecording)
-    // 4 : media recorder pause (cameraStatusCodeMbr == 2 and pauseRecording)
-    var mediaRecorderStatusCodeMbr: Int = 0
-
-
-    // [카메라 API 생산 데이터]
-    private var cameraDeviceMbr: CameraDevice? = null
-
-    // 이미지 리더 세팅 부산물
-    var captureImageReaderConfigVoMbr: ImageReaderConfigVo? = null
-    private var captureImageReaderMbr: ImageReader? = null
-
-    var analysisImageReaderConfigVoMbr: ImageReaderConfigVo? = null
-    private var analysisImageReaderMbr: ImageReader? = null
-
-    // 미디어 리코더 세팅 부산물
-    var mediaRecorderConfigVoMbr: MediaRecorderConfigVo? = null
-    private var mediaRecorderMbr: MediaRecorder? = null
-    private var mediaCodecSurfaceMbr: Surface? = null
-
-    // 프리뷰 세팅 부산물
-    var previewConfigVoListMbr: ArrayList<PreviewConfigVo>? = null
-    private var previewSurfaceListMbr: ArrayList<Surface>? = ArrayList()
-
-    // 카메라 세션 객체
-    private var cameraCaptureSessionMbr: CameraCaptureSession? = null
-
-    // 반복 리퀘스트 타겟 객체
-    private var repeatRequestTargetVoMbr: RepeatRequestTargetVo? = null
-
-
-    // ---------------------------------------------------------------------------------------------
     // <스태틱 공간>
     companion object {
         // <공개 메소드 공간>
+        // (가용한 카메라 아이디 리스트 반환)
+        // : 단순히 Camera2 API 반환 리스트뿐 아니라 동작에 필요한 필수 정보 제공여부도 파악
+        fun getAllAvailableCameraIdList(parentActivity: Activity): ArrayList<String> {
+            val resultList = ArrayList<String>()
 
-        // (모든 가용 카메라 지원 모드 반환)
-        // preview, captureImageReader, analysisImageReader, mediaRecorder, highSpeed 제공 사이즈 비율 동일성 파악
-        // 카메라 지원 모드 :
-        // 1 : preview - preview 가 존재
-        // 2 : capture - captureImageReader 가 존재
-        // 3 : mediaRecord - mediaRecorder 가 존재
-        // 4 : analysis - analysisImageReader 가 존재
-        // 5 : highSpeed - highSpeed 가 존재
-        // 6 : preview and capture - 동일 서페이스 비율 제공
-        // 7 : preview and mediaRecord - 동일 서페이스 비율 제공
-        // 8 : preview and analysis - 동일 서페이스 비율 제공
-        // 9 : capture and mediaRecord - 동일 서페이스 비율 제공
-        // 10 : capture and analysis - 동일 서페이스 비율 제공
-        // 11 : mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
-        // 13 : preview and capture and analysis - 동일 서페이스 비율 제공
-        // 14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
-        fun getAllSupportedCameraModeSet(parentActivity: Activity): HashSet<Int> {
+            if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+                // 카메라 장치가 없을 때
+                return resultList
+            }
+
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            val cameraIdList = cameraManager.cameraIdList
+
+            for (cameraId in cameraIdList) {
+                // 카메라 정보 가져오기
+                val cameraCharacteristics =
+                    cameraManager.getCameraCharacteristics(cameraId)
+
+                // 필수 정보 확인
+                val facing =
+                    cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
+
+                val streamConfigurationMap: StreamConfigurationMap? =
+                    cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+
+                val sensorOrientation: Int? =
+                    cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
+
+                val sensorSize =
+                    cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
+
+                val capabilities = cameraCharacteristics.get(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
+                )
+
+                if (null == facing ||
+                    null == streamConfigurationMap ||
+                    null == sensorOrientation ||
+                    null == sensorSize ||
+                    null == capabilities
+                ) {
+                    // 필수 정보가 하나라도 없으면 비가용
+                    continue
+                }
+
+                // (지원 사이즈 검증)
+                val previewInfoList = ArrayList<SizeSpecInfoVo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    streamConfigurationMap.getOutputSizes(SurfaceTexture::class.java)
+                        .forEach { size ->
+                            val secondsPerFrame =
+                                streamConfigurationMap.getOutputMinFrameDuration(
+                                    SurfaceTexture::class.java,
+                                    size
+                                ) / 1_000_000_000.0
+                            val fps =
+                                if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                            previewInfoList.add(
+                                SizeSpecInfoVo(
+                                    size, fps
+                                )
+                            )
+                        }
+                }
+
+                val captureImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    streamConfigurationMap.getOutputSizes(ImageFormat.JPEG).forEach { size ->
+                        val secondsPerFrame =
+                            streamConfigurationMap.getOutputMinFrameDuration(
+                                ImageFormat.YUV_420_888,
+                                size
+                            ) / 1_000_000_000.0
+                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                        captureImageReaderInfoList.add(
+                            SizeSpecInfoVo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+
+                val mediaRecorderInfoList = ArrayList<SizeSpecInfoVo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    streamConfigurationMap.getOutputSizes(MediaRecorder::class.java)
+                        .forEach { size ->
+                            val secondsPerFrame =
+                                streamConfigurationMap.getOutputMinFrameDuration(
+                                    MediaRecorder::class.java,
+                                    size
+                                ) / 1_000_000_000.0
+                            val fps =
+                                if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                            mediaRecorderInfoList.add(
+                                SizeSpecInfoVo(
+                                    size, fps
+                                )
+                            )
+                        }
+                }
+
+                val analysisImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                    )
+                ) {
+                    streamConfigurationMap.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+                        val secondsPerFrame =
+                            streamConfigurationMap.getOutputMinFrameDuration(
+                                ImageFormat.YUV_420_888,
+                                size
+                            ) / 1_000_000_000.0
+                        val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                        analysisImageReaderInfoList.add(
+                            SizeSpecInfoVo(
+                                size, fps
+                            )
+                        )
+                    }
+                }
+
+                val highSpeedInfoList = ArrayList<SizeSpecInfoVo>()
+                if (capabilities.contains(
+                        CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
+                    )
+                ) {
+                    streamConfigurationMap.highSpeedVideoSizes.forEach { size ->
+                        streamConfigurationMap.getHighSpeedVideoFpsRangesFor(size)
+                            .forEach { fpsRange ->
+                                val fps = fpsRange.upper
+                                if (highSpeedInfoList.indexOfFirst {
+                                        it.size == size && it.fps == fps
+                                    } == -1) {
+                                    highSpeedInfoList.add(
+                                        SizeSpecInfoVo(
+                                            size, fps
+                                        )
+                                    )
+                                }
+                            }
+                    }
+                }
+
+                // 출력 지원 사이즈가 하나도 없다면 비가용
+                if (previewInfoList.isEmpty() &&
+                    captureImageReaderInfoList.isEmpty() &&
+                    mediaRecorderInfoList.isEmpty() &&
+                    analysisImageReaderInfoList.isEmpty() &&
+                    highSpeedInfoList.isEmpty()
+                ) {
+                    continue
+                }
+
+                resultList.add(cameraId)
+            }
+
+            return resultList
+        }
+
+        // (특정 카메라의 지원 모드 리스트 반환)
+        // : 카메라 지원 모드 종류는 클래스 선언 위의 설명 참조
+        fun getAllSupportedCameraModeSet(
+            parentActivity: Activity,
+            cameraId: String
+        ): HashSet<Int> {
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
             val resultSet = HashSet<Int>()
 
-            for (cameraId in cameraManager.cameraIdList) {
-                val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
 
-                val cameraConfig = characteristics.get(
-                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
-                )!!
+            val cameraConfig = characteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
+            )!!
 
-                // (지원 사이즈 리스트 가져오기)
-                val previewSizeList = ArrayList<Size>()
-                previewSizeList.addAll(cameraConfig.getOutputSizes(SurfaceTexture::class.java))
+            // (지원 사이즈 리스트 가져오기)
+            val previewSizeList = ArrayList<Size>()
+            previewSizeList.addAll(cameraConfig.getOutputSizes(SurfaceTexture::class.java))
 
-                val captureImageReaderSizeList = ArrayList<Size>()
-                captureImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.JPEG))
+            val captureImageReaderSizeList = ArrayList<Size>()
+            captureImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.JPEG))
 
-                val mediaRecorderSizeList = ArrayList<Size>()
-                mediaRecorderSizeList.addAll(cameraConfig.getOutputSizes(MediaRecorder::class.java))
+            val mediaRecorderSizeList = ArrayList<Size>()
+            mediaRecorderSizeList.addAll(cameraConfig.getOutputSizes(MediaRecorder::class.java))
 
-                val analysisImageReaderSizeList = ArrayList<Size>()
-                analysisImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+            val analysisImageReaderSizeList = ArrayList<Size>()
+            analysisImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
 
-                val highSpeedSizeList = ArrayList<Size>()
-                highSpeedSizeList.addAll(cameraConfig.highSpeedVideoSizes)
+            val highSpeedSizeList = ArrayList<Size>()
+            highSpeedSizeList.addAll(cameraConfig.highSpeedVideoSizes)
 
-                // (지원 모드 비교)
-                if (previewSizeList.isNotEmpty()) {
-                    resultSet.add(1)
-                }
+            // (지원 모드 비교)
+            if (previewSizeList.isNotEmpty()) {
+                resultSet.add(1)
+            }
 
-                if (captureImageReaderSizeList.isNotEmpty()) {
-                    resultSet.add(2)
-                }
+            if (captureImageReaderSizeList.isNotEmpty()) {
+                resultSet.add(2)
+            }
 
-                if (mediaRecorderSizeList.isNotEmpty()) {
-                    resultSet.add(3)
-                }
+            if (mediaRecorderSizeList.isNotEmpty()) {
+                resultSet.add(3)
+            }
 
-                if (analysisImageReaderSizeList.isNotEmpty()) {
-                    resultSet.add(4)
-                }
+            if (analysisImageReaderSizeList.isNotEmpty()) {
+                resultSet.add(4)
+            }
 
-                if (highSpeedSizeList.isNotEmpty()) {
-                    resultSet.add(5)
-                }
+            if (highSpeedSizeList.isNotEmpty()) {
+                resultSet.add(5)
+            }
 
-                if (sizeListSameWhRatioExists(previewSizeList, captureImageReaderSizeList)) {
-                    resultSet.add(6)
-                }
+            if (sizeListSameWhRatioExists(previewSizeList, captureImageReaderSizeList)) {
+                resultSet.add(6)
+            }
 
-                if (sizeListSameWhRatioExists(previewSizeList, mediaRecorderSizeList)) {
-                    resultSet.add(7)
-                }
+            if (sizeListSameWhRatioExists(previewSizeList, mediaRecorderSizeList)) {
+                resultSet.add(7)
+            }
 
-                if (sizeListSameWhRatioExists(previewSizeList, analysisImageReaderSizeList)) {
-                    resultSet.add(8)
-                }
+            if (sizeListSameWhRatioExists(previewSizeList, analysisImageReaderSizeList)) {
+                resultSet.add(8)
+            }
 
-                if (sizeListSameWhRatioExists(captureImageReaderSizeList, mediaRecorderSizeList)) {
-                    resultSet.add(9)
-                }
+            if (sizeListSameWhRatioExists(captureImageReaderSizeList, mediaRecorderSizeList)) {
+                resultSet.add(9)
+            }
 
-                if (sizeListSameWhRatioExists(
-                        captureImageReaderSizeList,
-                        analysisImageReaderSizeList
-                    )
-                ) {
-                    resultSet.add(10)
-                }
+            if (sizeListSameWhRatioExists(
+                    captureImageReaderSizeList,
+                    analysisImageReaderSizeList
+                )
+            ) {
+                resultSet.add(10)
+            }
 
-                if (sizeListSameWhRatioExists(mediaRecorderSizeList, analysisImageReaderSizeList)) {
-                    resultSet.add(11)
-                }
+            if (sizeListSameWhRatioExists(
+                    mediaRecorderSizeList,
+                    analysisImageReaderSizeList
+                )
+            ) {
+                resultSet.add(11)
+            }
 
-                if (sizeListSameWhRatioExists(
-                        previewSizeList,
-                        captureImageReaderSizeList,
-                        mediaRecorderSizeList
-                    )
-                ) {
-                    resultSet.add(12)
-                }
+            if (sizeListSameWhRatioExists(
+                    previewSizeList,
+                    captureImageReaderSizeList,
+                    mediaRecorderSizeList
+                )
+            ) {
+                resultSet.add(12)
+            }
 
-                if (sizeListSameWhRatioExists(
-                        previewSizeList,
-                        captureImageReaderSizeList,
-                        analysisImageReaderSizeList
-                    )
-                ) {
-                    resultSet.add(13)
-                }
+            if (sizeListSameWhRatioExists(
+                    previewSizeList,
+                    captureImageReaderSizeList,
+                    analysisImageReaderSizeList
+                )
+            ) {
+                resultSet.add(13)
+            }
 
-                if (sizeListSameWhRatioExists(
-                        previewSizeList,
-                        mediaRecorderSizeList,
-                        analysisImageReaderSizeList
-                    )
-                ) {
-                    resultSet.add(14)
-                }
+            if (sizeListSameWhRatioExists(
+                    previewSizeList,
+                    mediaRecorderSizeList,
+                    analysisImageReaderSizeList
+                )
+            ) {
+                resultSet.add(14)
+            }
 
-                if (sizeListSameWhRatioExists(
-                        captureImageReaderSizeList,
-                        mediaRecorderSizeList,
-                        analysisImageReaderSizeList
-                    )
-                ) {
-                    resultSet.add(15)
-                }
+            if (sizeListSameWhRatioExists(
+                    captureImageReaderSizeList,
+                    mediaRecorderSizeList,
+                    analysisImageReaderSizeList
+                )
+            ) {
+                resultSet.add(15)
+            }
 
-                if (sizeListSameWhRatioExists(
-                        previewSizeList,
-                        captureImageReaderSizeList,
-                        mediaRecorderSizeList,
-                        analysisImageReaderSizeList
-                    )
-                ) {
-                    resultSet.add(16)
-                }
+            if (sizeListSameWhRatioExists(
+                    previewSizeList,
+                    captureImageReaderSizeList,
+                    mediaRecorderSizeList,
+                    analysisImageReaderSizeList
+                )
+            ) {
+                resultSet.add(16)
             }
 
             return resultSet
         }
 
-        // (특정 모드가 가능한 가용 카메라 정보 리스트 반환)
-        // 카메라 지원 모드
-        // 1 : preview - preview 가 존재
-        // 2 : capture - captureImageReader 가 존재
-        // 3 : mediaRecord - mediaRecorder 가 존재
-        // 4 : analysis - analysisImageReader 가 존재
-        // 5 : highSpeed - highSpeed 가 존재
-        // 6 : preview and capture - 동일 서페이스 비율 제공
-        // 7 : preview and mediaRecord - 동일 서페이스 비율 제공
-        // 8 : preview and analysis - 동일 서페이스 비율 제공
-        // 9 : capture and mediaRecord - 동일 서페이스 비율 제공
-        // 10 : capture and analysis - 동일 서페이스 비율 제공
-        // 11 : mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
-        // 13 : preview and capture and analysis - 동일 서페이스 비율 제공
-        // 14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
-        fun getSupportedCameraInfoListForMode(
+        // (특정 모드가 가능한 가용 카메라 아이디 리스트 반환)
+        // : 카메라 지원 모드 종류는 클래스 선언 위의 설명 참조
+        fun getSupportedCameraIdListForMode(
             parentActivity: Activity,
             mode: Int
-        ): ArrayList<CameraInfoVo> {
+        ): ArrayList<String> {
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
-            val supportedCameraInfoList: ArrayList<CameraInfoVo> = ArrayList()
+            val supportedCameraIdList: ArrayList<String> = ArrayList()
 
             for (cameraId in cameraManager.cameraIdList) {
                 val characteristics = cameraManager.getCameraCharacteristics(cameraId)
@@ -372,17 +430,25 @@ class CameraObj private constructor(
                 val mode3 = mediaRecorderSizeList.isNotEmpty()
                 val mode4 = analysisImageReaderSizeList.isNotEmpty()
                 val mode5 = highSpeedSizeList.isNotEmpty()
-                val mode6 = sizeListSameWhRatioExists(previewSizeList, captureImageReaderSizeList)
+                val mode6 =
+                    sizeListSameWhRatioExists(previewSizeList, captureImageReaderSizeList)
                 val mode7 = sizeListSameWhRatioExists(previewSizeList, mediaRecorderSizeList)
-                val mode8 = sizeListSameWhRatioExists(previewSizeList, analysisImageReaderSizeList)
+                val mode8 =
+                    sizeListSameWhRatioExists(previewSizeList, analysisImageReaderSizeList)
                 val mode9 =
-                    sizeListSameWhRatioExists(captureImageReaderSizeList, mediaRecorderSizeList)
+                    sizeListSameWhRatioExists(
+                        captureImageReaderSizeList,
+                        mediaRecorderSizeList
+                    )
                 val mode10 = sizeListSameWhRatioExists(
                     captureImageReaderSizeList,
                     analysisImageReaderSizeList
                 )
                 val mode11 =
-                    sizeListSameWhRatioExists(mediaRecorderSizeList, analysisImageReaderSizeList)
+                    sizeListSameWhRatioExists(
+                        mediaRecorderSizeList,
+                        analysisImageReaderSizeList
+                    )
                 val mode12 = sizeListSameWhRatioExists(
                     previewSizeList,
                     captureImageReaderSizeList,
@@ -481,627 +547,321 @@ class CameraObj private constructor(
                 }
 
                 // (모드 검증이 통과한 카메라 정보 추가)
-                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
-
                 val sensorOrientation: Int? =
                     characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
-
-                val afAvailableModes: IntArray? =
-                    characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
-
-                val fastAutoFocusSupported =
-                    afAvailableModes?.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                        ?: false
-
-                val naturalAutoFocusSupported =
-                    afAvailableModes?.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
-                        ?: false
-
-                val maxRegionAf =
-                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF)
-
-                val autoFocusMeteringAreaSupported =
-                    null != maxRegionAf && maxRegionAf >= 1
-
-                val aeAvailableModes: IntArray? =
-                    characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES)
-
-                val autoExposureSupported =
-                    !(aeAvailableModes == null || aeAvailableModes.isEmpty() || (aeAvailableModes.size == 1
-                            && aeAvailableModes[0] == CameraMetadata.CONTROL_AE_MODE_OFF))
-
-                val maxRegionAe: Int? =
-                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE)
-
-                val autoExposureMeteringAreaSupported =
-                    maxRegionAe != null && maxRegionAe >= 1
-
-                val awbAvailableModes: IntArray? =
-                    characteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)
-
-                val maxRegionAwb: Int? =
-                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB)
-
-                val autoWhiteBalanceMeteringAreaSupported =
-                    maxRegionAwb != null && maxRegionAwb >= 1
-
-                val autoWhiteBalanceSupported =
-                    !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
-                            && awbAvailableModes[0] == CameraMetadata.CONTROL_AWB_MODE_OFF))
-
-                val supportedMinimumFocusDistance =
-                    characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
-                        ?: 0f
-
-
-                // (기계적 떨림 보정 정보)
-                val availableOpticalStabilization =
-                    characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
-
-                var isOpticalStabilizationAvailable = false
-                if (availableOpticalStabilization != null) {
-                    for (stabilizationMode in availableOpticalStabilization) {
-                        if (stabilizationMode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
-                            isOpticalStabilizationAvailable = true
-                        }
-                    }
-                }
-
-                // (소프트웨어 떨림 보정 정보)
-                val availableVideoStabilization =
-                    characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
-
-                var isVideoStabilizationAvailable = false
-                if (availableVideoStabilization != null) {
-                    for (stabilizationMode in availableVideoStabilization) {
-                        if (stabilizationMode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
-                            isVideoStabilizationAvailable = true
-                        }
-                    }
-                }
 
                 val sensorSize =
                     characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
 
-                val maxZoom: Float =
-                    if (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) == null) {
-                        1.0f
-                    } else {
-                        if (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)!! < 1.0f) {
-                            1.0f
-                        } else {
-                            characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)!!
-                        }
-                    }
-
                 if (sensorOrientation != null && sensorSize != null) {
-                    supportedCameraInfoList.add(
-                        CameraInfoVo(
-                            cameraId,
-                            facing,
-                            sensorOrientation,
-                            fastAutoFocusSupported,
-                            naturalAutoFocusSupported,
-                            autoFocusMeteringAreaSupported,
-                            autoExposureSupported,
-                            autoExposureMeteringAreaSupported,
-                            autoWhiteBalanceSupported,
-                            autoWhiteBalanceMeteringAreaSupported,
-                            supportedMinimumFocusDistance,
-                            isOpticalStabilizationAvailable,
-                            isVideoStabilizationAvailable,
-                            sensorSize,
-                            maxZoom
-                        )
-                    )
+                    supportedCameraIdList.add(cameraId)
                 }
             }
 
-            return supportedCameraInfoList
+            return supportedCameraIdList
         }
 
-        // (모든 가용 카메라 정보 리스트 반환)
-        fun getAllSupportedCameraInfoList(parentActivity: Activity): ArrayList<CameraInfoVo> {
-            val cameraManager: CameraManager =
-                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-            val supportedCameraInfoList: ArrayList<CameraInfoVo> = ArrayList()
-
-            for (cameraId in cameraManager.cameraIdList) {
-                val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-
-                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)!!
-
-                val sensorOrientation: Int? =
-                    characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
-
-                val afAvailableModes: IntArray? =
-                    characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
-
-                val fastAutoFocusSupported =
-                    afAvailableModes?.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                        ?: false
-
-                val naturalAutoFocusSupported =
-                    afAvailableModes?.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
-                        ?: false
-
-                val maxRegionAf =
-                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF)
-
-                val autoFocusMeteringAreaSupported =
-                    null != maxRegionAf && maxRegionAf >= 1
-
-                val aeAvailableModes: IntArray? =
-                    characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES)
-
-                val autoExposureSupported =
-                    !(aeAvailableModes == null || aeAvailableModes.isEmpty() || (aeAvailableModes.size == 1
-                            && aeAvailableModes[0] == CameraMetadata.CONTROL_AE_MODE_OFF))
-
-                val aeState: Int? =
-                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE)
-                val autoExposureMeteringAreaSupported =
-                    aeState != null && aeState >= 1
-
-                val awbAvailableModes: IntArray? =
-                    characteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)
-
-                val autoWhiteBalanceSupported =
-                    !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
-                            && awbAvailableModes[0] == CameraMetadata.CONTROL_AWB_MODE_OFF))
-
-                val maxRegionAwb: Int? =
-                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB)
-
-                val autoWhiteBalanceMeteringAreaSupported =
-                    maxRegionAwb != null && maxRegionAwb >= 1
-
-                val supportedMinimumFocusDistance =
-                    characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
-                        ?: 0f
-
-
-                // (기계적 떨림 보정 정보)
-                val availableOpticalStabilization =
-                    characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
-
-                var isOpticalStabilizationAvailable = false
-                if (availableOpticalStabilization != null) {
-                    for (mode in availableOpticalStabilization) {
-                        if (mode == CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON) {
-                            isOpticalStabilizationAvailable = true
-                        }
-                    }
-                }
-
-                // (소프트웨어 떨림 보정 정보)
-                val availableVideoStabilization =
-                    characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
-
-                var isVideoStabilizationAvailable = false
-                if (availableVideoStabilization != null) {
-                    for (mode in availableVideoStabilization) {
-                        if (mode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
-                            isVideoStabilizationAvailable = true
-                        }
-                    }
-                }
-
-                val sensorSize =
-                    characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
-
-                val maxZoom: Float =
-                    if (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) == null) {
-                        1.0f
-                    } else {
-                        if (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)!! < 1.0f) {
-                            1.0f
-                        } else {
-                            characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)!!
-                        }
-                    }
-
-                if (sensorOrientation != null && sensorSize != null) {
-                    supportedCameraInfoList.add(
-                        CameraInfoVo(
-                            cameraId,
-                            facing,
-                            sensorOrientation,
-                            fastAutoFocusSupported,
-                            naturalAutoFocusSupported,
-                            autoFocusMeteringAreaSupported,
-                            autoExposureSupported,
-                            autoExposureMeteringAreaSupported,
-                            autoWhiteBalanceSupported,
-                            autoWhiteBalanceMeteringAreaSupported,
-                            supportedMinimumFocusDistance,
-                            isOpticalStabilizationAvailable,
-                            isVideoStabilizationAvailable,
-                            sensorSize,
-                            maxZoom
-                        )
-                    )
-                }
-            }
-
-            return supportedCameraInfoList
-        }
-
-        // (특정 카메라의 특정 모드 지원에 대한 중복되지 않는 단위 사이즈 반환)
-        // 단위 사이즈란, 정수에서 더이상 나누어 떨어지지 않는 사이즈로, 사이즈 width, height 최대공약수로 나눈 값
-        // 카메라 방향 기준으로, 3:2, 1:1 등의 비율을 나타냄
-        // 카메라 지원 모드
-        // 1 : preview - preview 가 존재
-        // 2 : capture - captureImageReader 가 존재
-        // 3 : mediaRecord - mediaRecorder 가 존재
-        // 4 : analysis - analysisImageReader 가 존재
-        // 5 : highSpeed - highSpeed 가 존재
-        // 6 : preview and capture - 동일 서페이스 비율 제공
-        // 7 : preview and mediaRecord - 동일 서페이스 비율 제공
-        // 8 : preview and analysis - 동일 서페이스 비율 제공
-        // 9 : capture and mediaRecord - 동일 서페이스 비율 제공
-        // 10 : capture and analysis - 동일 서페이스 비율 제공
-        // 11 : mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
-        // 13 : preview and capture and analysis - 동일 서페이스 비율 제공
-        // 14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
-        // 지원 모드 파라미터가 잘못되었다면 null 반환
-        fun getSupportedSurfaceUnitSize(
+        // (특정 카메라의 지원정보 반환)
+        // 가용한 cameraId 가 아닌 경우 null 반환
+        fun getCameraInfo(
             parentActivity: Activity,
-            cameraId: String,
-            mode: Int
-        ): HashSet<Size>? {
+            cameraId: String
+        ): CameraInfoVo? {
+            // 카메라 총괄 빌더
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
-            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+            val cameraIdList = cameraManager.cameraIdList
+            if (!cameraIdList.contains(cameraId)) { // 입력한 CameraId 가 지원되지 않을 때
+                return null
+            }
 
-            val cameraConfig = characteristics.get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
-            )!!
+            val cameraCharacteristics =
+                cameraManager.getCameraCharacteristics(cameraId)
 
-            // (카메라 제공 사이즈)
-            val previewSizeList = ArrayList<Size>()
-            previewSizeList.addAll(cameraConfig.getOutputSizes(SurfaceTexture::class.java))
+            val facing =
+                cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
 
-            val captureImageReaderSizeList = ArrayList<Size>()
-            captureImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.JPEG))
+            val streamConfigurationMap: StreamConfigurationMap? =
+                cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
 
-            val mediaRecorderSizeList = ArrayList<Size>()
-            mediaRecorderSizeList.addAll(cameraConfig.getOutputSizes(MediaRecorder::class.java))
+            val sensorOrientation: Int? =
+                cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
 
-            val analysisImageReaderSizeList = ArrayList<Size>()
-            analysisImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
+            val sensorSize =
+                cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
 
-            val highSpeedSizeList = ArrayList<Size>()
-            highSpeedSizeList.addAll(cameraConfig.highSpeedVideoSizes)
+            val capabilities = cameraCharacteristics.get(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
+            )
 
-            val resultSet = HashSet<Size>()
-            when (mode) {
-                1 -> {
-                    for (sizeInfo in previewSizeList) {
-                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                        resultSet.add(
-                            Size(
-                                sizeInfo.width / gcd,
-                                sizeInfo.height / gcd
-                            )
+            if (null == facing ||
+                null == streamConfigurationMap ||
+                null == sensorOrientation ||
+                null == sensorSize ||
+                null == capabilities
+            ) {
+                // 필수 정보가 하나라도 없으면 null 반환
+                return null
+            }
+
+            // (지원 사이즈 검증)
+            val previewInfoList = ArrayList<SizeSpecInfoVo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                )
+            ) {
+                streamConfigurationMap.getOutputSizes(SurfaceTexture::class.java).forEach { size ->
+                    val secondsPerFrame =
+                        streamConfigurationMap.getOutputMinFrameDuration(
+                            SurfaceTexture::class.java,
+                            size
+                        ) / 1_000_000_000.0
+                    val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                    previewInfoList.add(
+                        SizeSpecInfoVo(
+                            size, fps
                         )
-                    }
-                }
-                2 -> {
-                    for (sizeInfo in captureImageReaderSizeList) {
-                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                        resultSet.add(
-                            Size(
-                                sizeInfo.width / gcd,
-                                sizeInfo.height / gcd
-                            )
-                        )
-                    }
-                }
-                3 -> {
-                    for (sizeInfo in mediaRecorderSizeList) {
-                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                        resultSet.add(
-                            Size(
-                                sizeInfo.width / gcd,
-                                sizeInfo.height / gcd
-                            )
-                        )
-                    }
-                }
-                4 -> {
-                    for (sizeInfo in analysisImageReaderSizeList) {
-                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                        resultSet.add(
-                            Size(
-                                sizeInfo.width / gcd,
-                                sizeInfo.height / gcd
-                            )
-                        )
-                    }
-                }
-                5 -> {
-                    for (sizeInfo in highSpeedSizeList) {
-                        val gcd = CustomUtil.getGcd(sizeInfo.width, sizeInfo.height)
-                        resultSet.add(
-                            Size(
-                                sizeInfo.width / gcd,
-                                sizeInfo.height / gcd
-                            )
-                        )
-                    }
-                }
-                6 -> {
-                    for (sizeInfo in previewSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (captureImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                7 -> {
-                    for (sizeInfo in previewSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (mediaRecorderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                8 -> {
-                    for (sizeInfo in previewSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (analysisImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                9 -> {
-                    for (sizeInfo in captureImageReaderSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (mediaRecorderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                10 -> {
-                    for (sizeInfo in captureImageReaderSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (analysisImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                11 -> {
-                    for (sizeInfo in mediaRecorderSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (analysisImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                12 -> {
-                    for (sizeInfo in previewSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (captureImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1 &&
-                            mediaRecorderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                13 -> {
-                    for (sizeInfo in previewSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (captureImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1 &&
-                            analysisImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                14 -> {
-                    for (sizeInfo in previewSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (mediaRecorderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1 &&
-                            analysisImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                15 -> {
-                    for (sizeInfo in captureImageReaderSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (mediaRecorderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1 &&
-                            analysisImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                16 -> {
-                    for (sizeInfo in previewSizeList) {
-                        val gcd =
-                            CustomUtil.getGcd(
-                                sizeInfo.width,
-                                sizeInfo.height
-                            )
-                        val unitSize = Size(
-                            sizeInfo.width / gcd,
-                            sizeInfo.height / gcd
-                        )
-
-                        if (captureImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() ==
-                                        unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1 &&
-                            mediaRecorderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1 &&
-                            analysisImageReaderSizeList.indexOfFirst {
-                                it.width.toDouble() / it.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                            } != -1) {
-                            resultSet.add(unitSize)
-                        }
-                    }
-                }
-                else -> {
-                    return null
+                    )
                 }
             }
-            return resultSet
+
+            val captureImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                )
+            ) {
+                streamConfigurationMap.getOutputSizes(ImageFormat.JPEG).forEach { size ->
+                    val secondsPerFrame =
+                        streamConfigurationMap.getOutputMinFrameDuration(
+                            ImageFormat.YUV_420_888,
+                            size
+                        ) / 1_000_000_000.0
+                    val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                    captureImageReaderInfoList.add(
+                        SizeSpecInfoVo(
+                            size, fps
+                        )
+                    )
+                }
+            }
+
+            val mediaRecorderInfoList = ArrayList<SizeSpecInfoVo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                )
+            ) {
+                streamConfigurationMap.getOutputSizes(MediaRecorder::class.java).forEach { size ->
+                    val secondsPerFrame =
+                        streamConfigurationMap.getOutputMinFrameDuration(
+                            MediaRecorder::class.java,
+                            size
+                        ) / 1_000_000_000.0
+                    val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                    mediaRecorderInfoList.add(
+                        SizeSpecInfoVo(
+                            size, fps
+                        )
+                    )
+                }
+            }
+
+            val analysisImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE
+                )
+            ) {
+                streamConfigurationMap.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
+                    val secondsPerFrame =
+                        streamConfigurationMap.getOutputMinFrameDuration(
+                            ImageFormat.YUV_420_888,
+                            size
+                        ) / 1_000_000_000.0
+                    val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
+                    analysisImageReaderInfoList.add(
+                        SizeSpecInfoVo(
+                            size, fps
+                        )
+                    )
+                }
+            }
+
+            val highSpeedInfoList = ArrayList<SizeSpecInfoVo>()
+            if (capabilities.contains(
+                    CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
+                )
+            ) {
+                streamConfigurationMap.highSpeedVideoSizes.forEach { size ->
+                    streamConfigurationMap.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
+                        val fps = fpsRange.upper
+                        if (highSpeedInfoList.indexOfFirst {
+                                it.size == size && it.fps == fps
+                            } == -1) {
+                            highSpeedInfoList.add(
+                                SizeSpecInfoVo(
+                                    size, fps
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 출력 지원 사이즈가 하나도 없다면 null 반환
+            if (previewInfoList.isEmpty() &&
+                captureImageReaderInfoList.isEmpty() &&
+                mediaRecorderInfoList.isEmpty() &&
+                analysisImageReaderInfoList.isEmpty() &&
+                highSpeedInfoList.isEmpty()
+            ) {
+                return null
+            }
+
+            // [카메라 객체 내부 멤버변수 생성]
+            // AF 지원 가능 여부
+            val afAvailableModes: IntArray? =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
+
+            val fastAutoFocusSupported: Boolean
+            val naturalAutoFocusSupported: Boolean
+            if (afAvailableModes == null || afAvailableModes.isEmpty() || (afAvailableModes.size == 1
+                        && afAvailableModes[0] == CameraMetadata.CONTROL_AF_MODE_OFF)
+            ) {
+                fastAutoFocusSupported = false
+                naturalAutoFocusSupported = false
+            } else {
+                fastAutoFocusSupported =
+                    afAvailableModes.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                naturalAutoFocusSupported =
+                    afAvailableModes.contains(CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+            }
+
+            // area af 가능 여부
+            val maxRegionAf =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF)
+            val autoFocusMeteringAreaSupported =
+                null != maxRegionAf && maxRegionAf >= 1
+
+            // 가장 가까운 초점 거리
+            val supportedMinimumFocusDistance =
+                cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
+                    ?: 0f
+
+            // AE 지원 가능 여부
+            val aeAvailableModes: IntArray? =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES)
+            val autoExposureSupported =
+                !(aeAvailableModes == null || aeAvailableModes.isEmpty() || (aeAvailableModes.size == 1
+                        && aeAvailableModes[0] == CameraMetadata.CONTROL_AE_MODE_OFF))
+
+            // AE Area 지원 가능 여부
+            val aeState: Int? =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE)
+            val autoExposureMeteringAreaSupported =
+                aeState != null && aeState >= 1
+
+            // AWB 지원 가능 여부
+            val awbAvailableModes: IntArray? =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES)
+            val autoWhiteBalanceSupported =
+                !(awbAvailableModes == null || awbAvailableModes.isEmpty() || (awbAvailableModes.size == 1
+                        && awbAvailableModes[0] == CameraMetadata.CONTROL_AWB_MODE_OFF))
+
+            val maxRegionAwb: Int? =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AWB)
+
+            val autoWhiteBalanceMeteringAreaSupported =
+                maxRegionAwb != null && maxRegionAwb >= 1
+
+            // max zoom 정보
+            var maxZoom =
+                cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
+            maxZoom =
+                if (maxZoom == null) {
+                    1.0f
+                } else {
+                    if (maxZoom < 1.0f) {
+                        1.0f
+                    } else {
+                        maxZoom
+                    }
+                }
+
+            // 기계적 떨림 보정 여부
+            val availableOpticalStabilization =
+                cameraCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION)
+            val isOpticalStabilizationAvailable: Boolean =
+                availableOpticalStabilization?.contains(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_ON)
+                    ?: false
+
+            // 소프트웨어 떨림 보정 여부
+            val availableVideoStabilization =
+                cameraCharacteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+            val isVideoStabilizationAvailable: Boolean =
+                availableVideoStabilization?.contains(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON)
+                    ?: false
+
+
+            return CameraInfoVo(
+                cameraId,
+                facing,
+                sensorOrientation,
+                previewInfoList,
+                captureImageReaderInfoList,
+                mediaRecorderInfoList,
+                analysisImageReaderInfoList,
+                highSpeedInfoList,
+                fastAutoFocusSupported,
+                naturalAutoFocusSupported,
+                autoFocusMeteringAreaSupported,
+                autoExposureSupported,
+                autoExposureMeteringAreaSupported,
+                autoWhiteBalanceSupported,
+                autoWhiteBalanceMeteringAreaSupported,
+                supportedMinimumFocusDistance,
+                isOpticalStabilizationAvailable,
+                isVideoStabilizationAvailable,
+                sensorSize,
+                maxZoom
+            )
         }
 
-        // (카메라와 현 디바이스의 Width, height 개념이 동일한지)
-        // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨
-        // 해당 카메라의 sensorOrientation 가 null 이라서 카메라 방향을 알수 없으면 null 반환
+        // (특정 카메라와 현 디바이스의 Width, height 개념이 동일한지)
+        // 카메라 방향과 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨
+        // cameraId 가 적합하지 않다면 null 반환
         fun cameraSensorOrientationAndDeviceAreSameWh(
             parentActivity: Activity,
             cameraId: String
         ): Boolean? {
-            // 디바이스 물리적 특정 방향을 0으로 뒀을 때의 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
+            // 카메라 총괄 빌더
+            val cameraManager: CameraManager =
+                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            val cameraIdList = cameraManager.cameraIdList
+            if (!cameraIdList.contains(cameraId)) { // 입력한 CameraId 가 지원되지 않을 때
+                return null
+            }
+
+            // 카메라 Id에 해당하는 카메라 정보 가져오기
+            val cameraCharacteristics =
+                cameraManager.getCameraCharacteristics(cameraId)
+
+            val sensorOrientation: Int =
+                cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
+                    ?: return null
+
+            // 디바이스 물리적 기본 방향을 0으로 뒀을 때, 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
+            // 0 = 0, 반시계 90 = 1, 180 = 2, 반시계 270 = 3
             val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 parentActivity.display!!.rotation
             } else {
                 parentActivity.windowManager.defaultDisplay.rotation
             }
-
-            val cameraManager: CameraManager =
-                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-
-            val sensorOrientation: Int =
-                characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: return null
 
             return when (deviceOrientation) {
                 Surface.ROTATION_90, Surface.ROTATION_270 -> {
@@ -1132,244 +892,6 @@ class CameraObj private constructor(
             }
         }
 
-        // (원하는 Area 와 Ratio 에 가장 유사한 사이즈 반환 함수)
-        // surfaceType
-        // 1 : preview
-        // 2 : capture imageReader
-        // 3 : mediaRecorder
-        // 4 : analysis imageReader
-        // 5 : high speed
-        // preferredArea : 원하는 넓이
-        // cameraOrientPreferredWHRatio : 원하는 width * height 비율(width, height 개념은 카메라 방향 기준)
-        // surfaceType 를 잘못 입력하면 null 반환
-        fun getNearestSupportedCameraOutputSize(
-            parentActivity: Activity,
-            cameraId: String,
-            surfaceType: Int,
-            preferredArea: Long,
-            preferredWHRatio: Double
-        ): Size? {
-            val cameraManager: CameraManager =
-                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-
-            val cameraConfig = characteristics.get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
-            )!!
-
-            val previewSizeList = ArrayList<Size>()
-            previewSizeList.addAll(cameraConfig.getOutputSizes(SurfaceTexture::class.java))
-
-            val captureImageReaderSizeList = ArrayList<Size>()
-            captureImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.JPEG))
-
-            val mediaRecorderSizeList = ArrayList<Size>()
-            mediaRecorderSizeList.addAll(cameraConfig.getOutputSizes(MediaRecorder::class.java))
-
-            val analysisImageReaderSizeList = ArrayList<Size>()
-            analysisImageReaderSizeList.addAll(cameraConfig.getOutputSizes(ImageFormat.YUV_420_888))
-
-            val highSpeedSizeList = ArrayList<Size>()
-            highSpeedSizeList.addAll(cameraConfig.highSpeedVideoSizes)
-
-            val sizeList = when (surfaceType) {
-                1 -> {
-                    previewSizeList
-                }
-                2 -> {
-                    captureImageReaderSizeList
-                }
-                3 -> {
-                    mediaRecorderSizeList
-                }
-                4 -> {
-                    analysisImageReaderSizeList
-                }
-                5 -> {
-                    highSpeedSizeList
-                }
-                else -> {
-                    null
-                }
-            } ?: return null // surfaceType 인자를 잘못 입력한 상황
-
-            if (0 >= preferredWHRatio) { // whRatio 를 0 이하로 선택하면 넓이만으로 비교
-                // 넓이 비슷한 것을 선정
-                var smallestAreaDiff: Long = Long.MAX_VALUE
-                var resultIndex = 0
-
-                for ((index, value) in sizeList.withIndex()) {
-                    val area = value.width.toLong() * value.height.toLong()
-                    val areaDiff = abs(area - preferredArea)
-                    if (areaDiff < smallestAreaDiff) {
-                        smallestAreaDiff = areaDiff
-                        resultIndex = index
-                    }
-                }
-
-                return sizeList[resultIndex]
-            } else { // 비율을 먼저 보고, 이후 넓이로 비교
-                // 비율 비슷한 것을 선정
-                var mostSameWhRatio = 0.0
-                var smallestWhRatioDiff: Double = Double.MAX_VALUE
-
-                for (value in sizeList) {
-                    val whRatio: Double = value.width.toDouble() / value.height.toDouble()
-
-                    val whRatioDiff = abs(whRatio - preferredWHRatio)
-                    if (whRatioDiff < smallestWhRatioDiff) {
-                        smallestWhRatioDiff = whRatioDiff
-                        mostSameWhRatio = whRatio
-                    }
-                }
-
-                // 넓이 비슷한 것을 선정
-                var resultSizeIndex = 0
-                var smallestAreaDiff: Long = Long.MAX_VALUE
-                // 비슷한 비율중 가장 비슷한 넓이를 선정
-                for ((index, value) in sizeList.withIndex()) {
-                    val whRatio: Double = value.width.toDouble() / value.height.toDouble()
-
-                    if (mostSameWhRatio == whRatio) {
-                        val area = value.width.toLong() * value.height.toLong()
-                        val areaDiff = abs(area - preferredArea)
-                        if (areaDiff < smallestAreaDiff) {
-                            smallestAreaDiff = areaDiff
-                            resultSizeIndex = index
-                        }
-                    }
-                }
-                return sizeList[resultSizeIndex]
-            }
-        }
-
-        // (모든 가용 사이즈 정보를 반환)
-        // 해당 카메라에서 가용한 모든 사이즈, FPS 정보를 반환
-        fun getSupportedAllCameraSizeInfo(
-            parentActivity: Activity,
-            cameraId: String
-        ): CameraSurfacesSizeListInfoVo {
-            val cameraManager: CameraManager =
-                parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-            val cameraConfig = characteristics.get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
-            )!!
-
-            val previewInfoList = ArrayList<SizeSpecInfoVo>()
-            cameraConfig.getOutputSizes(SurfaceTexture::class.java).forEach { size ->
-                val secondsPerFrame =
-                    cameraConfig.getOutputMinFrameDuration(
-                        SurfaceTexture::class.java,
-                        size
-                    ) / 1_000_000_000.0
-                val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                previewInfoList.add(
-                    SizeSpecInfoVo(
-                        size, fps
-                    )
-                )
-            }
-
-            val captureImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
-            cameraConfig.getOutputSizes(ImageFormat.JPEG).forEach { size ->
-                val secondsPerFrame =
-                    cameraConfig.getOutputMinFrameDuration(
-                        ImageFormat.JPEG,
-                        size
-                    ) / 1_000_000_000.0
-                val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                captureImageReaderInfoList.add(
-                    SizeSpecInfoVo(
-                        size, fps
-                    )
-                )
-            }
-
-            val mediaRecorderInfoList = ArrayList<SizeSpecInfoVo>()
-            cameraConfig.getOutputSizes(MediaRecorder::class.java).forEach { size ->
-                val secondsPerFrame =
-                    cameraConfig.getOutputMinFrameDuration(
-                        MediaRecorder::class.java,
-                        size
-                    ) / 1_000_000_000.0
-                val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                mediaRecorderInfoList.add(
-                    SizeSpecInfoVo(
-                        size, fps
-                    )
-                )
-            }
-
-            val analysisImageReaderInfoList = ArrayList<SizeSpecInfoVo>()
-            cameraConfig.getOutputSizes(ImageFormat.YUV_420_888).forEach { size ->
-                val secondsPerFrame =
-                    cameraConfig.getOutputMinFrameDuration(
-                        ImageFormat.YUV_420_888,
-                        size
-                    ) / 1_000_000_000.0
-                val fps = if (secondsPerFrame > 0) (1.0 / secondsPerFrame).toInt() else 0
-                analysisImageReaderInfoList.add(
-                    SizeSpecInfoVo(
-                        size, fps
-                    )
-                )
-            }
-
-            // 120 fps 이상
-            val highSpeedInfoList = ArrayList<SizeSpecInfoVo>()
-            cameraConfig.highSpeedVideoSizes.forEach { size ->
-                cameraConfig.getHighSpeedVideoFpsRangesFor(size).forEach { fpsRange ->
-                    val fps = fpsRange.upper
-                    if (highSpeedInfoList.indexOfFirst {
-                            it.size == size && it.fps == fps
-                        } == -1) {
-                        highSpeedInfoList.add(
-                            SizeSpecInfoVo(
-                                size, fps
-                            )
-                        )
-                    }
-                }
-            }
-
-            val whRatioSet = HashSet<Double>()
-
-            for (sizeInfo in previewInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            for (sizeInfo in captureImageReaderInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            for (sizeInfo in mediaRecorderInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            for (sizeInfo in analysisImageReaderInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            for (sizeInfo in highSpeedInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            return CameraSurfacesSizeListInfoVo(
-                whRatioSet,
-                previewInfoList,
-                captureImageReaderInfoList,
-                mediaRecorderInfoList,
-                analysisImageReaderInfoList,
-                highSpeedInfoList
-            )
-        }
 
         // (객체 생성 함수 = 조건에 맞지 않으면 null 반환)
         // 조작하길 원하는 카메라 ID 를 설정하여 해당 카메라 정보를 생성
@@ -1377,7 +899,7 @@ class CameraObj private constructor(
             parentActivity: Activity,
             cameraId: String,
             onCameraDisconnectedAndClearCamera: (() -> Unit)
-        ): CameraObj? {
+        ): Camera2Obj? {
             // [카메라 디바이스 유무 검증]
             if (!parentActivity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
                 // 카메라 장치가 없다면 null 반환
@@ -1388,6 +910,11 @@ class CameraObj private constructor(
             // 카메라 총괄 빌더
             val cameraManager: CameraManager =
                 parentActivity.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            val cameraIdList = cameraManager.cameraIdList
+            if (!cameraIdList.contains(cameraId)) { // 입력한 CameraId 가 지원되지 않을 때
+                return null
+            }
 
             // 카메라 Id에 해당하는 카메라 정보 가져오기
             val cameraCharacteristics =
@@ -1538,7 +1065,7 @@ class CameraObj private constructor(
             }
 
             // [카메라 객체 생성]
-            val resultCameraObject = CameraObj(
+            val resultCameraObject = Camera2Obj(
                 parentActivity,
                 cameraManager,
                 onCameraDisconnectedAndClearCamera
@@ -1643,6 +1170,11 @@ class CameraObj private constructor(
                 cameraId,
                 facing,
                 sensorOrientation,
+                previewInfoList,
+                captureImageReaderInfoList,
+                mediaRecorderInfoList,
+                analysisImageReaderInfoList,
+                highSpeedInfoList,
                 fastAutoFocusSupported,
                 naturalAutoFocusSupported,
                 autoFocusMeteringAreaSupported,
@@ -1655,43 +1187,6 @@ class CameraObj private constructor(
                 isVideoStabilizationAvailable,
                 sensorSize,
                 maxZoom
-            )
-
-            val whRatioSet = HashSet<Double>()
-
-            for (sizeInfo in previewInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            for (sizeInfo in captureImageReaderInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            for (sizeInfo in mediaRecorderInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            for (sizeInfo in analysisImageReaderInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            for (sizeInfo in highSpeedInfoList) {
-                val whRatio = sizeInfo.size.width.toDouble() / sizeInfo.size.height.toDouble()
-                whRatioSet.add(whRatio)
-            }
-
-            // 카메라 지원 사이즈 정보
-            resultCameraObject.cameraSurfacesSizeListInfoVoMbr = CameraSurfacesSizeListInfoVo(
-                whRatioSet,
-                previewInfoList,
-                captureImageReaderInfoList,
-                mediaRecorderInfoList,
-                analysisImageReaderInfoList,
-                highSpeedInfoList
             )
 
             // 카메라 사용 스레드
@@ -1756,7 +1251,6 @@ class CameraObj private constructor(
         // 한 카메라에 대해 하나의 스레드와 세마포어를 생성후 사용
         private val cameraIdThreadVoList: ArrayList<CameraIdThreadVo> = ArrayList()
         private val cameraIdThreadVoListSemaphore: Semaphore = Semaphore(1)
-
         private fun publishSharedCameraIdThreadVoOnStaticMemory(cameraId: String): CameraIdThreadVo {
             cameraIdThreadVoListSemaphore.acquire()
 
@@ -1811,353 +1305,121 @@ class CameraObj private constructor(
         )
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // <멤버 변수 공간>
+    // (스레드 풀)
+    // 카메라 API 사용 스레드 세트
+    private lateinit var cameraThreadVoMbr: CameraIdThreadVo
+
+
+    // [카메라 지원 정보]
+    // 현 카메라 정보
+    lateinit var cameraInfoVoMbr: CameraInfoVo
+        private set
+
+
+    // [카메라 설정 정보]
+    // (3A 설정)
+    // 포커스 거리 :
+    //     거리는 0부터 시작해서 minimumFocusDistanceMbr 까지의 수치
+    //     0은 가장 먼 곳, 수치가 커질수록 가까운 곳의 포커스
+    //     -1 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO (자연스런 포커싱)
+    //     -2 일 때는 CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE (빠른 포커싱)
+    //     기본 값은 객체 생성시 결정되어, 카메라 지원 정보에 따라 -2 or -1 or 0 의 순서대로 적용 가능한 설정을 결정
+    var focusDistanceMbr: Float = -1f
+        private set
+
+    // 센서 노출 시간 :
+    //     나노초 == 초/1000000000
+    //     한 프레임에 대한 노출 시간
+    //     null 이라면 Auto Exposure ON
+    //     ex : 1000000000 / 80 // 나눠주는 값이 작을수록 밝아짐
+    var exposureTimeNsMbr: Long? = null
+        private set
+
+    // 화이트 밸런스 색온도 :
+    //     null 이라면 Auto WhiteBalance ON
+    //     화이트 밸런스는 0 ~ 100 사이의 정수값
+    //     0이면 파란색으로 차가운 색, 100이면 노란색으로 따뜻한 색
+    //     템플릿 적용 파라미터
+    //         -1 : CONTROL_AWB_MODE_CLOUDY_DAYLIGHT
+    //         -2 : CONTROL_AWB_MODE_DAYLIGHT
+    //         -3 : CONTROL_AWB_MODE_FLUORESCENT
+    //         -4 : CONTROL_AWB_MODE_INCANDESCENT
+    //         -5 : CONTROL_AWB_MODE_SHADE
+    //         -6 : CONTROL_AWB_MODE_TWILIGHT
+    //         -7 : CONTROL_AWB_MODE_WARM_FLUORESCENT
+    var whiteBalanceColorTemperatureMbr: Int? = null
+
+    // (수동 조작 설정)
+    // 떨림 보정 기능 적용 여부
+    //     0 : 적용 안함
+    //     1 : 기계적 떨림 보정
+    //     2 : 소프트웨어 떨림 보정
+    //     기계적 떨림 보정 적용을 해보고, 안되면 소프트웨어 떨림 보정 적용
+    var cameraStabilizationSetMbr: Int = 0
+        private set
+
+    // 카메라 현재 줌 배수
+    //     1f 부터 cameraInfoVoMbr.maxZoom 까지
+    var zoomFactorMbr: Float = 1.0f
+        private set
+
+
+    // [카메라 상태 정보]
+    // (카메라 현 상태 코드)
+    // : 각 상태 코드별 절차 순서를 나타냄
+    //     큰 숫자의 코드는 작은 숫자 프로세싱이 완료되어야 전환이 가능
+    //     -1 : 카메라 객체 파괴
+    //     0 : 카메라 객체 초기 상태
+    //     1 : surface output 세팅 완료
+    //     2 : request repeating
+    var cameraStatusCodeMbr: Int = 0
+
+    // 미디어 레코더 현 상태 코드
+    //     0 : media recorder surface set 이전
+    //     1 : media recorder surface set (cameraStatusCodeMbr == 1 and mediaRecorderConfig)
+    //     2 : media recorder ready (cameraStatusCodeMbr == 2 and requestForMediaRecorder)
+    //     3 : media recording (cameraStatusCodeMbr == 2 and startRecording)
+    //     4 : media recorder pause (cameraStatusCodeMbr == 2 and pauseRecording)
+    var mediaRecorderStatusCodeMbr: Int = 0
+
+
+    // [카메라 API 생산 데이터]
+    private var cameraDeviceMbr: CameraDevice? = null
+
+    // 이미지 리더 세팅 부산물
+    var captureImageReaderConfigVoMbr: ImageReaderConfigVo? = null
+    private var captureImageReaderMbr: ImageReader? = null
+
+    var analysisImageReaderConfigVoMbr: ImageReaderConfigVo? = null
+    private var analysisImageReaderMbr: ImageReader? = null
+
+    // 미디어 리코더 세팅 부산물
+    var mediaRecorderConfigVoMbr: MediaRecorderConfigVo? = null
+    private var mediaRecorderMbr: MediaRecorder? = null
+    private var mediaCodecSurfaceMbr: Surface? = null
+
+    // 프리뷰 세팅 부산물
+    var previewConfigVoListMbr: ArrayList<PreviewConfigVo>? = null
+    private var previewSurfaceListMbr: ArrayList<Surface>? = ArrayList()
+
+    // 카메라 세션 객체
+    private var cameraCaptureSessionMbr: CameraCaptureSession? = null
+
+    // 반복 리퀘스트 타겟 객체
+    private var repeatRequestTargetVoMbr: RepeatRequestTargetVo? = null
+
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
 
     // [카메라 정보 반환 함수]
-    // (특정 카메라의 특정 모드 지원에 대한 중복되지 않는 단위 사이즈 반환)
-    // 단위 사이즈란, 정수에서 더이상 나누어 떨어지지 않는 사이즈로, 사이즈 width, height 최대공약수로 나눈 값
-    // 카메라 방향 기준으로, 3:2, 1:1 등의 비율을 나타냄
-    // 카메라 지원 모드
-    // 1 : preview - preview 가 존재
-    // 2 : capture - captureImageReader 가 존재
-    // 3 : mediaRecord - mediaRecorder 가 존재
-    // 4 : analysis - analysisImageReader 가 존재
-    // 5 : highSpeed - highSpeed 가 존재
-    // 6 : preview and capture - 동일 서페이스 비율 제공
-    // 7 : preview and mediaRecord - 동일 서페이스 비율 제공
-    // 8 : preview and analysis - 동일 서페이스 비율 제공
-    // 9 : capture and mediaRecord - 동일 서페이스 비율 제공
-    // 10 : capture and analysis - 동일 서페이스 비율 제공
-    // 11 : mediaRecord and analysis - 동일 서페이스 비율 제공
-    // 12 : preview and capture and mediaRecord - 동일 서페이스 비율 제공
-    // 13 : preview and capture and analysis - 동일 서페이스 비율 제공
-    // 14 : preview and mediaRecord and analysis - 동일 서페이스 비율 제공
-    // 15 : capture and mediaRecord and analysis - 동일 서페이스 비율 제공
-    // 16 : preview and capture and mediaRecord and analysis - 동일 서페이스 비율 제공
-    // 지원 모드 파라미터가 잘못되었다면 null 반환
-    fun getSupportedSurfaceUnitSize(
-        mode: Int
-    ): HashSet<Size>? {
-        // (카메라 제공 사이즈)
-        val previewSizeList = cameraSurfacesSizeListInfoVoMbr.previewInfoList
-
-        val captureImageReaderSizeList = cameraSurfacesSizeListInfoVoMbr.captureImageReaderInfoList
-
-        val mediaRecorderSizeList = cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
-
-        val analysisImageReaderSizeList =
-            cameraSurfacesSizeListInfoVoMbr.analysisImageReaderInfoList
-
-        val highSpeedSizeList = cameraSurfacesSizeListInfoVoMbr.highSpeedInfoList
-
-        val resultSet = HashSet<Size>()
-        when (mode) {
-            1 -> {
-                for (sizeInfo in previewSizeList) {
-                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                    resultSet.add(
-                        Size(
-                            sizeInfo.size.width / gcd,
-                            sizeInfo.size.height / gcd
-                        )
-                    )
-                }
-            }
-            2 -> {
-                for (sizeInfo in captureImageReaderSizeList) {
-                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                    resultSet.add(
-                        Size(
-                            sizeInfo.size.width / gcd,
-                            sizeInfo.size.height / gcd
-                        )
-                    )
-                }
-            }
-            3 -> {
-                for (sizeInfo in mediaRecorderSizeList) {
-                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                    resultSet.add(
-                        Size(
-                            sizeInfo.size.width / gcd,
-                            sizeInfo.size.height / gcd
-                        )
-                    )
-                }
-            }
-            4 -> {
-                for (sizeInfo in analysisImageReaderSizeList) {
-                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                    resultSet.add(
-                        Size(
-                            sizeInfo.size.width / gcd,
-                            sizeInfo.size.height / gcd
-                        )
-                    )
-                }
-            }
-            5 -> {
-                for (sizeInfo in highSpeedSizeList) {
-                    val gcd = CustomUtil.getGcd(sizeInfo.size.width, sizeInfo.size.height)
-                    resultSet.add(
-                        Size(
-                            sizeInfo.size.width / gcd,
-                            sizeInfo.size.height / gcd
-                        )
-                    )
-                }
-            }
-            6 -> {
-                for (sizeInfo in previewSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (captureImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            7 -> {
-                for (sizeInfo in previewSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (mediaRecorderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            8 -> {
-                for (sizeInfo in previewSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (analysisImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            9 -> {
-                for (sizeInfo in captureImageReaderSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (mediaRecorderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            10 -> {
-                for (sizeInfo in captureImageReaderSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (analysisImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            11 -> {
-                for (sizeInfo in mediaRecorderSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (analysisImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            12 -> {
-                for (sizeInfo in previewSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (captureImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1 &&
-                        mediaRecorderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            13 -> {
-                for (sizeInfo in previewSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (captureImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1 &&
-                        analysisImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            14 -> {
-                for (sizeInfo in previewSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (mediaRecorderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1 &&
-                        analysisImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            15 -> {
-                for (sizeInfo in captureImageReaderSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (mediaRecorderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1 &&
-                        analysisImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            16 -> {
-                for (sizeInfo in previewSizeList) {
-                    val gcd =
-                        CustomUtil.getGcd(
-                            sizeInfo.size.width,
-                            sizeInfo.size.height
-                        )
-                    val unitSize = Size(
-                        sizeInfo.size.width / gcd,
-                        sizeInfo.size.height / gcd
-                    )
-
-                    if (captureImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() ==
-                                    unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1 &&
-                        mediaRecorderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1 &&
-                        analysisImageReaderSizeList.indexOfFirst {
-                            it.size.width.toDouble() / it.size.height.toDouble() == unitSize.width.toDouble() / unitSize.height.toDouble()
-                        } != -1) {
-                        resultSet.add(unitSize)
-                    }
-                }
-            }
-            else -> {
-                return null
-            }
-        }
-        return resultSet
-    }
-
     // (카메라와 현 디바이스의 Width, height 개념이 동일한지)
-    // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨₩
+    // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨
     fun cameraSensorOrientationAndDeviceAreSameWh(): Boolean {
-        // 디바이스 물리적 특정 방향을 0으로 뒀을 때의 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
+        // 디바이스 물리적 기본 방향을 0으로 뒀을 때, 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
+        // 0 = 0, 반시계 90 = 1, 180 = 2, 반시계 270 = 3
         val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             parentActivityMbr.display!!.rotation
         } else {
@@ -2193,91 +1455,6 @@ class CameraObj private constructor(
         }
     }
 
-    // (원하는 Area 와 Ratio 에 가장 유사한 사이즈 반환 함수)
-    // surfaceType
-    // 1 : preview
-    // 2 : capture imageReader
-    // 3 : mediaRecorder
-    // 4 : analysis imageReader
-    // 5 : high speed
-    // preferredArea : 원하는 넓이
-    // cameraOrientPreferredWHRatio : 원하는 width * height 비율(width, height 개념은 카메라 방향 기준)
-    // surfaceType 를 잘못 입력하면 null 반환
-    fun getNearestSupportedCameraOutputSize(
-        surfaceType: Int,
-        preferredArea: Long,
-        cameraOrientPreferredWHRatio: Double
-    ): Size? {
-        val sizeInfoList = when (surfaceType) {
-            1 -> {
-                cameraSurfacesSizeListInfoVoMbr.previewInfoList
-            }
-            2 -> {
-                cameraSurfacesSizeListInfoVoMbr.captureImageReaderInfoList
-            }
-            3 -> {
-                cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
-            }
-            4 -> {
-                cameraSurfacesSizeListInfoVoMbr.analysisImageReaderInfoList
-            }
-            5 -> {
-                cameraSurfacesSizeListInfoVoMbr.highSpeedInfoList
-            }
-            else -> {
-                null
-            }
-        } ?: return null // surfaceType 인자를 잘못 입력한 상황
-
-        if (0 >= cameraOrientPreferredWHRatio) { // whRatio 를 0 이하로 선택하면 넓이만으로 비교
-            // 넓이 비슷한 것을 선정
-            var smallestAreaDiff: Long = Long.MAX_VALUE
-            var resultIndex = 0
-
-            for ((index, value) in sizeInfoList.withIndex()) {
-                val area = value.size.width.toLong() * value.size.height.toLong()
-                val areaDiff = abs(area - preferredArea)
-                if (areaDiff < smallestAreaDiff) {
-                    smallestAreaDiff = areaDiff
-                    resultIndex = index
-                }
-            }
-
-            return sizeInfoList[resultIndex].size
-        } else { // 비율을 먼저 보고, 이후 넓이로 비교
-            // 비율 비슷한 것을 선정
-            var mostSameWhRatio = 0.0
-            var smallestWhRatioDiff: Double = Double.MAX_VALUE
-
-            for (value in sizeInfoList) {
-                val whRatio: Double = value.size.width.toDouble() / value.size.height.toDouble()
-
-                val whRatioDiff = abs(whRatio - cameraOrientPreferredWHRatio)
-                if (whRatioDiff < smallestWhRatioDiff) {
-                    smallestWhRatioDiff = whRatioDiff
-                    mostSameWhRatio = whRatio
-                }
-            }
-
-            // 넓이 비슷한 것을 선정
-            var resultSizeIndex = 0
-            var smallestAreaDiff: Long = Long.MAX_VALUE
-            // 비슷한 비율중 가장 비슷한 넓이를 선정
-            for ((index, value) in sizeInfoList.withIndex()) {
-                val whRatio: Double = value.size.width.toDouble() / value.size.height.toDouble()
-
-                if (mostSameWhRatio == whRatio) {
-                    val area = value.size.width.toLong() * value.size.height.toLong()
-                    val areaDiff = abs(area - preferredArea)
-                    if (areaDiff < smallestAreaDiff) {
-                        smallestAreaDiff = areaDiff
-                        resultSizeIndex = index
-                    }
-                }
-            }
-            return sizeInfoList[resultSizeIndex].size
-        }
-    }
 
     // todo : 핀치 크기에 따라 델타 값 차등 적용
     // todo : AE, AF 적용 (하나 클릭 감지, 빨리 클릭시 af로 돌아오기, 오래 클릭시 해당 값으로 고정 - 이 상태에서 다른데 클릭시 고정 풀기)
@@ -2286,133 +1463,135 @@ class CameraObj private constructor(
     // 뷰를 주입하면 해당 뷰를 핀칭할 때에 줌을 변경할수 있도록 리스너를 주입
     // 뷰를 여러번 넣으면 각각의 뷰에 핀칭을 할 때마다 줌을 변경
     // delta : 단위 핀치 이벤트에 따른 줌 변화량 = 높을수록 민감
-    var beforePinchSpacingMbr: Float? = null
-    var pinchBeforeMbr: Boolean = false
-    var clickStartTimeMsMbr: Long? = null
-    var longClickedBeforeMbr = false
-    val longClickTimeMsMbr = 500
-    fun setCameraPinchZoomTouchListener(
-        view: View,
-        delta: Float = 0.05f
-    ) {
-        view.setOnTouchListener(object : View.OnTouchListener {
-            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-                when (event!!.action) {
-                    MotionEvent.ACTION_DOWN -> {}
-                    MotionEvent.ACTION_UP -> {
-                        // 형식 맞추기 코드
-                        v!!.performClick()
-
-                        // 손가락을 떼면 기존 핀치 너비 비우기
-                        beforePinchSpacingMbr = null
-                    }
-                    else -> {}
-                }
-
-                when (event.pointerCount) {
-                    2 -> { // 핀치를 위한 더블 터치일 경우
-                        // 두손가락을 대고있는 매 순간 실행
-
-                        // 현재 핀치 넓이 구하기
-                        val currentFingerSpacing: Float
-                        val x = event.getX(0) - event.getX(1)
-                        val y = event.getY(0) - event.getY(1)
-                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
-
-                        if (beforePinchSpacingMbr != null) {
-                            if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
-                                val zoom =
-                                    if ((zoomFactorMbr + delta) > cameraInfoVoMbr.maxZoom) {
-                                        cameraInfoVoMbr.maxZoom
-                                    } else {
-                                        zoomFactorMbr + delta
-                                    }
-                                setZoomFactor(
-                                    zoom,
-                                    onComplete = {})
-                            } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
-                                val zoom =
-                                    if ((zoomFactorMbr - delta) < 1.0f) {
-                                        1.0f
-                                    } else {
-                                        zoomFactorMbr - delta
-                                    }
-                                setZoomFactor(
-                                    zoom,
-                                    onComplete = {})
-                            }
-                        }
-
-                        // 핀치 너비를 갱신
-                        beforePinchSpacingMbr = currentFingerSpacing
-
-                        pinchBeforeMbr = true
-                        clickStartTimeMsMbr = null
-                        longClickedBeforeMbr = false
-
-                        return true
-                    }
-                    1 -> { // 한손가락을 대고있는 매 순간 실행
-
-                        // long click 탐지
-                        if (!pinchBeforeMbr) {
-                            if (clickStartTimeMsMbr == null) {
-                                clickStartTimeMsMbr = SystemClock.elapsedRealtime()
-                                longClickedBeforeMbr = false
-                            } else {
-                                longClickedBeforeMbr =
-                                    if (SystemClock.elapsedRealtime() - clickStartTimeMsMbr!! >= longClickTimeMsMbr) {
-                                        if (!longClickedBeforeMbr) {
-                                            // longClick 으로 전환되는 순간
-
-                                        }
-                                        true
-                                    } else {
-                                        false
-                                    }
-                            }
-                        }
-
-                        when (event.action) {
-                            MotionEvent.ACTION_DOWN -> {
-                                pinchBeforeMbr = false
-                            }
-                            MotionEvent.ACTION_UP -> {
-                                if (!pinchBeforeMbr && !longClickedBeforeMbr) {
-                                    // 핀치도, 롱 클릭도 아닌 단순 클릭
-
-                                }
-
-                                pinchBeforeMbr = false
-                                longClickedBeforeMbr = false
-                                clickStartTimeMsMbr = null
-                            }
-
-                            MotionEvent.ACTION_CANCEL -> {
-                                pinchBeforeMbr = false
-                                longClickedBeforeMbr = false
-                                clickStartTimeMsMbr = null
-                            }
-                            else -> {}
-                        }
-
-                        return true
-                    }
-                    else -> {
-                        return true
-                    }
-                }
-            }
-        })
-    }
+//    var beforePinchSpacingMbr: Float? = null
+//    var pinchBeforeMbr: Boolean = false
+//    var clickStartTimeMsMbr: Long? = null
+//    var longClickedBeforeMbr = false
+//    val longClickTimeMsMbr = 500
+//    fun setCameraPinchZoomTouchListener(
+//        view: View,
+//        delta: Float = 0.05f
+//    ) {
+//        view.setOnTouchListener(object : View.OnTouchListener {
+//            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+//                when (event!!.action) {
+//                    MotionEvent.ACTION_DOWN -> {}
+//                    MotionEvent.ACTION_UP -> {
+//                        // 형식 맞추기 코드
+//                        v!!.performClick()
+//
+//                        // 손가락을 떼면 기존 핀치 너비 비우기
+//                        beforePinchSpacingMbr = null
+//                    }
+//                    else -> {}
+//                }
+//
+//                when (event.pointerCount) {
+//                    2 -> { // 핀치를 위한 더블 터치일 경우
+//                        // 두손가락을 대고있는 매 순간 실행
+//
+//                        // 현재 핀치 넓이 구하기
+//                        val currentFingerSpacing: Float
+//                        val x = event.getX(0) - event.getX(1)
+//                        val y = event.getY(0) - event.getY(1)
+//                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+//
+//                        if (beforePinchSpacingMbr != null) {
+//                            if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
+//                                val zoom =
+//                                    if ((zoomFactorMbr + delta) > cameraInfoVoMbr.maxZoom) {
+//                                        cameraInfoVoMbr.maxZoom
+//                                    } else {
+//                                        zoomFactorMbr + delta
+//                                    }
+//                                setZoomFactor(
+//                                    zoom,
+//                                    onComplete = {})
+//                            } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
+//                                val zoom =
+//                                    if ((zoomFactorMbr - delta) < 1.0f) {
+//                                        1.0f
+//                                    } else {
+//                                        zoomFactorMbr - delta
+//                                    }
+//                                setZoomFactor(
+//                                    zoom,
+//                                    onComplete = {})
+//                            }
+//                        }
+//
+//                        // 핀치 너비를 갱신
+//                        beforePinchSpacingMbr = currentFingerSpacing
+//
+//                        pinchBeforeMbr = true
+//                        clickStartTimeMsMbr = null
+//                        longClickedBeforeMbr = false
+//
+//                        return true
+//                    }
+//                    1 -> { // 한손가락을 대고있는 매 순간 실행
+//
+//                        // long click 탐지
+//                        if (!pinchBeforeMbr) {
+//                            if (clickStartTimeMsMbr == null) {
+//                                clickStartTimeMsMbr = SystemClock.elapsedRealtime()
+//                                longClickedBeforeMbr = false
+//                            } else {
+//                                longClickedBeforeMbr =
+//                                    if (SystemClock.elapsedRealtime() - clickStartTimeMsMbr!! >= longClickTimeMsMbr) {
+//                                        if (!longClickedBeforeMbr) {
+//                                            // longClick 으로 전환되는 순간
+//
+//                                        }
+//                                        true
+//                                    } else {
+//                                        false
+//                                    }
+//                            }
+//                        }
+//
+//                        when (event.action) {
+//                            MotionEvent.ACTION_DOWN -> {
+//                                pinchBeforeMbr = false
+//                            }
+//                            MotionEvent.ACTION_UP -> {
+//                                if (!pinchBeforeMbr && !longClickedBeforeMbr) {
+//                                    // 핀치도, 롱 클릭도 아닌 단순 클릭
+//
+//                                }
+//
+//                                pinchBeforeMbr = false
+//                                longClickedBeforeMbr = false
+//                                clickStartTimeMsMbr = null
+//                            }
+//
+//                            MotionEvent.ACTION_CANCEL -> {
+//                                pinchBeforeMbr = false
+//                                longClickedBeforeMbr = false
+//                                clickStartTimeMsMbr = null
+//                            }
+//                            else -> {}
+//                        }
+//
+//                        return true
+//                    }
+//                    else -> {
+//                        return true
+//                    }
+//                }
+//            }
+//        })
+//    }
 
 
     // [카메라 조작 함수]
+    // : 아래로부터는 Camera 현 status 에 따라 처리해야 할 부분을 자동으로 처리하고,
+    //     중요한 조작 관련 인터페이스를 제공해주는 함수들
 
     // (카메라 객체 소멸)
     // camera status : n -> -1
     // media status : n -> 0
-    // 카메라 객체 생성자와 대비되는 함수로, 생성했으면 소멸을 시켜야 함.
+    // 카메라 객체 생성용 getInstance() 함수와 대비되는 메소드로, 생성했으면 소멸을 시켜야 함.
     fun destroyCameraObject(
         onComplete: () -> Unit
     ) {
@@ -2565,7 +1744,7 @@ class CameraObj private constructor(
             // (서페이스 사이즈 검사)
             // 프리뷰 리스트 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
             if (previewConfigVoList != null && previewConfigVoList.isNotEmpty()) {
-                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.previewInfoList
+                val cameraSizes = cameraInfoVoMbr.previewInfoList
 
                 // 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes.isEmpty()
@@ -2588,7 +1767,7 @@ class CameraObj private constructor(
             }
 
             if (captureImageReaderConfigVo != null) {
-                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.captureImageReaderInfoList
+                val cameraSizes = cameraInfoVoMbr.captureImageReaderInfoList
 
                 // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes.isEmpty() || cameraSizes.indexOfFirst {
@@ -2603,7 +1782,7 @@ class CameraObj private constructor(
             }
 
             if (mediaRecorderConfigVo != null) {
-                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList
+                val cameraSizes = cameraInfoVoMbr.mediaRecorderInfoList
 
                 // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes.isEmpty() || cameraSizes.indexOfFirst {
@@ -2618,7 +1797,7 @@ class CameraObj private constructor(
             }
 
             if (analysisImageReaderConfigVo != null) {
-                val cameraSizes = cameraSurfacesSizeListInfoVoMbr.analysisImageReaderInfoList
+                val cameraSizes = cameraInfoVoMbr.analysisImageReaderInfoList
 
                 // 이미지 리더 지원 사이즈가 없는데 요청한 경우나, 혹은 지원 사이즈 내에 요청한 사이즈가 없는 경우 에러
                 if (cameraSizes.isEmpty() || cameraSizes.indexOfFirst {
@@ -2725,7 +1904,7 @@ class CameraObj private constructor(
 
                 // 데이터 저장 프레임 설정
                 val maxMediaRecorderFps =
-                    cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList[cameraSurfacesSizeListInfoVoMbr.mediaRecorderInfoList.indexOfFirst {
+                    cameraInfoVoMbr.mediaRecorderInfoList[cameraInfoVoMbr.mediaRecorderInfoList.indexOfFirst {
                         it.size.width == mediaRecorderConfigVo.cameraOrientSurfaceSize.width &&
                                 it.size.height == mediaRecorderConfigVo.cameraOrientSurfaceSize.height
                     }].fps
@@ -4413,24 +3592,14 @@ class CameraObj private constructor(
     )
 
     // (카메라 정보 객체)
-    // 카메라 제공 사이즈 정보
-    // capture image reader format : JPEG 을 사용
-    // analysis image reader format : YUV 420 888 을 사용
-    data class CameraSurfacesSizeListInfoVo(
-        val whRatioSet: HashSet<Double>, // 지원되는 비율 셋
-        val previewInfoList: ArrayList<SizeSpecInfoVo>,
-        val captureImageReaderInfoList: ArrayList<SizeSpecInfoVo>,
-        val mediaRecorderInfoList: ArrayList<SizeSpecInfoVo>,
-        val analysisImageReaderInfoList: ArrayList<SizeSpecInfoVo>,
-        val highSpeedInfoList: ArrayList<SizeSpecInfoVo>
-    )
-
     data class SizeSpecInfoVo(
         val size: Size,
         val fps: Int
     )
 
     // 카메라 정보
+    // capture image reader format : JPEG 을 사용
+    // analysis image reader format : YUV 420 888 을 사용
     data class CameraInfoVo(
         // 카메라 아이디
         val cameraId: String,
@@ -4441,6 +3610,11 @@ class CameraObj private constructor(
         val facing: Int,
         // 카메라 방향이 시계방향으로 얼마나 돌려야 디바이스 방향과 일치하는지에 대한 각도
         val sensorOrientation: Int,
+        val previewInfoList: ArrayList<SizeSpecInfoVo>,
+        val captureImageReaderInfoList: ArrayList<SizeSpecInfoVo>,
+        val mediaRecorderInfoList: ArrayList<SizeSpecInfoVo>,
+        val analysisImageReaderInfoList: ArrayList<SizeSpecInfoVo>,
+        val highSpeedInfoList: ArrayList<SizeSpecInfoVo>,
         // CONTROL_AF_MODE_CONTINUOUS_PICTURE auto focus 지원 여부
         val fastAutoFocusSupported: Boolean,
         // CONTROL_AF_MODE_CONTINUOUS_VIDEO auto focus 지원 여부

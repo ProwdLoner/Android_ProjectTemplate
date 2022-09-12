@@ -1,18 +1,28 @@
 package com.example.prowd_android_template.activity_set.activity_basic_camera2_api_sample
 
 import android.Manifest
+import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.renderscript.Element
+import android.renderscript.RenderScript
+import android.renderscript.ScriptIntrinsicResize
+import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.view.Surface
+import android.view.WindowManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.example.prowd_android_template.ScriptC_rotator
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
@@ -22,8 +32,10 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
-import com.example.prowd_android_template.util_class.CameraObj
+import com.example.prowd_android_template.util_class.Camera2Obj
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import com.example.prowd_android_template.util_object.CustomUtil
+import com.xxx.yyy.ScriptC_crop
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -51,6 +63,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (SharedPreference 객체)
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
+
+    // 카메라 설정 정보 접근 객체
+    lateinit var classSpwMbr: ClassSpw
 
     // (스레드 풀)
     val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
@@ -120,7 +135,22 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (데이터)
     // 카메라 실행 객체
-    private lateinit var cameraObjMbr: CameraObj
+    private lateinit var cameraObjMbr: Camera2Obj
+
+    // 이미지 처리용 랜더 스크립트
+    private lateinit var renderScriptMbr: RenderScript
+
+    // intrinsic yuv to rgb
+    private lateinit var scriptIntrinsicYuvToRGBMbr: ScriptIntrinsicYuvToRGB
+
+    // image rotate
+    private lateinit var scriptCRotatorMbr: ScriptC_rotator
+
+    // image crop
+    private lateinit var scriptCCropMbr: ScriptC_crop
+
+    // image resize
+    private lateinit var scriptIntrinsicResizeMbr: ScriptIntrinsicResize
 
 
     // ---------------------------------------------------------------------------------------------
@@ -391,17 +421,71 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 다이얼로그 객체 해소
         dialogMbr?.dismiss()
+
+        // 카메라 해소
+        cameraObjMbr.destroyCameraObject(onComplete = {})
+
+        // 랜더 스크립트 객체 해소
+        scriptCCropMbr.destroy()
+        scriptIntrinsicResizeMbr.destroy()
+        scriptIntrinsicYuvToRGBMbr.destroy()
+        scriptCRotatorMbr.destroy()
+        renderScriptMbr.finish()
+        renderScriptMbr.destroy()
     }
 
     // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
     // : 해당 이벤트 발생시 처리할 로직을 작성
+
+    // 화면 회전시 복구를 위해 화면 방향별 뷰 변화 정도를 저장
+    var galleryBtnPlusYMbr = 0 // 증가된 Y
+    var recordOrCaptureBtnPlusYMbr = 0
+    var cameraChangeBtnPlusYMbr = 0
+    var captureModeBtnMbr = 0
+    var recordModeBtnMbr = 0
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
 
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) { // 화면회전 landscape
+        // (화면 방향에 따른 뷰 마진 설정)
+        // : 소프트 네비게이션을 투명으로 뒀기에, 화면 극단에 위치한 뷰들은 바와 겹치지 않도록 방향에 따라 마진을 설정해야함
+        val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display!!.rotation
+        } else {
+            windowManager.defaultDisplay.rotation
+        }
+        when (deviceOrientation) {
+            Surface.ROTATION_0 -> {
+                bindingMbr.galleryBtn.y =
+                    bindingMbr.galleryBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                bindingMbr.recordOrCaptureBtn.y =
+                    bindingMbr.recordOrCaptureBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                bindingMbr.cameraChangeBtn.y =
+                    bindingMbr.cameraChangeBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                bindingMbr.recordModeBtn.y =
+                    bindingMbr.recordModeBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                bindingMbr.captureModeBtn.y =
+                    bindingMbr.captureModeBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
 
-        } else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { // 화면회전 portrait
+                galleryBtnPlusYMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+                recordOrCaptureBtnPlusYMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+                cameraChangeBtnPlusYMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+                captureModeBtnMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+                recordModeBtnMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+            }
+            else -> {
+                bindingMbr.galleryBtn.y = bindingMbr.galleryBtn.y - galleryBtnPlusYMbr
+                bindingMbr.recordOrCaptureBtn.y = bindingMbr.recordOrCaptureBtn.y - recordOrCaptureBtnPlusYMbr
+                bindingMbr.cameraChangeBtn.y = bindingMbr.cameraChangeBtn.y - cameraChangeBtnPlusYMbr
+                bindingMbr.recordModeBtn.y = bindingMbr.recordModeBtn.y - recordModeBtnMbr
+                bindingMbr.captureModeBtn.y = bindingMbr.captureModeBtn.y - captureModeBtnMbr
 
+                galleryBtnPlusYMbr = 0
+                recordOrCaptureBtnPlusYMbr = 0
+                cameraChangeBtnPlusYMbr = 0
+                recordModeBtnMbr = 0
+                captureModeBtnMbr = 0
+            }
         }
     }
 
@@ -428,6 +512,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // SPW 객체 생성
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
+        classSpwMbr = ClassSpw(application)
 
         // 권한 요청 객체 생성
         permissionRequestMbr =
@@ -447,13 +532,141 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         // (최초 사용 카메라 객체 생성)
-        val cameraInfoList = CameraObj.getAllSupportedCameraInfoList(this)
+        // 사용 가능한 카메라 리스트
+        val availableCameraIdList = Camera2Obj.getAllAvailableCameraIdList(this)
 
+        if (availableCameraIdList.size == 0) {
+            // 지원하는 카메라가 없음
+            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                true,
+                "에러",
+                "지원되는 카메라를 찾을 수 없습니다.",
+                null,
+                onCheckBtnClicked = {
+                    shownDialogInfoVOMbr = null
+                    finish()
+                },
+                onCanceled = {
+                    shownDialogInfoVOMbr = null
+                    finish()
+                }
+            )
+            return
+        }
+
+        // 초기 카메라 아이디 선정
+        val cameraId: String =
+            if (classSpwMbr.currentCameraId != null) { // 기존 아이디가 있을 때
+
+                // 기존 아이디가 현재 지원 카메라 리스트에 있는지를 확인
+                val lastCameraIdIdx = availableCameraIdList.indexOfFirst {
+                    it == classSpwMbr.currentCameraId
+                }
+
+                if (lastCameraIdIdx != -1) {
+                    // 기존 아이디가 제공 아이디 리스트에 있을 때
+                    classSpwMbr.currentCameraId!!
+                } else {
+                    // 기존 아이디가 제공 아이디 리스트에 없을 때 = 0번 카메라를 먼저 적용
+                    availableCameraIdList[0]
+                }
+            } else { // 기존 아이디가 없을 때 = 0번 카메라를 먼저 적용
+                availableCameraIdList[0]
+            }
+
+        val cameraObj = Camera2Obj.getInstance(
+            this,
+            cameraId,
+            onCameraDisconnectedAndClearCamera = {
+                // todo 디버그 후 결정
+            }
+        )
+
+        if (cameraObj == null) {
+            // 위에서 적합성 검증을 끝냈지만 찰나의 에러에 대비
+            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                true,
+                "에러",
+                "지원되는 카메라를 찾을 수 없습니다.",
+                null,
+                onCheckBtnClicked = {
+                    shownDialogInfoVOMbr = null
+                    finish()
+                },
+                onCanceled = {
+                    shownDialogInfoVOMbr = null
+                    finish()
+                }
+            )
+            return
+        }
+
+        cameraObjMbr = cameraObj
+        classSpwMbr.currentCameraId = cameraId
+
+        // (랜더 스크립트 객체 생성)
+        renderScriptMbr = RenderScript.create(application)
+        scriptIntrinsicYuvToRGBMbr =
+            ScriptIntrinsicYuvToRGB.create(
+                renderScriptMbr,
+                Element.U8_4(renderScriptMbr)
+            )
+        scriptCRotatorMbr = ScriptC_rotator(renderScriptMbr)
+
+        scriptCCropMbr = ScriptC_crop(renderScriptMbr)
+
+        scriptIntrinsicResizeMbr = ScriptIntrinsicResize.create(renderScriptMbr)
     }
 
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
+        // (화면 자동꺼짐 방지 플래그)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        // (화면 방향에 따른 뷰 마진 설정)
+        // : 소프트 네비게이션을 투명으로 뒀기에, 화면 극단에 위치한 뷰들은 바와 겹치지 않도록 방향에 따라 마진을 설정해야함
+        val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display!!.rotation
+        } else {
+            windowManager.defaultDisplay.rotation
+        }
+        when (deviceOrientation) {
+            Surface.ROTATION_0 -> {
+                bindingMbr.galleryBtn.y =
+                    bindingMbr.galleryBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                bindingMbr.recordOrCaptureBtn.y =
+                    bindingMbr.recordOrCaptureBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                bindingMbr.cameraChangeBtn.y =
+                    bindingMbr.cameraChangeBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                bindingMbr.recordModeBtn.y =
+                    bindingMbr.recordModeBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                bindingMbr.captureModeBtn.y =
+                    bindingMbr.captureModeBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+
+                galleryBtnPlusYMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+                recordOrCaptureBtnPlusYMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+                cameraChangeBtnPlusYMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+                captureModeBtnMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+                recordModeBtnMbr = -CustomUtil.getSoftNavigationBarHeightPixel(this)
+            }
+            else -> {
+                bindingMbr.galleryBtn.y = bindingMbr.galleryBtn.y - galleryBtnPlusYMbr
+                bindingMbr.recordOrCaptureBtn.y = bindingMbr.recordOrCaptureBtn.y - recordOrCaptureBtnPlusYMbr
+                bindingMbr.cameraChangeBtn.y = bindingMbr.cameraChangeBtn.y - cameraChangeBtnPlusYMbr
+                bindingMbr.recordModeBtn.y = bindingMbr.recordModeBtn.y - recordModeBtnMbr
+                bindingMbr.captureModeBtn.y = bindingMbr.captureModeBtn.y - captureModeBtnMbr
+
+                galleryBtnPlusYMbr = 0
+                recordOrCaptureBtnPlusYMbr = 0
+                cameraChangeBtnPlusYMbr = 0
+                recordModeBtnMbr = 0
+                captureModeBtnMbr = 0
+            }
+        }
+
+        // todo 카메라 디버그
+//        Log.e("d", cameraId.toString())
 
     }
 
@@ -651,4 +864,35 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (기존 카메라 설정 저장 객체)
+    class ClassSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityBasicCamera2ApiSampleSpw",
+            Context.MODE_PRIVATE
+        )
+
+        var currentCameraId: String?
+            get() {
+                return spMbr.getString(
+                    "currentCameraId",
+                    null
+                )
+            }
+            set(value) {
+                with(spMbr.edit()) {
+                    putString(
+                        "currentCameraId",
+                        value
+                    )
+                    apply()
+                }
+            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
 }

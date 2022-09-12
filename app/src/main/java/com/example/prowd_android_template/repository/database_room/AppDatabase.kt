@@ -2,6 +2,7 @@ package com.example.prowd_android_template.repository.database_room
 
 import android.content.Context
 import androidx.room.*
+import com.example.prowd_android_template.repository.database_room.tables.ActivityBasicCamera2ApiSampleTable
 import com.example.prowd_android_template.repository.database_room.tables.TestInfoTable
 import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import java.util.concurrent.Semaphore
@@ -11,7 +12,9 @@ import java.util.concurrent.Semaphore
 //     DAO 객체를 (Table DAO 객체) 공간에 추가하기
 @Database(
     entities = [
-        TestInfoTable.TableVo::class, TestUserInfoTable.TableVo::class
+        TestInfoTable.TableVo::class,
+        TestUserInfoTable.TableVo::class,
+        ActivityBasicCamera2ApiSampleTable.TableVo::class
     ],
     version = 1,
     exportSchema = false
@@ -21,6 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
     // (Table DAO 객체)
     abstract fun testInfoTableDao(): TestInfoTable.TableDao
     abstract fun testUserInfoTableDao(): TestUserInfoTable.TableDao
+    abstract fun activityBasicCamera2ApiSampleTableDao(): ActivityBasicCamera2ApiSampleTable.TableDao
 
 
     // ---------------------------------------------------------------------------------------------
