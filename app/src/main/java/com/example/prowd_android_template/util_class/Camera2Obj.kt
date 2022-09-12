@@ -436,6 +436,10 @@ class Camera2Obj private constructor(
             )
 
             // [카메라 객체 내부 멤버변수 생성]
+            // 플래시 사용 가능여부
+            val flashSupported =
+                cameraCharacteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) ?: false
+
             // AF 지원 가능 여부
             val afAvailableModes: IntArray? =
                 cameraCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES)
@@ -539,6 +543,7 @@ class Camera2Obj private constructor(
                 mediaRecorderInfoList,
                 analysisImageReaderInfoList,
                 highSpeedInfoList,
+                flashSupported,
                 fastAutoFocusSupported,
                 naturalAutoFocusSupported,
                 autoFocusMeteringAreaSupported,
@@ -1409,7 +1414,7 @@ class Camera2Obj private constructor(
         }
     }
 
-    // todo : 해당 비율의 사이즈 리스트들 반환
+    // 해당 비율의 사이즈 리스트들 반환
     // whRatio : 카메라 방향의 서페이스 width / height 값
     // 반환값 : 카메라 방향의 whRatio 와 동일한 카메라 방향의 제공되는 사이즈
     fun getSizeListsForWhRatio(whRatio: Double): SurfacesSizeList {
@@ -3671,6 +3676,7 @@ class Camera2Obj private constructor(
         val mediaRecorderSizeInfoList: ArrayList<SizeSpecInfoVo>,
         val analysisImageReaderSizeInfoList: ArrayList<SizeSpecInfoVo>,
         val highSpeedSizeInfoList: ArrayList<SizeSpecInfoVo>,
+        val flashSupported : Boolean,
         // CONTROL_AF_MODE_CONTINUOUS_PICTURE auto focus 지원 여부
         val fastAutoFocusSupported: Boolean,
         // CONTROL_AF_MODE_CONTINUOUS_VIDEO auto focus 지원 여부

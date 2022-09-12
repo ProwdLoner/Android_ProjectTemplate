@@ -43,7 +43,6 @@ class ActivityBasicCamera2ApiSampleCameraConfigTable {
         // ex : "1000:1000"
         @ColumnInfo(name = "camera_orient_surface_size")
         val cameraOrientSurfaceSize: String
-
     )
 
     // (테이블 Dao)
@@ -51,6 +50,9 @@ class ActivityBasicCamera2ApiSampleCameraConfigTable {
     interface TableDao {
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         fun insert(vararg inputTable: TableVo)
+
+        @Update
+        fun update(vararg inputTable: TableVo)
 
         @Query(
             "SELECT " +
@@ -70,9 +72,6 @@ class ActivityBasicCamera2ApiSampleCameraConfigTable {
 //                    "test_info"
 //        )
 //        fun selectColAll2(): List<TableVo>
-//
-//        @Update
-//        fun update(vararg inputTable: TableVo)
 //
 //        @Delete
 //        fun delete(vararg inputTable: TableVo)

@@ -1066,6 +1066,29 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // todo 다시보기
     // (초기 카메라 정보 설정 및 실행)
     // : DB 에 저장된 기존 카메라 정보 확인
     //     카메라 앱 구조는 ID 안에 모드가 있고, 모드 안에 설정 정보가 있음
@@ -1107,10 +1130,34 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 // 위 비율에 대한 지원 해상도 목록 선정
                 val surfaceSizeList = cameraObjMbr.getSizeListsForWhRatio(16.0 / 9.0)
                 // 가장 큰 해상도 선정
-                val cameraOrientSupportedSize = cameraObjMbr.getNearestSize(
-                    surfaceSizeList.captureImageReaderSizeList,
-                    Long.MAX_VALUE, 16.0 / 9.0
-                )
+                val cameraOrientSupportedSize = if (currentCameraModeMbr == 1){
+                    cameraObjMbr.getNearestSize(
+                        surfaceSizeList.captureImageReaderSizeList,
+                        Long.MAX_VALUE, 16.0 / 9.0
+                    )
+                }else{
+                    cameraObjMbr.getNearestSize(
+                        surfaceSizeList.mediaRecorderSizeList,
+                        Long.MAX_VALUE, 16.0 / 9.0
+                    )
+                }
+
+                runOnUiThread {
+                    bindingMbr.flashModeValue.text = "off"
+                    bindingMbr.timerValue.text = "0"
+                    bindingMbr.surfaceRatioValue.text =
+                        if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
+                            "${cameraOrientSupportedUnitSize.width}:${cameraOrientSupportedUnitSize.height}"
+                        } else {
+                            "${cameraOrientSupportedUnitSize.height}:${cameraOrientSupportedUnitSize.width}"
+                        }
+                    bindingMbr.surfaceSizeValue.text =
+                        if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
+                            "${cameraOrientSupportedSize.width}:${cameraOrientSupportedSize.height}"
+                        } else {
+                            "${cameraOrientSupportedSize.height}:${cameraOrientSupportedSize.width}"
+                        }
+                }
 
                 repositorySetMbr.databaseRoomMbr.appDatabaseMbr.activityBasicCamera2ApiSampleCameraConfigTableDao()
                     .insert(
@@ -1119,25 +1166,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             currentCameraModeMbr,
                             0, // 기본 플래시 0
                             0, // 기본 타이머 0
-                            "${cameraOrientSupportedUnitSize.width} : ${cameraOrientSupportedUnitSize.height}",
-                            "${cameraOrientSupportedSize.width} : ${cameraOrientSupportedSize.height}"
+                            "${cameraOrientSupportedUnitSize.width}:${cameraOrientSupportedUnitSize.height}",
+                            "${cameraOrientSupportedSize.width}:${cameraOrientSupportedSize.height}"
                         )
                     )
-
-                bindingMbr.flashModeValue.text = "off"
-                bindingMbr.timerValue.text = "0"
-                bindingMbr.surfaceRatioValue.text =
-                    if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
-                        "${cameraOrientSupportedUnitSize.width} : ${cameraOrientSupportedUnitSize.height}"
-                    } else {
-                        "${cameraOrientSupportedUnitSize.height} : ${cameraOrientSupportedUnitSize.width}"
-                    }
-                bindingMbr.surfaceSizeValue.text =
-                    if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
-                        "${cameraOrientSupportedSize.width} : ${cameraOrientSupportedSize.height}"
-                    } else {
-                        "${cameraOrientSupportedSize.height} : ${cameraOrientSupportedSize.width}"
-                    }
 
                 flashModeMbr = 0
                 timerMbr = 0
@@ -1145,9 +1177,159 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 startCamera()
             } else { // 기존 저장 카메라 정보가 있을 때
-                // 카메라 정보 검증
-                // todo
-                Log.e("d", cameraInfo.toString())
+                // (카메라 정보 검증)
+                // 기존 플래시
+                var flashMode = cameraInfo.flashMode
+                // 플래시 검증
+                flashMode =
+                    if (flashMode != 0 &&  // 플래시 사용 설정 and
+                        cameraObjMbr.cameraInfoVoMbr.flashSupported // 플래시 지원
+                    ) {
+                        flashMode
+                    } else { // 플래시 비사용 설정 or 플래시 미지원
+                        0
+                    }
+
+                // 기존 타이머 (검증 필요없음)
+                val timer = cameraInfo.timerSec
+
+                // 기존 단위 사이즈
+                val cameraOrientSupportedUnitArray = cameraInfo.cameraOrientSurfaceRatio.split(":")
+                var cameraOrientSupportedUnitSize = Size(
+                    cameraOrientSupportedUnitArray[0].toInt(),
+                    cameraOrientSupportedUnitArray[1].toInt()
+                )
+                // 단위 사이즈 검증
+                val cameraOrientSupportedUnitSizeList =
+                    cameraObjMbr.getSupportedCameraOrientSurfaceUnitSize(
+                        if (currentCameraModeMbr == 1) { // 사진
+                            if (isCameraImageAnalysisMbr) { // 이미지 분석
+                                13
+                            } else {
+                                6
+                            }
+                        } else { // 동영상
+                            if (isCameraImageAnalysisMbr) { // 이미지 분석
+                                14
+                            } else {
+                                7
+                            }
+                        }
+                    )
+                val findSameUnitSizeIdx = cameraOrientSupportedUnitSizeList.indexOfFirst {
+                    it.width == cameraOrientSupportedUnitSize.width &&
+                            it.height == cameraOrientSupportedUnitSize.height
+                }
+
+                var cameraOrientSupportedSize: Size? = null
+                if (findSameUnitSizeIdx == -1) { // 기존 단위 사이즈가 존재하지 않을 때
+                    // 기존 해상도도 쓸모가 없어지기에 단위사이즈서부터 다시 생성
+
+                    // 모니터에서 가장 많이 사용되는 16:9 비율과 비슷한 크기를 먼저 선정
+                    val cameraOrientSupportedUnitSizeList1 =
+                        cameraObjMbr.getSupportedCameraOrientSurfaceUnitSize(
+                            if (currentCameraModeMbr == 1) { // 사진
+                                if (isCameraImageAnalysisMbr) { // 이미지 분석
+                                    13
+                                } else {
+                                    6
+                                }
+                            } else { // 동영상
+                                if (isCameraImageAnalysisMbr) { // 이미지 분석
+                                    14
+                                } else {
+                                    7
+                                }
+                            }
+                        )
+
+                    cameraOrientSupportedUnitSize = cameraObjMbr.getNearestSize(
+                        cameraOrientSupportedUnitSizeList1.toList(),
+                        Long.MAX_VALUE, 16.0 / 9.0
+                    )
+
+                    // 위 비율에 대한 지원 해상도 목록 선정
+                    val surfaceSizeList = cameraObjMbr.getSizeListsForWhRatio(16.0 / 9.0)
+                    // 가장 큰 해상도 선정
+                    cameraOrientSupportedSize = if (currentCameraModeMbr == 1){
+                        cameraObjMbr.getNearestSize(
+                            surfaceSizeList.captureImageReaderSizeList,
+                            Long.MAX_VALUE, 16.0 / 9.0
+                        )
+                    }else{
+                        cameraObjMbr.getNearestSize(
+                            surfaceSizeList.mediaRecorderSizeList,
+                            Long.MAX_VALUE, 16.0 / 9.0
+                        )
+                    }
+
+                } else { // 기존 단위 사이즈가 실존할 때
+                    // 기존 해상도
+                    val cameraOrientSupportedSizeArray =
+                        cameraInfo.cameraOrientSurfaceSize.split(":")
+                    cameraOrientSupportedSize = Size(
+                        cameraOrientSupportedSizeArray[0].toInt(),
+                        cameraOrientSupportedSizeArray[1].toInt()
+                    )
+                    // todo 해상도 존재 검증
+                    val surfaceSizeLists =
+                        cameraObjMbr.getSizeListsForWhRatio(
+                            cameraOrientSupportedUnitSize.width.toDouble() /
+                                    cameraOrientSupportedUnitSize.height.toDouble()
+                        )
+
+                    val surfaceSizeList = if (currentCameraModeMbr == 1){
+                        surfaceSizeLists.captureImageReaderSizeList
+                    }else{
+                        surfaceSizeLists.mediaRecorderSizeList
+                    }
+
+                    val findSameSizeIdx = surfaceSizeList.indexOfFirst {
+                        it.width == cameraOrientSupportedUnitSize.width &&
+                                it.height == cameraOrientSupportedUnitSize.height
+                    }
+                    Log.e("dd", findSameSizeIdx.toString())
+
+
+                }
+
+                runOnUiThread {
+                    bindingMbr.flashModeValue.text = when (flashMode) {
+                        0 -> "off"
+                        1 -> "on"
+                        2 -> "always"
+                        else -> throw Exception("flashMode parameter error")
+                    }
+                    bindingMbr.timerValue.text = timer.toString()
+                    bindingMbr.surfaceRatioValue.text =
+                        if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
+                            "${cameraOrientSupportedUnitSize.width}:${cameraOrientSupportedUnitSize.height}"
+                        } else {
+                            "${cameraOrientSupportedUnitSize.height}:${cameraOrientSupportedUnitSize.width}"
+                        }
+                    bindingMbr.surfaceSizeValue.text =
+                        if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
+                            "${cameraOrientSupportedSize!!.width}:${cameraOrientSupportedSize.height}"
+                        } else {
+                            "${cameraOrientSupportedSize!!.height}:${cameraOrientSupportedSize.width}"
+                        }
+                }
+
+                repositorySetMbr.databaseRoomMbr.appDatabaseMbr.activityBasicCamera2ApiSampleCameraConfigTableDao()
+                    .insert(
+                        ActivityBasicCamera2ApiSampleCameraConfigTable.TableVo(
+                            cameraObjMbr.cameraInfoVoMbr.cameraId,
+                            currentCameraModeMbr,
+                            flashMode,
+                            timer,
+                            "${cameraOrientSupportedUnitSize.width}:${cameraOrientSupportedUnitSize.height}",
+                            "${cameraOrientSupportedSize!!.width}:${cameraOrientSupportedSize.height}"
+                        )
+                    )
+
+                flashModeMbr = flashMode
+                timerMbr = timer
+                cameraOrientSurfaceSizeMbr = cameraOrientSupportedSize
 
                 startCamera()
             }
