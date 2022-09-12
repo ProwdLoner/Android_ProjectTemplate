@@ -160,7 +160,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (카메라 정보)
     // 영상 분석을 할지 여부
-    private val imageAnalysisMbr = true
+    private val isCameraImageAnalysisMbr = true
 
     // 현재 카메라 모드
     // 1 : 사진
@@ -701,7 +701,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // (카메라 지원에 따른 모드 버튼 처리)
         if (cameraObjMbr.isThisCameraSupportedForMode(
-                if (imageAnalysisMbr) {// preview, capture, analysis 가능
+                if (isCameraImageAnalysisMbr) {// preview, capture, analysis 가능
                     13
                 } else {// preview, capture 가능
                     6
@@ -714,7 +714,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         if (cameraObjMbr.isThisCameraSupportedForMode(
-                if (imageAnalysisMbr) { // preview, mediaRecord, analysis 가능
+                if (isCameraImageAnalysisMbr) { // preview, mediaRecord, analysis 가능
                     14
                 } else { // preview, mediaRecord 가능
                     7
@@ -728,14 +728,14 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // 카메라 모드를 모두 지원하지 않을 때
         if (!cameraObjMbr.isThisCameraSupportedForMode(
-                if (imageAnalysisMbr) {// preview, capture, analysis 가능
+                if (isCameraImageAnalysisMbr) {// preview, capture, analysis 가능
                     13
                 } else {// preview, capture 가능
                     6
                 }
             ) &&
             !cameraObjMbr.isThisCameraSupportedForMode(
-                if (imageAnalysisMbr) { // preview, mediaRecord, analysis 가능
+                if (isCameraImageAnalysisMbr) { // preview, mediaRecord, analysis 가능
                     14
                 } else { // preview, mediaRecord 가능
                     7
@@ -837,7 +837,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // todo 기존 카메라 중단 onPause 와 동일
             // (초기 카메라 정보 설정 및 실행)
-            getCameraConfigAndStartCamera()
+            getCameraConfig()
         }
 
         bindingMbr.recordModeBtn.setOnClickListener {
@@ -855,7 +855,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // todo 기존 카메라 중단 onPause 와 동일
             // (초기 카메라 정보 설정 및 실행)
-            getCameraConfigAndStartCamera()
+            getCameraConfig()
         }
 
         bindingMbr.recordOrCaptureBtn.setOnClickListener {
@@ -885,7 +885,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             refreshWholeScreenData(onComplete = {})
 
             // (초기 카메라 정보 설정 및 실행)
-            getCameraConfigAndStartCamera()
+            getCameraConfig()
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -1067,10 +1067,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
     // (초기 카메라 정보 설정 및 실행)
-    // : DB 에 저장된 기존 카메라 정보 적용 후 실행
+    // : DB 에 저장된 기존 카메라 정보 확인
     //     카메라 앱 구조는 ID 안에 모드가 있고, 모드 안에 설정 정보가 있음
     //     여기까지 오면 "초기 카메라 id", "카메라 모드"는 결정된 상황
-    private fun getCameraConfigAndStartCamera() {
+    private fun getCameraConfig() {
         executorServiceMbr.execute {
             // 기존 저장된 카메라 설정 가져오기
             val cameraInfo =
@@ -1081,32 +1081,87 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                     )
 
             if (cameraInfo == null) {
-                val size = if (currentCameraModeMbr == 1) { // 사진
-                    cameraObjMbr.cameraInfoVoMbr.captureImageReaderInfoList
-                } else { // 동영상
-                    cameraObjMbr.cameraInfoVoMbr.mediaRecorderInfoList
-                }
-                // todo 기본 비율, 기본 해상도 생성
+                // 모니터에서 가장 많이 사용되는 16:9 비율과 비슷한 크기를 먼저 선정
+                val cameraOrientSupportedUnitSizeList =
+                    cameraObjMbr.getSupportedCameraOrientSurfaceUnitSize(
+                        if (currentCameraModeMbr == 1) { // 사진
+                            if (isCameraImageAnalysisMbr) { // 이미지 분석
+                                13
+                            } else {
+                                6
+                            }
+                        } else { // 동영상
+                            if (isCameraImageAnalysisMbr) { // 이미지 분석
+                                14
+                            } else {
+                                7
+                            }
+                        }
+                    )
 
-//                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.activityBasicCamera2ApiSampleCameraConfigTableDao()
-//                        .insert(
-//                            ActivityBasicCamera2ApiSampleCameraConfigTable.TableVo(
-//                                cameraObjMbr.cameraInfoVoMbr.cameraId,
-//                                currentCameraModeMbr,
-//                                0, // 기본 플래시 0
-//                                0, // 기본 타이머 0
-//
-//                                )
-//                        )
+                val cameraOrientSupportedUnitSize = cameraObjMbr.getNearestSize(
+                    cameraOrientSupportedUnitSizeList.toList(),
+                    Long.MAX_VALUE, 16.0 / 9.0
+                )
 
-            } else {
+                // 위 비율에 대한 지원 해상도 목록 선정
+                val surfaceSizeList = cameraObjMbr.getSizeListsForWhRatio(16.0 / 9.0)
+                // 가장 큰 해상도 선정
+                val cameraOrientSupportedSize = cameraObjMbr.getNearestSize(
+                    surfaceSizeList.captureImageReaderSizeList,
+                    Long.MAX_VALUE, 16.0 / 9.0
+                )
+
+                repositorySetMbr.databaseRoomMbr.appDatabaseMbr.activityBasicCamera2ApiSampleCameraConfigTableDao()
+                    .insert(
+                        ActivityBasicCamera2ApiSampleCameraConfigTable.TableVo(
+                            cameraObjMbr.cameraInfoVoMbr.cameraId,
+                            currentCameraModeMbr,
+                            0, // 기본 플래시 0
+                            0, // 기본 타이머 0
+                            "${cameraOrientSupportedUnitSize.width} : ${cameraOrientSupportedUnitSize.height}",
+                            "${cameraOrientSupportedSize.width} : ${cameraOrientSupportedSize.height}"
+                        )
+                    )
+
+                bindingMbr.flashModeValue.text = "off"
+                bindingMbr.timerValue.text = "0"
+                bindingMbr.surfaceRatioValue.text =
+                    if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
+                        "${cameraOrientSupportedUnitSize.width} : ${cameraOrientSupportedUnitSize.height}"
+                    } else {
+                        "${cameraOrientSupportedUnitSize.height} : ${cameraOrientSupportedUnitSize.width}"
+                    }
+                bindingMbr.surfaceSizeValue.text =
+                    if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
+                        "${cameraOrientSupportedSize.width} : ${cameraOrientSupportedSize.height}"
+                    } else {
+                        "${cameraOrientSupportedSize.height} : ${cameraOrientSupportedSize.width}"
+                    }
+
+                flashModeMbr = 0
+                timerMbr = 0
+                cameraOrientSurfaceSizeMbr = cameraOrientSupportedSize
+
+                startCamera()
+            } else { // 기존 저장 카메라 정보가 있을 때
+                // 카메라 정보 검증
+                // todo
                 Log.e("d", cameraInfo.toString())
 
+                startCamera()
             }
 
         }
     }
 
+    // (카메라 실행 함수)
+    // : 여기까지 오면 카메라 실행에 필요한 정보들이 결정된 상태
+    //     멤버변수에 존재하는 카메라 id, 카메라 mode, 플래시 모드, 타이머, 카메라 사이즈 정보를 토대로 실행
+    private fun startCamera() {
+        // todo
+
+    }
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
