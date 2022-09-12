@@ -2,8 +2,7 @@ package com.example.prowd_android_template.repository.database_room
 
 import android.content.Context
 import androidx.room.*
-import com.example.prowd_android_template.repository.database_room.tables.ActivityBasicCamera2ApiSampleCameraModeConfigTable
-import com.example.prowd_android_template.repository.database_room.tables.ActivityBasicCamera2ApiSampleCameraDetailConfigTable
+import com.example.prowd_android_template.repository.database_room.tables.ActivityBasicCamera2ApiSampleCameraConfigTable
 import com.example.prowd_android_template.repository.database_room.tables.TestInfoTable
 import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import java.util.concurrent.Semaphore
@@ -15,8 +14,7 @@ import java.util.concurrent.Semaphore
     entities = [
         TestInfoTable.TableVo::class,
         TestUserInfoTable.TableVo::class,
-        ActivityBasicCamera2ApiSampleCameraModeConfigTable.TableVo::class,
-        ActivityBasicCamera2ApiSampleCameraDetailConfigTable.TableVo::class
+        ActivityBasicCamera2ApiSampleCameraConfigTable.TableVo::class
     ],
     version = 1,
     exportSchema = false
@@ -26,8 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
     // (Table DAO 객체)
     abstract fun testInfoTableDao(): TestInfoTable.TableDao
     abstract fun testUserInfoTableDao(): TestUserInfoTable.TableDao
-    abstract fun activityBasicCamera2ApiSampleCameraModeConfigTableDao(): ActivityBasicCamera2ApiSampleCameraModeConfigTable.TableDao
-    abstract fun activityBasicCamera2ApiSampleCameraDetailConfigTableDao(): ActivityBasicCamera2ApiSampleCameraDetailConfigTable.TableDao
+    abstract fun activityBasicCamera2ApiSampleCameraConfigTableDao(): ActivityBasicCamera2ApiSampleCameraConfigTable.TableDao
 
 
     // ---------------------------------------------------------------------------------------------

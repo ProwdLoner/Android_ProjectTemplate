@@ -4,21 +4,21 @@ import androidx.room.*
 import androidx.room.ForeignKey.CASCADE
 
 // CameraId 테이블의 Uid 별 카메라 정보 테이블
-class ActivityBasicCamera2ApiSampleCameraDetailConfigTable {
+class ActivityBasicCamera2ApiSampleCameraConfigTable {
     // (테이블 구조)
-    @Entity(tableName = "activity_basic_camera2_api_sample_camera_detail_config",
-        foreignKeys = [
-            ForeignKey(
-                entity = ActivityBasicCamera2ApiSampleCameraModeConfigTable.TableVo::class,
-                parentColumns = ["uid"],
-                childColumns = ["activity_basic_camera2_api_sample_camera_mode_config_uid"],
-                onDelete = CASCADE
-            )
-        ])
+    @Entity(
+        tableName = "activity_basic_camera2_api_sample_camera_config",
+        primaryKeys = ["camera_id", "camera_mode"]
+    )
     data class TableVo(
-        // 외례키
-        @ColumnInfo(name = "activity_basic_camera2_api_sample_camera_mode_config_uid")
-        val activityBasicCamera2ApiSampleCameraModeConfigUid: Long,
+        // camera_id 와 camera_mode 가 고유값 역할을 맡음
+        @ColumnInfo(name = "camera_id")
+        val cameraId: String,
+
+        // 1 : 사진
+        // 2 : 동영상
+        @ColumnInfo(name = "camera_mode")
+        val cameraMode: Int,
 
         // 0 : 안함
         // 1 : 촬영시
@@ -44,25 +44,25 @@ class ActivityBasicCamera2ApiSampleCameraDetailConfigTable {
         @ColumnInfo(name = "camera_orient_surface_size")
         val cameraOrientSurfaceSize: String
 
-    ) {
-        @PrimaryKey(autoGenerate = true)
-        @ColumnInfo(name = "uid")
-        var uid: Long = 0
-    }
+    )
 
     // (테이블 Dao)
     @Dao
     interface TableDao {
-//        @Query(
-//            "SELECT " +
-//                    "* " +
-//                    "FROM " +
-//                    "test_info " +
-//                    "where " +
-//                    "uid = :uid"
-//        )
-//        fun selectColAll(uid: Int): TableVo
-//
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        fun insert(vararg inputTable: TableVo)
+
+        @Query(
+            "SELECT " +
+                    "* " +
+                    "FROM " +
+                    "activity_basic_camera2_api_sample_camera_config " +
+                    "where " +
+                    "camera_id = :cameraId and " +
+                    "camera_mode = :cameraMode"
+        )
+        fun getCameraModeConfig(cameraId: String, cameraMode: Int): TableVo?
+
 //        @Query(
 //            "SELECT " +
 //                    "* " +
@@ -70,9 +70,6 @@ class ActivityBasicCamera2ApiSampleCameraDetailConfigTable {
 //                    "test_info"
 //        )
 //        fun selectColAll2(): List<TableVo>
-//
-//        @Insert(onConflict = OnConflictStrategy.REPLACE)
-//        fun insert(vararg inputTable: TableVo)
 //
 //        @Update
 //        fun update(vararg inputTable: TableVo)

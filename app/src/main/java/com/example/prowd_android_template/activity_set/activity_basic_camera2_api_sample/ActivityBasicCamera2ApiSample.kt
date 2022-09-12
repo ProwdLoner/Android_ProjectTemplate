@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,13 +17,16 @@ import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
 import android.util.Log
+import android.util.Size
 import android.view.Surface
+import android.view.View
 import android.view.WindowManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.example.prowd_android_template.R
 import com.example.prowd_android_template.ScriptC_rotator
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
@@ -33,6 +37,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityBasicCamera2ApiSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.repository.database_room.tables.ActivityBasicCamera2ApiSampleCameraConfigTable
 import com.example.prowd_android_template.util_class.Camera2Obj
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import com.example.prowd_android_template.util_object.CustomUtil
@@ -152,6 +157,25 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // image resize
     private lateinit var scriptIntrinsicResizeMbr: ScriptIntrinsicResize
+
+    // (카메라 정보)
+    // 영상 분석을 할지 여부
+    private val imageAnalysisMbr = true
+
+    // 현재 카메라 모드
+    // 1 : 사진
+    // 2 : 동영상
+    private var currentCameraModeMbr: Int = -1
+
+    // 플래쉬 모드
+    // 0 : 안함
+    // 1 : 촬영시
+    // 2 : 항상
+    private var flashModeMbr: Int = 0
+
+    private var timerMbr: Int = 0
+
+    private var cameraOrientSurfaceSizeMbr: Size? = null
 
 
     // ---------------------------------------------------------------------------------------------
@@ -415,6 +439,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         permissionRequestOnProgressSemaphoreMbr.release()
 
         // (onPause 알고리즘)
+        // todo : 카메라 일시정지
     }
 
     override fun onDestroy() {
@@ -608,7 +633,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         cameraObjMbr = cameraObj
         classSpwMbr.currentCameraId = cameraId
-        currentCameraIdMbr = cameraId
 
         // (랜더 스크립트 객체 생성)
         renderScriptMbr = RenderScript.create(application)
@@ -623,11 +647,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         scriptIntrinsicResizeMbr = ScriptIntrinsicResize.create(renderScriptMbr)
     }
-
-    // todo
-    lateinit var currentCameraIdMbr: String
-    // 1 : 사진, 2 : 동영상
-    var currentCameraModeMbr : Int = -1
 
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
@@ -680,23 +699,176 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
         }
 
-        // todo 카메라 디버그
-        executorServiceMbr.execute {
-            val currentCameraMode =
-                repositorySetMbr.databaseRoomMbr.appDatabaseMbr
-                    .activityBasicCamera2ApiSampleCameraModeConfigTableDao()
-                    .getCurrentCameraMode(currentCameraIdMbr)
+        // (카메라 지원에 따른 모드 버튼 처리)
+        if (cameraObjMbr.isThisCameraSupportedForMode(
+                if (imageAnalysisMbr) {// preview, capture, analysis 가능
+                    13
+                } else {// preview, capture 가능
+                    6
+                }
+            )
+        ) { // 사진모드
+            bindingMbr.captureModeBtn.visibility = View.VISIBLE
+        } else {
+            bindingMbr.captureModeBtn.visibility = View.GONE
+        }
 
-            val availableCameraMode = cameraObjMbr
-            Log.e("df", cameraObjMbr.cameraInfoVoMbr.toString())
+        if (cameraObjMbr.isThisCameraSupportedForMode(
+                if (imageAnalysisMbr) { // preview, mediaRecord, analysis 가능
+                    14
+                } else { // preview, mediaRecord 가능
+                    7
+                }
+            )
+        ) { // 동영상 모드
+            bindingMbr.recordModeBtn.visibility = View.VISIBLE
+        } else {
+            bindingMbr.recordModeBtn.visibility = View.GONE
+        }
 
-            if (currentCameraMode == null){
+        // 카메라 모드를 모두 지원하지 않을 때
+        if (!cameraObjMbr.isThisCameraSupportedForMode(
+                if (imageAnalysisMbr) {// preview, capture, analysis 가능
+                    13
+                } else {// preview, capture 가능
+                    6
+                }
+            ) &&
+            !cameraObjMbr.isThisCameraSupportedForMode(
+                if (imageAnalysisMbr) { // preview, mediaRecord, analysis 가능
+                    14
+                } else { // preview, mediaRecord 가능
+                    7
+                }
+            )
+        ) {
+            // 위에서 적합성 검증을 끝냈지만 찰나의 에러에 대비
+            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                true,
+                "에러",
+                "지원되는 카메라를 찾을 수 없습니다.",
+                null,
+                onCheckBtnClicked = {
+                    shownDialogInfoVOMbr = null
+                    finish()
+                },
+                onCanceled = {
+                    shownDialogInfoVOMbr = null
+                    finish()
+                }
+            )
+            return
+        }
 
-            }else{
+        if (classSpwMbr.currentCameraMode == -1) { // 기존 설정이 없을 때
+            if (bindingMbr.captureModeBtn.visibility == View.VISIBLE) { // 사진모드 가능
+                // 사진 모드 설정
+                currentCameraModeMbr = 1
+                classSpwMbr.currentCameraMode = 1
+
+                bindingMbr.captureModeBtn.setTextColor(Color.parseColor("#FF3D7DDC"))
+                bindingMbr.recordModeBtn.setTextColor(Color.parseColor("#FFFFFFFF"))
+                bindingMbr.recordOrCaptureBtn.setImageResource(R.drawable.img_layout_activity_basic_camera2_api_sample_capture)
+
+            } else if (bindingMbr.recordModeBtn.visibility == View.VISIBLE) { // 동영상 모드 가능
+                // 동영상 모드 설정
+                currentCameraModeMbr = 2
+                classSpwMbr.currentCameraMode = 2
+
+                bindingMbr.captureModeBtn.setTextColor(Color.parseColor("#FFFFFFFF"))
+                bindingMbr.recordModeBtn.setTextColor(Color.parseColor("#FF3D7DDC"))
+                bindingMbr.recordOrCaptureBtn.setImageResource(R.drawable.img_layout_activity_basic_camera2_api_sample_record)
+
+            }
+        } else if (classSpwMbr.currentCameraMode == 1) { // 기존 설정이 사진 모드
+            if (bindingMbr.captureModeBtn.visibility == View.VISIBLE) { // 사진모드 가능
+                // 사진 모드 설정
+                currentCameraModeMbr = 1
+
+                bindingMbr.captureModeBtn.setTextColor(Color.parseColor("#FF3D7DDC"))
+                bindingMbr.recordModeBtn.setTextColor(Color.parseColor("#FFFFFFFF"))
+                bindingMbr.recordOrCaptureBtn.setImageResource(R.drawable.img_layout_activity_basic_camera2_api_sample_capture)
+
+            } else if (bindingMbr.recordModeBtn.visibility == View.VISIBLE) { // 동영상 모드 가능
+                // 동영상 모드 설정
+                currentCameraModeMbr = 2
+                classSpwMbr.currentCameraMode = 2
+
+                bindingMbr.captureModeBtn.setTextColor(Color.parseColor("#FFFFFFFF"))
+                bindingMbr.recordModeBtn.setTextColor(Color.parseColor("#FF3D7DDC"))
+                bindingMbr.recordOrCaptureBtn.setImageResource(R.drawable.img_layout_activity_basic_camera2_api_sample_record)
+
+            }
+        } else if (classSpwMbr.currentCameraMode == 2) { // 기존 설정이 동영상 모드
+            if (bindingMbr.recordModeBtn.visibility == View.VISIBLE) { // 동영상 모드 가능
+                // 동영상 모드 설정
+                currentCameraModeMbr = 2
+
+                bindingMbr.captureModeBtn.setTextColor(Color.parseColor("#FFFFFFFF"))
+                bindingMbr.recordModeBtn.setTextColor(Color.parseColor("#FF3D7DDC"))
+                bindingMbr.recordOrCaptureBtn.setImageResource(R.drawable.img_layout_activity_basic_camera2_api_sample_record)
+
+            } else if (bindingMbr.captureModeBtn.visibility == View.VISIBLE) { // 사진모드 가능
+                // 사진 모드 설정
+                currentCameraModeMbr = 1
+                classSpwMbr.currentCameraMode = 1
+
+                bindingMbr.captureModeBtn.setTextColor(Color.parseColor("#FF3D7DDC"))
+                bindingMbr.recordModeBtn.setTextColor(Color.parseColor("#FFFFFFFF"))
+                bindingMbr.recordOrCaptureBtn.setImageResource(R.drawable.img_layout_activity_basic_camera2_api_sample_capture)
+
+            }
+        } else { // 코드 에러
+            throw Exception("Code Error : 지원하지 않는 모드")
+        }
+
+        bindingMbr.captureModeBtn.setOnClickListener {
+            if (currentCameraModeMbr == 1) {
+                return@setOnClickListener
+            }
+
+            // 사진 모드 설정
+            currentCameraModeMbr = 1
+            classSpwMbr.currentCameraMode = 1
+
+            bindingMbr.captureModeBtn.setTextColor(Color.parseColor("#FF3D7DDC"))
+            bindingMbr.recordModeBtn.setTextColor(Color.parseColor("#FFFFFFFF"))
+            bindingMbr.recordOrCaptureBtn.setImageResource(R.drawable.img_layout_activity_basic_camera2_api_sample_capture)
+
+            // todo 기존 카메라 중단 onPause 와 동일
+            // (초기 카메라 정보 설정 및 실행)
+            getCameraConfigAndStartCamera()
+        }
+
+        bindingMbr.recordModeBtn.setOnClickListener {
+            if (currentCameraModeMbr == 2) {
+                return@setOnClickListener
+            }
+
+            // 동영상 모드 설정
+            currentCameraModeMbr = 2
+            classSpwMbr.currentCameraMode = 2
+
+            bindingMbr.captureModeBtn.setTextColor(Color.parseColor("#FFFFFFFF"))
+            bindingMbr.recordModeBtn.setTextColor(Color.parseColor("#FF3D7DDC"))
+            bindingMbr.recordOrCaptureBtn.setImageResource(R.drawable.img_layout_activity_basic_camera2_api_sample_record)
+
+            // todo 기존 카메라 중단 onPause 와 동일
+            // (초기 카메라 정보 설정 및 실행)
+            getCameraConfigAndStartCamera()
+        }
+
+        bindingMbr.recordOrCaptureBtn.setOnClickListener {
+            if (currentCameraModeMbr == 1) { // 사진 캡쳐 모드
+                // todo
+
+            } else { // 동영상 촬영 모드
+                // todo
 
             }
         }
 
+        // todo : 각 버튼 클릭 리스너 처리
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -712,6 +884,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             currentUserUidMbr = currentLoginSessionInfoSpwMbr.userUid
             refreshWholeScreenData(onComplete = {})
 
+            // (초기 카메라 정보 설정 및 실행)
+            getCameraConfigAndStartCamera()
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -725,6 +899,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 // (데이터 수집)
                 refreshWholeScreenData(onComplete = {})
             }
+
+            // todo 카메라 재시작
 
         }
 
@@ -890,6 +1066,47 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
     }
 
+    // (초기 카메라 정보 설정 및 실행)
+    // : DB 에 저장된 기존 카메라 정보 적용 후 실행
+    //     카메라 앱 구조는 ID 안에 모드가 있고, 모드 안에 설정 정보가 있음
+    //     여기까지 오면 "초기 카메라 id", "카메라 모드"는 결정된 상황
+    private fun getCameraConfigAndStartCamera() {
+        executorServiceMbr.execute {
+            // 기존 저장된 카메라 설정 가져오기
+            val cameraInfo =
+                repositorySetMbr.databaseRoomMbr.appDatabaseMbr.activityBasicCamera2ApiSampleCameraConfigTableDao()
+                    .getCameraModeConfig(
+                        cameraObjMbr.cameraInfoVoMbr.cameraId,
+                        currentCameraModeMbr
+                    )
+
+            if (cameraInfo == null) {
+                val size = if (currentCameraModeMbr == 1) { // 사진
+                    cameraObjMbr.cameraInfoVoMbr.captureImageReaderInfoList
+                } else { // 동영상
+                    cameraObjMbr.cameraInfoVoMbr.mediaRecorderInfoList
+                }
+                // todo 기본 비율, 기본 해상도 생성
+
+//                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.activityBasicCamera2ApiSampleCameraConfigTableDao()
+//                        .insert(
+//                            ActivityBasicCamera2ApiSampleCameraConfigTable.TableVo(
+//                                cameraObjMbr.cameraInfoVoMbr.cameraId,
+//                                currentCameraModeMbr,
+//                                0, // 기본 플래시 0
+//                                0, // 기본 타이머 0
+//
+//                                )
+//                        )
+
+            } else {
+                Log.e("d", cameraInfo.toString())
+
+            }
+
+        }
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
@@ -913,6 +1130,23 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 with(spMbr.edit()) {
                     putString(
                         "currentCameraId",
+                        value
+                    )
+                    apply()
+                }
+            }
+
+        var currentCameraMode: Int
+            get() {
+                return spMbr.getInt(
+                    "currentCameraMode",
+                    -1
+                )
+            }
+            set(value) {
+                with(spMbr.edit()) {
+                    putInt(
+                        "currentCameraMode",
                         value
                     )
                     apply()
