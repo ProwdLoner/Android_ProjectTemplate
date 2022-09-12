@@ -1,29 +1,34 @@
 package com.example.prowd_android_template.repository.database_room.tables
 
-import android.util.Size
 import androidx.room.*
+import androidx.room.ForeignKey.CASCADE
 
-class ActivityBasicCamera2ApiSampleTable {
+// CameraId 테이블의 Uid 별 카메라 정보 테이블
+class ActivityBasicCamera2ApiSampleCameraDetailConfigTable {
     // (테이블 구조)
-    @Entity(tableName = "activity_basic_camera2_api_sample")
+    @Entity(tableName = "activity_basic_camera2_api_sample_camera_detail_config",
+        foreignKeys = [
+            ForeignKey(
+                entity = ActivityBasicCamera2ApiSampleCameraModeConfigTable.TableVo::class,
+                parentColumns = ["uid"],
+                childColumns = ["activity_basic_camera2_api_sample_camera_mode_config_uid"],
+                onDelete = CASCADE
+            )
+        ])
     data class TableVo(
-        @ColumnInfo(name = "camera_id")
-        val cameraId: String,
-
-        // 1 : 사진
-        // 2 : 동영상
-        @ColumnInfo(name = "camera_mode")
-        val cameraMode: Int,
+        // 외례키
+        @ColumnInfo(name = "activity_basic_camera2_api_sample_camera_mode_config_uid")
+        val activityBasicCamera2ApiSampleCameraModeConfigUid: Long,
 
         // 0 : 안함
         // 1 : 촬영시
         // 2 : 항상
-        @ColumnInfo(name = "flash_mode")
+        @ColumnInfo(name = "flash_mode", defaultValue = "0")
         val flashMode: Int,
 
         // 촬영 시작 시간
         // 0초, 2초, 5초, 10초
-        @ColumnInfo(name = "timer_sec")
+        @ColumnInfo(name = "timer_sec", defaultValue = "0")
         val timerSec: Int,
 
         // 카메라 방향의 서페이스 비율
@@ -42,7 +47,7 @@ class ActivityBasicCamera2ApiSampleTable {
     ) {
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = "uid")
-        var uid: Int = 0
+        var uid: Long = 0
     }
 
     // (테이블 Dao)

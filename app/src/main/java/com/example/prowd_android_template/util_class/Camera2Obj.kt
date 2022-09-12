@@ -477,19 +477,19 @@ class Camera2Obj private constructor(
                 )
 
                 // (가용 모드 확인)
-                if (mode == 1) { // capture mode 가용
+                if (mode == 1) { // preview mode 가용
                     if (!mode1) {
                         continue
                     }
-                } else if (mode == 2) { // record mode 가용
+                } else if (mode == 2) { // captureImageReader mode 가용
                     if (!mode2) {
                         continue
                     }
-                } else if (mode == 3) { // high speed mode 가용
+                } else if (mode == 3) { // mediaRecorder mode 가용
                     if (!mode3) {
                         continue
                     }
-                } else if (mode == 4) { // high speed mode 가용
+                } else if (mode == 4) { // analysisImageReader mode 가용
                     if (!mode4) {
                         continue
                     }
@@ -497,47 +497,47 @@ class Camera2Obj private constructor(
                     if (!mode5) {
                         continue
                     }
-                } else if (mode == 6) { // high speed mode 가용
+                } else if (mode == 6) { // preview and capture mode 가용
                     if (!mode6) {
                         continue
                     }
-                } else if (mode == 7) { // high speed mode 가용
+                } else if (mode == 7) { // preview and mediaRecord mode 가용
                     if (!mode7) {
                         continue
                     }
-                } else if (mode == 8) { // high speed mode 가용
+                } else if (mode == 8) { // preview and analysis mode 가용
                     if (!mode8) {
                         continue
                     }
-                } else if (mode == 9) { // high speed mode 가용
+                } else if (mode == 9) { // capture and mediaRecord mode 가용
                     if (!mode9) {
                         continue
                     }
-                } else if (mode == 10) { // high speed mode 가용
+                } else if (mode == 10) { // capture and analysis mode 가용
                     if (!mode10) {
                         continue
                     }
-                } else if (mode == 11) { // high speed mode 가용
+                } else if (mode == 11) { // mediaRecord and analysis mode 가용
                     if (!mode11) {
                         continue
                     }
-                } else if (mode == 12) { // high speed mode 가용
+                } else if (mode == 12) { //  preview and capture and mediaRecord mode 가용
                     if (!mode12) {
                         continue
                     }
-                } else if (mode == 13) { // high speed mode 가용
+                } else if (mode == 13) { // preview and capture and analysis mode 가용
                     if (!mode13) {
                         continue
                     }
-                } else if (mode == 14) { // high speed mode 가용
+                } else if (mode == 14) { // preview and mediaRecord and analysis mode 가용
                     if (!mode14) {
                         continue
                     }
-                } else if (mode == 15) { // high speed mode 가용
+                } else if (mode == 15) { //  capture and mediaRecord and analysis mode 가용
                     if (!mode15) {
                         continue
                     }
-                } else if (mode == 16) { // high speed mode 가용
+                } else if (mode == 16) { // preview and capture and mediaRecord and analysis 가용
                     if (!mode16) {
                         continue
                     }
@@ -1415,44 +1415,264 @@ class Camera2Obj private constructor(
     // <공개 메소드 공간>
 
     // [카메라 정보 반환 함수]
-    // (카메라와 현 디바이스의 Width, height 개념이 동일한지)
-    // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨
-    fun cameraSensorOrientationAndDeviceAreSameWh(): Boolean {
-        // 디바이스 물리적 기본 방향을 0으로 뒀을 때, 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
-        // 0 = 0, 반시계 90 = 1, 180 = 2, 반시계 270 = 3
-        val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            parentActivityMbr.display!!.rotation
-        } else {
-            parentActivityMbr.windowManager.defaultDisplay.rotation
+
+    // (현 카메라의 지원 모드 리스트 반환)
+    // : 카메라 지원 모드 종류는 클래스 선언 위의 설명 참조
+    fun getAllSupportedCameraModeSet(): HashSet<Int> {
+        val resultSet = HashSet<Int>()
+
+        // (지원 사이즈 리스트 가져오기)
+        val previewSizeList = cameraInfoVoMbr.previewInfoList
+
+        val captureImageReaderSizeList = cameraInfoVoMbr.captureImageReaderInfoList
+
+        val mediaRecorderSizeList = cameraInfoVoMbr.mediaRecorderInfoList
+
+        val analysisImageReaderSizeList = cameraInfoVoMbr.analysisImageReaderInfoList
+
+        val highSpeedSizeList = cameraInfoVoMbr.highSpeedInfoList
+
+        // (지원 모드 비교)
+        if (previewSizeList.isNotEmpty()) {
+            resultSet.add(1)
         }
 
-        return when (deviceOrientation) {
-            Surface.ROTATION_90, Surface.ROTATION_270 -> {
-                // 디바이스 현 방향이 90도 단위로 기울어졌을 때
-                when (cameraInfoVoMbr.sensorOrientation) {
-                    // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
-                    0, 180 -> {
-                        false
-                    }
-                    else -> {
-                        true
-                    }
-                }
-            }
-
-            else -> {
-                // 디바이스 현 방향이 90도 단위로 기울어지지 않았을 때
-                when (cameraInfoVoMbr.sensorOrientation) {
-                    // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
-                    0, 180 -> {
-                        true
-                    }
-                    else -> {
-                        false
-                    }
-                }
-            }
+        if (captureImageReaderSizeList.isNotEmpty()) {
+            resultSet.add(2)
         }
+
+        if (mediaRecorderSizeList.isNotEmpty()) {
+            resultSet.add(3)
+        }
+
+        if (analysisImageReaderSizeList.isNotEmpty()) {
+            resultSet.add(4)
+        }
+
+        if (highSpeedSizeList.isNotEmpty()) {
+            resultSet.add(5)
+        }
+
+        if (sizeListSameWhRatioExists(previewSizeList, captureImageReaderSizeList)) {
+            resultSet.add(6)
+        }
+
+        if (sizeListSameWhRatioExists(previewSizeList, mediaRecorderSizeList)) {
+            resultSet.add(7)
+        }
+
+        if (sizeListSameWhRatioExists(previewSizeList, analysisImageReaderSizeList)) {
+            resultSet.add(8)
+        }
+
+        if (sizeListSameWhRatioExists(captureImageReaderSizeList, mediaRecorderSizeList)) {
+            resultSet.add(9)
+        }
+
+        if (sizeListSameWhRatioExists(
+                captureImageReaderSizeList,
+                analysisImageReaderSizeList
+            )
+        ) {
+            resultSet.add(10)
+        }
+
+        if (sizeListSameWhRatioExists(
+                mediaRecorderSizeList,
+                analysisImageReaderSizeList
+            )
+        ) {
+            resultSet.add(11)
+        }
+
+        if (sizeListSameWhRatioExists(
+                previewSizeList,
+                captureImageReaderSizeList,
+                mediaRecorderSizeList
+            )
+        ) {
+            resultSet.add(12)
+        }
+
+        if (sizeListSameWhRatioExists(
+                previewSizeList,
+                captureImageReaderSizeList,
+                analysisImageReaderSizeList
+            )
+        ) {
+            resultSet.add(13)
+        }
+
+        if (sizeListSameWhRatioExists(
+                previewSizeList,
+                mediaRecorderSizeList,
+                analysisImageReaderSizeList
+            )
+        ) {
+            resultSet.add(14)
+        }
+
+        if (sizeListSameWhRatioExists(
+                captureImageReaderSizeList,
+                mediaRecorderSizeList,
+                analysisImageReaderSizeList
+            )
+        ) {
+            resultSet.add(15)
+        }
+
+        if (sizeListSameWhRatioExists(
+                previewSizeList,
+                captureImageReaderSizeList,
+                mediaRecorderSizeList,
+                analysisImageReaderSizeList
+            )
+        ) {
+            resultSet.add(16)
+        }
+
+        return resultSet
+    }
+
+    // (특정 모드가 가능한 가용 카메라 아이디 리스트 반환)
+    // : 카메라 지원 모드 종류는 클래스 선언 위의 설명 참조
+    fun isThisCameraSupportedForMode(
+        mode: Int
+    ): Boolean {
+        // (카메라 제공 사이즈)
+        val previewSizeList = cameraInfoVoMbr.previewInfoList
+
+        val captureImageReaderSizeList = cameraInfoVoMbr.captureImageReaderInfoList
+
+        val mediaRecorderSizeList = cameraInfoVoMbr.mediaRecorderInfoList
+
+        val analysisImageReaderSizeList = cameraInfoVoMbr.analysisImageReaderInfoList
+
+        val highSpeedSizeList = cameraInfoVoMbr.highSpeedInfoList
+
+        // (지원 모드 비교)
+        val mode1 = previewSizeList.isNotEmpty()
+        val mode2 = captureImageReaderSizeList.isNotEmpty()
+        val mode3 = mediaRecorderSizeList.isNotEmpty()
+        val mode4 = analysisImageReaderSizeList.isNotEmpty()
+        val mode5 = highSpeedSizeList.isNotEmpty()
+        val mode6 =
+            sizeListSameWhRatioExists(previewSizeList, captureImageReaderSizeList)
+        val mode7 = sizeListSameWhRatioExists(previewSizeList, mediaRecorderSizeList)
+        val mode8 =
+            sizeListSameWhRatioExists(previewSizeList, analysisImageReaderSizeList)
+        val mode9 =
+            sizeListSameWhRatioExists(
+                captureImageReaderSizeList,
+                mediaRecorderSizeList
+            )
+        val mode10 = sizeListSameWhRatioExists(
+            captureImageReaderSizeList,
+            analysisImageReaderSizeList
+        )
+        val mode11 =
+            sizeListSameWhRatioExists(
+                mediaRecorderSizeList,
+                analysisImageReaderSizeList
+            )
+        val mode12 = sizeListSameWhRatioExists(
+            previewSizeList,
+            captureImageReaderSizeList,
+            mediaRecorderSizeList
+        )
+        val mode13 = sizeListSameWhRatioExists(
+            previewSizeList,
+            captureImageReaderSizeList,
+            analysisImageReaderSizeList
+        )
+        val mode14 = sizeListSameWhRatioExists(
+            previewSizeList,
+            mediaRecorderSizeList,
+            analysisImageReaderSizeList
+        )
+        val mode15 = sizeListSameWhRatioExists(
+            captureImageReaderSizeList,
+            mediaRecorderSizeList,
+            analysisImageReaderSizeList
+        )
+        val mode16 = sizeListSameWhRatioExists(
+            previewSizeList,
+            captureImageReaderSizeList,
+            mediaRecorderSizeList,
+            analysisImageReaderSizeList
+        )
+
+        // (가용 모드 확인)
+        if (mode == 1) { // preview mode 가용
+            if (!mode1) {
+                return false
+            }
+        } else if (mode == 2) { // captureImageReader mode 가용
+            if (!mode2) {
+                return false
+            }
+        } else if (mode == 3) { // mediaRecorder mode 가용
+            if (!mode3) {
+                return false
+            }
+        } else if (mode == 4) { // analysisImageReader mode 가용
+            if (!mode4) {
+                return false
+            }
+        } else if (mode == 5) { // high speed mode 가용
+            if (!mode5) {
+                return false
+            }
+        } else if (mode == 6) { // preview and capture mode 가용
+            if (!mode6) {
+                return false
+            }
+        } else if (mode == 7) { // preview and mediaRecord mode 가용
+            if (!mode7) {
+                return false
+            }
+        } else if (mode == 8) { // preview and analysis mode 가용
+            if (!mode8) {
+                return false
+            }
+        } else if (mode == 9) { // capture and mediaRecord mode 가용
+            if (!mode9) {
+                return false
+            }
+        } else if (mode == 10) { // capture and analysis mode 가용
+            if (!mode10) {
+                return false
+            }
+        } else if (mode == 11) { // mediaRecord and analysis mode 가용
+            if (!mode11) {
+                return false
+            }
+        } else if (mode == 12) { // preview and capture and mediaRecord mode 가용
+            if (!mode12) {
+                return false
+            }
+        } else if (mode == 13) { // preview and capture and analysis mode 가용
+            if (!mode13) {
+                return false
+            }
+        } else if (mode == 14) { // preview and mediaRecord and analysis mode 가용
+            if (!mode14) {
+                return false
+            }
+        } else if (mode == 15) { // capture and mediaRecord and analysi mode 가용
+            if (!mode15) {
+                return false
+            }
+        } else if (mode == 16) { // preview and capture and mediaRecord and analysis mode 가용
+            if (!mode16) {
+                return false
+            }
+        } else { // 그외 모드
+            // 파라미터 에러로, 그냥 전부 스킵
+            return false
+        }
+
+        return true
     }
 
 
@@ -3565,6 +3785,92 @@ class Camera2Obj private constructor(
 //        // the image upright relative to the device orientation
 //        return (sensorOrientation + deviceOrientation + 360) % 360
 //    }
+
+    // (카메라와 현 디바이스의 Width, height 개념이 동일한지)
+    // 카메라와 디바이스 방향이 90, 270 차이가 난다면 둘의 width, height 개념이 상반됨
+    private fun cameraSensorOrientationAndDeviceAreSameWh(): Boolean {
+        // 디바이스 물리적 기본 방향을 0으로 뒀을 때, 현 디바이스가 반시계 방향으로 몇도가 돌아갔는가
+        // 0 = 0, 반시계 90 = 1, 180 = 2, 반시계 270 = 3
+        val deviceOrientation: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            parentActivityMbr.display!!.rotation
+        } else {
+            parentActivityMbr.windowManager.defaultDisplay.rotation
+        }
+
+        return when (deviceOrientation) {
+            Surface.ROTATION_90, Surface.ROTATION_270 -> {
+                // 디바이스 현 방향이 90도 단위로 기울어졌을 때
+                when (cameraInfoVoMbr.sensorOrientation) {
+                    // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
+                    0, 180 -> {
+                        false
+                    }
+                    else -> {
+                        true
+                    }
+                }
+            }
+
+            else -> {
+                // 디바이스 현 방향이 90도 단위로 기울어지지 않았을 때
+                when (cameraInfoVoMbr.sensorOrientation) {
+                    // 센서 방향이 물리적 특정 방향에서 n*90 도 회전 된 것을 기반하여
+                    0, 180 -> {
+                        true
+                    }
+                    else -> {
+                        false
+                    }
+                }
+            }
+        }
+    }
+
+    // (size 리스트들에서 공통 비율 사이즈가 존재하는지 여부)
+    // 가변 리스트 인자를 넣어주고, 동일 width / height 비율의 사이즈가 존재하는지를 판별,
+    // 하나라도 동일 비율 사이즈가 없는 리스트가 존재하면 false, 모두 어떠한 동일 비율 사이즈를 공유하면 true
+    private fun sizeListSameWhRatioExists(vararg sizeLists: ArrayList<SizeSpecInfoVo>): Boolean {
+        val whRatioSet = HashSet<Double>()
+
+        for (sizeListIdx in 0..sizeLists.lastIndex) {
+            val sizeList = sizeLists[sizeListIdx]
+
+            if (sizeList.isEmpty()) {
+                // 리스트 하나라도 비어있다면 동일성 존재 여부가 깨진 것으로 간주
+                return false
+            }
+
+            if (sizeListIdx == 0) {
+                // 첫번째 리스트이므로 비교할 것도 없이 비교용 비율을 넣어두기
+                for (size in sizeList) {
+                    whRatioSet.add(size.size.width.toDouble() / size.size.height.toDouble())
+                }
+            } else {
+                // 사이즈를 순회하며 기존 비율 셋에 해당 사이즈 비율이 존재하는지 확인
+                // containNum 이 1 이상이라면 통과, 0이라면 그 시점으로 false 를 return
+                var containNum = 0
+                val subWhRatioSet = HashSet<Double>()
+
+                for (size in sizeList) {
+                    val whRatio = size.size.width.toDouble() / size.size.height.toDouble()
+                    subWhRatioSet.add(whRatio)
+
+                    if (whRatioSet.contains(whRatio)) {
+                        containNum += 1
+                    }
+                }
+
+                if (containNum == 0) {
+                    // 모든 리스트에 대한 비율 공유의 조건이 깨졌으므로 false
+                    return false
+                }
+
+                whRatioSet.addAll(subWhRatioSet)
+            }
+        }
+
+        return true
+    }
 
 
     // ---------------------------------------------------------------------------------------------

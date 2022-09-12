@@ -15,6 +15,7 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
+import android.util.Log
 import android.view.Surface
 import android.view.WindowManager
 import androidx.activity.result.ActivityResult
@@ -459,7 +460,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 bindingMbr.galleryBtn.y =
                     bindingMbr.galleryBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
                 bindingMbr.recordOrCaptureBtn.y =
-                    bindingMbr.recordOrCaptureBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                    bindingMbr.recordOrCaptureBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(
+                        this
+                    )
                 bindingMbr.cameraChangeBtn.y =
                     bindingMbr.cameraChangeBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
                 bindingMbr.recordModeBtn.y =
@@ -475,8 +478,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
             else -> {
                 bindingMbr.galleryBtn.y = bindingMbr.galleryBtn.y - galleryBtnPlusYMbr
-                bindingMbr.recordOrCaptureBtn.y = bindingMbr.recordOrCaptureBtn.y - recordOrCaptureBtnPlusYMbr
-                bindingMbr.cameraChangeBtn.y = bindingMbr.cameraChangeBtn.y - cameraChangeBtnPlusYMbr
+                bindingMbr.recordOrCaptureBtn.y =
+                    bindingMbr.recordOrCaptureBtn.y - recordOrCaptureBtnPlusYMbr
+                bindingMbr.cameraChangeBtn.y =
+                    bindingMbr.cameraChangeBtn.y - cameraChangeBtnPlusYMbr
                 bindingMbr.recordModeBtn.y = bindingMbr.recordModeBtn.y - recordModeBtnMbr
                 bindingMbr.captureModeBtn.y = bindingMbr.captureModeBtn.y - captureModeBtnMbr
 
@@ -603,6 +608,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         cameraObjMbr = cameraObj
         classSpwMbr.currentCameraId = cameraId
+        currentCameraIdMbr = cameraId
 
         // (랜더 스크립트 객체 생성)
         renderScriptMbr = RenderScript.create(application)
@@ -617,6 +623,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         scriptIntrinsicResizeMbr = ScriptIntrinsicResize.create(renderScriptMbr)
     }
+
+    // todo
+    lateinit var currentCameraIdMbr: String
+    // 1 : 사진, 2 : 동영상
+    var currentCameraModeMbr : Int = -1
 
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
@@ -636,7 +647,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 bindingMbr.galleryBtn.y =
                     bindingMbr.galleryBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
                 bindingMbr.recordOrCaptureBtn.y =
-                    bindingMbr.recordOrCaptureBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
+                    bindingMbr.recordOrCaptureBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(
+                        this
+                    )
                 bindingMbr.cameraChangeBtn.y =
                     bindingMbr.cameraChangeBtn.y - CustomUtil.getSoftNavigationBarHeightPixel(this)
                 bindingMbr.recordModeBtn.y =
@@ -652,8 +665,10 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             }
             else -> {
                 bindingMbr.galleryBtn.y = bindingMbr.galleryBtn.y - galleryBtnPlusYMbr
-                bindingMbr.recordOrCaptureBtn.y = bindingMbr.recordOrCaptureBtn.y - recordOrCaptureBtnPlusYMbr
-                bindingMbr.cameraChangeBtn.y = bindingMbr.cameraChangeBtn.y - cameraChangeBtnPlusYMbr
+                bindingMbr.recordOrCaptureBtn.y =
+                    bindingMbr.recordOrCaptureBtn.y - recordOrCaptureBtnPlusYMbr
+                bindingMbr.cameraChangeBtn.y =
+                    bindingMbr.cameraChangeBtn.y - cameraChangeBtnPlusYMbr
                 bindingMbr.recordModeBtn.y = bindingMbr.recordModeBtn.y - recordModeBtnMbr
                 bindingMbr.captureModeBtn.y = bindingMbr.captureModeBtn.y - captureModeBtnMbr
 
@@ -666,7 +681,21 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         // todo 카메라 디버그
-//        Log.e("d", cameraId.toString())
+        executorServiceMbr.execute {
+            val currentCameraMode =
+                repositorySetMbr.databaseRoomMbr.appDatabaseMbr
+                    .activityBasicCamera2ApiSampleCameraModeConfigTableDao()
+                    .getCurrentCameraMode(currentCameraIdMbr)
+
+            val availableCameraMode = cameraObjMbr
+            Log.e("df", cameraObjMbr.cameraInfoVoMbr.toString())
+
+            if (currentCameraMode == null){
+
+            }else{
+
+            }
+        }
 
     }
 

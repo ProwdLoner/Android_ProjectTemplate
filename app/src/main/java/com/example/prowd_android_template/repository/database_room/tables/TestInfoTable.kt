@@ -17,7 +17,7 @@ class TestInfoTable {
     ) {
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = "uid")
-        var uid: Int = 0
+        var uid: Long = 0
     }
 
     // (테이블 Dao)
