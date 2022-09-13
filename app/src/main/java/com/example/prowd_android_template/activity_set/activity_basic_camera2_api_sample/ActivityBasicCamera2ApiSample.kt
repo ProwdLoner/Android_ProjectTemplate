@@ -7,7 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.Color
+import android.graphics.*
+import android.media.Image
+import android.media.ImageReader
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,7 +18,6 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicResize
 import android.renderscript.ScriptIntrinsicYuvToRGB
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.View
@@ -26,6 +27,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.FitCenter
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.ScriptC_rotator
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
@@ -41,12 +44,17 @@ import com.example.prowd_android_template.repository.database_room.tables.Activi
 import com.example.prowd_android_template.util_class.Camera2Obj
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import com.example.prowd_android_template.util_object.CustomUtil
+import com.example.prowd_android_template.util_object.RenderScriptUtil
 import com.xxx.yyy.ScriptC_crop
+import java.io.File
+import java.io.FileOutputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 
+// todo : 이미지 처리 프레임 조절 기능
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -177,6 +185,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     private var cameraOrientSurfaceSizeMbr: Size? = null
 
+    // 이미지 리더 프로세싱 일시정지 여부
+    var imageProcessingPauseMbr = false
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -440,6 +450,102 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // (onPause 알고리즘)
         // todo : 카메라 일시정지
+        imageProcessingPauseMbr = true
+
+        if (cameraObjMbr.mediaRecorderStatusCodeMbr == 3 ||
+            cameraObjMbr.mediaRecorderStatusCodeMbr == 4
+        ) { // 레코딩 중이라면 기존 레코딩 세션을 제거 후 프리뷰 세션으로 전환
+            // 기존 저장 폴더 백업
+            // todo
+//            val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+//
+//            // (카메라를 서페이스 까지 초기화)
+//            cameraObjMbr.unsetCameraOutputSurfaces(
+//                onComplete = {
+//                    // 기존 저장 폴더 삭제
+//                    videoFile.delete()
+//
+//                    // 미디어 레코드를 제외한 카메라 세션 준비
+//                    // 지원 사이즈 탐지
+//                    val chosenPreviewSurfaceSize =
+//                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                            3,
+//                            Long.MAX_VALUE,
+//                            3.0 / 2.0
+//                        )!!
+//
+//                    val previewConfigVo =
+//                        // 설정 객체 반환
+//                        arrayListOf(
+//                            CameraObj.PreviewConfigVo(
+//                                chosenPreviewSurfaceSize,
+//                                bindingMbr.cameraPreviewAutoFitTexture
+//                            )
+//                        )
+//
+//                    // 지원 사이즈 탐지
+//                    val chosenAnalysisImageReaderSurfaceSize =
+//                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                            2,
+//                            500 * 500,
+//                            3.0 / 2.0
+//                        )!!
+//
+//                    val analysisImageReaderConfigVo =
+//                        // 설정 객체 반환
+//                        CameraObj.ImageReaderConfigVo(
+//                            chosenAnalysisImageReaderSurfaceSize,
+//                            imageReaderCallback = { reader ->
+//                                analyzeImage(reader)
+//                            }
+//                        )
+//
+//                    val chosenCaptureImageReaderSurfaceSize =
+//                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                            2,
+//                            Long.MAX_VALUE,
+//                            3.0 / 2.0
+//                        )!!
+//
+//                    val captureImageReaderConfigVo =
+//                        // 설정 객체 반환
+//                        CameraObj.ImageReaderConfigVo(
+//                            chosenCaptureImageReaderSurfaceSize,
+//                            imageReaderCallback = { reader ->
+//                                captureImage(reader)
+//                            }
+//                        )
+//
+//                    // (카메라 변수 설정)
+//                    // (카메라 서페이스 설정)
+//                    cameraObjMbr.setCameraOutputSurfaces(
+//                        previewConfigVo,
+//                        captureImageReaderConfigVo,
+//                        null,
+//                        analysisImageReaderConfigVo,
+//                        onComplete = {
+//                            // (카메라 리퀘스트 설정)
+//                            cameraObjMbr.repeatingRequestOnTemplate(
+//                                forPreview = true,
+//                                forMediaRecorder = false,
+//                                forAnalysisImageReader = true,
+//                                onComplete = {
+//
+//                                },
+//                                onError = {
+//
+//                                }
+//                            )
+//                        },
+//                        onError = {
+//
+//                        }
+//                    )
+//                }
+//            )
+        } else {
+            cameraObjMbr.stopRepeatingRequest(onCameraPause = {}, onError = {})
+        }
     }
 
     override fun onDestroy() {
@@ -517,6 +623,32 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 captureModeBtnMbr = 0
             }
         }
+    }
+
+    override fun onBackPressed() {
+        imageProcessingPauseMbr = true
+        shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
+            true,
+            "카메라 종료",
+            "카메라를 종료하시겠습니까?",
+            "종료",
+            "취소",
+            onPosBtnClicked = {
+                shownDialogInfoVOMbr = null
+
+                finish()
+            },
+            onNegBtnClicked = {
+                shownDialogInfoVOMbr = null
+
+                imageProcessingPauseMbr = false
+            },
+            onCanceled = {
+                shownDialogInfoVOMbr = null
+
+                imageProcessingPauseMbr = false
+            }
+        )
     }
 
 
@@ -651,6 +783,43 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
+
+
+        // (디버그 이미지 뷰 전환 기능)
+        bindingMbr.debugYuvToRgbImg.setOnClickListener {
+            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
+            bindingMbr.debugRotateImg.visibility = View.VISIBLE
+            bindingMbr.debugResizeImg.visibility = View.GONE
+            bindingMbr.debugCropImg.visibility = View.GONE
+
+            bindingMbr.debugImageLabel.text = "ROTATE"
+        }
+        bindingMbr.debugRotateImg.setOnClickListener {
+            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
+            bindingMbr.debugRotateImg.visibility = View.GONE
+            bindingMbr.debugResizeImg.visibility = View.VISIBLE
+            bindingMbr.debugCropImg.visibility = View.GONE
+
+            bindingMbr.debugImageLabel.text = "RESIZE (half)"
+        }
+        bindingMbr.debugResizeImg.setOnClickListener {
+            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
+            bindingMbr.debugRotateImg.visibility = View.GONE
+            bindingMbr.debugResizeImg.visibility = View.GONE
+            bindingMbr.debugCropImg.visibility = View.VISIBLE
+
+            bindingMbr.debugImageLabel.text = "CROP"
+        }
+        bindingMbr.debugCropImg.setOnClickListener {
+            bindingMbr.debugYuvToRgbImg.visibility = View.VISIBLE
+            bindingMbr.debugRotateImg.visibility = View.GONE
+            bindingMbr.debugResizeImg.visibility = View.GONE
+            bindingMbr.debugCropImg.visibility = View.GONE
+
+            bindingMbr.debugImageLabel.text = "ORIGIN"
+        }
+
+
         // (화면 자동꺼짐 방지 플래그)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -861,14 +1030,344 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         bindingMbr.recordOrCaptureBtn.setOnClickListener {
             if (currentCameraModeMbr == 1) { // 사진 캡쳐 모드
                 // todo
+                cameraObjMbr.captureRequest(null, onError = {})
 
             } else { // 동영상 촬영 모드
                 // todo
+                // todo 촬영중 모드 변경 버튼 숨기기
+                //     pause 시에는 영상 멈추고 새로운 서페이스
+                //
 
+//                cameraObjMbr.repeatingRequestOnTemplate(
+//                    forPreview = true,
+//                    forMediaRecorder = true,
+//                    forAnalysisImageReader = false,
+//                    onComplete = {
+//                    },
+//                    onError = {
+//
+//                    }
+//                )
             }
         }
 
         // todo : 각 버튼 클릭 리스너 처리
+
+
+
+
+
+
+        cameraObjMbr.setCameraPinchZoomTouchListener(bindingMbr.cameraPreviewAutoFitTexture)
+        // 카메라 전환
+//        bindingMbr.cameraChangeBtn.setOnClickListener {
+//            val cameraInfoList = CameraObj.getAllSupportedCameraInfoList(this)
+//            val cameraItemList = ArrayList<String>()
+//
+//            for (id in cameraInfoList) {
+//                cameraItemList.add("Camera ${id.cameraId}")
+//            }
+//
+//            var checkedIdx = cameraInfoList.indexOfFirst {
+//                it.cameraId == classSpwMbr.currentCameraId
+//            }
+//
+//            if (checkedIdx == -1) {
+//                checkedIdx = 0
+//            }
+//
+//            imageProcessingPauseMbr = true
+//            shownDialogInfoVOMbr =
+//                DialogRadioButtonChoose.DialogInfoVO(
+//                    isCancelable = true,
+//                    title = "카메라 선택",
+//                    contentMsg = null,
+//                    radioButtonContentList = cameraItemList,
+//                    checkedItemIdx = checkedIdx,
+//                    cancelBtnTxt = null,
+//                    onRadioItemClicked = {
+//                    },
+//                    onCancelBtnClicked = {
+//                        shownDialogInfoVOMbr = null
+//                        imageProcessingPauseMbr = false
+//                    },
+//                    onSelectBtnClicked = {
+//                        val checkedCameraId = cameraInfoList[it].cameraId
+//
+//                        if (checkedCameraId != classSpwMbr.currentCameraId) {
+//                            // 기존 저장 폴더 백업
+//                            val videoFile =
+//                                if (cameraObjMbr.mediaRecorderStatusCodeMbr == 3 || cameraObjMbr.mediaRecorderStatusCodeMbr == 4) {
+//                                    cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+//                                } else {
+//                                    null
+//                                }
+//
+//                            cameraObjMbr.destroyCameraObject {
+//                                videoFile?.delete()
+//
+//                                val cameraObj = CameraObj.getInstance(
+//                                    this,
+//                                    checkedCameraId,
+//                                    onCameraDisconnectedAndClearCamera = {
+//
+//                                    }
+//                                )!!
+//
+//                                cameraObjMbr = cameraObj
+//
+//                                // 핀치 줌 설정
+//                                cameraObjMbr.setCameraPinchZoomTouchListener(bindingMbr.cameraPreviewAutoFitTexture)
+//
+//                                classSpwMbr.currentCameraId =
+//                                    checkedCameraId
+//
+//                                // (카메라 실행)
+//                                // 지원 사이즈 탐지
+//                                val chosenPreviewSurfaceSize =
+//                                    cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                                        1,
+//                                        Long.MAX_VALUE,
+//                                        3.0 / 2.0
+//                                    )!!
+//
+//                                val previewConfigVo =
+//                                    // 설정 객체 반환
+//                                    arrayListOf(
+//                                        CameraObj.PreviewConfigVo(
+//                                            chosenPreviewSurfaceSize,
+//                                            bindingMbr.cameraPreviewAutoFitTexture
+//                                        )
+//                                    )
+//
+//                                // 지원 사이즈 탐지
+//                                val chosenImageReaderSurfaceSize =
+//                                    cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                                        2,
+//                                        500 * 500,
+//                                        3.0 / 2.0
+//                                    )!!
+//
+//                                val analysisImageReaderConfigVo =
+//                                    // 설정 객체 반환
+//                                    CameraObj.ImageReaderConfigVo(
+//                                        chosenImageReaderSurfaceSize,
+//                                        imageReaderCallback = { reader ->
+//                                            analyzeImage(reader)
+//                                        }
+//                                    )
+//
+//                                val chosenCaptureImageReaderSurfaceSize =
+//                                    cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                                        2,
+//                                        Long.MAX_VALUE,
+//                                        3.0 / 2.0
+//                                    )!!
+//
+//                                val captureImageReaderConfigVo =
+//                                    // 설정 객체 반환
+//                                    CameraObj.ImageReaderConfigVo(
+//                                        chosenCaptureImageReaderSurfaceSize,
+//                                        imageReaderCallback = { reader ->
+//                                            captureImage(reader)
+//                                        }
+//                                    )
+//
+//                                // (카메라 변수 설정)
+//                                // todo : 세팅 함수는 그대로 두되, setCameraRequest 에서 한번에 설정하도록
+//                                // 떨림 보정
+//                                cameraObjMbr.setCameraStabilization(
+//                                    true,
+//                                    onComplete = {},
+//                                    onError = {})
+//
+//                                // (카메라 서페이스 설정)
+//                                cameraObjMbr.setCameraOutputSurfaces(
+//                                    previewConfigVo,
+//                                    captureImageReaderConfigVo,
+//                                    null,
+//                                    analysisImageReaderConfigVo,
+//                                    onComplete = {
+//                                        // (카메라 리퀘스트 설정)
+//                                        cameraObjMbr.repeatingRequestOnTemplate(
+//                                            forPreview = true,
+//                                            forMediaRecorder = false,
+//                                            forAnalysisImageReader = true,
+//                                            onComplete = {
+//
+//                                            },
+//                                            onError = {
+//
+//                                            }
+//                                        )
+//                                    },
+//                                    onError = {
+//
+//                                    }
+//                                )
+//                            }
+//                        }
+//                        shownDialogInfoVOMbr = null
+//                        imageProcessingPauseMbr = false
+//                    },
+//                    onCanceled = {
+//                        shownDialogInfoVOMbr = null
+//                        imageProcessingPauseMbr = false
+//                    }
+//                )
+//        }
+//
+//        // todo 녹화중 화면 효과
+//        // todo 방해 금지 모드로 회전 및 pause 가 불가능하도록 처리
+//        bindingMbr.btn1.setOnClickListener {
+//            // 처리 완료까지 중복 클릭 방지
+//            bindingMbr.btn1.isEnabled = false
+//
+//            if (cameraObjMbr.mediaRecorderStatusCodeMbr != 3 && cameraObjMbr.mediaRecorderStatusCodeMbr != 4) { // 현재 레코딩 중이 아닐 때
+//                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
+//
+//                cameraObjMbr.unsetCameraOutputSurfaces {
+//                    // 지원 사이즈 탐지
+//                    val chosenPreviewSurfaceSize =
+//                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                            1,
+//                            Long.MAX_VALUE,
+//                            3.0 / 2.0
+//                        )!!
+//
+//                    val previewConfigVo =
+//                        // 설정 객체 반환
+//                        arrayListOf(
+//                            CameraObj.PreviewConfigVo(
+//                                chosenPreviewSurfaceSize,
+//                                bindingMbr.cameraPreviewAutoFitTexture
+//                            )
+//                        )
+//
+//                    // 지원 사이즈 탐지
+//                    val chosenImageReaderSurfaceSize =
+//                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                            2,
+//                            500 * 500,
+//                            3.0 / 2.0
+//                        )!!
+//
+//                    val analysisImageReaderConfigVo =
+//                        // 설정 객체 반환
+//                        CameraObj.ImageReaderConfigVo(
+//                            chosenImageReaderSurfaceSize,
+//                            imageReaderCallback = { reader ->
+//                                analyzeImage(reader)
+//                            }
+//                        )
+//
+//                    // 지원 사이즈 탐지
+//                    val chosenSurfaceSize =
+//                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                            3,
+//                            Long.MAX_VALUE,
+//                            3.0 / 2.0
+//                        )!!
+//
+//                    val mediaRecorderConfigVo =
+//                        // 설정 객체 반환
+//                        CameraObj.MediaRecorderConfigVo(
+//                            chosenSurfaceSize,
+//                            File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.mp4"),
+//                            true,
+//                            Int.MAX_VALUE,
+//                            Int.MAX_VALUE,
+//                            Int.MAX_VALUE
+//                        )
+//
+//                    val chosenCaptureImageReaderSurfaceSize =
+//                        cameraObjMbr.getNearestSupportedCameraOutputSize(
+//                            2,
+//                            Long.MAX_VALUE,
+//                            3.0 / 2.0
+//                        )!!
+//
+//                    val captureImageReaderConfigVo =
+//                        // 설정 객체 반환
+//                        CameraObj.ImageReaderConfigVo(
+//                            chosenCaptureImageReaderSurfaceSize,
+//                            imageReaderCallback = { reader ->
+//                                captureImage(reader)
+//                            }
+//                        )
+//
+//                    // (카메라 변수 설정)
+//                    // 떨림 보정
+//                    cameraObjMbr.setCameraStabilization(
+//                        true,
+//                        onComplete = {},
+//                        onError = {})
+//
+//                    // (카메라 서페이스 설정)
+//                    cameraObjMbr.setCameraOutputSurfaces(
+//                        previewConfigVo,
+//                        captureImageReaderConfigVo,
+//                        mediaRecorderConfigVo,
+//                        null,
+//                        onComplete = {
+//                            // (카메라 리퀘스트 설정)
+//                            cameraObjMbr.repeatingRequestOnTemplate(
+//                                forPreview = true,
+//                                forMediaRecorder = true,
+//                                forAnalysisImageReader = false,
+//                                onComplete = {ㅋㅇ
+//                                },
+//                                onError = {
+//
+//                                }
+//                            )
+//                        },
+//                        onError = {
+//                            runOnUiThread {
+//                                bindingMbr.btn1.isEnabled = true
+//                            }
+//                        }
+//                    )
+//                }
+//
+//            } else { // 레코딩 중일때
+//                // 화면 고정 풀기
+//                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+//
+//                // 기존 저장 폴더 백업
+//                val videoFile = cameraObjMbr.mediaRecorderConfigVoMbr!!.mediaRecordingMp4File
+//
+//                // 카메라 초기화
+//                cameraObjMbr.unsetCameraOutputSurfaces(
+//                    onComplete = {
+//                        runOnUiThread {
+//                            bindingMbr.btn1.isEnabled = true
+//
+//                            // (결과물 감상)
+//                            val mediaPlayerIntent = Intent()
+//                            mediaPlayerIntent.action = Intent.ACTION_VIEW
+//                            mediaPlayerIntent.setDataAndType(
+//                                FileProvider.getUriForFile(
+//                                    this@ActivityBasicCamera2ApiSample,
+//                                    "${BuildConfig.APPLICATION_ID}.provider",
+//                                    videoFile
+//                                ), MimeTypeMap.getSingleton()
+//                                    .getMimeTypeFromExtension(videoFile.extension)
+//                            )
+//                            mediaPlayerIntent.flags =
+//                                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+//                                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+//
+//                            resultLauncherCallbackMbr = {
+//                                videoFile.delete()
+//                                finish()
+//                            }
+//                            resultLauncherMbr.launch(mediaPlayerIntent)
+//                        }
+//                    }
+//                )
+//            }
+//        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -900,8 +1399,20 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 refreshWholeScreenData(onComplete = {})
             }
 
+            // (카메라 실행)
             // todo 카메라 재시작
+            imageProcessingPauseMbr = false
+            cameraObjMbr.repeatingRequestOnTemplate(
+                forPreview = true,
+                forMediaRecorder = false,
+                forAnalysisImageReader = isCameraImageAnalysisMbr,
+                onComplete = {
 
+                },
+                onError = {
+
+                }
+            )
         }
 
         // (onResume)
@@ -1067,27 +1578,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // todo 다시보기
     // (초기 카메라 정보 설정 및 실행)
     // : DB 에 저장된 기존 카메라 정보 확인
@@ -1124,24 +1614,33 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 val cameraOrientSupportedUnitSize = cameraObjMbr.getNearestSize(
                     cameraOrientSupportedUnitSizeList.toList(),
-                    Long.MAX_VALUE, 16.0 / 9.0
+                    Long.MAX_VALUE,
+                    16.0 / 9.0
                 )
 
+                // 실제로 선정된 비율값
+                val selectedWhRatio =
+                    cameraOrientSupportedUnitSize.width.toDouble() / cameraOrientSupportedUnitSize.height.toDouble()
+
                 // 위 비율에 대한 지원 해상도 목록 선정
-                val surfaceSizeList = cameraObjMbr.getSizeListsForWhRatio(16.0 / 9.0)
+                val surfaceSizeList =
+                    cameraObjMbr.getSizeListsForWhRatio(selectedWhRatio)
                 // 가장 큰 해상도 선정
-                val cameraOrientSupportedSize = if (currentCameraModeMbr == 1){
+                val cameraOrientSupportedSize = if (currentCameraModeMbr == 1) {
                     cameraObjMbr.getNearestSize(
                         surfaceSizeList.captureImageReaderSizeList,
-                        Long.MAX_VALUE, 16.0 / 9.0
+                        Long.MAX_VALUE,
+                        selectedWhRatio
                     )
-                }else{
+                } else {
                     cameraObjMbr.getNearestSize(
                         surfaceSizeList.mediaRecorderSizeList,
-                        Long.MAX_VALUE, 16.0 / 9.0
+                        Long.MAX_VALUE,
+                        selectedWhRatio
                     )
                 }
 
+                // 화면 반영
                 runOnUiThread {
                     bindingMbr.flashModeValue.text = "off"
                     bindingMbr.timerValue.text = "0"
@@ -1248,18 +1747,23 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         Long.MAX_VALUE, 16.0 / 9.0
                     )
 
+                    val selectedWhRatio =
+                        cameraOrientSupportedUnitSize.width.toDouble() / cameraOrientSupportedUnitSize.height.toDouble()
+
                     // 위 비율에 대한 지원 해상도 목록 선정
-                    val surfaceSizeList = cameraObjMbr.getSizeListsForWhRatio(16.0 / 9.0)
+                    val surfaceSizeList = cameraObjMbr.getSizeListsForWhRatio(selectedWhRatio)
                     // 가장 큰 해상도 선정
-                    cameraOrientSupportedSize = if (currentCameraModeMbr == 1){
+                    cameraOrientSupportedSize = if (currentCameraModeMbr == 1) {
                         cameraObjMbr.getNearestSize(
                             surfaceSizeList.captureImageReaderSizeList,
-                            Long.MAX_VALUE, 16.0 / 9.0
+                            Long.MAX_VALUE,
+                            selectedWhRatio
                         )
-                    }else{
+                    } else {
                         cameraObjMbr.getNearestSize(
                             surfaceSizeList.mediaRecorderSizeList,
-                            Long.MAX_VALUE, 16.0 / 9.0
+                            Long.MAX_VALUE,
+                            selectedWhRatio
                         )
                     }
 
@@ -1271,26 +1775,34 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         cameraOrientSupportedSizeArray[0].toInt(),
                         cameraOrientSupportedSizeArray[1].toInt()
                     )
-                    // todo 해상도 존재 검증
+
+                    // 해상도 존재 검증
                     val surfaceSizeLists =
                         cameraObjMbr.getSizeListsForWhRatio(
                             cameraOrientSupportedUnitSize.width.toDouble() /
                                     cameraOrientSupportedUnitSize.height.toDouble()
                         )
 
-                    val surfaceSizeList = if (currentCameraModeMbr == 1){
+                    val surfaceSizeList = if (currentCameraModeMbr == 1) {
                         surfaceSizeLists.captureImageReaderSizeList
-                    }else{
+                    } else {
                         surfaceSizeLists.mediaRecorderSizeList
                     }
 
                     val findSameSizeIdx = surfaceSizeList.indexOfFirst {
-                        it.width == cameraOrientSupportedUnitSize.width &&
-                                it.height == cameraOrientSupportedUnitSize.height
+                        it.width == cameraOrientSupportedSize!!.width &&
+                                it.height == cameraOrientSupportedSize!!.height
                     }
-                    Log.e("dd", findSameSizeIdx.toString())
 
-
+                    if (findSameSizeIdx == -1) { // 동일 해상도를 찾지 못했을 때
+                        // 존재하는 리스트에서 가장 큰 해상도를 선택
+                        cameraOrientSupportedSize = cameraObjMbr.getNearestSize(
+                            surfaceSizeList,
+                            Long.MAX_VALUE,
+                            cameraOrientSupportedUnitSize.width.toDouble() /
+                                    cameraOrientSupportedUnitSize.height.toDouble()
+                        )
+                    }
                 }
 
                 runOnUiThread {
@@ -1309,9 +1821,9 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                         }
                     bindingMbr.surfaceSizeValue.text =
                         if (cameraObjMbr.cameraSensorOrientationAndDeviceAreSameWh()) {
-                            "${cameraOrientSupportedSize!!.width}:${cameraOrientSupportedSize.height}"
+                            "${cameraOrientSupportedSize.width}:${cameraOrientSupportedSize.height}"
                         } else {
-                            "${cameraOrientSupportedSize!!.height}:${cameraOrientSupportedSize.width}"
+                            "${cameraOrientSupportedSize.height}:${cameraOrientSupportedSize.width}"
                         }
                 }
 
@@ -1323,7 +1835,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                             flashMode,
                             timer,
                             "${cameraOrientSupportedUnitSize.width}:${cameraOrientSupportedUnitSize.height}",
-                            "${cameraOrientSupportedSize!!.width}:${cameraOrientSupportedSize.height}"
+                            "${cameraOrientSupportedSize.width}:${cameraOrientSupportedSize.height}"
                         )
                     )
 
@@ -1339,10 +1851,480 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (카메라 실행 함수)
     // : 여기까지 오면 카메라 실행에 필요한 정보들이 결정된 상태
-    //     멤버변수에 존재하는 카메라 id, 카메라 mode, 플래시 모드, 타이머, 카메라 사이즈 정보를 토대로 실행
+    //     멤버변수에 존재하는 
+    //     카메라 id : cameraObjMbr.cameraInfoVoMbr.cameraId,
+    //     카메라 mode : currentCameraModeMbr,
+    //     플래시 모드 : flashModeMbr,
+    //     타이머 : timerMbr,
+    //     카메라 사이즈 : cameraOrientSupportedSize
+    //     정보를 토대로 실행
     private fun startCamera() {
-        // todo
+        val previewConfigVo =
+            // 설정 객체 반환
+            arrayListOf(
+                Camera2Obj.PreviewConfigVo(
+                    cameraOrientSurfaceSizeMbr!!,
+                    bindingMbr.cameraPreviewAutoFitTexture
+                )
+            )
 
+        val captureImageReaderConfigVo = if (currentCameraModeMbr == 1){ // 사진
+            Camera2Obj.ImageReaderConfigVo(
+                cameraOrientSurfaceSizeMbr!!,
+                imageReaderCallback = { reader ->
+                    captureImage(reader)
+                }
+            )
+        }else{ // 동영상
+            null
+        }
+
+        // todo
+        val mediaRecorderConfigVo = if (currentCameraModeMbr == 1){ // 사진
+            null
+        }else{ // 동영상
+            null
+        }
+
+        val analysisImageReaderConfigVo = if (isCameraImageAnalysisMbr){
+            Camera2Obj.ImageReaderConfigVo(
+                cameraOrientSurfaceSizeMbr!!,
+                imageReaderCallback = { reader ->
+                    analyzeImage(reader)
+                }
+            )
+        }else{
+            null
+        }
+
+
+        cameraObjMbr.setCameraOutputSurfaces(
+            previewConfigVo,
+            captureImageReaderConfigVo,
+            mediaRecorderConfigVo,
+            analysisImageReaderConfigVo,
+            onComplete = {
+                // (카메라 리퀘스트 설정)
+                cameraObjMbr.repeatingRequestOnTemplate(
+                    forPreview = true,
+                    forMediaRecorder = currentCameraModeMbr == 2,
+                    forAnalysisImageReader = isCameraImageAnalysisMbr,
+                    onComplete = {
+
+                    },
+                    onError = {
+
+                    }
+                )
+            },
+            onError = {
+
+            }
+        )
+
+    }
+
+    // GPU 접속 제한 세마포어
+    private val gpuSemaphoreMbr = Semaphore(1)
+
+    // 최대 이미지 프로세싱 개수 (현재 처리중인 이미지 프로세싱 개수가 이것을 넘어가면 그냥 return)
+    private var asyncImageProcessingOnProgressMbr = false
+    private val asyncImageProcessingOnProgressSemaphoreMbr = Semaphore(1)
+
+    // (카메라 이미지 실시간 처리 콜백)
+    // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
+    private fun analyzeImage(reader: ImageReader) {
+        try {
+            // (1. Image 객체 정보 추출)
+            // reader 객체로 받은 image 객체의 이미지 정보가 처리되어 close 될 때까지는 동기적으로 처리
+            // image 객체가 빨리 close 되고 나머지는 비동기 처리를 하는게 좋음
+
+            // 프레임 이미지 객체
+            val imageObj: Image = reader.acquireLatestImage() ?: return
+
+            // 조기 종료 플래그
+            if (cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
+                imageProcessingPauseMbr || // imageProcessing 정지 신호
+                isDestroyed // 액티비티 자체가 종료
+            ) {
+                imageObj.close()
+                return
+            }
+
+            // 안정화를 위하여 Image 객체의 필요 데이터를 clone
+            // 이번 프레임 수집 시간 (time stamp nano sec -> milli sec)
+            val imageGainTimeMs: Long = imageObj.timestamp / 1000 / 1000
+
+            val imageWidth = imageObj.width
+            val imageHeight = imageObj.height
+            val pixelCount = imageWidth * imageHeight
+
+            // image planes 를 순회하면 yuvByteArray 채우기
+            val plane0: Image.Plane = imageObj.planes[0]
+            val plane1: Image.Plane = imageObj.planes[1]
+            val plane2: Image.Plane = imageObj.planes[2]
+
+            val rowStride0: Int = plane0.rowStride
+            val pixelStride0: Int = plane0.pixelStride
+
+            val rowStride1: Int = plane1.rowStride
+            val pixelStride1: Int = plane1.pixelStride
+
+            val rowStride2: Int = plane2.rowStride
+            val pixelStride2: Int = plane2.pixelStride
+
+            val planeBuffer0: ByteBuffer = CustomUtil.cloneByteBuffer(plane0.buffer)
+            val planeBuffer1: ByteBuffer = CustomUtil.cloneByteBuffer(plane1.buffer)
+            val planeBuffer2: ByteBuffer = CustomUtil.cloneByteBuffer(plane2.buffer)
+
+            imageObj.close()
+
+            // 여기까지, camera2 api 이미지 리더에서 발행하는 image 객체를 처리하는 사이클이 완성
+
+            // (2. 비동기 이미지 프로세싱 시작)
+            executorServiceMbr?.execute {
+
+                // 조기 종료 확인
+                asyncImageProcessingOnProgressSemaphoreMbr.acquire()
+                if (asyncImageProcessingOnProgressMbr || // 현재 비동기 이미지 프로세싱 중일 때
+                    cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
+                    imageProcessingPauseMbr || // imageProcessing 정지 신호
+                    isDestroyed // 액티비티 자체가 종료
+                ) {
+                    asyncImageProcessingOnProgressSemaphoreMbr.release()
+                    return@execute
+                }
+                asyncImageProcessingOnProgressMbr = true
+                asyncImageProcessingOnProgressSemaphoreMbr.release()
+
+                // (3. 이미지 객체에서 추출한 YUV 420 888 바이트 버퍼를 ARGB 8888 비트맵으로 변환)
+                val cameraImageFrameBitmap = yuv420888ByteBufferToArgb8888Bitmap(
+                    imageWidth,
+                    imageHeight,
+                    pixelCount,
+                    rowStride0,
+                    pixelStride0,
+                    planeBuffer0,
+                    rowStride1,
+                    pixelStride1,
+                    planeBuffer1,
+                    rowStride2,
+                    pixelStride2,
+                    planeBuffer2
+                )
+
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(cameraImageFrameBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.debugYuvToRgbImg)
+                    }
+                }
+
+                // (4. 이미지를 회전)
+                // 현 디바이스 방향으로 이미지를 맞추기 위해 역시계 방향으로 몇도를 돌려야 하는지
+                val rotateCounterClockAngle: Int =
+                    when (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        display!!.rotation
+                    } else {
+                        windowManager.defaultDisplay.rotation
+                    }) {
+                        Surface.ROTATION_0 -> { // 카메라 기본 방향
+                            // if sensorOrientationMbr = 90 -> 270
+                            360 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
+                        }
+                        Surface.ROTATION_90 -> { // 카메라 기본 방향에서 역시계 방향 90도 회전 상태
+                            // if sensorOrientationMbr = 90 -> 0
+                            90 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
+                        }
+                        Surface.ROTATION_180 -> {
+                            // if sensorOrientationMbr = 90 -> 90
+                            180 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
+                        }
+                        Surface.ROTATION_270 -> {
+                            // if sensorOrientationMbr = 90 -> 180
+                            270 - cameraObjMbr.cameraInfoVoMbr.sensorOrientation
+                        }
+                        else -> {
+                            0
+                        }
+                    }
+
+                gpuSemaphoreMbr.acquire()
+                val rotatedCameraImageFrameBitmap =
+                    RenderScriptUtil.rotateBitmapCounterClock(
+                        renderScriptMbr,
+                        scriptCRotatorMbr,
+                        cameraImageFrameBitmap,
+                        rotateCounterClockAngle
+                    )
+                gpuSemaphoreMbr.release()
+
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(rotatedCameraImageFrameBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.debugRotateImg)
+                    }
+                }
+
+                // (5. 리사이징 테스트)
+                // 리사이징 사이즈
+                val dstSize = Size(
+                    rotatedCameraImageFrameBitmap.width / 2,
+                    rotatedCameraImageFrameBitmap.height / 2
+                )
+
+                gpuSemaphoreMbr.acquire()
+                val resizedBitmap = RenderScriptUtil.resizeBitmapIntrinsic(
+                    renderScriptMbr,
+                    scriptIntrinsicResizeMbr,
+                    rotatedCameraImageFrameBitmap,
+                    dstSize.width,
+                    dstSize.height
+                )
+                gpuSemaphoreMbr.release()
+
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(resizedBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.debugResizeImg)
+                    }
+                }
+
+                // (6. Crop 테스트)
+                // 좌표 width, height 을 1로 두었을 때, 어느 영역을 자를건지에 대한 비율
+                val cropAreaRatioRectF = RectF(
+                    0.3f,
+                    0.3f,
+                    0.7f,
+                    0.7f
+                )
+
+                gpuSemaphoreMbr.acquire()
+                val croppedBitmap = RenderScriptUtil.cropBitmap(
+                    renderScriptMbr,
+                    scriptCCropMbr,
+                    rotatedCameraImageFrameBitmap,
+                    Rect(
+                        (cropAreaRatioRectF.left * rotatedCameraImageFrameBitmap.width).toInt(),
+                        (cropAreaRatioRectF.top * rotatedCameraImageFrameBitmap.height).toInt(),
+                        (cropAreaRatioRectF.right * rotatedCameraImageFrameBitmap.width).toInt(),
+                        (cropAreaRatioRectF.bottom * rotatedCameraImageFrameBitmap.height).toInt()
+                    )
+                )
+                gpuSemaphoreMbr.release()
+
+                // 디버그를 위한 표시
+                runOnUiThread {
+                    if (!isDestroyed) {
+                        Glide.with(this)
+                            .load(croppedBitmap)
+                            .transform(FitCenter())
+                            .into(bindingMbr.debugCropImg)
+                    }
+                }
+
+                // 프로세스 한 사이클이 끝나면 반드시 count 를 내릴 것!
+                asyncImageProcessingOnProgressSemaphoreMbr.acquire()
+                asyncImageProcessingOnProgressMbr = false
+                asyncImageProcessingOnProgressSemaphoreMbr.release()
+
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // (카메라 이미지 실시간 처리 콜백)
+    // 카메라에서 이미지 프레임을 받아올 때마다 이것이 실행됨
+    private fun captureImage(reader: ImageReader) {
+        try {
+            val file = File("${this.filesDir.absolutePath}/${System.currentTimeMillis()}.jpg")
+
+            // 프레임 이미지 객체
+            val imageObj: Image = reader.acquireLatestImage() ?: return
+
+            // 조기 종료 플래그
+            if (cameraObjMbr.cameraStatusCodeMbr != 2 || // repeating 상태가 아닐 경우
+                isDestroyed // 액티비티 자체가 종료
+            ) {
+                imageObj.close()
+                return
+            }
+
+            val buffer: ByteBuffer = CustomUtil.cloneByteBuffer(imageObj.planes[0].buffer)
+            imageObj.close()
+            val bytes = ByteArray(buffer.remaining())
+            buffer[bytes]
+            val output = FileOutputStream(file)
+            output.write(bytes)
+            output.close()
+
+            runOnUiThread {
+                if (!isDestroyed) {
+                    Glide.with(this)
+                        .load(file)
+                        .transform(FitCenter())
+                        .into(bindingMbr.captureImg)
+                }
+
+                executorServiceMbr?.execute {
+                    Thread.sleep(2000)
+                    file.delete()
+                }
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // (YUV 420 888 ByteBuffer 를 ARGB 8888 Bitmap 으로 변환하는 함수)
+    private fun yuv420888ByteBufferToArgb8888Bitmap(
+        imageWidth: Int,
+        imageHeight: Int,
+        pixelCount: Int,
+        rowStride0: Int,
+        pixelStride0: Int,
+        planeBuffer0: ByteBuffer,
+        rowStride1: Int,
+        pixelStride1: Int,
+        planeBuffer1: ByteBuffer,
+        rowStride2: Int,
+        pixelStride2: Int,
+        planeBuffer2: ByteBuffer
+    ): Bitmap {
+        val yuvByteArray =
+            ByteArray(pixelCount * ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888) / 8)
+
+        val rowBuffer0 = ByteArray(rowStride0)
+        val outputStride0 = 1
+
+        var outputOffset0 = 0
+
+        val imageCrop0 = Rect(0, 0, imageWidth, imageHeight)
+
+        val planeWidth0 = imageCrop0.width()
+
+        val rowLength0 = if (pixelStride0 == 1 && outputStride0 == 1) {
+            planeWidth0
+        } else {
+            (planeWidth0 - 1) * pixelStride0 + 1
+        }
+
+        for (row in 0 until imageCrop0.height()) {
+            planeBuffer0.position(
+                (row + imageCrop0.top) * rowStride0 + imageCrop0.left * pixelStride0
+            )
+
+            if (pixelStride0 == 1 && outputStride0 == 1) {
+                planeBuffer0.get(yuvByteArray, outputOffset0, rowLength0)
+                outputOffset0 += rowLength0
+            } else {
+                planeBuffer0.get(rowBuffer0, 0, rowLength0)
+                for (col in 0 until planeWidth0) {
+                    yuvByteArray[outputOffset0] = rowBuffer0[col * pixelStride0]
+                    outputOffset0 += outputStride0
+                }
+            }
+        }
+
+        val rowBuffer1 = ByteArray(rowStride1)
+        val outputStride1 = 2
+
+        var outputOffset1: Int = pixelCount + 1
+
+        val imageCrop1 = Rect(0, 0, imageWidth, imageHeight)
+
+        val planeCrop1 = Rect(
+            imageCrop1.left / 2,
+            imageCrop1.top / 2,
+            imageCrop1.right / 2,
+            imageCrop1.bottom / 2
+        )
+
+        val planeWidth1 = planeCrop1.width()
+
+        val rowLength1 = if (pixelStride1 == 1 && outputStride1 == 1) {
+            planeWidth1
+        } else {
+            (planeWidth1 - 1) * pixelStride1 + 1
+        }
+
+        for (row in 0 until planeCrop1.height()) {
+            planeBuffer1.position(
+                (row + planeCrop1.top) * rowStride1 + planeCrop1.left * pixelStride1
+            )
+
+            if (pixelStride1 == 1 && outputStride1 == 1) {
+                planeBuffer1.get(yuvByteArray, outputOffset1, rowLength1)
+                outputOffset1 += rowLength1
+            } else {
+                planeBuffer1.get(rowBuffer1, 0, rowLength1)
+                for (col in 0 until planeWidth1) {
+                    yuvByteArray[outputOffset1] = rowBuffer1[col * pixelStride1]
+                    outputOffset1 += outputStride1
+                }
+            }
+        }
+
+        val rowBuffer2 = ByteArray(rowStride2)
+        val outputStride2 = 2
+
+        var outputOffset2: Int = pixelCount
+
+        val imageCrop2 = Rect(0, 0, imageWidth, imageHeight)
+
+        val planeCrop2 = Rect(
+            imageCrop2.left / 2,
+            imageCrop2.top / 2,
+            imageCrop2.right / 2,
+            imageCrop2.bottom / 2
+        )
+
+        val planeWidth2 = planeCrop2.width()
+
+        val rowLength2 = if (pixelStride2 == 1 && outputStride2 == 1) {
+            planeWidth2
+        } else {
+            (planeWidth2 - 1) * pixelStride2 + 1
+        }
+
+        for (row in 0 until planeCrop2.height()) {
+            planeBuffer2.position(
+                (row + planeCrop2.top) * rowStride2 + planeCrop2.left * pixelStride2
+            )
+
+            if (pixelStride2 == 1 && outputStride2 == 1) {
+                planeBuffer2.get(yuvByteArray, outputOffset2, rowLength2)
+                outputOffset2 += rowLength2
+            } else {
+                planeBuffer2.get(rowBuffer2, 0, rowLength2)
+                for (col in 0 until planeWidth2) {
+                    yuvByteArray[outputOffset2] = rowBuffer2[col * pixelStride2]
+                    outputOffset2 += outputStride2
+                }
+            }
+        }
+        gpuSemaphoreMbr.acquire()
+        val result = RenderScriptUtil.yuv420888ToARgb8888BitmapIntrinsic(
+            renderScriptMbr,
+            scriptIntrinsicYuvToRGBMbr,
+            imageWidth,
+            imageHeight,
+            yuvByteArray
+        )
+        gpuSemaphoreMbr.release()
+
+        return result
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -1395,4 +2377,20 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         // <중첩 클래스 공간>
 
     }
+
+    data class ImageDataVo(
+        val imageTimeMs: Long,
+        val imageWidth: Int,
+        val imageHeight: Int,
+        val pixelCount: Int,
+        val rowStride0: Int,
+        val pixelStride0: Int,
+        val planeBuffer0: ByteBuffer,
+        val rowStride1: Int,
+        val pixelStride1: Int,
+        val planeBuffer1: ByteBuffer,
+        val rowStride2: Int,
+        val pixelStride2: Int,
+        val planeBuffer2: ByteBuffer
+    )
 }

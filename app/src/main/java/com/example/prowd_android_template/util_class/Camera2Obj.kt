@@ -14,6 +14,7 @@ import android.media.ImageReader
 import android.media.MediaCodec
 import android.media.MediaRecorder
 import android.os.Build
+import android.os.SystemClock
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.*
@@ -23,6 +24,7 @@ import com.example.prowd_android_template.util_object.CustomUtil
 import com.google.android.gms.common.util.concurrent.HandlerExecutor
 import java.io.File
 import java.util.concurrent.Semaphore
+import kotlin.math.sqrt
 
 
 // todo : 예시 샘플에서 fps 조절 부분도 추가
@@ -1420,35 +1422,35 @@ class Camera2Obj private constructor(
     fun getSizeListsForWhRatio(whRatio: Double): SurfacesSizeList {
         val previewSizeList = ArrayList<Size>()
         for (previewSizeInfo in cameraInfoVoMbr.previewSizeInfoList) {
-            if ((previewSizeInfo.size.width.toDouble() / previewSizeInfo.size.height.toDouble()) == whRatio){
+            if ((previewSizeInfo.size.width.toDouble() / previewSizeInfo.size.height.toDouble()) == whRatio) {
                 previewSizeList.add(previewSizeInfo.size)
             }
         }
 
         val captureImageReaderSizeList = ArrayList<Size>()
         for (captureImageReaderSizeInfo in cameraInfoVoMbr.captureImageReaderSizeInfoList) {
-            if ((captureImageReaderSizeInfo.size.width.toDouble() / captureImageReaderSizeInfo.size.height.toDouble()) == whRatio){
+            if ((captureImageReaderSizeInfo.size.width.toDouble() / captureImageReaderSizeInfo.size.height.toDouble()) == whRatio) {
                 captureImageReaderSizeList.add(captureImageReaderSizeInfo.size)
             }
         }
 
         val mediaRecorderSizeList = ArrayList<Size>()
         for (mediaRecorderSizeInfo in cameraInfoVoMbr.mediaRecorderSizeInfoList) {
-            if ((mediaRecorderSizeInfo.size.width.toDouble() / mediaRecorderSizeInfo.size.height.toDouble()) == whRatio){
+            if ((mediaRecorderSizeInfo.size.width.toDouble() / mediaRecorderSizeInfo.size.height.toDouble()) == whRatio) {
                 mediaRecorderSizeList.add(mediaRecorderSizeInfo.size)
             }
         }
 
         val analysisImageReaderSizeList = ArrayList<Size>()
         for (analysisImageReaderSizeInfo in cameraInfoVoMbr.analysisImageReaderSizeInfoList) {
-            if ((analysisImageReaderSizeInfo.size.width.toDouble() / analysisImageReaderSizeInfo.size.height.toDouble()) == whRatio){
+            if ((analysisImageReaderSizeInfo.size.width.toDouble() / analysisImageReaderSizeInfo.size.height.toDouble()) == whRatio) {
                 analysisImageReaderSizeList.add(analysisImageReaderSizeInfo.size)
             }
         }
 
         val highSpeedSizeList = ArrayList<Size>()
         for (highSpeedSizeInfo in cameraInfoVoMbr.highSpeedSizeInfoList) {
-            if ((highSpeedSizeInfo.size.width.toDouble() / highSpeedSizeInfo.size.height.toDouble()) == whRatio){
+            if ((highSpeedSizeInfo.size.width.toDouble() / highSpeedSizeInfo.size.height.toDouble()) == whRatio) {
                 highSpeedSizeList.add(highSpeedSizeInfo.size)
             }
         }
@@ -1469,125 +1471,125 @@ class Camera2Obj private constructor(
     // 뷰를 주입하면 해당 뷰를 핀칭할 때에 줌을 변경할수 있도록 리스너를 주입
     // 뷰를 여러번 넣으면 각각의 뷰에 핀칭을 할 때마다 줌을 변경
     // delta : 단위 핀치 이벤트에 따른 줌 변화량 = 높을수록 민감
-//    var beforePinchSpacingMbr: Float? = null
-//    var pinchBeforeMbr: Boolean = false
-//    var clickStartTimeMsMbr: Long? = null
-//    var longClickedBeforeMbr = false
-//    val longClickTimeMsMbr = 500
-//    fun setCameraPinchZoomTouchListener(
-//        view: View,
-//        delta: Float = 0.05f
-//    ) {
-//        view.setOnTouchListener(object : View.OnTouchListener {
-//            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-//                when (event!!.action) {
-//                    MotionEvent.ACTION_DOWN -> {}
-//                    MotionEvent.ACTION_UP -> {
-//                        // 형식 맞추기 코드
-//                        v!!.performClick()
-//
-//                        // 손가락을 떼면 기존 핀치 너비 비우기
-//                        beforePinchSpacingMbr = null
-//                    }
-//                    else -> {}
-//                }
-//
-//                when (event.pointerCount) {
-//                    2 -> { // 핀치를 위한 더블 터치일 경우
-//                        // 두손가락을 대고있는 매 순간 실행
-//
-//                        // 현재 핀치 넓이 구하기
-//                        val currentFingerSpacing: Float
-//                        val x = event.getX(0) - event.getX(1)
-//                        val y = event.getY(0) - event.getY(1)
-//                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
-//
-//                        if (beforePinchSpacingMbr != null) {
-//                            if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
-//                                val zoom =
-//                                    if ((zoomFactorMbr + delta) > cameraInfoVoMbr.maxZoom) {
-//                                        cameraInfoVoMbr.maxZoom
-//                                    } else {
-//                                        zoomFactorMbr + delta
-//                                    }
-//                                setZoomFactor(
-//                                    zoom,
-//                                    onComplete = {})
-//                            } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
-//                                val zoom =
-//                                    if ((zoomFactorMbr - delta) < 1.0f) {
-//                                        1.0f
-//                                    } else {
-//                                        zoomFactorMbr - delta
-//                                    }
-//                                setZoomFactor(
-//                                    zoom,
-//                                    onComplete = {})
-//                            }
-//                        }
-//
-//                        // 핀치 너비를 갱신
-//                        beforePinchSpacingMbr = currentFingerSpacing
-//
-//                        pinchBeforeMbr = true
-//                        clickStartTimeMsMbr = null
-//                        longClickedBeforeMbr = false
-//
-//                        return true
-//                    }
-//                    1 -> { // 한손가락을 대고있는 매 순간 실행
-//
-//                        // long click 탐지
-//                        if (!pinchBeforeMbr) {
-//                            if (clickStartTimeMsMbr == null) {
-//                                clickStartTimeMsMbr = SystemClock.elapsedRealtime()
-//                                longClickedBeforeMbr = false
-//                            } else {
-//                                longClickedBeforeMbr =
-//                                    if (SystemClock.elapsedRealtime() - clickStartTimeMsMbr!! >= longClickTimeMsMbr) {
-//                                        if (!longClickedBeforeMbr) {
-//                                            // longClick 으로 전환되는 순간
-//
-//                                        }
-//                                        true
-//                                    } else {
-//                                        false
-//                                    }
-//                            }
-//                        }
-//
-//                        when (event.action) {
-//                            MotionEvent.ACTION_DOWN -> {
-//                                pinchBeforeMbr = false
-//                            }
-//                            MotionEvent.ACTION_UP -> {
-//                                if (!pinchBeforeMbr && !longClickedBeforeMbr) {
-//                                    // 핀치도, 롱 클릭도 아닌 단순 클릭
-//
-//                                }
-//
-//                                pinchBeforeMbr = false
-//                                longClickedBeforeMbr = false
-//                                clickStartTimeMsMbr = null
-//                            }
-//
-//                            MotionEvent.ACTION_CANCEL -> {
-//                                pinchBeforeMbr = false
-//                                longClickedBeforeMbr = false
-//                                clickStartTimeMsMbr = null
-//                            }
-//                            else -> {}
-//                        }
-//
-//                        return true
-//                    }
-//                    else -> {
-//                        return true
-//                    }
-//                }
-//            }
-//        })
-//    }
+    var beforePinchSpacingMbr: Float? = null
+    var pinchBeforeMbr: Boolean = false
+    var clickStartTimeMsMbr: Long? = null
+    var longClickedBeforeMbr = false
+    val longClickTimeMsMbr = 500
+    fun setCameraPinchZoomTouchListener(
+        view: View,
+        delta: Float = 0.05f
+    ) {
+        view.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event!!.action) {
+                    MotionEvent.ACTION_DOWN -> {}
+                    MotionEvent.ACTION_UP -> {
+                        // 형식 맞추기 코드
+                        v!!.performClick()
+
+                        // 손가락을 떼면 기존 핀치 너비 비우기
+                        beforePinchSpacingMbr = null
+                    }
+                    else -> {}
+                }
+
+                when (event.pointerCount) {
+                    2 -> { // 핀치를 위한 더블 터치일 경우
+                        // 두손가락을 대고있는 매 순간 실행
+
+                        // 현재 핀치 넓이 구하기
+                        val currentFingerSpacing: Float
+                        val x = event.getX(0) - event.getX(1)
+                        val y = event.getY(0) - event.getY(1)
+                        currentFingerSpacing = sqrt((x * x + y * y).toDouble()).toFloat()
+
+                        if (beforePinchSpacingMbr != null) {
+                            if (currentFingerSpacing > beforePinchSpacingMbr!!) { // 손가락을 벌린 경우
+                                val zoom =
+                                    if ((zoomFactorMbr + delta) > cameraInfoVoMbr.maxZoom) {
+                                        cameraInfoVoMbr.maxZoom
+                                    } else {
+                                        zoomFactorMbr + delta
+                                    }
+                                setZoomFactor(
+                                    zoom,
+                                    onComplete = {})
+                            } else if (currentFingerSpacing < beforePinchSpacingMbr!!) { // 손가락을 좁힌 경우
+                                val zoom =
+                                    if ((zoomFactorMbr - delta) < 1.0f) {
+                                        1.0f
+                                    } else {
+                                        zoomFactorMbr - delta
+                                    }
+                                setZoomFactor(
+                                    zoom,
+                                    onComplete = {})
+                            }
+                        }
+
+                        // 핀치 너비를 갱신
+                        beforePinchSpacingMbr = currentFingerSpacing
+
+                        pinchBeforeMbr = true
+                        clickStartTimeMsMbr = null
+                        longClickedBeforeMbr = false
+
+                        return true
+                    }
+                    1 -> { // 한손가락을 대고있는 매 순간 실행
+
+                        // long click 탐지
+                        if (!pinchBeforeMbr) {
+                            if (clickStartTimeMsMbr == null) {
+                                clickStartTimeMsMbr = SystemClock.elapsedRealtime()
+                                longClickedBeforeMbr = false
+                            } else {
+                                longClickedBeforeMbr =
+                                    if (SystemClock.elapsedRealtime() - clickStartTimeMsMbr!! >= longClickTimeMsMbr) {
+                                        if (!longClickedBeforeMbr) {
+                                            // longClick 으로 전환되는 순간
+
+                                        }
+                                        true
+                                    } else {
+                                        false
+                                    }
+                            }
+                        }
+
+                        when (event.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                pinchBeforeMbr = false
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                if (!pinchBeforeMbr && !longClickedBeforeMbr) {
+                                    // 핀치도, 롱 클릭도 아닌 단순 클릭
+
+                                }
+
+                                pinchBeforeMbr = false
+                                longClickedBeforeMbr = false
+                                clickStartTimeMsMbr = null
+                            }
+
+                            MotionEvent.ACTION_CANCEL -> {
+                                pinchBeforeMbr = false
+                                longClickedBeforeMbr = false
+                                clickStartTimeMsMbr = null
+                            }
+                            else -> {}
+                        }
+
+                        return true
+                    }
+                    else -> {
+                        return true
+                    }
+                }
+            }
+        })
+    }
 
 
     // [카메라 조작 함수]
@@ -3676,7 +3678,7 @@ class Camera2Obj private constructor(
         val mediaRecorderSizeInfoList: ArrayList<SizeSpecInfoVo>,
         val analysisImageReaderSizeInfoList: ArrayList<SizeSpecInfoVo>,
         val highSpeedSizeInfoList: ArrayList<SizeSpecInfoVo>,
-        val flashSupported : Boolean,
+        val flashSupported: Boolean,
         // CONTROL_AF_MODE_CONTINUOUS_PICTURE auto focus 지원 여부
         val fastAutoFocusSupported: Boolean,
         // CONTROL_AF_MODE_CONTINUOUS_VIDEO auto focus 지원 여부
