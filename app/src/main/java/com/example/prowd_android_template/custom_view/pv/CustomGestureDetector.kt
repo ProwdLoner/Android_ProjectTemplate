@@ -137,7 +137,7 @@ internal class CustomGestureDetector(context: Context?, listener: OnGestureListe
 
     init {
         val configuration = ViewConfiguration
-            .get(context)
+            .get(context!!)
         mMinimumVelocity = configuration.scaledMinimumFlingVelocity.toFloat()
         mTouchSlop = configuration.scaledTouchSlop.toFloat()
         mListener = listener
