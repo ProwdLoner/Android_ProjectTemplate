@@ -137,7 +137,4 @@ dependencies {
 
     // 스와이프 리플래시 레이아웃
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-
-    // 핀치 줌
-    implementation 'com.github.chrisbanes:PhotoView:2.0.0'
 }
