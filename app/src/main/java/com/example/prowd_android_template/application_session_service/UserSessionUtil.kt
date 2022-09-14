@@ -1,8 +1,7 @@
-package com.example.prowd_android_template.util_object
+package com.example.prowd_android_template.application_session_service
 
 import android.app.Activity
-import com.example.prowd_android_template.abstract_class.InterfaceUserSessionUtil
-import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import java.text.SimpleDateFormat
@@ -11,15 +10,19 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 // (유저 세션 관련 테스트 유틸)
-// : 실제 서비스시엔 로그인 시스템에 맞게 새로운 유틸을 만들어 사용
-object TestUserSessionUtil : InterfaceUserSessionUtil {
+// : 유저 세션 관련 함수들을 모아둔 유틸.
+//     실제 서비스시엔 로그인 시스템에 맞게 새로운 유틸을 만들어 사용
+//     기본적으로 본 템플릿 앱 세션은 한 서버에 대응하도록 만들어졌지만,
+//     멀티 서버 로그인시엔 UserSessionUtil, CurrentLoginSessionInfoSpw 를 하나 더 만들고,
+//     각 액티비티별 userUid 식별 처리 부분을 커스텀하면 됨
+object UserSessionUtil {
     // (현 어플리케이션 세션 로그인 함수)
     // 입력 정보대로 로그인 요청 후 로그인 spw 에 결과 저장
     // 알고리즘 :
     //     1. SNS 로그인시 Oauth 검증 후 id 와 access token 을 준비, 아니라면 입력받은 id 와 pw 사용
     //     2. 서버에 loginType, loginId(SNS 시엔 sns id), loginPw(SNS 시엔 sns access token) 를 가지고 로그인 요청
     //     3. 에러시 각 콜백 사용. 에러가 나지 않고 로그인 검증이 완료되면 spw 에 로그인 정보 저장
-    override fun sessionLogIn(
+    fun sessionLogIn(
         activity: Activity,
         loginType: Int,
         loginId: String?, // SNS 는 아무값을 넣어도 상관없기에 nullable. OAuth 에서 id 를 받아와 사용
@@ -185,7 +188,7 @@ object TestUserSessionUtil : InterfaceUserSessionUtil {
     // 알고리즘 :
     //     1. SNS 로그아웃
     //     2. SPW 정보 로그아웃 처리
-    override fun sessionLogOut(activity: Activity) {
+    fun sessionLogOut(activity: Activity) {
         // (SharedPreference 객체)
         // 현 로그인 정보 접근 객체
         val currentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(activity.application)
@@ -221,7 +224,7 @@ object TestUserSessionUtil : InterfaceUserSessionUtil {
     //     1 = 액세스 토큰 갱신 완료
     //     2 = 리플래시 토큰이 없음
     //     3 = 리플래시 토큰 만료
-    override fun refreshAccessToken(
+    fun refreshAccessToken(
         activity: Activity,
         onComplete: (status: Int) -> Unit,
         onNetworkError: () -> Unit,

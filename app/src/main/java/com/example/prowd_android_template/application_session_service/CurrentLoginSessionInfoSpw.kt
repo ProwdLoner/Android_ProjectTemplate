@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.common_shared_preference_wrapper
+package com.example.prowd_android_template.application_session_service
 
 import android.app.Application
 import android.content.Context

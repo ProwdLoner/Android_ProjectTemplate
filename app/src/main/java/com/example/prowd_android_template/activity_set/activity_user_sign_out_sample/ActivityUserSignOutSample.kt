@@ -20,7 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
-import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
@@ -28,7 +28,7 @@ import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityUserSignOutSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
-import com.example.prowd_android_template.util_object.TestUserSessionUtil
+import com.example.prowd_android_template.application_session_service.UserSessionUtil
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -545,7 +545,7 @@ class ActivityUserSignOutSample : AppCompatActivity() {
                                         null,
                                         onCheckBtnClicked = {
                                             shownDialogInfoVOMbr = null
-                                            TestUserSessionUtil.sessionLogOut(this)
+                                            UserSessionUtil.sessionLogOut(this)
                                             finish()
                                         },
                                         onCanceled = { }
