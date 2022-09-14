@@ -25,6 +25,7 @@ import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityInitBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import com.example.prowd_android_template.util_object.TestUserSessionUtil
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -836,132 +837,66 @@ class ActivityInit : AppCompatActivity() {
             return
         }
 
-        // 로그인 검증 필요
-        // 검증용 정보 가져오기 (SNS 로그인이라면 OAuth 로그인 검증 후 반환되는 id, 토큰을 반환)
-        val loginId: String?
-        val loginPw: String?
+        // 로그인 요청
+        TestUserSessionUtil.sessionLogIn(
+            this,
+            loginType,
+            currentLoginSessionInfoSpwMbr.loginId,
+            currentLoginSessionInfoSpwMbr.loginPw,
+            onLoginComplete = {
+                goToNextActivitySemaphoreMbr.acquire()
+                checkLoginCompletedMbr = true
+                goToNextActivitySemaphoreMbr.release()
 
-        when (loginType) {
-            1 -> { // 저장된 이메일 아이디를 가져와 사용
-                loginId = currentLoginSessionInfoSpwMbr.loginId
-                loginPw = currentLoginSessionInfoSpwMbr.loginPw
-            }
-            2 -> {
-                loginId = "구글 SNS Id 실패시 null"
-                loginPw = "구글 SNS Token 실패시 null"
-            }
-            3 -> {
-                loginId = "카카오 SNS Id 실패시 null"
-                loginPw = "카카오 SNS Token 실패시 null"
-            }
-            4 -> {
-                loginId = "네이버 SNS Id 실패시 null"
-                loginPw = "네이버 SNS Token 실패시 null"
-            }
-            else -> {
-                loginId = null
-                loginPw = null
-            }
-        }
+                goToNextActivity()
+            },
+            onLoginFailed = {
+                // 서버 내 정보가 달라졌기에 로그아웃 처리
+                TestUserSessionUtil.sessionLogOut(this)
 
-        if (loginId == null || loginPw == null) { // 로그인 불가
-            // 비회원 처리
-            currentLoginSessionInfoSpwMbr.setLogout()
+                goToNextActivitySemaphoreMbr.acquire()
+                checkLoginCompletedMbr = true
+                goToNextActivitySemaphoreMbr.release()
 
-            goToNextActivitySemaphoreMbr.acquire()
-            checkLoginCompletedMbr = true
-            goToNextActivitySemaphoreMbr.release()
+                goToNextActivity()
+            },
+            onNetworkError = {
+                shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
+                    false,
+                    "네트워크 불안정",
+                    "현재 네트워크 연결이 불안정합니다.",
+                    "다시시도",
+                    "종료",
+                    onPosBtnClicked = {
+                        shownDialogInfoVOMbr = null
+                        checkLogin()
+                    },
+                    onNegBtnClicked = {
+                        shownDialogInfoVOMbr = null
+                        finish()
+                    },
+                    onCanceled = {}
+                )
+            },
+            onServerError = {
+                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                    true,
+                    "기술적 문제",
+                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                    null,
+                    onCheckBtnClicked = {
+                        shownDialogInfoVOMbr = null
 
-            goToNextActivity()
-            return
-        }
+                        finish()
+                    },
+                    onCanceled = {
+                        shownDialogInfoVOMbr = null
 
-        // (정보 요청 콜백)
-        // statusCode : 서버 반환 상태값. -1 이라면 타임아웃
-        // userUid : 로그인 완료시 반환되는 세션토큰
-        val loginCompleteCallback: (statusCode: Int, userUid: Long?, userNickName: String?) -> Unit =
-            { statusCode, userUid, userNickName ->
-                runOnUiThread {
-                    when (statusCode) {
-                        1 -> {// 로그인 완료
-                            // 회원 처리
-                            currentLoginSessionInfoSpwMbr.isAutoLogin = true
-                            currentLoginSessionInfoSpwMbr.userUid = userUid.toString()
-                            currentLoginSessionInfoSpwMbr.userNickName = userNickName
-
-                            goToNextActivitySemaphoreMbr.acquire()
-                            checkLoginCompletedMbr = true
-                            goToNextActivitySemaphoreMbr.release()
-
-                            goToNextActivity()
-                        }
-                        2 -> { // 로그인 정보 불일치
-                            // 비회원 처리
-                            currentLoginSessionInfoSpwMbr.setLogout()
-
-                            goToNextActivitySemaphoreMbr.acquire()
-                            checkLoginCompletedMbr = true
-                            goToNextActivitySemaphoreMbr.release()
-
-                            goToNextActivity()
-                        }
-                        -1 -> { // 네트워크 에러
-                            shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
-                                false,
-                                "네트워크 불안정",
-                                "현재 네트워크 연결이 불안정합니다.",
-                                "다시시도",
-                                "종료",
-                                onPosBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                    checkLogin()
-                                },
-                                onNegBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                },
-                                onCanceled = {}
-                            )
-                        }
-                        else -> { // 그외 서버 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "기술적 문제",
-                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-
-                                    finish()
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-
-                                    finish()
-                                }
-                            )
-                        }
+                        finish()
                     }
-                }
+                )
             }
-
-        executorServiceMbr.execute {
-            // 아래는 원래 네트워크 서버에서 처리하는 로직
-
-            // 이메일과 비번으로 검색
-            val userInfoList =
-                repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                    .getUserInfoForLogin(loginId, loginPw, loginType)
-
-            if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
-                loginCompleteCallback(2, null, null)
-            } else {
-                val uid = userInfoList[0].uid
-                val nickname = userInfoList[0].nickName
-
-                loginCompleteCallback(1, uid, nickname)
-            }
-        }
+        )
     }
 
     private fun goToNextActivity() {

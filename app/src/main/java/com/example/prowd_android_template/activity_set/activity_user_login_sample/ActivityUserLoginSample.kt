@@ -29,6 +29,7 @@ import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityUserLoginSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import com.example.prowd_android_template.util_object.TestUserSessionUtil
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -578,6 +579,7 @@ class ActivityUserLoginSample : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // 로그인 정보 가져오기
             val email: String = bindingMbr.emailTextInputEditTxt.text.toString()
             val pw: String = bindingMbr.pwTextInputEditTxt.text.toString()
 
@@ -587,101 +589,83 @@ class ActivityUserLoginSample : AppCompatActivity() {
                 onCanceled = {}
             )
 
-            // 로그인 콜백
-            val logInCallback = { statusCode: Int, userUid: Long?, userNickName: String? ->
-                runOnUiThread {
+            // 로그인 요청
+            TestUserSessionUtil.sessionLogIn(
+                this,
+                1,
+                email,
+                pw,
+                onLoginComplete = {
                     shownDialogInfoVOMbr = null
 
-                    when (statusCode) {
-                        1 -> { // 로그인 완료
-                            // 정보 저장
-                            currentLoginSessionInfoSpwMbr.userUid = userUid!!.toString()
-                            currentLoginSessionInfoSpwMbr.loginId = email
-                            currentLoginSessionInfoSpwMbr.loginPw = pw
-                            currentLoginSessionInfoSpwMbr.loginType = 1
-                            currentLoginSessionInfoSpwMbr.userNickName = userNickName!!
-                            currentLoginSessionInfoSpwMbr.isAutoLogin =
-                                bindingMbr.autoLoginCheckBox.isChecked
+                    currentLoginSessionInfoSpwMbr.isAutoLogin =
+                        bindingMbr.autoLoginCheckBox.isChecked
 
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "로그인 완료",
-                                "로그인 되었습니다.",
-                                "닫기",
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                }
-                            )
+                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                        true,
+                        "로그인 완료",
+                        "로그인 되었습니다.",
+                        "닫기",
+                        onCheckBtnClicked = {
+                            shownDialogInfoVOMbr = null
+                            finish()
+                        },
+                        onCanceled = {
+                            shownDialogInfoVOMbr = null
+                            finish()
                         }
-                        2 -> { // 아이디 or 비번 틀림
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "로그인 실패",
-                                "로그인 정보가 일치하지 않습니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
+                    )
+                },
+                onLoginFailed = {
+                    shownDialogInfoVOMbr = null
+
+                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                        true,
+                        "로그인 실패",
+                        "로그인 정보가 일치하지 않습니다.",
+                        null,
+                        onCheckBtnClicked = {
+                            shownDialogInfoVOMbr = null
+                        },
+                        onCanceled = {
+                            shownDialogInfoVOMbr = null
                         }
-                        -1 -> { // 네트워크 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "네트워크 불안정",
-                                "현재 네트워크 연결이 불안정합니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
+                    )
+                },
+                onNetworkError = {
+                    shownDialogInfoVOMbr = null
+
+                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                        true,
+                        "네트워크 불안정",
+                        "현재 네트워크 연결이 불안정합니다.",
+                        null,
+                        onCheckBtnClicked = {
+                            shownDialogInfoVOMbr = null
+                        },
+                        onCanceled = {
+                            shownDialogInfoVOMbr = null
                         }
-                        else -> { // 그외 서버 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "기술적 문제",
-                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
+                    )
+                },
+                onServerError = {
+                    shownDialogInfoVOMbr = null
+
+                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                        true,
+                        "기술적 문제",
+                        "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                        null,
+                        onCheckBtnClicked = {
+                            shownDialogInfoVOMbr = null
+                        },
+                        onCanceled = {
+                            shownDialogInfoVOMbr = null
                         }
-                    }
+                    )
                 }
-            }
+            )
 
-            // 로그인 요청
-            executorServiceMbr.execute {
-                // 아래는 원래 네트워크 서버에서 처리하는 로직
-
-                // 이메일과 비번으로 검색
-                val userInfoList =
-                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                        .getUserInfoForLogin(email, pw, 1)
-
-                if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
-                    logInCallback(2, null, null)
-                } else {
-                    val uid = userInfoList[0].uid
-                    val nickname = userInfoList[0].nickName
-
-                    logInCallback(1, uid, nickname)
-                }
-            }
         }
     }
 

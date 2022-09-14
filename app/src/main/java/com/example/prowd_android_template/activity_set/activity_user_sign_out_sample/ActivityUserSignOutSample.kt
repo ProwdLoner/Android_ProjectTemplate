@@ -28,6 +28,7 @@ import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityUserSignOutSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import com.example.prowd_android_template.util_object.TestUserSessionUtil
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -544,7 +545,7 @@ class ActivityUserSignOutSample : AppCompatActivity() {
                                         null,
                                         onCheckBtnClicked = {
                                             shownDialogInfoVOMbr = null
-                                            currentLoginSessionInfoSpwMbr.setLogout()
+                                            TestUserSessionUtil.sessionLogOut(this)
                                             finish()
                                         },
                                         onCanceled = { }

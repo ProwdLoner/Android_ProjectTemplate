@@ -70,6 +70,21 @@ class TestUserInfoTable {
             userType: Int
         ): List<GetUserInfoForLoginOutput>
 
+        @Query(
+            "SELECT " +
+                    "uid, nick_name " +
+                    "FROM " +
+                    "test_user " +
+                    "where " +
+                    "id = :id " +
+                    "and " +
+                    "user_type = :userType"
+        )
+        fun getUserInfoForLogin(
+            id: String,
+            userType: Int
+        ): List<GetUserInfoForLoginOutput>
+
         data class GetUserInfoForLoginOutput(
             @ColumnInfo(name = "uid")
             val uid: Long,
