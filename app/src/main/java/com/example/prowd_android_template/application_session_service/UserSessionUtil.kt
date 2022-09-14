@@ -18,14 +18,18 @@ object UserSessionUtil {
     // (현 어플리케이션 세션 로그인 함수)
     // 입력 정보대로 로그인 요청 후 로그인 spw 에 결과 저장
     // 알고리즘 :
-    //     1. SNS 로그인시 Oauth 검증 후 id 와 access token 을 준비, 아니라면 입력받은 id 와 pw 사용
+    //     1. SNS 로그인시 Oauth 검증
+    //         loginId 가 비어있다면 최초 로그인 선택 시점.
+    //         loginId 가 비어있지 않다면 기존 로그인 확인
+    //         이후 id 와 access token 을 준비,
+    //         SNS 로그인이 아니라면 입력받은 id 와 pw 사용
     //     2. 서버에 loginType, loginId(SNS 시엔 sns id), loginPw(SNS 시엔 sns access token) 를 가지고 로그인 요청
     //     3. 에러시 각 콜백 사용. 에러가 나지 않고 로그인 검증이 완료되면 spw 에 로그인 정보 저장
     fun sessionLogIn(
         activity: Activity,
         loginType: Int,
-        loginId: String?, // SNS 는 아무값을 넣어도 상관없기에 nullable. OAuth 에서 id 를 받아와 사용
-        loginPw: String?, // SNS 는 아무값을 넣어도 상관없기에 nullable. OAuth 에서 access token 을 받아와 사용
+        loginId: String?,
+        loginPw: String?,
         onLoginComplete: () -> Unit,
         onLoginFailed: () -> Unit,
         onNetworkError: () -> Unit,
@@ -47,24 +51,74 @@ object UserSessionUtil {
         // 로그인 타입은 위의 CurrentLoginSessionInfoSpw 의 설정을 따름
         when (loginType) {
             1 -> { // 이메일 회원
-                loginId1 = loginId!!
-                loginPw1 = loginPw!!
+                sessionLogInOnIdReady(
+                    activity,
+                    currentLoginSessionInfoSpw,
+                    executorService,
+                    repositorySet,
+                    loginType,
+                    loginId!!,
+                    loginPw!!,
+                    onLoginComplete,
+                    onLoginFailed,
+                    onNetworkError,
+                    onServerError
+                )
             }
             // 아래부터는 SNS 로그인용 토큰 수집
             // SNS 의 pw 는 Oauth 로그인 후 나오는 액세스 토큰을 서버로 넘겨주는 용도
             // 서버는 해당 액세스 토큰으로 현재 로그인 여부를 확인하는 용도.
             // 액세스 토큰을 SNS 에서 발급받아 건내줄 것
             2 -> { // 구글 회원
-                loginId1 = "실제 구현시 OAuth 발급"
-                loginPw1 = "실제 구현시 OAuth 발급"
+                // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
+
+                sessionLogInOnIdReady(
+                    activity,
+                    currentLoginSessionInfoSpw,
+                    executorService,
+                    repositorySet,
+                    loginType,
+                    "실제 구현시 OAuth 발급",
+                    "실제 구현시 OAuth 발급",
+                    onLoginComplete,
+                    onLoginFailed,
+                    onNetworkError,
+                    onServerError
+                )
             }
             3 -> { // 카카오 회원
-                loginId1 = "실제 구현시 OAuth 발급"
-                loginPw1 = "실제 구현시 OAuth 발급"
+                // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
+
+                sessionLogInOnIdReady(
+                    activity,
+                    currentLoginSessionInfoSpw,
+                    executorService,
+                    repositorySet,
+                    loginType,
+                    "실제 구현시 OAuth 발급",
+                    "실제 구현시 OAuth 발급",
+                    onLoginComplete,
+                    onLoginFailed,
+                    onNetworkError,
+                    onServerError
+                )
             }
             4 -> { // 네이버 회원
-                loginId1 = "실제 구현시 OAuth 발급"
-                loginPw1 = "실제 구현시 OAuth 발급"
+                // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
+
+                sessionLogInOnIdReady(
+                    activity,
+                    currentLoginSessionInfoSpw,
+                    executorService,
+                    repositorySet,
+                    loginType,
+                    "실제 구현시 OAuth 발급",
+                    "실제 구현시 OAuth 발급",
+                    onLoginComplete,
+                    onLoginFailed,
+                    onNetworkError,
+                    onServerError
+                )
             }
             else -> { // 비회원
                 // 그냥 로그인 통과
@@ -72,7 +126,21 @@ object UserSessionUtil {
                 return
             }
         }
+    }
 
+    private fun sessionLogInOnIdReady(
+        activity: Activity,
+        currentLoginSessionInfoSpw: CurrentLoginSessionInfoSpw,
+        executorService: ExecutorService,
+        repositorySet: RepositorySet,
+        loginType: Int,
+        loginId: String,
+        loginPw: String,
+        onLoginComplete: () -> Unit,
+        onLoginFailed: () -> Unit,
+        onNetworkError: () -> Unit,
+        onServerError: () -> Unit
+    ) {
         // (정보 요청 콜백)
         val loginCompleteCallback =
             { statusCode: Int,
@@ -89,8 +157,8 @@ object UserSessionUtil {
                             currentLoginSessionInfoSpw.setLogin(
                                 currentLoginSessionInfoSpw.isAutoLogin,
                                 loginType,
-                                loginId1,
-                                loginPw1,
+                                loginId,
+                                loginPw,
                                 userUid!!,
                                 userNickName!!,
                                 accessToken!!,
@@ -123,7 +191,7 @@ object UserSessionUtil {
                     // 이메일과 비번으로 검색
                     userInfoList =
                         repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getUserInfoForLogin(loginId1, loginPw1, loginType)
+                            .getUserInfoForLogin(loginId, loginPw, loginType)
                 }
                 2 -> { // 구글
                     // SNS 로그인시 pw를 액세스 토큰으로 사용하여, 각 SNS 로그인이 되어있는지 여부를 판단
@@ -131,7 +199,7 @@ object UserSessionUtil {
                     // 해당 sns 회원가입이 되어있는지를 파악
                     userInfoList =
                         repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getUserInfoForLogin(loginId1, loginType)
+                            .getUserInfoForLogin(loginId, loginType)
                 }
                 3 -> { // 카카오
                     // SNS 로그인시 pw를 액세스 토큰으로 사용하여, 각 SNS 로그인이 되어있는지 여부를 판단
@@ -139,7 +207,7 @@ object UserSessionUtil {
                     // 해당 sns 회원가입이 되어있는지를 파악
                     userInfoList =
                         repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getUserInfoForLogin(loginId1, loginType)
+                            .getUserInfoForLogin(loginId, loginType)
                 }
                 4 -> { // 네이버
                     // SNS 로그인시 pw를 액세스 토큰으로 사용하여, 각 SNS 로그인이 되어있는지 여부를 판단
@@ -147,7 +215,7 @@ object UserSessionUtil {
                     // 해당 sns 회원가입이 되어있는지를 파악
                     userInfoList =
                         repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getUserInfoForLogin(loginId1, loginType)
+                            .getUserInfoForLogin(loginId, loginType)
                 }
                 else -> {
                     throw Exception("login Type Input Error")
