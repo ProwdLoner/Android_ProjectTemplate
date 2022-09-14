@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.application_session_service
 
 import android.app.Activity
-import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import java.text.SimpleDateFormat
