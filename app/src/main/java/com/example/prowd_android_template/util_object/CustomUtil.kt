@@ -16,14 +16,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 object CustomUtil {
-    // 현재 실행 환경이 디버그 모드인지 파악하는 함수
-    fun isDebuggable(context: Context): Boolean {
-        return 0 != context.packageManager.getApplicationInfo(
-            context.packageName,
-            0
-        ).flags and ApplicationInfo.FLAG_DEBUGGABLE
-    }
-
     // 스테이터스 바 높이 픽셀 반환
     fun getStatusBarHeightPixel(context: Context): Int {
         var statusBarHeight = 0
