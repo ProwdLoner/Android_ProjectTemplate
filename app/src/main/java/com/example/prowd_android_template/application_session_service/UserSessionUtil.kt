@@ -49,14 +49,17 @@ object UserSessionUtil {
         // 로그인 타입은 위의 CurrentLoginSessionInfoSpw 의 설정을 따름
         when (loginType) {
             1 -> { // 이메일 회원
+                val id = loginId!!
+                val pw = loginPw!!
+
                 sessionLogInOnIdReady(
                     activity,
                     currentLoginSessionInfoSpw,
                     executorService,
                     repositorySet,
                     loginType,
-                    loginId!!,
-                    loginPw!!,
+                    id,
+                    pw,
                     onLoginComplete,
                     onLoginFailed,
                     onNetworkError,
@@ -70,14 +73,17 @@ object UserSessionUtil {
             2 -> { // 구글 회원
                 // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
 
+                val id = "실제 구현시 OAuth SNS id 발급"
+                val pw = "실제 구현시 OAuth access token 발급"
+
                 sessionLogInOnIdReady(
                     activity,
                     currentLoginSessionInfoSpw,
                     executorService,
                     repositorySet,
                     loginType,
-                    "실제 구현시 OAuth SNS id 발급",
-                    "실제 구현시 OAuth access token 발급",
+                    id,
+                    pw,
                     onLoginComplete,
                     onLoginFailed,
                     onNetworkError,
@@ -87,14 +93,17 @@ object UserSessionUtil {
             3 -> { // 카카오 회원
                 // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
 
+                val id = "실제 구현시 OAuth SNS id 발급"
+                val pw = "실제 구현시 OAuth access token 발급"
+
                 sessionLogInOnIdReady(
                     activity,
                     currentLoginSessionInfoSpw,
                     executorService,
                     repositorySet,
                     loginType,
-                    "실제 구현시 OAuth SNS id 발급",
-                    "실제 구현시 OAuth access token 발급",
+                    id,
+                    pw,
                     onLoginComplete,
                     onLoginFailed,
                     onNetworkError,
@@ -104,14 +113,17 @@ object UserSessionUtil {
             4 -> { // 네이버 회원
                 // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
 
+                val id = "실제 구현시 OAuth SNS id 발급"
+                val pw = "실제 구현시 OAuth access token 발급"
+
                 sessionLogInOnIdReady(
                     activity,
                     currentLoginSessionInfoSpw,
                     executorService,
                     repositorySet,
                     loginType,
-                    "실제 구현시 OAuth SNS id 발급",
-                    "실제 구현시 OAuth access token 발급",
+                    id,
+                    pw,
                     onLoginComplete,
                     onLoginFailed,
                     onNetworkError,
