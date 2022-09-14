@@ -46,8 +46,6 @@ object UserSessionUtil {
         val currentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(activity.application)
 
         // 타입별 pw 의 의미가 다르므로 처리
-        val loginId1: String
-        val loginPw1: String
         // 로그인 타입은 위의 CurrentLoginSessionInfoSpw 의 설정을 따름
         when (loginType) {
             1 -> { // 이메일 회원
@@ -78,8 +76,8 @@ object UserSessionUtil {
                     executorService,
                     repositorySet,
                     loginType,
-                    "실제 구현시 OAuth 발급",
-                    "실제 구현시 OAuth 발급",
+                    "실제 구현시 OAuth SNS id 발급",
+                    "실제 구현시 OAuth access token 발급",
                     onLoginComplete,
                     onLoginFailed,
                     onNetworkError,
@@ -95,8 +93,8 @@ object UserSessionUtil {
                     executorService,
                     repositorySet,
                     loginType,
-                    "실제 구현시 OAuth 발급",
-                    "실제 구현시 OAuth 발급",
+                    "실제 구현시 OAuth SNS id 발급",
+                    "실제 구현시 OAuth access token 발급",
                     onLoginComplete,
                     onLoginFailed,
                     onNetworkError,
@@ -112,8 +110,8 @@ object UserSessionUtil {
                     executorService,
                     repositorySet,
                     loginType,
-                    "실제 구현시 OAuth 발급",
-                    "실제 구현시 OAuth 발급",
+                    "실제 구현시 OAuth SNS id 발급",
+                    "실제 구현시 OAuth access token 발급",
                     onLoginComplete,
                     onLoginFailed,
                     onNetworkError,
