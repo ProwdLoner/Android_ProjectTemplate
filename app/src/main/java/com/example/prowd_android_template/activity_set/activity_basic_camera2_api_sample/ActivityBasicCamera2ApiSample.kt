@@ -167,7 +167,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     private lateinit var scriptIntrinsicResizeMbr: ScriptIntrinsicResize
 
     // (카메라 정보)
-    // 영상 분석을 할지 여부
+    // 영상 분석을 할지 여부 설정
     private val isCameraImageAnalysisMbr = true
 
     // 현재 카메라 모드
@@ -783,43 +783,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-
-
-        // (디버그 이미지 뷰 전환 기능)
-        bindingMbr.debugYuvToRgbImg.setOnClickListener {
-            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
-            bindingMbr.debugRotateImg.visibility = View.VISIBLE
-            bindingMbr.debugResizeImg.visibility = View.GONE
-            bindingMbr.debugCropImg.visibility = View.GONE
-
-            bindingMbr.debugImageLabel.text = "ROTATE"
-        }
-        bindingMbr.debugRotateImg.setOnClickListener {
-            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
-            bindingMbr.debugRotateImg.visibility = View.GONE
-            bindingMbr.debugResizeImg.visibility = View.VISIBLE
-            bindingMbr.debugCropImg.visibility = View.GONE
-
-            bindingMbr.debugImageLabel.text = "RESIZE (half)"
-        }
-        bindingMbr.debugResizeImg.setOnClickListener {
-            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
-            bindingMbr.debugRotateImg.visibility = View.GONE
-            bindingMbr.debugResizeImg.visibility = View.GONE
-            bindingMbr.debugCropImg.visibility = View.VISIBLE
-
-            bindingMbr.debugImageLabel.text = "CROP"
-        }
-        bindingMbr.debugCropImg.setOnClickListener {
-            bindingMbr.debugYuvToRgbImg.visibility = View.VISIBLE
-            bindingMbr.debugRotateImg.visibility = View.GONE
-            bindingMbr.debugResizeImg.visibility = View.GONE
-            bindingMbr.debugCropImg.visibility = View.GONE
-
-            bindingMbr.debugImageLabel.text = "ORIGIN"
-        }
-
-
         // (화면 자동꺼짐 방지 플래그)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -1368,6 +1331,39 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 //                )
 //            }
 //        }
+        // (디버그 이미지 뷰 전환 기능)
+        bindingMbr.debugYuvToRgbImg.setOnClickListener {
+            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
+            bindingMbr.debugRotateImg.visibility = View.VISIBLE
+            bindingMbr.debugResizeImg.visibility = View.GONE
+            bindingMbr.debugCropImg.visibility = View.GONE
+
+            bindingMbr.debugImageLabel.text = "ROTATE"
+        }
+        bindingMbr.debugRotateImg.setOnClickListener {
+            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
+            bindingMbr.debugRotateImg.visibility = View.GONE
+            bindingMbr.debugResizeImg.visibility = View.VISIBLE
+            bindingMbr.debugCropImg.visibility = View.GONE
+
+            bindingMbr.debugImageLabel.text = "RESIZE (half)"
+        }
+        bindingMbr.debugResizeImg.setOnClickListener {
+            bindingMbr.debugYuvToRgbImg.visibility = View.GONE
+            bindingMbr.debugRotateImg.visibility = View.GONE
+            bindingMbr.debugResizeImg.visibility = View.GONE
+            bindingMbr.debugCropImg.visibility = View.VISIBLE
+
+            bindingMbr.debugImageLabel.text = "CROP"
+        }
+        bindingMbr.debugCropImg.setOnClickListener {
+            bindingMbr.debugYuvToRgbImg.visibility = View.VISIBLE
+            bindingMbr.debugRotateImg.visibility = View.GONE
+            bindingMbr.debugResizeImg.visibility = View.GONE
+            bindingMbr.debugCropImg.visibility = View.GONE
+
+            bindingMbr.debugImageLabel.text = "ORIGIN"
+        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
