@@ -1,6 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample
 
+import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -54,6 +56,9 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivityAarModuleCallerSampleAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivityAarModuleCallerSampleSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
@@ -115,8 +120,8 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
     // (권한 요청 객체)
     lateinit var permissionRequestMbr: ActivityResultLauncher<Array<String>>
     var permissionRequestCallbackMbr: (((Map<String, Boolean>) -> Unit))? = null
-    private var permissionRequestOnProgressMbr = false
-    private val permissionRequestOnProgressSemaphoreMbr = Semaphore(1)
+    var permissionRequestOnProgressMbr = false
+    val permissionRequestOnProgressSemaphoreMbr = Semaphore(1)
 
     // (ActivityResultLauncher 객체)
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
@@ -357,7 +362,6 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-
         permissionRequestOnProgressSemaphoreMbr.acquire()
         if (permissionRequestOnProgressMbr) {
             permissionRequestOnProgressSemaphoreMbr.release()
@@ -366,6 +370,7 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
         }
         permissionRequestOnProgressSemaphoreMbr.release()
 
+        // (onPause 알고리즘)
     }
 
     override fun onDestroy() {
@@ -409,6 +414,7 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
         adapterSetMbr = ActivityAarModuleCallerSampleAdapterSet()
 
         // SPW 객체 생성
+        classSpwMbr = ActivityAarModuleCallerSampleSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -644,4 +650,42 @@ class ActivityAarModuleCallerSample : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class ActivityAarModuleCallerSampleSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityAarModuleCallerSampleSpw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivityAarModuleCallerSampleAdapterSet {
+        // 어뎁터 #1
+
+    }
 }

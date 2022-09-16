@@ -1,33 +1,37 @@
-package com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.fragment3
+package com.example.prowd_android_template.activity_set.activity_a_template
 
 import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
-import com.example.prowd_android_template.activity_set.activity_basic_bottom_sheet_navigation_sample.ActivityBasicBottomSheetNavigationSample
-import com.example.prowd_android_template.databinding.FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
+import com.example.prowd_android_template.databinding.FragmentActivityATemplateTemplateBinding
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.Semaphore
 
-class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
+// 실제 어디도 연결되어 있지 않은 템플릿용 플래그먼트
+// 붙여놓고 사용할수 있도록 기본적인 구조가 완성
+// 플래그먼트 생성및 연결은 부모 액티비티의 필수 권한 요청이 끝난 이후로 가정
+class FragmentActivityATemplateTemplate : Fragment() {
     // <멤버 변수 공간>
     // (부모 객체) : 뷰 모델 구조 구현 및 부모 및 플래그먼트 간의 통신용
-    lateinit var parentActivityMbr: ActivityBasicBottomSheetNavigationSample
+    lateinit var parentActivityMbr: ActivityATemplate
 
     // (뷰 바인더 객체) : 뷰 조작에 관련된 바인더는 밖에서 조작 금지
-    private lateinit var bindingMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding
+    private lateinit var bindingMbr: FragmentActivityATemplateTemplateBinding
 
     // (어뎁터 객체)
-    lateinit var adapterSetMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3AdapterSet
+    lateinit var adapterSetMbr: FragmentActivityATemplateTemplateAdapterSet
 
     // (SharedPreference 객체)
     // 클래스 비휘발성 저장객체
-    lateinit var classSpwMbr: FragmentActivityBasicBottomSheetNavigationSampleFragment3Spw
+    lateinit var classSpwMbr: FragmentActivityATemplateTemplateSpw
 
 
     // ---------------------------------------------------------------------------------------------
@@ -78,12 +82,6 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
         }
 
         // (onResume)
-        if (parentActivityMbr.fragmentClickedPositionMbr == null) {
-            bindingMbr.clickedByValueTxt.text = "클릭 없음"
-        } else {
-            val textMsg = "${parentActivityMbr.fragmentClickedPositionMbr}번 플래그먼트"
-            bindingMbr.clickedByValueTxt.text = textMsg
-        }
     }
 
     // (AndroidManifest.xml 에서 configChanges 에 설정된 요소에 변경 사항이 존재할 때 실행되는 콜백)
@@ -91,9 +89,9 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
 
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) { // 화면회전 landscape
+        if (resources.configuration.orientation == ORIENTATION_LANDSCAPE) { // 화면회전 landscape
 
-        } else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { // 화면회전 portrait
+        } else if (resources.configuration.orientation == ORIENTATION_PORTRAIT) { // 화면회전 portrait
 
         }
     }
@@ -108,27 +106,22 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     // (초기 객체 생성)
     private fun onCreateViewInitObject() {
         // (부모 객체 저장)
-        parentActivityMbr = requireActivity() as ActivityBasicBottomSheetNavigationSample
+        parentActivityMbr = requireActivity() as ActivityATemplate
 
         // (뷰 바인딩)
         bindingMbr =
-            FragmentActivityBasicBottomSheetNavigationSampleFragment3Binding.inflate(layoutInflater)
+            FragmentActivityATemplateTemplateBinding.inflate(layoutInflater)
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = FragmentActivityBasicBottomSheetNavigationSampleFragment3AdapterSet()
+        adapterSetMbr = FragmentActivityATemplateTemplateAdapterSet()
 
         // SPW 객체 생성
-        classSpwMbr =
-            FragmentActivityBasicBottomSheetNavigationSampleFragment3Spw(requireActivity().application)
+        classSpwMbr = FragmentActivityATemplateTemplateSpw(requireActivity().application)
     }
 
     // (초기 뷰 설정)
     private fun onCreateViewInitView() {
-        bindingMbr.fragmentClickBtn.setOnClickListener {
-            parentActivityMbr.fragmentClickedPositionMbr = 3
-            val textMsg = "${parentActivityMbr.fragmentClickedPositionMbr}번 플래그먼트"
-            bindingMbr.clickedByValueTxt.text = textMsg
-        }
+
     }
 
     // 화면 데이터 갱신관련 세마포어
@@ -294,11 +287,11 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
     // (클래스 비휘발 저장 객체)
-    class FragmentActivityBasicBottomSheetNavigationSampleFragment3Spw(application: Application) {
+    class FragmentActivityATemplateTemplateSpw(application: Application) {
         // <멤버 변수 공간>
         // SharedPreference 접근 객체
         private val spMbr = application.getSharedPreferences(
-            "FragmentActivityBasicBottomSheetNavigationSampleFragment3Spw",
+            "FragmentActivityATemplateTemplateSpw",
             Context.MODE_PRIVATE
         )
 
@@ -327,7 +320,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment3 : Fragment() {
 
     // (액티비티 내 사용 어뎁터 모음)
     // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
-    class FragmentActivityBasicBottomSheetNavigationSampleFragment3AdapterSet {
+    class FragmentActivityATemplateTemplateAdapterSet {
         // 어뎁터 #1
 
     }

@@ -1,6 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_a_template
 
+import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -29,7 +31,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 // 실제 어디도 연결되어 있지 않은 템플릿용 액티비티
-// 붙여놓고 사용할수 있도록 기본적인 구조가 완성
+// 복붙하여 사용할수 있도록 기본적인 구조가 완성
 class ActivityATemplate : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -50,6 +52,9 @@ class ActivityATemplate : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivityATemplateAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivityATemplateSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
@@ -405,6 +410,7 @@ class ActivityATemplate : AppCompatActivity() {
         adapterSetMbr = ActivityATemplateAdapterSet()
 
         // SPW 객체 생성
+        classSpwMbr = ActivityATemplateSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -626,4 +632,42 @@ class ActivityATemplate : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class ActivityATemplateSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityATemplateSpw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivityATemplateAdapterSet {
+        // 어뎁터 #1
+
+    }
 }
