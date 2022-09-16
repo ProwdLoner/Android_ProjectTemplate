@@ -1,6 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample
 
+import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -12,6 +14,9 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DiffUtil
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.fragment1.FragmentActivityBasicTabLayoutSampleFragment1
@@ -49,6 +54,9 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivityBasicTabLayoutSampleAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivityBasicTabLayoutSampleSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
@@ -369,6 +377,7 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
         }
         permissionRequestOnProgressSemaphoreMbr.release()
 
+        // (onPause 알고리즘)
     }
 
     override fun onDestroy() {
@@ -416,6 +425,7 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
         )
 
         // SPW 객체 생성
+        classSpwMbr = ActivityBasicTabLayoutSampleSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -664,4 +674,97 @@ class ActivityBasicTabLayoutSample : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class ActivityBasicTabLayoutSampleSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityBasicTabLayoutSampleSpw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivityBasicTabLayoutSampleAdapterSet(
+        val screenViewPagerFragmentStateAdapter: ScreenViewPagerFragmentStateAdapter
+    ) {
+        // <내부 클래스 공간>
+        // [플래그먼트 변경 어뎁터]
+        class ScreenViewPagerFragmentStateAdapter(
+            parentViewMbr: AppCompatActivity
+        ) : FragmentStateAdapter(parentViewMbr) {
+            // <멤버 변수 공간>
+            private val adapterMainDataMbr: ArrayList<Fragment> = ArrayList()
+
+
+            // ---------------------------------------------------------------------------------------------
+            // <메소드 오버라이딩 공간>
+            // 전체 프레그먼트 아이템 개수
+            override fun getItemCount(): Int {
+                return adapterMainDataMbr.size
+            }
+
+            // 각 프레그먼트 생성시의 콜백
+            override fun createFragment(position: Int): Fragment {
+                return adapterMainDataMbr[position]
+            }
+
+
+            // ---------------------------------------------------------------------------------------------
+            // <공개 메소드 공간>
+            fun setItems(itemList: List<Fragment>) {
+                // 기존 플래그먼트 제거
+                adapterMainDataMbr.clear()
+                adapterMainDataMbr.addAll(itemList)
+
+                // 화면 반영
+                DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                    override fun getOldListSize() = adapterMainDataMbr.size
+
+                    override fun getNewListSize() = itemList.size
+
+                    // 객체 id 를 가지고 판별
+                    override fun areItemsTheSame(
+                        oldItemPosition: Int,
+                        newItemPosition: Int
+                    ): Boolean {
+                        return adapterMainDataMbr[oldItemPosition].id == itemList[newItemPosition].id
+                    }
+
+                    // 고유 값을 가지고 판별 (없으면 전체를 비교)
+                    override fun areContentsTheSame(
+                        oldItemPosition: Int,
+                        newItemPosition: Int
+                    ): Boolean {
+                        return adapterMainDataMbr[oldItemPosition] == itemList[newItemPosition]
+                    }
+
+                }).dispatchUpdatesTo(this)
+            }
+
+        }
+    }
 }

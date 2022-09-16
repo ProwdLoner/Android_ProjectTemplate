@@ -1,5 +1,7 @@
 package com.example.prowd_android_template.activity_set.activity_basic_tab_layout_sample.fragment2
 
+import android.app.Application
+import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -24,6 +26,8 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
     lateinit var adapterSetMbr: FragmentActivityBasicTabLayoutSampleFragment2AdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: FragmentActivityBasicTabLayoutSampleFragment2Spw
 
 
     // ---------------------------------------------------------------------------------------------
@@ -112,20 +116,19 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
         adapterSetMbr = FragmentActivityBasicTabLayoutSampleFragment2AdapterSet()
+
+        // SPW 객체 생성
+        classSpwMbr =
+            FragmentActivityBasicTabLayoutSampleFragment2Spw(requireActivity().application)
     }
 
     // (초기 뷰 설정)
     private fun onCreateViewInitView() {
         bindingMbr.fragmentClickBtn.setOnClickListener {
             parentActivityMbr.fragmentClickedPositionMbr = 2
-            if (parentActivityMbr.fragmentClickedPositionMbr == null) {
-                bindingMbr.clickedByValueTxt.text = "클릭 없음"
-            } else {
-                val textMsg = "${parentActivityMbr.fragmentClickedPositionMbr}번 플래그먼트"
-                bindingMbr.clickedByValueTxt.text = textMsg
-            }
+            val textMsg = "${parentActivityMbr.fragmentClickedPositionMbr}번 플래그먼트"
+            bindingMbr.clickedByValueTxt.text = textMsg
         }
-
     }
 
     // 화면 데이터 갱신관련 세마포어
@@ -290,4 +293,42 @@ class FragmentActivityBasicTabLayoutSampleFragment2 : Fragment() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class FragmentActivityBasicTabLayoutSampleFragment2Spw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "FragmentActivityBasicTabLayoutSampleFragment2Spw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class FragmentActivityBasicTabLayoutSampleFragment2AdapterSet {
+        // 어뎁터 #1
+
+    }
 }
