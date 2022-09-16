@@ -291,7 +291,9 @@ object UserSessionUtil {
     }
 
     // (서버 액세스 토큰 재발급 함수)
+    // LoginSpw 에 저장된 리플래시 토큰으로 액세스 토큰 리플레시 요청.
     // 리플래시 토큰이 만료되었으면 재로그인 필요
+    // 만료되지 않았다면 새로운 액세스 토큰과 리플래시 토큰을 받아와 LoginSpw 에 저장
     // 알고리즘 :
     //     1. 리플래시 토큰 없을시 status 2
     //     2. 리플래시 토큰 만료 여부 확인
@@ -341,7 +343,9 @@ object UserSessionUtil {
         val getAccessTokenCallback =
             { statusCode: Int,
               accessToken: String?,
-              accessTokenExpireDate: String? ->
+              accessTokenExpireDate: String?,
+              refreshToken: String?,
+              refreshTokenExpireDate: String? ->
                 activity.runOnUiThread {
                     when (statusCode) {
                         1 -> {// 로그인 완료
@@ -349,6 +353,9 @@ object UserSessionUtil {
                             currentLoginSessionInfoSpw.serverAccessToken = accessToken
                             currentLoginSessionInfoSpw.serverAccessTokenExpireDate =
                                 accessTokenExpireDate
+                            currentLoginSessionInfoSpw.serverRefreshToken = refreshToken
+                            currentLoginSessionInfoSpw.serverRefreshTokenExpireDate =
+                                refreshTokenExpireDate
 
                             onComplete(1)
                         }
@@ -369,7 +376,7 @@ object UserSessionUtil {
         executorService.execute {
             // 서버에서 리플래시 토큰으로 JWT 재발급
             // 아래에선 임의로 userUid 를 발행하도록 함
-            getAccessTokenCallback(1, currentLoginSessionInfoSpw.userUid, null)
+            getAccessTokenCallback(1, currentLoginSessionInfoSpw.userUid, null, null, null)
         }
     }
 }
