@@ -17,6 +17,7 @@ import java.util.concurrent.Executors
 object UserSessionUtil {
     // (현 어플리케이션 세션 로그인 함수)
     // 입력 정보대로 로그인 요청 후 로그인 spw 에 결과 저장
+    // 로그인 타입, 아이디, 비밀번호를 입력하면 서버에서 로그인 검증을 하고 결과를 LoginSpw 에 저장하고, 각 콜백을 실행
     // 알고리즘 :
     //     1. SNS 로그인시 Oauth 검증
     //         loginId 가 비어있다면 최초 로그인 선택 시점.
