@@ -27,6 +27,7 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    namespace 'com.example.test_module_for_aar_compile'
 }
 
 dependencies {
