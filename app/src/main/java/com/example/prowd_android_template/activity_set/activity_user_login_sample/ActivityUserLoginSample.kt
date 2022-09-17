@@ -602,7 +602,7 @@ class ActivityUserLoginSample : AppCompatActivity() {
                 1,
                 email,
                 pw,
-                onLoginComplete = {
+                onLogInComplete = {
                     shownDialogInfoVOMbr = null
 
                     currentLoginSessionInfoSpwMbr.isAutoLogin =
@@ -623,7 +623,7 @@ class ActivityUserLoginSample : AppCompatActivity() {
                         }
                     )
                 },
-                onLoginFailed = {
+                onLogInFailed = {
                     shownDialogInfoVOMbr = null
 
                     shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(

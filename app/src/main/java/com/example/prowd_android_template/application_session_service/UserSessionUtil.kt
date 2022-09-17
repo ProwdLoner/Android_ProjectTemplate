@@ -10,14 +10,26 @@ import java.util.concurrent.Executors
 
 // (유저 세션 관련 테스트 유틸)
 // : 유저 세션 관련 함수들을 모아둔 유틸.
-//     실제 서비스시엔 로그인 시스템에 맞게 새로운 유틸을 만들어 사용
+//     서버 검증 및 유저 세션 관련 SPW 정보 변경을 담당.
+//     인터페이스는 회원가입, 로그인, 로그아웃, 회원탈퇴와, 그외 유저 세션 관련 기능에 대한 함수 구현.
 //     기본적으로 본 템플릿 앱 세션은 한 서버에 대응하도록 만들어졌지만,
 //     멀티 서버 로그인시엔 UserSessionUtil, CurrentLoginSessionInfoSpw 를 하나 더 만들고,
 //     각 액티비티별 userUid 식별 처리 부분을 커스텀하면 됨
+//     실제 서비스시엔 로그인 시스템에 맞게 새로운 유틸을 만들어 사용 할것.
 object UserSessionUtil {
+    // (회원가입 함수)
+    // : 서버에 회원 가입 요청
+    fun userJoin(){
+
+    }
+
+
+
+
     // (현 어플리케이션 세션 로그인 함수)
     // 입력 정보대로 로그인 요청 후 로그인 spw 에 결과 저장
     // 로그인 타입, 아이디, 비밀번호를 입력하면 서버에서 로그인 검증을 하고 결과를 LoginSpw 에 저장하고, 각 콜백을 실행
+    // 아래 예시는 JWT 를 가정. FCM 을 사용하고 싶다면 로그인 로그아웃, 회원탈퇴시 토큰과 유저 아이디를 반환하여 서버에서 처리하도록 할것
     // 알고리즘 :
     //     1. SNS 로그인시 Oauth 검증
     //         loginId 가 비어있다면 최초 로그인 선택 시점.
@@ -28,11 +40,11 @@ object UserSessionUtil {
     //     3. 에러시 각 콜백 사용. 에러가 나지 않고 로그인 검증이 완료되면 spw 에 로그인 정보 저장
     fun sessionLogIn(
         activity: Activity,
-        loginType: Int,
-        loginId: String?,
-        loginPw: String?,
-        onLoginComplete: () -> Unit,
-        onLoginFailed: () -> Unit,
+        logInType: Int,
+        logInId: String?,
+        logInPw: String?,
+        onLogInComplete: () -> Unit,
+        onLogInFailed: () -> Unit,
         onNetworkError: () -> Unit,
         onServerError: () -> Unit
     ) {
@@ -48,21 +60,21 @@ object UserSessionUtil {
 
         // 타입별 pw 의 의미가 다르므로 처리
         // 로그인 타입은 위의 CurrentLoginSessionInfoSpw 의 설정을 따름
-        when (loginType) {
+        when (logInType) {
             1 -> { // 이메일 회원
-                val id = loginId!!
-                val pw = loginPw!!
+                val id = logInId!!
+                val pw = logInPw!!
 
                 sessionLogInOnIdReady(
                     activity,
                     currentLoginSessionInfoSpw,
                     executorService,
                     repositorySet,
-                    loginType,
+                    logInType,
                     id,
                     pw,
-                    onLoginComplete,
-                    onLoginFailed,
+                    onLogInComplete,
+                    onLogInFailed,
                     onNetworkError,
                     onServerError
                 )
@@ -82,11 +94,11 @@ object UserSessionUtil {
                     currentLoginSessionInfoSpw,
                     executorService,
                     repositorySet,
-                    loginType,
+                    logInType,
                     id,
                     pw,
-                    onLoginComplete,
-                    onLoginFailed,
+                    onLogInComplete,
+                    onLogInFailed,
                     onNetworkError,
                     onServerError
                 )
@@ -102,11 +114,11 @@ object UserSessionUtil {
                     currentLoginSessionInfoSpw,
                     executorService,
                     repositorySet,
-                    loginType,
+                    logInType,
                     id,
                     pw,
-                    onLoginComplete,
-                    onLoginFailed,
+                    onLogInComplete,
+                    onLogInFailed,
                     onNetworkError,
                     onServerError
                 )
@@ -122,18 +134,18 @@ object UserSessionUtil {
                     currentLoginSessionInfoSpw,
                     executorService,
                     repositorySet,
-                    loginType,
+                    logInType,
                     id,
                     pw,
-                    onLoginComplete,
-                    onLoginFailed,
+                    onLogInComplete,
+                    onLogInFailed,
                     onNetworkError,
                     onServerError
                 )
             }
             else -> { // 비회원
                 // 그냥 로그인 통과
-                onLoginComplete()
+                onLogInComplete()
                 return
             }
         }
@@ -266,7 +278,12 @@ object UserSessionUtil {
     // 알고리즘 :
     //     1. SNS 로그아웃
     //     2. SPW 정보 로그아웃 처리
-    fun sessionLogOut(activity: Activity) {
+    fun sessionLogOut(
+        activity: Activity,
+        onLogoutComplete: () -> Unit,
+        onNetworkError: () -> Unit,
+        onServerError: () -> Unit
+    ) {
         // (SharedPreference 객체)
         // 현 로그인 정보 접근 객체
         val currentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(activity.application)
@@ -288,6 +305,7 @@ object UserSessionUtil {
         }
 
         currentLoginSessionInfoSpw.setLogout()
+        onLogoutComplete()
     }
 
     // (서버 액세스 토큰 재발급 함수)

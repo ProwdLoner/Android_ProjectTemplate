@@ -843,14 +843,14 @@ class ActivityInit : AppCompatActivity() {
             loginType,
             currentLoginSessionInfoSpwMbr.loginId,
             currentLoginSessionInfoSpwMbr.loginPw,
-            onLoginComplete = {
+            onLogInComplete = {
                 goToNextActivitySemaphoreMbr.acquire()
                 checkLoginCompletedMbr = true
                 goToNextActivitySemaphoreMbr.release()
 
                 goToNextActivity()
             },
-            onLoginFailed = {
+            onLogInFailed = {
                 // 서버 내 정보가 달라졌기에 로그아웃 처리
                 UserSessionUtil.sessionLogOut(this)
 
