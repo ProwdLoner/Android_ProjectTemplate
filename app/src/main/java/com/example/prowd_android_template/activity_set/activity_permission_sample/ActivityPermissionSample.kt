@@ -1,7 +1,9 @@
 package com.example.prowd_android_template.activity_set.activity_permission_sample
 
 import android.Manifest
+import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -58,6 +60,9 @@ class ActivityPermissionSample : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivityPermissionSampleAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivityPermissionSampleSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
@@ -372,6 +377,7 @@ class ActivityPermissionSample : AppCompatActivity() {
         }
         permissionRequestOnProgressSemaphoreMbr.release()
 
+        // (onPause 알고리즘)
     }
 
     override fun onDestroy() {
@@ -415,6 +421,7 @@ class ActivityPermissionSample : AppCompatActivity() {
         adapterSetMbr = ActivityPermissionSampleAdapterSet()
 
         // SPW 객체 생성
+        classSpwMbr = ActivityPermissionSampleSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
         customPermissionSpwMbr = CustomPermissionSpw(application)
 
@@ -1167,6 +1174,69 @@ class ActivityPermissionSample : AppCompatActivity() {
         setSwitchView()
     }
 
+
+    // (권한에 따라 스위치 반영)
+    private fun setSwitchView() {
+        // 푸시 알람 권한 여부 반영
+        bindingMbr.pushPermissionSwitch.isChecked = customPermissionSpwMbr.pushPermissionGranted
+
+        // 외부 저장소 읽기 권한 설정 여부 반영
+        bindingMbr.externalStorageReadPermissionSwitch.isChecked =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+
+        // 카메라 접근 권한 설정 여부 반영
+        bindingMbr.cameraPermissionSwitch.isChecked =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+
+        // 오디오 녹음 권한 설정 여부 반영
+        bindingMbr.audioRecordPermissionSwitch.isChecked =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+
+        // 상세 위치 정보 권한 설정 여부 반영
+        val fineLocationGranted = ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        // 대략 위치 정보 권한 설정 여부 반영
+        val coarseLocationGranted =
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        // 두 위치 정보의 상호 상태에 따른 뷰 처리
+        when {
+            fineLocationGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
+                bindingMbr.locationPermissionSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
+            }
+            coarseLocationGranted -> {// 위치 권한 coarse 만 승인
+                // 정확도 보정 설정 보여주기
+                bindingMbr.locationPermissionSwitch.isChecked = true
+                bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
+            }
+            else -> {// 위치 권한 모두 거부
+                bindingMbr.locationPermissionSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailSwitch.isChecked = false
+                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
+            }
+        }
+
+        bindingMbr.writeSettingPermissionSwitch.isChecked = Settings.System.canWrite(this)
+    }
+
     // 화면 데이터 갱신관련 세마포어
     private val screenDataSemaphoreMbr = Semaphore(1)
 
@@ -1327,69 +1397,44 @@ class ActivityPermissionSample : AppCompatActivity() {
     }
 
 
-    // (권한에 따라 스위치 반영)
-    private fun setSwitchView() {
-        // 푸시 알람 권한 여부 반영
-        bindingMbr.pushPermissionSwitch.isChecked = customPermissionSpwMbr.pushPermissionGranted
-
-        // 외부 저장소 읽기 권한 설정 여부 반영
-        bindingMbr.externalStorageReadPermissionSwitch.isChecked =
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-
-        // 카메라 접근 권한 설정 여부 반영
-        bindingMbr.cameraPermissionSwitch.isChecked =
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-
-        // 오디오 녹음 권한 설정 여부 반영
-        bindingMbr.audioRecordPermissionSwitch.isChecked =
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
-
-        // 상세 위치 정보 권한 설정 여부 반영
-        val fineLocationGranted = ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        // 대략 위치 정보 권한 설정 여부 반영
-        val coarseLocationGranted =
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-        // 두 위치 정보의 상호 상태에 따른 뷰 처리
-        when {
-            fineLocationGranted -> {// 위치 권한 fine 을 승인하면 자동으로 모두 승인한 것과 같음
-                bindingMbr.locationPermissionSwitch.isChecked = true
-                bindingMbr.locationPermissionDetailSwitch.isChecked = true
-                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
-            }
-            coarseLocationGranted -> {// 위치 권한 coarse 만 승인
-                // 정확도 보정 설정 보여주기
-                bindingMbr.locationPermissionSwitch.isChecked = true
-                bindingMbr.locationPermissionDetailSwitch.isChecked = false
-                bindingMbr.locationPermissionDetailContainer.visibility = View.VISIBLE
-            }
-            else -> {// 위치 권한 모두 거부
-                bindingMbr.locationPermissionSwitch.isChecked = false
-                bindingMbr.locationPermissionDetailSwitch.isChecked = false
-                bindingMbr.locationPermissionDetailContainer.visibility = View.GONE
-            }
-        }
-
-        bindingMbr.writeSettingPermissionSwitch.isChecked = Settings.System.canWrite(this)
-    }
-
-
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class ActivityPermissionSampleSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityPermissionSampleSpw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivityPermissionSampleAdapterSet {
+        // 어뎁터 #1
+
+    }
 }
