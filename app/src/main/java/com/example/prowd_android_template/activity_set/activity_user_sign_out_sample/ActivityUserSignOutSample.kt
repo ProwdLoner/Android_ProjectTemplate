@@ -462,66 +462,12 @@ class ActivityUserSignOutSample : AppCompatActivity() {
         bindingMbr.acceptCheckBoxContainer.setOnClickListener {
             bindingMbr.signOutConfirmCheckBox.isChecked =
                 !bindingMbr.signOutConfirmCheckBox.isChecked
+
+            bindingMbr.signOutBtn.isEnabled = bindingMbr.signOutConfirmCheckBox.isChecked
+            bindingMbr.signOutBtn.isFocusable = bindingMbr.signOutConfirmCheckBox.isChecked
         }
-
-        bindingMbr.signOutConfirmCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            bindingMbr.pwTextInputEditTxt.setText("")
-            if (isChecked) {
-                bindingMbr.pwTextInputLayout.visibility = View.VISIBLE
-            } else {
-                bindingMbr.pwTextInputLayout.visibility = View.GONE
-            }
-        }
-
-        var pwClear = false
-        bindingMbr.pwTextInputEditTxt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.pwTextInputLayout.error = null
-                bindingMbr.pwTextInputLayout.isErrorEnabled = false
-            }
-
-            override fun afterTextChanged(s: Editable) {
-                val pw = s.toString()
-
-                when {
-                    "" == pw -> {
-                        bindingMbr.pwTextInputLayout.error = null
-                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
-
-                        pwClear = false
-                        bindingMbr.signOutBtn.isEnabled = false
-                        bindingMbr.signOutBtn.isFocusable = false
-                    }
-
-                    // 공백 존재
-                    pw.contains(" ") -> {
-                        bindingMbr.pwTextInputLayout.error = "공백 문자가 들어갔습니다."
-
-                        pwClear = false
-                        bindingMbr.signOutBtn.isEnabled = false
-                        bindingMbr.signOutBtn.isFocusable = false
-                    }
-
-                    else -> {
-                        bindingMbr.pwTextInputLayout.error = null
-                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
-                        pwClear = true
-
-                        if (pwClear) {
-                            bindingMbr.signOutBtn.isEnabled = true
-                            bindingMbr.signOutBtn.isFocusable = true
-                        }
-                    }
-                }
-            }
-        })
 
         bindingMbr.signOutBtn.setOnClickListener {
-            if (!pwClear) {
-                return@setOnClickListener
-            }
-
             shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
                 true,
                 "회원 탈퇴",
@@ -537,14 +483,17 @@ class ActivityUserSignOutSample : AppCompatActivity() {
                         onCanceled = {}
                     )
 
-                    // 회원탈퇴 처리
-                    // 입력한 비밀번호와 같이 회원탈퇴 요청 후 비번이 맞다면 탈퇴처리
-                    val signOutCallback = { statusCode: Int ->
-                        runOnUiThread {
-                            shownDialogInfoVOMbr = null
+                    val loginType: Int =
+                        currentLoginSessionInfoSpwMbr.loginType
 
-                            when (statusCode) {
-                                1 -> { // 탈퇴 완료
+                    // 회원탈퇴 처리
+                    UserSessionUtil.signOut(
+                        this,
+                        loginType,
+                        currentLoginSessionInfoSpwMbr.loginId!!,
+                        onComplete = { status ->
+                            when (status) {
+                                1 -> { // 회원탈퇴 완료
                                     shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
                                         false,
                                         "회원탈퇴",
@@ -552,16 +501,23 @@ class ActivityUserSignOutSample : AppCompatActivity() {
                                         null,
                                         onCheckBtnClicked = {
                                             shownDialogInfoVOMbr = null
-                                            UserSessionUtil.sessionLogOut(this)
                                             finish()
                                         },
                                         onCanceled = { }
                                     )
                                 }
-                                2 -> { // 비밀번호 불일치
-                                    bindingMbr.pwTextInputLayout.error = "비밀번호가 일치하지 않습니다."
-                                    bindingMbr.pwTextInputEditTxt.requestFocus()
-
+                                3 -> { // 존재하지 않는 유저
+                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                        false,
+                                        "회원탈퇴",
+                                        "이미 탈퇴된 회원입니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                            finish()
+                                        },
+                                        onCanceled = { }
+                                    )
                                 }
                                 -1 -> { // 네트워크 에러
                                     shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
@@ -593,29 +549,7 @@ class ActivityUserSignOutSample : AppCompatActivity() {
                                 }
                             }
                         }
-                    }
-
-                    // 회원탈퇴 요청
-                    executorServiceMbr.execute {
-                        // 아래는 서버에서 처리해야 하는 로직
-                        val type = currentLoginSessionInfoSpwMbr.loginType
-                        val id = currentLoginSessionInfoSpwMbr.loginId
-                        val pw = bindingMbr.pwTextInputEditTxt.text.toString()
-
-                        val userInfo =
-                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                                .getUserInfoForLogin(
-                                    id!!, pw, type
-                                )
-
-                        if (userInfo.isEmpty()) { // 회원정보 조회 불가능
-                            signOutCallback(2)
-                        } else { // 회원정보 조회 완료
-                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                                .delete(userInfo[0].uid)
-                            signOutCallback(1)
-                        }
-                    }
+                    )
                 },
                 onNegBtnClicked = {
                     shownDialogInfoVOMbr = null

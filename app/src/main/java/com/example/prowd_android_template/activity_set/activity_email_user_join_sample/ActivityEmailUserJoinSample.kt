@@ -24,13 +24,13 @@ import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerVi
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.activity_set.activity_user_login_sample.ActivityUserLoginSample
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.application_session_service.UserSessionUtil
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityEmailUserJoinSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
-import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -469,8 +469,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
 
         // 회원가입 버튼 비활성화
         //     적합성 검증 완료시 활성
-        bindingMbr.joinBtn.isEnabled = false
-        bindingMbr.joinBtn.isFocusable = false
+        bindingMbr.emailJoinBtn.isEnabled = false
+        bindingMbr.emailJoinBtn.isFocusable = false
 
         var emailVerificationRequestUid: Long? = null
         bindingMbr.emailCheckBtn.isEnabled = false
@@ -485,7 +485,12 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
         var pwCheckClear = false
         bindingMbr.emailTextInputEditTxt.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+            override fun onTextChanged(
+                s: CharSequence,
+                start: Int,
+                before: Int,
+                count: Int
+            ) { // 입력값 변경시 작동
                 bindingMbr.emailTextInputLayout.error = null
                 bindingMbr.emailTextInputLayout.isErrorEnabled = false
 
@@ -497,11 +502,11 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
 
                 emailClear = false
 
-                bindingMbr.joinBtn.isEnabled = false
-                bindingMbr.joinBtn.isFocusable = false
+                bindingMbr.emailJoinBtn.isEnabled = false
+                bindingMbr.emailJoinBtn.isFocusable = false
             }
 
-            override fun afterTextChanged(s: Editable) {
+            override fun afterTextChanged(s: Editable) { // onTextChanged 다음에 작동
                 val email = s.toString()
 
                 when {
@@ -511,8 +516,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.emailTextInputLayout.isErrorEnabled = false
                         emailClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     // 공백 존재
@@ -520,16 +525,16 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.emailTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
                         emailClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
                         bindingMbr.emailTextInputLayout.error = "이메일 형태가 아닙니다."
                         emailClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     else -> {
@@ -588,8 +593,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                                     bindingMbr.emailTextInputEditTxt.requestFocus()
                                     emailClear = false
 
-                                    bindingMbr.joinBtn.isEnabled = false
-                                    bindingMbr.joinBtn.isFocusable = false
+                                    bindingMbr.emailJoinBtn.isEnabled = false
+                                    bindingMbr.emailJoinBtn.isFocusable = false
 
                                     bindingMbr.emailCheckBtn.isEnabled = false
                                     bindingMbr.emailCheckBtn.isFocusable = false
@@ -654,8 +659,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                 emailClear = true
 
                 if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                    bindingMbr.joinBtn.isEnabled = true
-                    bindingMbr.joinBtn.isFocusable = true
+                    bindingMbr.emailJoinBtn.isEnabled = true
+                    bindingMbr.emailJoinBtn.isFocusable = true
                 }
             }
         }
@@ -677,8 +682,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.nickNameTextInputLayout.isErrorEnabled = false
                         nickNameClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     // 16자 초과
@@ -686,8 +691,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.nickNameTextInputLayout.error = "16자 이하로 입력해주세요."
                         nickNameClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     // trim 검사
@@ -695,8 +700,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.nickNameTextInputLayout.error = "문장 앞뒤 공백 문자는 입력할 수 없습니다."
                         nickNameClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     // 영문, 숫자, 한글 외의 특수문자 존재
@@ -704,8 +709,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.nickNameTextInputLayout.error = "유효하지 않은 닉네임입니다."
                         nickNameClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     else -> {
@@ -714,8 +719,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         nickNameClear = true
 
                         if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.joinBtn.isEnabled = true
-                            bindingMbr.joinBtn.isFocusable = true
+                            bindingMbr.emailJoinBtn.isEnabled = true
+                            bindingMbr.emailJoinBtn.isFocusable = true
                         }
                     }
                 }
@@ -743,8 +748,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.pwTextInputLayout.isErrorEnabled = false
                         pwClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     // 8자 미만
@@ -752,8 +757,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.pwTextInputLayout.error = "8자 이상 입력해주세요."
                         pwClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     // 16자 초과
@@ -761,8 +766,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.pwTextInputLayout.error = "16자 이하로 입력해주세요."
                         pwClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     // 공백 존재
@@ -770,8 +775,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.pwTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
                         pwClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     // 비밀번호 작성 규칙 : 영문, 숫자, 특수문자 혼합
@@ -780,8 +785,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.pwTextInputLayout.error = "유효하지 않은 비밀번호입니다."
                         pwClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     else -> {
@@ -790,8 +795,8 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         pwClear = true
 
                         if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.joinBtn.isEnabled = true
-                            bindingMbr.joinBtn.isFocusable = true
+                            bindingMbr.emailJoinBtn.isEnabled = true
+                            bindingMbr.emailJoinBtn.isFocusable = true
                         }
                     }
                 }
@@ -816,16 +821,16 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
                         pwCheckClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
 
                     pw != pwCheck -> {
                         bindingMbr.pwTextCheckInputLayout.error = "비밀번호가 일치하지 않습니다."
                         pwCheckClear = false
 
-                        bindingMbr.joinBtn.isEnabled = false
-                        bindingMbr.joinBtn.isFocusable = false
+                        bindingMbr.emailJoinBtn.isEnabled = false
+                        bindingMbr.emailJoinBtn.isFocusable = false
                     }
                     else -> {
                         bindingMbr.pwTextCheckInputLayout.error = null
@@ -833,15 +838,15 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         pwCheckClear = true
 
                         if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.joinBtn.isEnabled = true
-                            bindingMbr.joinBtn.isFocusable = true
+                            bindingMbr.emailJoinBtn.isEnabled = true
+                            bindingMbr.emailJoinBtn.isFocusable = true
                         }
                     }
                 }
             }
         })
 
-        bindingMbr.joinBtn.setOnClickListener {
+        bindingMbr.emailJoinBtn.setOnClickListener {
             // 적합성 검증 완료를 가정
             if (!emailClear || !nickNameClear || !pwClear || !pwCheckClear) {
                 return@setOnClickListener
@@ -857,9 +862,16 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                 onCanceled = {}
             )
 
-            // 회원가입 콜백
-            val signInCallback = { statusCode: Int ->
-                runOnUiThread {
+            // 회원가입
+            UserSessionUtil.userJoinToServer(
+                this,
+                UserSessionUtil.UserJoinInputVo(
+                    1,
+                    email,
+                    pw,
+                    nickName
+                ),
+                onComplete = { statusCode: Int ->
                     shownDialogInfoVOMbr = null
 
                     when (statusCode) {
@@ -879,13 +891,16 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                                 }
                             )
                         }
-                        2 -> { // 아이디 중복
+                        2 -> { // 입력값 에러
+                            throw Exception("user join input error")
+                        }
+                        3 -> { // 이미 가입된 회원
                             bindingMbr.emailTextInputLayout.error = "현재 사용중인 아이디입니다."
                             bindingMbr.emailTextInputEditTxt.requestFocus()
                             emailClear = false
 
-                            bindingMbr.joinBtn.isEnabled = false
-                            bindingMbr.joinBtn.isFocusable = false
+                            bindingMbr.emailJoinBtn.isEnabled = false
+                            bindingMbr.emailJoinBtn.isFocusable = false
                         }
                         -1 -> { // 네트워크 에러
                             shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
@@ -917,27 +932,7 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                         }
                     }
                 }
-            }
-
-            // 회원가입 요청
-            executorServiceMbr.execute {
-                // 아래는 원래 네트워크 서버에서 처리하는 로직
-                // 이메일 중복검사
-                val emailCount =
-                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                        .getIdCount(email, 1)
-
-                if (emailCount != 0) { // 아이디 중복
-                    signInCallback(2)
-                } else {
-                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao().insert(
-                        TestUserInfoTable.TableVo(
-                            1, email, nickName, pw
-                        )
-                    )
-                    signInCallback(1)
-                }
-            }
+            )
         }
     }
 

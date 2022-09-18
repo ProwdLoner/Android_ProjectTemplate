@@ -1,7 +1,9 @@
 package com.example.prowd_android_template.activity_set.activity_init
 
+import android.app.Application
 import android.app.Dialog
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -51,6 +53,9 @@ class ActivityInit : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivityInitAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivityInitSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
@@ -382,6 +387,7 @@ class ActivityInit : AppCompatActivity() {
         }
         permissionRequestOnProgressSemaphoreMbr.release()
 
+        // (onPause 알고리즘)
         executorServiceMbr.execute {
             goToNextActivitySemaphoreMbr.acquire()
             if (!waitToGoToNextActivityCompletedMbr) { // 화면 대기가 끝나지 않았을 때
@@ -433,6 +439,7 @@ class ActivityInit : AppCompatActivity() {
         adapterSetMbr = ActivityInitAdapterSet()
 
         // SPW 객체 생성
+        classSpwMbr = ActivityInitSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -825,7 +832,7 @@ class ActivityInit : AppCompatActivity() {
         val loginType: Int =
             currentLoginSessionInfoSpwMbr.loginType
 
-        if (!isAutoLogin || loginType == 0) { // 로그인 검증 불필요
+        if (!isAutoLogin || loginType == 0) { // 자동 로그인 x or 비회원 = 로그인 검증 불필요
             // 비회원 처리
             currentLoginSessionInfoSpwMbr.setLogout()
 
@@ -838,65 +845,332 @@ class ActivityInit : AppCompatActivity() {
         }
 
         // 로그인 요청
-        UserSessionUtil.sessionLogIn(
-            this,
-            loginType,
-            currentLoginSessionInfoSpwMbr.loginId,
-            currentLoginSessionInfoSpwMbr.loginPw,
-            onLogInComplete = {
-                goToNextActivitySemaphoreMbr.acquire()
-                checkLoginCompletedMbr = true
-                goToNextActivitySemaphoreMbr.release()
+        when (loginType) {
+            1 -> { // 서버 로그인
+                UserSessionUtil.sessionLogIn(
+                    this,
+                    UserSessionUtil.SessionLogInInputVo(
+                        loginType,
+                        currentLoginSessionInfoSpwMbr.loginId!!,
+                        currentLoginSessionInfoSpwMbr.loginPw!!
+                    ),
+                    onComplete = { status ->
+                        when (status) {
+                            1 -> { // 정상 로그인
+                                goToNextActivitySemaphoreMbr.acquire()
+                                checkLoginCompletedMbr = true
+                                goToNextActivitySemaphoreMbr.release()
 
-                goToNextActivity()
-            },
-            onLogInFailed = {
-                // 서버 내 정보가 달라졌기에 로그아웃 처리
-                UserSessionUtil.sessionLogOut(this)
+                                goToNextActivity()
+                            }
+                            2, 4 -> { // 정보 불일치
+                                // 서버 내 정보가 달라졌기에 로그아웃 처리
+                                UserSessionUtil.sessionLogOut(
+                                    this,
+                                    onComplete = { status1 ->
+                                        when (status1) {
+                                            1 -> {
+                                                goToNextActivitySemaphoreMbr.acquire()
+                                                checkLoginCompletedMbr = true
+                                                goToNextActivitySemaphoreMbr.release()
 
-                goToNextActivitySemaphoreMbr.acquire()
-                checkLoginCompletedMbr = true
-                goToNextActivitySemaphoreMbr.release()
+                                                goToNextActivity()
+                                            }
+                                            -1 -> { // 네트워크 에러
+                                                shownDialogInfoVOMbr =
+                                                    DialogBinaryChoose.DialogInfoVO(
+                                                        false,
+                                                        "네트워크 불안정",
+                                                        "현재 네트워크 연결이 불안정합니다.",
+                                                        "다시시도",
+                                                        "종료",
+                                                        onPosBtnClicked = {
+                                                            shownDialogInfoVOMbr = null
+                                                            checkLogin()
+                                                        },
+                                                        onNegBtnClicked = {
+                                                            shownDialogInfoVOMbr = null
+                                                            finish()
+                                                        },
+                                                        onCanceled = {}
+                                                    )
+                                            }
+                                            else -> { // 서버 에러
+                                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                    true,
+                                                    "기술적 문제",
+                                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                    null,
+                                                    onCheckBtnClicked = {
+                                                        shownDialogInfoVOMbr = null
 
-                goToNextActivity()
-            },
-            onNetworkError = {
-                shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
-                    false,
-                    "네트워크 불안정",
-                    "현재 네트워크 연결이 불안정합니다.",
-                    "다시시도",
-                    "종료",
-                    onPosBtnClicked = {
-                        shownDialogInfoVOMbr = null
-                        checkLogin()
-                    },
-                    onNegBtnClicked = {
-                        shownDialogInfoVOMbr = null
-                        finish()
-                    },
-                    onCanceled = {}
-                )
-            },
-            onServerError = {
-                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                    true,
-                    "기술적 문제",
-                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                    null,
-                    onCheckBtnClicked = {
-                        shownDialogInfoVOMbr = null
+                                                        finish()
+                                                    },
+                                                    onCanceled = {
+                                                        shownDialogInfoVOMbr = null
 
-                        finish()
-                    },
-                    onCanceled = {
-                        shownDialogInfoVOMbr = null
+                                                        finish()
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    })
+                            }
+                            -1 -> { // 네트워크 에러
+                                shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    "다시시도",
+                                    "종료",
+                                    onPosBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                        checkLogin()
+                                    },
+                                    onNegBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                        finish()
+                                    },
+                                    onCanceled = {}
+                                )
+                            }
+                            else -> { // 서버 에러
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
 
-                        finish()
+                                        finish()
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+
+                                        finish()
+                                    }
+                                )
+                            }
+                        }
                     }
                 )
             }
-        )
+            else -> { // SNS 로그인
+                UserSessionUtil.snsLogin(
+                    this,
+                    loginType,
+                    onComplete = { status, snsLoginOutputVo ->
+                        when (status) {
+                            1 -> { // SNS 로그인 완료 = SNS id, SNS pw 준비 완료
+                                UserSessionUtil.sessionLogIn(
+                                    this,
+                                    UserSessionUtil.SessionLogInInputVo(
+                                        loginType,
+                                        snsLoginOutputVo!!.snsId,
+                                        snsLoginOutputVo.accessToken
+                                    ),
+                                    onComplete = { status1 ->
+                                        when (status1) {
+                                            1 -> { // 정상 로그인
+                                                goToNextActivitySemaphoreMbr.acquire()
+                                                checkLoginCompletedMbr = true
+                                                goToNextActivitySemaphoreMbr.release()
+
+                                                goToNextActivity()
+                                            }
+                                            2, 4 -> { // 정보 불일치
+                                                // 서버 내 정보가 달라졌기에 로그아웃 처리
+                                                UserSessionUtil.sessionLogOut(
+                                                    this,
+                                                    onComplete = { status1 ->
+                                                        when (status1) {
+                                                            1 -> {
+                                                                goToNextActivitySemaphoreMbr.acquire()
+                                                                checkLoginCompletedMbr = true
+                                                                goToNextActivitySemaphoreMbr.release()
+
+                                                                goToNextActivity()
+                                                            }
+                                                            -1 -> { // 네트워크 에러
+                                                                shownDialogInfoVOMbr =
+                                                                    DialogBinaryChoose.DialogInfoVO(
+                                                                        false,
+                                                                        "네트워크 불안정",
+                                                                        "현재 네트워크 연결이 불안정합니다.",
+                                                                        "다시시도",
+                                                                        "종료",
+                                                                        onPosBtnClicked = {
+                                                                            shownDialogInfoVOMbr =
+                                                                                null
+                                                                            checkLogin()
+                                                                        },
+                                                                        onNegBtnClicked = {
+                                                                            shownDialogInfoVOMbr =
+                                                                                null
+                                                                            finish()
+                                                                        },
+                                                                        onCanceled = {}
+                                                                    )
+                                                            }
+                                                            else -> { // 서버 에러
+                                                                shownDialogInfoVOMbr =
+                                                                    DialogConfirm.DialogInfoVO(
+                                                                        true,
+                                                                        "기술적 문제",
+                                                                        "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                                        null,
+                                                                        onCheckBtnClicked = {
+                                                                            shownDialogInfoVOMbr =
+                                                                                null
+
+                                                                            finish()
+                                                                        },
+                                                                        onCanceled = {
+                                                                            shownDialogInfoVOMbr =
+                                                                                null
+
+                                                                            finish()
+                                                                        }
+                                                                    )
+                                                            }
+                                                        }
+                                                    })
+                                            }
+                                            -1 -> { // 네트워크 에러
+                                                shownDialogInfoVOMbr =
+                                                    DialogBinaryChoose.DialogInfoVO(
+                                                        false,
+                                                        "네트워크 불안정",
+                                                        "현재 네트워크 연결이 불안정합니다.",
+                                                        "다시시도",
+                                                        "종료",
+                                                        onPosBtnClicked = {
+                                                            shownDialogInfoVOMbr = null
+                                                            checkLogin()
+                                                        },
+                                                        onNegBtnClicked = {
+                                                            shownDialogInfoVOMbr = null
+                                                            finish()
+                                                        },
+                                                        onCanceled = {}
+                                                    )
+                                            }
+                                            else -> { // 서버 에러
+                                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                    true,
+                                                    "기술적 문제",
+                                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                    null,
+                                                    onCheckBtnClicked = {
+                                                        shownDialogInfoVOMbr = null
+
+                                                        finish()
+                                                    },
+                                                    onCanceled = {
+                                                        shownDialogInfoVOMbr = null
+
+                                                        finish()
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                            2 -> { // 입력값 에러
+                                UserSessionUtil.sessionLogOut(
+                                    this,
+                                    onComplete = { status1 ->
+                                        when (status1) {
+                                            1 -> {
+                                                goToNextActivitySemaphoreMbr.acquire()
+                                                checkLoginCompletedMbr = true
+                                                goToNextActivitySemaphoreMbr.release()
+
+                                                goToNextActivity()
+                                            }
+                                            -1 -> { // 네트워크 에러
+                                                shownDialogInfoVOMbr =
+                                                    DialogBinaryChoose.DialogInfoVO(
+                                                        false,
+                                                        "네트워크 불안정",
+                                                        "현재 네트워크 연결이 불안정합니다.",
+                                                        "다시시도",
+                                                        "종료",
+                                                        onPosBtnClicked = {
+                                                            shownDialogInfoVOMbr = null
+                                                            checkLogin()
+                                                        },
+                                                        onNegBtnClicked = {
+                                                            shownDialogInfoVOMbr = null
+                                                            finish()
+                                                        },
+                                                        onCanceled = {}
+                                                    )
+                                            }
+                                            else -> { // 서버 에러
+                                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                    true,
+                                                    "기술적 문제",
+                                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                    null,
+                                                    onCheckBtnClicked = {
+                                                        shownDialogInfoVOMbr = null
+
+                                                        finish()
+                                                    },
+                                                    onCanceled = {
+                                                        shownDialogInfoVOMbr = null
+
+                                                        finish()
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    })
+                            }
+                            -1 -> { // 네트워크 에러
+                                shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    "다시시도",
+                                    "종료",
+                                    onPosBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                        checkLogin()
+                                    },
+                                    onNegBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                        finish()
+                                    },
+                                    onCanceled = {}
+                                )
+                            }
+                            0 -> { // 서버 에러
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        finish()
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+
+                                        finish()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+        }
     }
 
     private fun goToNextActivity() {
@@ -922,4 +1196,42 @@ class ActivityInit : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class ActivityInitSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityInitSpw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivityInitAdapterSet {
+        // 어뎁터 #1
+
+    }
 }

@@ -454,11 +454,118 @@ class ActivityUserSampleList : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // (로그아웃 버튼)
         bindingMbr.userLogoutBtn.setOnClickListener {
-            UserSessionUtil.sessionLogOut(this)
-            currentUserUidMbr = null
-            setUserBtn()
-            setUserInfo()
+
+            shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                false,
+                "로그아웃 요청 중입니다.",
+                onCanceled = {}
+            )
+
+            // SNS 로그인 상태 비워주기
+            if (currentLoginSessionInfoSpwMbr.loginType == 0) { // 비회원 상태
+                shownDialogInfoVOMbr = null
+                return@setOnClickListener
+            } else { // 로그인 상태
+                UserSessionUtil.sessionLogOut(
+                    this,
+                    onComplete = { statusCode: Int ->
+                        shownDialogInfoVOMbr = null
+                        when (statusCode) { // 로그아웃 완료
+                            1 -> {
+                                // SNS 관련 로그아웃
+                                UserSessionUtil.snsLogout(
+                                    this,
+                                    currentLoginSessionInfoSpwMbr.loginType,
+                                    onComplete = { statusCode1: Int ->
+                                        when (statusCode1) {
+                                            1 -> { // SNS 로그아웃 완료
+                                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                    true,
+                                                    "로그아웃",
+                                                    "로그아웃 되었습니다.",
+                                                    null,
+                                                    onCheckBtnClicked = {
+                                                        shownDialogInfoVOMbr = null
+
+                                                        currentUserUidMbr = null
+                                                        setUserBtn()
+                                                        setUserInfo()
+                                                    },
+                                                    onCanceled = {
+                                                        shownDialogInfoVOMbr = null
+
+                                                        currentUserUidMbr = null
+                                                        setUserBtn()
+                                                        setUserInfo()
+                                                    }
+                                                )
+                                            }
+                                            -1 -> { // 네트워크 에러
+                                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                    true,
+                                                    "네트워크 불안정",
+                                                    "현재 네트워크 연결이 불안정합니다.",
+                                                    null,
+                                                    onCheckBtnClicked = {
+                                                        shownDialogInfoVOMbr = null
+                                                    },
+                                                    onCanceled = {
+                                                        shownDialogInfoVOMbr = null
+                                                    }
+                                                )
+                                            }
+                                            else -> { // 그외 서버 에러
+                                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                    true,
+                                                    "기술적 문제",
+                                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                    null,
+                                                    onCheckBtnClicked = {
+                                                        shownDialogInfoVOMbr = null
+                                                    },
+                                                    onCanceled = {
+                                                        shownDialogInfoVOMbr = null
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                            -1 -> { // 네트워크 에러
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+                            else -> { // 그외 서버 에러
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+
+                        }
+                    })
+            }
         }
 
         bindingMbr.goToUserSignOutSampleBtn.setOnClickListener {

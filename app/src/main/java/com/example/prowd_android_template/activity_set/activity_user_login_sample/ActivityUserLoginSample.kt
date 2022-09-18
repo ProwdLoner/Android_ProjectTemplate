@@ -599,80 +599,100 @@ class ActivityUserLoginSample : AppCompatActivity() {
             // 로그인 요청
             UserSessionUtil.sessionLogIn(
                 this,
-                1,
-                email,
-                pw,
-                onLogInComplete = {
+                UserSessionUtil.SessionLogInInputVo(
+                    1,
+                    email,
+                    pw
+                ),
+                onComplete = { status ->
                     shownDialogInfoVOMbr = null
 
-                    currentLoginSessionInfoSpwMbr.isAutoLogin =
-                        bindingMbr.autoLoginCheckBox.isChecked
-
-                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                        true,
-                        "로그인 완료",
-                        "로그인 되었습니다.",
-                        "닫기",
-                        onCheckBtnClicked = {
-                            shownDialogInfoVOMbr = null
-                            finish()
-                        },
-                        onCanceled = {
-                            shownDialogInfoVOMbr = null
-                            finish()
+                    when (status) {
+                        -1 -> { // 네트워크 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "네트워크 불안정",
+                                "현재 네트워크 연결이 불안정합니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
                         }
-                    )
-                },
-                onLogInFailed = {
-                    shownDialogInfoVOMbr = null
+                        1 -> { // 로그인 검증됨
+                            currentLoginSessionInfoSpwMbr.isAutoLogin =
+                                bindingMbr.autoLoginCheckBox.isChecked
 
-                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                        true,
-                        "로그인 실패",
-                        "로그인 정보가 일치하지 않습니다.",
-                        null,
-                        onCheckBtnClicked = {
-                            shownDialogInfoVOMbr = null
-                        },
-                        onCanceled = {
-                            shownDialogInfoVOMbr = null
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "로그인 완료",
+                                "로그인 되었습니다.",
+                                "닫기",
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                    finish()
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                    finish()
+                                }
+                            )
                         }
-                    )
-                },
-                onNetworkError = {
-                    shownDialogInfoVOMbr = null
-
-                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                        true,
-                        "네트워크 불안정",
-                        "현재 네트워크 연결이 불안정합니다.",
-                        null,
-                        onCheckBtnClicked = {
-                            shownDialogInfoVOMbr = null
-                        },
-                        onCanceled = {
-                            shownDialogInfoVOMbr = null
+                        2 -> { // 입력값 에러 = 일어나면 안되는 에러
+                            throw java.lang.Exception("login input error")
                         }
-                    )
-                },
-                onServerError = {
-                    shownDialogInfoVOMbr = null
-
-                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                        true,
-                        "기술적 문제",
-                        "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                        null,
-                        onCheckBtnClicked = {
-                            shownDialogInfoVOMbr = null
-                        },
-                        onCanceled = {
-                            shownDialogInfoVOMbr = null
+                        3 -> { // 가입된 회원이 아님
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "로그인 실패",
+                                "가입되지 않은 회원입니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
                         }
-                    )
+                        4 -> { // 로그인 정보 불일치
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "로그인 실패",
+                                "로그인 정보가 일치하지 않습니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
+                        else -> { // 그외 서버 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "기술적 문제",
+                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
+                    }
                 }
             )
         }
+
+        // SNS 로그인의 경우는 SNS 로그인 후 액세스 토큰과 id 를 서버에 검증 보내고 로그인 처리 후 닫기
+        // 만약 현재 회원이 아니라면 바로 회원가입 절차로 들어가고 로그인 처리 후 닫기
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)

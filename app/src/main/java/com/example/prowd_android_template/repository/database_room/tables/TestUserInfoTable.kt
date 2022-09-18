@@ -54,25 +54,7 @@ class TestUserInfoTable {
 
         @Query(
             "SELECT " +
-                    "uid, nick_name " +
-                    "FROM " +
-                    "test_user " +
-                    "where " +
-                    "id = :id " +
-                    "and " +
-                    "password = :password " +
-                    "and " +
-                    "user_type = :userType"
-        )
-        fun getUserInfoForLogin(
-            id: String,
-            password: String,
-            userType: Int
-        ): List<GetUserInfoForLoginOutput>
-
-        @Query(
-            "SELECT " +
-                    "uid, nick_name " +
+                    "uid, nick_name, password " +
                     "FROM " +
                     "test_user " +
                     "where " +
@@ -89,7 +71,9 @@ class TestUserInfoTable {
             @ColumnInfo(name = "uid")
             val uid: Long,
             @ColumnInfo(name = "nick_name")
-            val nickName: String
+            val nickName: String,
+            @ColumnInfo(name = "password")
+            val password: String
         )
 
 //        @Update

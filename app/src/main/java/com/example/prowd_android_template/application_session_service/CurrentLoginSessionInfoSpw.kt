@@ -228,7 +228,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
         loginPw: String,
         userUid: String,
         userNickName: String,
-        serverAccessToken: String,
+        serverAccessToken: String?,
         serverAccessTokenExpireDate: String?,
         serverRefreshToken: String?,
         serverRefreshTokenExpireDate: String?

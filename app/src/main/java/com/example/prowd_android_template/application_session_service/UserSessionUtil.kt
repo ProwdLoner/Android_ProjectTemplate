@@ -10,43 +10,119 @@ import java.util.concurrent.Executors
 
 // (유저 세션 관련 테스트 유틸)
 // : 유저 세션 관련 함수들을 모아둔 유틸.
-//     서버 검증 및 유저 세션 관련 SPW 정보 변경을 담당.
-//     인터페이스는 회원가입, 로그인, 로그아웃, 회원탈퇴와, 그외 유저 세션 관련 기능에 대한 함수 구현.
-//     기본적으로 본 템플릿 앱 세션은 한 서버에 대응하도록 만들어졌지만,
-//     멀티 서버 로그인시엔 UserSessionUtil, CurrentLoginSessionInfoSpw 를 하나 더 만들고,
-//     각 액티비티별 userUid 식별 처리 부분을 커스텀하면 됨
-//     실제 서비스시엔 로그인 시스템에 맞게 새로운 유틸을 만들어 사용 할것.
-object UserSessionUtil {
-    // (회원가입 함수)
-    // : 서버에 회원 가입 요청
-    fun userJoin(){
+//     = 서버 회원가입, 서버 로그인, 서버 로그아웃, 서버 회원탈퇴, SNS 로그인, SNS 로그아웃, JWT 토큰 재발행
 
+//     서버 검증 및 유저 세션 관련 SPW 정보 변경을 담당.
+
+//     실제 서비스시엔 로그인 시스템에 맞게 커스텀 하여 사용 할것.
+
+//     기본적으로 본 템플릿 앱 세션은 한 서버에 대응하도록 만들어졌지만,
+//     중계 앱 같은 멀티 서버 로그인시엔 UserSessionUtil, CurrentLoginSessionInfoSpw 세트를 따로 더 만들고,
+//     각 액티비티별 userUid 식별 처리 부분을 커스텀하면 됨
+
+//     아래 예시는 JWT 를 가정. FCM 을 사용하고 싶다면,
+//     sessionLogIn, sessionLogOut, userJoin 시 FCM 토큰을 반환하여 서버에서 처리하도록 할것
+object UserSessionUtil {
+    // (서버 회원가입)
+    // : 서버에 회원 가입 요청
+
+    // 회원가입 필요 정보 객체
+    // : API 요구 정보로 커스텀
+    data class UserJoinInputVo(
+        val logInType: Int, // 0 : 비회원, 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
+        val id: String, // SNS 로그인시 SNS id
+        val password: String, // SNS 로그인시 Access Token
+        val nickName: String // 사용할 닉네임
+    )
+
+    //  onComplete statusCode :
+    //     -1 = 네트워크 에러
+    //     0 = 서버 에러
+    //     1 = 가입 완료
+    //     2 = 입력값 에러
+    //     3 = 이미 가입된 회원
+    fun userJoinToServer(
+        activity: Activity,
+        userJoinVo: UserJoinInputVo,
+        onComplete: (status: Int) -> Unit
+    ) {
+        // (repository 모델)
+        val repositorySet: RepositorySet = RepositorySet.getInstance(activity)
+
+        // (스레드 풀)
+        val executorService: ExecutorService = Executors.newCachedThreadPool()
+
+        // 회원가입 콜백
+        val signInCallback = { statusCode: Int ->
+            activity.runOnUiThread {
+                when (statusCode) {
+                    -1 -> { // 네트워크 에러
+                        onComplete(-1)
+                    }
+                    1 -> { // 회원 가입 완료
+                        onComplete(1)
+                    }
+                    2 -> { // 입력값 에러
+                        onComplete(2)
+                    }
+                    3 -> { // 아이디 중복
+                        onComplete(3)
+                    }
+                    else -> { // 그외 서버 에러
+                        onComplete(0)
+                    }
+                }
+            }
+        }
+
+        // 회원가입 요청
+        executorService.execute {
+            // 아래는 원래 네트워크 서버에서 처리하는 로직
+            // 이메일 중복검사
+            val emailCount =
+                repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                    .getIdCount(userJoinVo.id, userJoinVo.logInType)
+
+            if (emailCount != 0) { // 아이디 중복
+                signInCallback(3)
+            } else {
+                repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao().insert(
+                    TestUserInfoTable.TableVo(
+                        userJoinVo.logInType,
+                        userJoinVo.id,
+                        userJoinVo.nickName,
+                        userJoinVo.password
+                    )
+                )
+                signInCallback(1)
+            }
+        }
     }
 
 
-
-
     // (현 어플리케이션 세션 로그인 함수)
-    // 입력 정보대로 로그인 요청 후 로그인 spw 에 결과 저장
-    // 로그인 타입, 아이디, 비밀번호를 입력하면 서버에서 로그인 검증을 하고 결과를 LoginSpw 에 저장하고, 각 콜백을 실행
-    // 아래 예시는 JWT 를 가정. FCM 을 사용하고 싶다면 로그인 로그아웃, 회원탈퇴시 토큰과 유저 아이디를 반환하여 서버에서 처리하도록 할것
-    // 알고리즘 :
-    //     1. SNS 로그인시 Oauth 검증
-    //         loginId 가 비어있다면 최초 로그인 선택 시점.
-    //         loginId 가 비어있지 않다면 기존 로그인 확인
-    //         이후 id 와 access token 을 준비,
-    //         SNS 로그인이 아니라면 입력받은 id 와 pw 사용
-    //     2. 서버에 loginType, loginId(SNS 시엔 sns id), loginPw(SNS 시엔 sns access token) 를 가지고 로그인 요청
-    //     3. 에러시 각 콜백 사용. 에러가 나지 않고 로그인 검증이 완료되면 spw 에 로그인 정보 저장
+    // : 입력 정보대로 로그인 요청 후 로그인 spw 에 결과 저장
+    //     로그인 타입, 아이디, 비밀번호를 입력하면 서버에서 로그인 검증을 하고 결과를 LoginSpw 에 저장
+
+    // 회원가입 필요 정보 객체
+    // : API 요구 정보로 커스텀
+    data class SessionLogInInputVo(
+        val logInType: Int, // 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
+        val logInId: String, // SNS 로그인시 ID는 API 에서 가져옴
+        val logInPw: String // SNS 로그인시 PW는 API 에서 가져온 액세스 토큰을 사용
+    )
+
+    //  onComplete statusCode :
+    //     -1 = 네트워크 에러
+    //     0 = 서버 에러
+    //     1 = 로그인 검증됨
+    //     2 = 입력값 에러
+    //     3 = 가입된 회원이 아님
+    //     4 = 검증 불일치
     fun sessionLogIn(
         activity: Activity,
-        logInType: Int,
-        logInId: String?,
-        logInPw: String?,
-        onLogInComplete: () -> Unit,
-        onLogInFailed: () -> Unit,
-        onNetworkError: () -> Unit,
-        onServerError: () -> Unit
+        sessionLogInInputVo: SessionLogInInputVo,
+        onComplete: (status: Int) -> Unit
     ) {
         // (repository 모델)
         val repositorySet: RepositorySet = RepositorySet.getInstance(activity)
@@ -58,196 +134,67 @@ object UserSessionUtil {
         // 현 로그인 정보 접근 객체
         val currentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(activity.application)
 
-        // 타입별 pw 의 의미가 다르므로 처리
-        // 로그인 타입은 위의 CurrentLoginSessionInfoSpw 의 설정을 따름
-        when (logInType) {
-            1 -> { // 이메일 회원
-                val id = logInId!!
-                val pw = logInPw!!
-
-                sessionLogInOnIdReady(
-                    activity,
-                    currentLoginSessionInfoSpw,
-                    executorService,
-                    repositorySet,
-                    logInType,
-                    id,
-                    pw,
-                    onLogInComplete,
-                    onLogInFailed,
-                    onNetworkError,
-                    onServerError
-                )
-            }
-            // 아래부터는 SNS 로그인용 토큰 수집
-            // SNS 의 pw 는 Oauth 로그인 후 나오는 액세스 토큰을 서버로 넘겨주는 용도
-            // 서버는 해당 액세스 토큰으로 현재 로그인 여부를 확인하는 용도.
-            // 액세스 토큰을 SNS 에서 발급받아 건내줄 것
-            2 -> { // 구글 회원
-                // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
-
-                val id = "실제 구현시 OAuth SNS id 발급"
-                val pw = "실제 구현시 OAuth access token 발급"
-
-                sessionLogInOnIdReady(
-                    activity,
-                    currentLoginSessionInfoSpw,
-                    executorService,
-                    repositorySet,
-                    logInType,
-                    id,
-                    pw,
-                    onLogInComplete,
-                    onLogInFailed,
-                    onNetworkError,
-                    onServerError
-                )
-            }
-            3 -> { // 카카오 회원
-                // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
-
-                val id = "실제 구현시 OAuth SNS id 발급"
-                val pw = "실제 구현시 OAuth access token 발급"
-
-                sessionLogInOnIdReady(
-                    activity,
-                    currentLoginSessionInfoSpw,
-                    executorService,
-                    repositorySet,
-                    logInType,
-                    id,
-                    pw,
-                    onLogInComplete,
-                    onLogInFailed,
-                    onNetworkError,
-                    onServerError
-                )
-            }
-            4 -> { // 네이버 회원
-                // loginId 가 비어있다면 최초 로그인, 비어있지 않다면 기존 로그인 확인과 id 동일성 검증
-
-                val id = "실제 구현시 OAuth SNS id 발급"
-                val pw = "실제 구현시 OAuth access token 발급"
-
-                sessionLogInOnIdReady(
-                    activity,
-                    currentLoginSessionInfoSpw,
-                    executorService,
-                    repositorySet,
-                    logInType,
-                    id,
-                    pw,
-                    onLogInComplete,
-                    onLogInFailed,
-                    onNetworkError,
-                    onServerError
-                )
-            }
-            else -> { // 비회원
-                // 그냥 로그인 통과
-                onLogInComplete()
-                return
-            }
-        }
-    }
-
-    private fun sessionLogInOnIdReady(
-        activity: Activity,
-        currentLoginSessionInfoSpw: CurrentLoginSessionInfoSpw,
-        executorService: ExecutorService,
-        repositorySet: RepositorySet,
-        loginType: Int,
-        loginId: String,
-        loginPw: String,
-        onLoginComplete: () -> Unit,
-        onLoginFailed: () -> Unit,
-        onNetworkError: () -> Unit,
-        onServerError: () -> Unit
-    ) {
         // (정보 요청 콜백)
         val loginCompleteCallback =
             { statusCode: Int,
-              userUid: String?,
-              userNickName: String?,
+              userUid: Long?, // 클라이언트 내 현 유저 구분을 위한 고유 값
+              userNickName: String?, // 닉네임은 다른 디바이스에서 변경이 가능하니 받아오기
               accessToken: String?,
               accessTokenExpireDate: String?,
               refreshToken: String?,
               refreshTokenExpireDate: String? ->
                 activity.runOnUiThread {
                     when (statusCode) {
+                        -1 -> { // 네트워크 에러
+                            onComplete(-1)
+                        }
                         1 -> {// 로그인 완료
                             // 회원 처리
                             currentLoginSessionInfoSpw.setLogin(
                                 currentLoginSessionInfoSpw.isAutoLogin,
-                                loginType,
-                                loginId,
-                                loginPw,
-                                userUid!!,
+                                sessionLogInInputVo.logInType,
+                                sessionLogInInputVo.logInId,
+                                sessionLogInInputVo.logInPw,
+                                userUid!!.toString(),
                                 userNickName!!,
-                                accessToken!!,
+                                accessToken,
                                 accessTokenExpireDate,
                                 refreshToken,
                                 refreshTokenExpireDate
                             )
 
-                            onLoginComplete()
+                            onComplete(1)
                         }
-                        2 -> { // 로그인 정보 불일치
-                            onLoginFailed()
+                        2 -> { // 입력값 에러
+                            onComplete(2)
                         }
-                        -1 -> { // 네트워크 에러
-                            onNetworkError()
+                        3 -> { // 가입된 회원이 아님
+                            onComplete(3)
+                        }
+                        4 -> { // 로그인 정보 불일치
+                            onComplete(4)
                         }
                         else -> { // 그외 서버 에러
-                            onServerError()
+                            onComplete(0)
                         }
                     }
                 }
             }
 
         // (로그인 요청)
+        // 서버에선 보내준 id, pw 를 가지고 적절한 검증 과정을 거치고 정보 반환
         executorService.execute {
             // 아래는 원래 네트워크 서버에서 처리하는 로직
-            val userInfoList: List<TestUserInfoTable.TableDao.GetUserInfoForLoginOutput>
-            when (loginType) {
-                1 -> {
-                    // 이메일과 비번으로 검색
-                    userInfoList =
-                        repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getUserInfoForLogin(loginId, loginPw, loginType)
-                }
-                2 -> { // 구글
-                    // SNS 로그인시 pw를 액세스 토큰으로 사용하여, 각 SNS 로그인이 되어있는지 여부를 판단
-
-                    // 해당 sns 회원가입이 되어있는지를 파악
-                    userInfoList =
-                        repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getUserInfoForLogin(loginId, loginType)
-                }
-                3 -> { // 카카오
-                    // SNS 로그인시 pw를 액세스 토큰으로 사용하여, 각 SNS 로그인이 되어있는지 여부를 판단
-
-                    // 해당 sns 회원가입이 되어있는지를 파악
-                    userInfoList =
-                        repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getUserInfoForLogin(loginId, loginType)
-                }
-                4 -> { // 네이버
-                    // SNS 로그인시 pw를 액세스 토큰으로 사용하여, 각 SNS 로그인이 되어있는지 여부를 판단
-
-                    // 해당 sns 회원가입이 되어있는지를 파악
-                    userInfoList =
-                        repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getUserInfoForLogin(loginId, loginType)
-                }
-                else -> {
-                    throw Exception("login Type Input Error")
-                }
-            }
+            val userInfoList =
+                repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                    .getUserInfoForLogin(
+                        sessionLogInInputVo.logInId,
+                        sessionLogInInputVo.logInType
+                    )
 
             if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
                 loginCompleteCallback(
-                    2,
+                    3,
                     null,
                     null,
                     null,
@@ -258,54 +205,260 @@ object UserSessionUtil {
             } else {
                 val uid = userInfoList[0].uid
                 val nickname = userInfoList[0].nickName
+                val password = userInfoList[0].password
 
-                // jwt 사용시 access token, refresh token 발행
-                // 여기선 jwt 를 사용하지 않고, 단순히 uid 로 정보 요청을 한다고 가정
-                loginCompleteCallback(
-                    1,
-                    uid.toString(),
-                    nickname,
-                    uid.toString(),
-                    null,
-                    null,
-                    null
-                )
+                if (sessionLogInInputVo.logInType == 1 &&
+                    password != sessionLogInInputVo.logInPw
+                ) { // 이메일 로그인 비밀번호 불일치
+                    loginCompleteCallback(
+                        4,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                    )
+                } else { // 검증 완료
+                    // jwt 사용시 access token, refresh token 발행
+                    // 여기선 jwt 를 구현하지 않았기에 null 반환
+                    loginCompleteCallback(
+                        1,
+                        uid,
+                        nickname,
+                        null,
+                        null,
+                        null,
+                        null
+                    )
+                }
             }
         }
     }
 
     // (현 어플리케이션 세션 로그아웃 함수)
-    // 알고리즘 :
-    //     1. SNS 로그아웃
-    //     2. SPW 정보 로그아웃 처리
+    // : SNS 로그아웃은 정상 로그아웃이 된 이후에 처리할것
+    //  onComplete statusCode :
+    //     -1 = 네트워크 에러
+    //     0 = 서버 에러
+    //     1 = 로그아웃 완료
     fun sessionLogOut(
         activity: Activity,
-        onLogoutComplete: () -> Unit,
-        onNetworkError: () -> Unit,
-        onServerError: () -> Unit
+        onComplete: (status: Int) -> Unit
     ) {
+        // (스레드 풀)
+        val executorService: ExecutorService = Executors.newCachedThreadPool()
+
         // (SharedPreference 객체)
         // 현 로그인 정보 접근 객체
         val currentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(activity.application)
 
-        // 서버에 로그아웃을 알릴 필요는 없음.
-        // 로그아웃 함수를 사용하지 않고, 앱 방치 및 앱 삭제를 할 경우가 있기에 서버에선 이를 감안할것
+        val loginType = currentLoginSessionInfoSpw.loginType
 
-        // SNS 로그인시 각 OAuth 로그아웃 처리
-        when (currentLoginSessionInfoSpw.loginType) {
-            2 -> { // 구글 회원
-
-            }
-            3 -> { // 카카오 회원
-
-            }
-            4 -> { // 네이버 회원
-
-            }
+        if (loginType == 0) {
+            onComplete(1)
         }
 
-        currentLoginSessionInfoSpw.setLogout()
-        onLogoutComplete()
+        // 별다른 이유가 없다면 서버에 로그아웃을 알릴 필요는 없음.
+        // 로그아웃 함수를 사용하지 않고, 앱 방치 및 앱 삭제를 할 경우가 있기에 서버에선 이를 감안할것
+
+        val serverLogoutCompleteCallback =
+            { statusCode: Int ->
+                activity.runOnUiThread {
+                    when (statusCode) {
+                        -1 -> { // 네트워크 에러
+                            onComplete(-1)
+                        }
+                        1 -> { // 로그아웃 완료
+                            // 내부 정보 로그아웃 처리
+                            currentLoginSessionInfoSpw.setLogout()
+
+                            onComplete(1)
+                        }
+                        else -> { // 그외 에러
+                            onComplete(0)
+                        }
+                    }
+                }
+            }
+
+        executorService.execute {
+            serverLogoutCompleteCallback(1)
+        }
+    }
+
+    // (회원탈퇴)
+    // : 로그인과 동일한 정보를 보내면 서버에서 검증 후 검증 정보가 맞다면 회원탈퇴처리 후 앱 내부 로그인 정보 비우기
+    //  onComplete statusCode :
+    //     -1 = 네트워크 에러
+    //     0 = 서버 에러
+    //     1 = 회원탈퇴
+    //     2 = 입력값 에러
+    //     3 = 존재하지 않는 유저
+    fun signOut(
+        activity: Activity,
+        logInType: Int, // 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
+        logInId: String,
+        onComplete: (status: Int) -> Unit
+    ) {
+        // (repository 모델)
+        val repositorySet: RepositorySet = RepositorySet.getInstance(activity)
+
+        // (스레드 풀)
+        val executorService: ExecutorService = Executors.newCachedThreadPool()
+
+        // (SharedPreference 객체)
+        // 현 로그인 정보 접근 객체
+        val currentLoginSessionInfoSpw = CurrentLoginSessionInfoSpw(activity.application)
+
+        // (정보 요청 콜백)
+        val signOutCompleteCallback =
+            { statusCode: Int ->
+                activity.runOnUiThread {
+                    when (statusCode) {
+                        1 -> {// 회원탈퇴 완료
+                            // 회원 처리
+                            currentLoginSessionInfoSpw.setLogout()
+
+                            onComplete(1)
+                        }
+                        2 -> { // 입력값 에러
+                            onComplete(2)
+                        }
+                        3 -> { // 존재하지 않는 유저
+                            // 회원 처리
+                            currentLoginSessionInfoSpw.setLogout()
+
+                            onComplete(3)
+                        }
+                        -1 -> { // 네트워크 에러
+                            onComplete(-1)
+                        }
+                        else -> { // 그외 서버 에러
+                            onComplete(0)
+                        }
+                    }
+                }
+            }
+
+        // (회원탈퇴 요청)
+        executorService.execute {
+            // 아래는 원래 네트워크 서버에서 처리하는 로직
+            val userInfoList: List<TestUserInfoTable.TableDao.GetUserInfoForLoginOutput> =
+                repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                    .getUserInfoForLogin(
+                        logInId,
+                        logInType
+                    )
+
+            if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
+                signOutCompleteCallback(3)
+            } else { // 회원정보 검증 완료
+                // 회원 정보 삭제
+                repositorySet.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                    .delete(userInfoList[0].uid)
+
+                signOutCompleteCallback(1)
+            }
+        }
+    }
+
+    // (SNS 로그인)
+    // : SNS 로그인을 완료한 후 결과값으로 서버에 넘겨줄 access token 을 반환
+    //     서버는 클라이언트로부터 액세스 토큰을 받아서 SNS 서버에 해당 토큰 검증 요청으로 SNS 로그인 검증을 진행
+
+    // 회원가입 필요 정보 객체
+    // : API 요구 정보로 커스텀
+    data class SnsLoginOutputVo(
+        val snsId: String,
+        val accessToken: String
+    )
+
+    //  onComplete statusCode :
+    //     -1 = 네트워크 에러
+    //     0 = 서버 에러
+    //     1 = SNS 로그인 완료
+    //     2 = 입력값 에러
+    fun snsLogin(
+        activity: Activity,
+        logInType: Int, // 2 : google, 3 : kakao, 4 : naver
+        onComplete: (status: Int, snsLoginOutputVo: SnsLoginOutputVo?) -> Unit
+    ) {
+        when (logInType) {
+            2 -> { // 구글 로그인
+                // 기존 SNS 로그인이 되어있다면 정보만 가져오기, 아니라면 SNS 로그인 후 가져오기
+                val snsId = "sns api login and get id"
+                val accessToken = "sns api login and get access token"
+                onComplete(
+                    1,
+                    SnsLoginOutputVo(
+                        snsId,
+                        accessToken
+                    )
+                )
+            }
+            3 -> { // 카카오 로그인
+                // 기존 SNS 로그인이 되어있다면 정보만 가져오기, 아니라면 SNS 로그인 후 가져오기
+                val snsId = "sns api login and get id"
+                val accessToken = "sns api login and get access token"
+                onComplete(
+                    1,
+                    SnsLoginOutputVo(
+                        snsId,
+                        accessToken
+                    )
+                )
+            }
+            4 -> { // 네이버 로그인
+                // 기존 SNS 로그인이 되어있다면 정보만 가져오기, 아니라면 SNS 로그인 후 가져오기
+                val snsId = "sns api login and get id"
+                val accessToken = "sns api login and get access token"
+                onComplete(
+                    1,
+                    SnsLoginOutputVo(
+                        snsId,
+                        accessToken
+                    )
+                )
+            }
+            else -> {
+                onComplete(2, null)
+            }
+        }
+    }
+
+    // (SNS 로그아웃)
+    // : SNS 로그아웃
+    // SNS 로그인 상태를 초기화하는 개념으로, 기존에 SNS 로그인이 안 되어있다면 바로 onComplete 1 반환
+    //     단순 로그아웃과 SignOut 이라는 개념이 있을텐데,
+    //     되도록 로그아웃시엔 다시 로그인 요청을 했을 때 다른 유저 선택이 가능하도록 처리
+
+    //  onComplete statusCode :
+    //     -1 = 네트워크 에러
+    //     0 = 서버 에러
+    //     1 = SNS 로그아웃 완료
+    fun snsLogout(
+        activity: Activity,
+        logInType: Int, // 2 : google, 3 : kakao, 4 : naver
+        onComplete: (status: Int) -> Unit
+    ) {
+        when (logInType) {
+            2 -> { // 구글 로그인
+                // SNS 로그아웃 요청
+                onComplete(1)
+            }
+            3 -> { // 카카오 로그인
+                // SNS 로그아웃 요청
+                onComplete(1)
+            }
+            4 -> { // 네이버 로그인
+                // SNS 로그아웃 요청
+                onComplete(1)
+            }
+            else -> {
+                onComplete(1)
+            }
+        }
     }
 
     // (서버 액세스 토큰 재발급 함수)
@@ -318,15 +471,16 @@ object UserSessionUtil {
     //     3. 리플래시 토큰 만료시 status 3
     //     4. 리플래시 토큰 사용 가능시 이를 이용해 서버에 액세스 토큰 요청
     //     5. 발급받은 액세스 토큰과 만료시간을 spw 에 저장해서 status 1
+
     // onComplete status :
+    //     -1 = 네트워크 에러
+    //     0 = 서버 에러
     //     1 = 액세스 토큰 갱신 완료
     //     2 = 리플래시 토큰이 없음
     //     3 = 리플래시 토큰 만료
     fun refreshAccessToken(
         activity: Activity,
-        onComplete: (status: Int) -> Unit,
-        onNetworkError: () -> Unit,
-        onServerError: () -> Unit
+        onComplete: (status: Int) -> Unit
     ) {
         // (스레드 풀)
         val executorService: ExecutorService = Executors.newCachedThreadPool()
@@ -337,7 +491,7 @@ object UserSessionUtil {
 
         val refreshToken = currentLoginSessionInfoSpw.serverRefreshToken
 
-        if (refreshToken == null) {
+        if (refreshToken == null) { // 저장된 리플래시 토큰이 없음
             onComplete(2)
             return
         }
@@ -360,31 +514,31 @@ object UserSessionUtil {
         // (정보 요청 콜백)
         val getAccessTokenCallback =
             { statusCode: Int,
-              accessToken: String?,
-              accessTokenExpireDate: String?,
-              refreshToken: String?,
-              refreshTokenExpireDate: String? ->
+              newAccessToken: String?,
+              newAccessTokenExpireDate: String?,
+              newRefreshToken: String?,
+              newRefreshTokenExpireDate: String? ->
                 activity.runOnUiThread {
                     when (statusCode) {
+                        -1 -> { // 네트워크 에러
+                            onComplete(-1)
+                        }
                         1 -> {// 로그인 완료
                             // 회원 처리
-                            currentLoginSessionInfoSpw.serverAccessToken = accessToken
+                            currentLoginSessionInfoSpw.serverAccessToken = newAccessToken
                             currentLoginSessionInfoSpw.serverAccessTokenExpireDate =
-                                accessTokenExpireDate
-                            currentLoginSessionInfoSpw.serverRefreshToken = refreshToken
+                                newAccessTokenExpireDate
+                            currentLoginSessionInfoSpw.serverRefreshToken = newRefreshToken
                             currentLoginSessionInfoSpw.serverRefreshTokenExpireDate =
-                                refreshTokenExpireDate
+                                newRefreshTokenExpireDate
 
                             onComplete(1)
                         }
-                        2 -> { // 토큰 만료
+                        3 -> { // 토큰 만료
                             onComplete(3)
                         }
-                        -1 -> { // 네트워크 에러
-                            onNetworkError()
-                        }
                         else -> { // 그외 서버 에러
-                            onServerError()
+                            onComplete(0)
                         }
                     }
                 }
@@ -394,7 +548,8 @@ object UserSessionUtil {
         executorService.execute {
             // 서버에서 리플래시 토큰으로 JWT 재발급
             // 아래에선 임의로 userUid 를 발행하도록 함
-            getAccessTokenCallback(1, currentLoginSessionInfoSpw.userUid, null, null, null)
+            // 여기선 jwt 를 구현하지 않았기에 null 반환
+            getAccessTokenCallback(1, null, null, null, null)
         }
     }
 }

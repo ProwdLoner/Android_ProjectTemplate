@@ -230,7 +230,7 @@
                     app:layout_constraintTop_toBottomOf="@id/already_sign_in_sample_btn" />
 
                 <Button
-                    android:id="@+id/join_btn"
+                    android:id="@+id/email_join_btn"
                     android:layout_width="300dp"
                     android:layout_height="60dp"
                     android:layout_marginTop="20dp"
