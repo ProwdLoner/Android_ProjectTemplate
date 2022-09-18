@@ -1,6 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample_sender
 
+import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -46,6 +48,9 @@ class ActivityBroadcastReceiverSampleSender : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivityBroadcastReceiverSampleSenderAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivityBroadcastReceiverSampleSenderSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
@@ -357,6 +362,7 @@ class ActivityBroadcastReceiverSampleSender : AppCompatActivity() {
         }
         permissionRequestOnProgressSemaphoreMbr.release()
 
+        // (onPause 알고리즘)
     }
 
     override fun onDestroy() {
@@ -400,6 +406,7 @@ class ActivityBroadcastReceiverSampleSender : AppCompatActivity() {
         adapterSetMbr = ActivityBroadcastReceiverSampleSenderAdapterSet()
 
         // SPW 객체 생성
+        classSpwMbr = ActivityBroadcastReceiverSampleSenderSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -633,4 +640,42 @@ class ActivityBroadcastReceiverSampleSender : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class ActivityBroadcastReceiverSampleSenderSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityBroadcastReceiverSampleSenderSpw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivityBroadcastReceiverSampleSenderAdapterSet {
+        // 어뎁터 #1
+
+    }
 }

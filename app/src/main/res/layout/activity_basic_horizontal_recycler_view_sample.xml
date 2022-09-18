@@ -29,7 +29,7 @@
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
                 android:gravity="center"
                 android:text="기본 리사이클러 뷰 샘플\n(가로)"
-                android:textColor="#FF000000"
+                android:textColor="#FFFFFFFF"
                 android:textSize="20sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

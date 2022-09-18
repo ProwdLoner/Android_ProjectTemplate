@@ -1,6 +1,8 @@
 package com.example.prowd_android_template.activity_set.activity_jni_sample_list
 
+import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -48,6 +50,9 @@ class ActivityJniSampleList : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivityJniSampleListAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivityJniSampleListSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
@@ -359,6 +364,7 @@ class ActivityJniSampleList : AppCompatActivity() {
         }
         permissionRequestOnProgressSemaphoreMbr.release()
 
+        // (onPause 알고리즘)
     }
 
     override fun onDestroy() {
@@ -402,6 +408,7 @@ class ActivityJniSampleList : AppCompatActivity() {
         adapterSetMbr = ActivityJniSampleListAdapterSet()
 
         // SPW 객체 생성
+        classSpwMbr = ActivityJniSampleListSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -639,4 +646,42 @@ class ActivityJniSampleList : AppCompatActivity() {
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class ActivityJniSampleListSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivityJniSampleListSpw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivityJniSampleListAdapterSet {
+        // 어뎁터 #1
+
+    }
 }
