@@ -75,11 +75,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivityBasicCamera2ApiSampleAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivityBasicCamera2ApiSampleSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
-
-    // 카메라 설정 정보 접근 객체
-    lateinit var classSpwMbr: ClassSpw
 
     // (스레드 풀)
     val executorServiceMbr: ExecutorService = Executors.newCachedThreadPool()
@@ -187,6 +187,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // 이미지 리더 프로세싱 일시정지 여부
     var imageProcessingPauseMbr = false
+
 
     // ---------------------------------------------------------------------------------------------
     // <클래스 생명주기 공간>
@@ -673,8 +674,8 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         adapterSetMbr = ActivityBasicCamera2ApiSampleAdapterSet()
 
         // SPW 객체 생성
+        classSpwMbr = ActivityBasicCamera2ApiSampleSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
-        classSpwMbr = ClassSpw(application)
 
         // 권한 요청 객체 생성
         permissionRequestMbr =
@@ -778,6 +779,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         scriptCCropMbr = ScriptC_crop(renderScriptMbr)
 
         scriptIntrinsicResizeMbr = ScriptIntrinsicResize.create(renderScriptMbr)
+
     }
 
     // (초기 뷰 설정)
@@ -1015,10 +1017,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         }
 
         // todo : 각 버튼 클릭 리스너 처리
-
-
-
-
 
 
         cameraObjMbr.setCameraPinchZoomTouchListener(bindingMbr.cameraPreviewAutoFitTexture)
@@ -1381,6 +1379,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
             // (초기 카메라 정보 설정 및 실행)
             getCameraConfig()
+
         } else {
             // (onResume - (권한이 충족된 onCreate))
 
@@ -1409,6 +1408,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
                 }
             )
+
         }
 
         // (onResume)
@@ -1847,7 +1847,7 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
     // (카메라 실행 함수)
     // : 여기까지 오면 카메라 실행에 필요한 정보들이 결정된 상태
-    //     멤버변수에 존재하는 
+    //     멤버변수에 존재하는
     //     카메라 id : cameraObjMbr.cameraInfoVoMbr.cameraId,
     //     카메라 mode : currentCameraModeMbr,
     //     플래시 모드 : flashModeMbr,
@@ -1864,32 +1864,32 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
                 )
             )
 
-        val captureImageReaderConfigVo = if (currentCameraModeMbr == 1){ // 사진
+        val captureImageReaderConfigVo = if (currentCameraModeMbr == 1) { // 사진
             Camera2Obj.ImageReaderConfigVo(
                 cameraOrientSurfaceSizeMbr!!,
                 imageReaderCallback = { reader ->
                     captureImage(reader)
                 }
             )
-        }else{ // 동영상
+        } else { // 동영상
             null
         }
 
         // todo
-        val mediaRecorderConfigVo = if (currentCameraModeMbr == 1){ // 사진
+        val mediaRecorderConfigVo = if (currentCameraModeMbr == 1) { // 사진
             null
-        }else{ // 동영상
+        } else { // 동영상
             null
         }
 
-        val analysisImageReaderConfigVo = if (isCameraImageAnalysisMbr){
+        val analysisImageReaderConfigVo = if (isCameraImageAnalysisMbr) {
             Camera2Obj.ImageReaderConfigVo(
                 cameraOrientSurfaceSizeMbr!!,
                 imageReaderCallback = { reader ->
                     analyzeImage(reader)
                 }
             )
-        }else{
+        } else {
             null
         }
 
@@ -2323,10 +2323,11 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
         return result
     }
 
+
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
-    // (기존 카메라 설정 저장 객체)
-    class ClassSpw(application: Application) {
+    // (클래스 비휘발 저장 객체)
+    class ActivityBasicCamera2ApiSampleSpw(application: Application) {
         // <멤버 변수 공간>
         // SharedPreference 접근 객체
         private val spMbr = application.getSharedPreferences(
@@ -2371,6 +2372,13 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
 
         // ---------------------------------------------------------------------------------------------
         // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivityBasicCamera2ApiSampleAdapterSet {
+        // 어뎁터 #1
 
     }
 
