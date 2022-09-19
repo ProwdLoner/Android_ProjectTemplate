@@ -53,7 +53,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-
+// todo : 신코드 적용
 // todo : 이미지 처리 프레임 조절 기능
 class ActivityBasicCamera2ApiSample : AppCompatActivity() {
     // <설정 변수 공간>
