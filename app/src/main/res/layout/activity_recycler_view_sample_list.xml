@@ -52,7 +52,7 @@
         android:fitsSystemWindows="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <ScrollView
+        <com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingTop="15dp"
@@ -96,7 +96,7 @@
                     app:layout_constraintTop_toBottomOf="@id/go_to_basic_horizontal_recycler_view_sample_btn" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
-        </ScrollView>
+        </com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -52,7 +52,7 @@
         android:fitsSystemWindows="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <ScrollView
+        <com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingTop="15dp"
@@ -64,7 +64,7 @@
                 android:layout_height="wrap_content">
 
             </androidx.constraintlayout.widget.ConstraintLayout>
-        </ScrollView>
+        </com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

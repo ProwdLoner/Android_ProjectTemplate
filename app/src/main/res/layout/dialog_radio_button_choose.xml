@@ -54,7 +54,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <ScrollView
+                <com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
@@ -80,7 +80,7 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
-                </ScrollView>
+                </com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView>
 
             </LinearLayout>
 
