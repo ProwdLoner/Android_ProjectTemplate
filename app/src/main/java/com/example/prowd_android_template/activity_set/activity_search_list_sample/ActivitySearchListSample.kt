@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.activity_set.activity_etc_sample_list
+package com.example.prowd_android_template.activity_set.activity_search_list_sample
 
 import android.app.Application
 import android.app.Dialog
@@ -16,30 +16,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
-import com.example.prowd_android_template.activity_set.activity_aar_module_caller_sample.ActivityAarModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_basic_notification_sample.ActivityBasicNotificationSample
-import com.example.prowd_android_template.activity_set.activity_basic_service_sample.ActivityBasicServiceSample
-import com.example.prowd_android_template.activity_set.activity_brightness_change_sample.ActivityBrightnessChangeSample
-import com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample
-import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
-import com.example.prowd_android_template.activity_set.activity_dp_and_px_calculator.ActivityDpAndPxCalculator
-import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
-import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
-import com.example.prowd_android_template.activity_set.activity_search_list_sample.ActivitySearchListSample
-import com.example.prowd_android_template.activity_set.activity_touch_delegate_sample.ActivityTouchDelegateSample
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
-import com.example.prowd_android_template.databinding.ActivityEtcSampleListBinding
+import com.example.prowd_android_template.databinding.ActivitySearchListSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-class ActivityEtcSampleList : AppCompatActivity() {
+class ActivitySearchListSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
@@ -50,17 +39,17 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <멤버 변수 공간>
     // (뷰 바인더 객체)
-    lateinit var bindingMbr: ActivityEtcSampleListBinding
+    lateinit var bindingMbr: ActivitySearchListSampleBinding
 
     // (repository 모델)
     lateinit var repositorySetMbr: RepositorySet
 
     // (어뎁터 객체)
-    lateinit var adapterSetMbr: ActivityEtcSampleListAdapterSet
+    lateinit var adapterSetMbr: ActivitySearchListSampleAdapterSet
 
     // (SharedPreference 객체)
     // 클래스 비휘발성 저장객체
-    lateinit var classSpwMbr: ActivityEtcSampleListSpw
+    lateinit var classSpwMbr: ActivitySearchListSampleSpw
 
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
@@ -406,7 +395,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // : 클래스에서 사용할 객체를 초기 생성
     private fun onCreateInitObject() {
         // 뷰 객체
-        bindingMbr = ActivityEtcSampleListBinding.inflate(layoutInflater)
+        bindingMbr = ActivitySearchListSampleBinding.inflate(layoutInflater)
         // 뷰 객체 바인딩
         setContentView(bindingMbr.root)
 
@@ -414,10 +403,10 @@ class ActivityEtcSampleList : AppCompatActivity() {
         repositorySetMbr = RepositorySet.getInstance(application)
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivityEtcSampleListAdapterSet()
+        adapterSetMbr = ActivitySearchListSampleAdapterSet()
 
         // SPW 객체 생성
-        classSpwMbr = ActivityEtcSampleListSpw(application)
+        classSpwMbr = ActivitySearchListSampleSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -442,106 +431,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        // 권한 샘플 이동 버튼
-        bindingMbr.goToPermissionSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityPermissionSample::class.java
-                )
-            startActivity(intent)
-        }
 
-        // 다이얼로그 샘플 이동 버튼
-        bindingMbr.goToDialogSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityDialogSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBrightnessChangeSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBrightnessChangeSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityAarModuleCallerSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityAarModuleCallerSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBasicServiceSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicServiceSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBroadcastReceiverSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBroadcastReceiverSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityBasicNotificationSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityBasicNotificationSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityTouchDelegateSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityTouchDelegateSample::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivityDpAndPxCalculatorBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivityDpAndPxCalculator::class.java
-                )
-            startActivity(intent)
-        }
-
-        bindingMbr.goToActivitySearchListSampleBtn.setOnClickListener {
-            val intent =
-                Intent(
-                    this,
-                    ActivitySearchListSample::class.java
-                )
-            startActivity(intent)
-        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -739,11 +629,11 @@ class ActivityEtcSampleList : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
     // (클래스 비휘발 저장 객체)
-    class ActivityEtcSampleListSpw(application: Application) {
+    class ActivitySearchListSampleSpw(application: Application) {
         // <멤버 변수 공간>
         // SharedPreference 접근 객체
         private val spMbr = application.getSharedPreferences(
-            "ActivityEtcSampleListSpw",
+            "ActivitySearchListSampleSpw",
             Context.MODE_PRIVATE
         )
 
@@ -772,7 +662,7 @@ class ActivityEtcSampleList : AppCompatActivity() {
 
     // (액티비티 내 사용 어뎁터 모음)
     // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
-    class ActivityEtcSampleListAdapterSet {
+    class ActivitySearchListSampleAdapterSet {
         // 어뎁터 #1
 
     }

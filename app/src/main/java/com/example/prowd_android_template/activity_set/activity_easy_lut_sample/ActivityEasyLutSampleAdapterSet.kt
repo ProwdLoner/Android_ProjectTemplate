@@ -184,21 +184,21 @@ class ActivityEasyLutSampleAdapterSet(
                                 "hald" -> {
                                     filter = CustomUtil.getBitmapFromAssets(
                                         parentViewMbr,
-                                        "lut_filters_hald/${entity.title}.png"
+                                        "lut_filter/hald/${entity.title}.png"
                                     )
                                     filterKind = LutAlignment.Mode.HALD
                                 }
                                 "square" -> {
                                     filter = CustomUtil.getBitmapFromAssets(
                                         parentViewMbr,
-                                        "lut_filters_square/${entity.title}.png"
+                                        "lut_filter/square/${entity.title}.png"
                                     )
                                     filterKind = LutAlignment.Mode.SQUARE
                                 }
                                 else -> {
                                     filter = CustomUtil.getBitmapFromAssets(
                                         parentViewMbr,
-                                        "lut_filters_wide/${entity.title}.png"
+                                        "lut_filter/wide/${entity.title}.png"
                                     )
                                     filterKind = LutAlignment.Mode.SQUARE
                                 }

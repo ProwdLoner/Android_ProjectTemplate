@@ -107,17 +107,17 @@ class ActivityEasyLutSample : AppCompatActivity() {
                             num1 - num2
                         }
 
-                    val wideFilterFileList = assets.list("lut_filters_wide")!!
+                    val wideFilterFileList = assets.list("lut_filter/wide")!!
                     wideFilterFileList.sortWith(
                         numTitleComp
                     )
 
-                    val haldFilterFileList = assets.list("lut_filters_hald")!!
+                    val haldFilterFileList = assets.list("lut_filter/hald")!!
                     haldFilterFileList.sortWith(
                         numTitleComp
                     )
 
-                    val squareFilterFileList = assets.list("lut_filters_square")!!
+                    val squareFilterFileList = assets.list("lut_filter/square")!!
                     squareFilterFileList.sortWith(
                         numTitleComp
                     )
