@@ -462,9 +462,11 @@ class ActivityUserSignOutSample : AppCompatActivity() {
         bindingMbr.acceptCheckBoxContainer.setOnClickListener {
             bindingMbr.signOutConfirmCheckBox.isChecked =
                 !bindingMbr.signOutConfirmCheckBox.isChecked
+        }
 
-            bindingMbr.signOutBtn.isEnabled = bindingMbr.signOutConfirmCheckBox.isChecked
-            bindingMbr.signOutBtn.isFocusable = bindingMbr.signOutConfirmCheckBox.isChecked
+        bindingMbr.signOutConfirmCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            bindingMbr.signOutBtn.isEnabled = isChecked
+            bindingMbr.signOutBtn.isFocusable = isChecked
         }
 
         bindingMbr.signOutBtn.setOnClickListener {
