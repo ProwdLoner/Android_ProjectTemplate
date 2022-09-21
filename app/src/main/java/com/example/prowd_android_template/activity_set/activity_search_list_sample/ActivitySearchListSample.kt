@@ -10,10 +10,17 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.recyclerview.widget.RecyclerView
+import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
@@ -22,11 +29,18 @@ import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivitySearchListSampleBinding
+import com.example.prowd_android_template.databinding.ItemActivitySearchListSampleAdapterRecyclerViewItem1Binding
+import com.example.prowd_android_template.databinding.ItemActivitySearchListSampleAdapterRecyclerViewLoaderBinding
+import com.example.prowd_android_template.databinding.ItemEmptyBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import com.opencsv.CSVReader
+import java.io.InputStreamReader
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import kotlin.collections.ArrayList
 
 class ActivitySearchListSample : AppCompatActivity() {
     // <설정 변수 공간>
@@ -403,7 +417,14 @@ class ActivitySearchListSample : AppCompatActivity() {
         repositorySetMbr = RepositorySet.getInstance(application)
 
         // 어뎁터 셋 객체 생성 (어뎁터 내부 데이터가 포함된 객체)
-        adapterSetMbr = ActivitySearchListSampleAdapterSet()
+        adapterSetMbr = ActivitySearchListSampleAdapterSet(
+            ActivitySearchListSampleAdapterSet.RecyclerViewAdapter(
+                this,
+                bindingMbr.searchSampleList,
+                true, // 세로 스크롤인지 가로 스크롤인지
+                1, // 이 개수를 늘리면 그리드 레이아웃으로 변화
+                onScrollReachTheEnd = { }
+            ))
 
         // SPW 객체 생성
         classSpwMbr = ActivitySearchListSampleSpw(application)
@@ -431,7 +452,55 @@ class ActivitySearchListSample : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
+        bindingMbr.searchBox.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {}
+            override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {}
+            override fun afterTextChanged(editable: Editable) {
+                // input창에 문자를 입력할때마다 호출된다.
+                // search 메소드를 호출한다.
+                val charText: String = bindingMbr.searchBox.text.toString()
 
+                // 문자 입력시마다 리스트를 지우고 새로 뿌려준다.
+                adapterSetMbr.recyclerViewAdapter.setItemList(arrayListOf())
+
+                if (charText.isEmpty()) {
+                    bindingMbr.searchSampleList.visibility = View.GONE
+                    adapterSetMbr.recyclerViewAdapter.setItemList(arrayListOf())
+                } else {
+                    // 리스트의 모든 데이터를 검색한다.
+                    // csv 품종 리스트 불러오기 = 추천 검색 리스트 준비
+                    val assetManager = assets
+                    val inputStream = assetManager.open("dog_kind.csv")
+                    val reader = CSVReader(InputStreamReader(inputStream))
+                    var kindList = ArrayList<String>()
+                    for (content in reader.readAll()) {
+                        kindList.add(content.toList()[0].toString())
+                    }
+
+                    kindList =
+                        kindList.filter { x: String? -> x != null && x != "" } as ArrayList<String>
+
+                    // 리스트에서 검색어 추려내기
+                    val itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO> =
+                        arrayListOf()
+                    for (i in 0 until kindList.size) {
+                        // arraylist의 모든 데이터에 입력받은 단어(charText)가 포함되어 있으면 true를 반환한다.
+                        if (kindList[i].lowercase(Locale.ROOT).contains(charText)) {
+                            // 검색된 데이터를 리스트에 추가한다.
+                            itemList.add(
+                                ActivitySearchListSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                    kindList[i]
+                                )
+                            )
+                        }
+                    }
+
+                    adapterSetMbr.recyclerViewAdapter.setItemList(itemList)
+                    bindingMbr.searchSampleList.visibility = View.VISIBLE
+                }
+            }
+        })
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -662,8 +731,316 @@ class ActivitySearchListSample : AppCompatActivity() {
 
     // (액티비티 내 사용 어뎁터 모음)
     // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
-    class ActivitySearchListSampleAdapterSet {
+    class ActivitySearchListSampleAdapterSet(
+        val recyclerViewAdapter: RecyclerViewAdapter
+    ) {
         // 어뎁터 #1
+        class RecyclerViewAdapter(
+            private val parentViewMbr: ActivitySearchListSample,
+            targetView: RecyclerView,
+            isVertical: Boolean,
+            oneRowItemCount: Int,
+            onScrollReachTheEnd: (() -> Unit)?
+        ) : AbstractProwdRecyclerViewAdapter(
+            parentViewMbr,
+            targetView,
+            isVertical,
+            oneRowItemCount,
+            onScrollReachTheEnd
+        ) {
+            // <멤버 변수 공간>
 
+
+            // ---------------------------------------------------------------------------------------------
+            // <메소드 오버라이딩 공간>
+            // 아이템 뷰 타입 결정
+            override fun getItemViewType(position: Int): Int {
+                return when (currentDataListCloneMbr[position]) {
+                    is AdapterHeaderAbstractVO -> {
+                        Header::class.hashCode()
+                    }
+
+                    is AdapterFooterAbstractVO -> {
+                        Footer::class.hashCode()
+                    }
+
+                    // 여기서부터 아래로는 아이템 유형에 따른 중복 클래스를 사용하여 설정
+                    // 아이템 로더 클래스 역시 아이템에 해당하여, 종류를 바꾸어 뷰를 변경
+                    is ItemLoader.ItemVO -> {
+                        ItemLoader::class.hashCode()
+                    }
+
+                    is Item1.ItemVO -> {
+                        Item1::class.hashCode()
+                    }
+
+                    else -> {
+                        Item1::class.hashCode()
+                    }
+                }
+            }
+
+            // 아이템 뷰타입에 따른 xml 화면 반환
+            override fun onCreateViewHolder(
+                parent: ViewGroup,
+                viewType: Int
+            ): RecyclerView.ViewHolder {
+                return when (viewType) {
+                    // 헤더 / 푸터를 사용하지 않을 것이라면 item_empty 를 사용
+                    Header::class.hashCode() -> {
+                        Header.ViewHolder(
+                            LayoutInflater.from(parent.context)
+                                .inflate(
+                                    R.layout.item_empty,
+                                    parent,
+                                    false
+                                )
+                        )
+                    }
+
+                    Footer::class.hashCode() -> {
+                        Footer.ViewHolder(
+                            LayoutInflater.from(parent.context)
+                                .inflate(
+                                    R.layout.item_empty,
+                                    parent,
+                                    false
+                                )
+                        )
+                    }
+
+                    // 아래로는 사용할 아이템 타입에 따른 뷰를 설정
+                    ItemLoader::class.hashCode() -> {
+                        ItemLoader.ViewHolder(
+                            LayoutInflater.from(parent.context)
+                                .inflate(
+                                    R.layout.item_activity_search_list_sample_adapter_recycler_view_loader,
+                                    parent,
+                                    false
+                                )
+                        )
+                    }
+
+                    Item1::class.hashCode() -> {
+                        Item1.ViewHolder(
+                            LayoutInflater.from(parent.context)
+                                .inflate(
+                                    R.layout.item_activity_search_list_sample_adapter_recycler_view_item1,
+                                    parent,
+                                    false
+                                )
+                        )
+                    }
+
+                    // 아이템이 늘어나면 추가
+
+                    else -> {
+                        Item1.ViewHolder(
+                            LayoutInflater.from(parent.context)
+                                .inflate(
+                                    R.layout.item_activity_search_list_sample_adapter_recycler_view_item1,
+                                    parent,
+                                    false
+                                )
+                        )
+                    }
+                }
+            }
+
+            // 아이템 뷰 생성 시점 로직
+            // 주의 : 반환되는 position 이 currentDataList 인덱스와 같지 않을 수 있음.
+            //     최초 실행시에는 같지만 아이템이 지워질 경우 position 을 0 부터 재정렬하는게 아님.
+            //     고로 데이터 조작시 주의할것.
+            override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+                when (holder) {
+                    is Header.ViewHolder -> { // 헤더 아이템 바인딩
+//                    val binding = holder.binding
+//                    val copyEntity = currentDataListCloneMbr[position] as Header.ItemVO
+                    }
+
+                    is Footer.ViewHolder -> { // 푸터 아이템 바인딩
+//                    val binding = holder.binding
+//                    val copyEntity = currentDataListCloneMbr[position] as Footer.ItemVO
+                    }
+
+                    is ItemLoader.ViewHolder -> { // 아이템 로더 아이템 바인딩
+//                    val binding = holder.binding
+//                    val copyEntity = currentDataListCloneMbr[position] as ItemLoader.ItemVO
+                    }
+
+                    is Item1.ViewHolder -> { // 아이템1 아이템 바인딩
+                        val binding = holder.binding
+                        val copyEntity = currentDataListCloneMbr[position] as Item1.ItemVO
+
+                        binding.dogKindText.text = copyEntity.searchResult
+
+                        binding.root.setOnClickListener {
+                            parentViewMbr.bindingMbr.searchBox.setText(copyEntity.searchResult)
+                            parentViewMbr.bindingMbr.searchSampleList.visibility = View.GONE
+                        }
+                    }
+
+                    // 아이템이 늘어나면 추가
+                }
+            }
+
+            // 아이템 내용 동일성 비교(아이템 내용/화면 변경시 사용될 기준)
+            override fun isContentSame(
+                oldItem: AdapterDataAbstractVO,
+                newItem: AdapterDataAbstractVO
+            ): Boolean {
+                return when (oldItem) {
+                    is Header.ItemVO -> {
+                        if (newItem is Header.ItemVO) { // 아이템 서로 타입이 같으면,
+                            // 내용 비교
+                            oldItem == newItem
+                        } else { // 아이템 서로 타입이 다르면,
+                            // 무조건 다른 아이템
+                            false
+                        }
+                    }
+
+                    is Footer.ItemVO -> {
+                        if (newItem is Footer.ItemVO) { // 아이템 서로 타입이 같으면,
+                            // 내용 비교
+                            oldItem == newItem
+                        } else { // 아이템 서로 타입이 다르면,
+                            // 무조건 다른 아이템
+                            false
+                        }
+                    }
+
+                    is ItemLoader.ItemVO -> {
+                        if (newItem is ItemLoader.ItemVO) { // 아이템 서로 타입이 같으면,
+                            // 내용 비교
+                            oldItem == newItem
+                        } else { // 아이템 서로 타입이 다르면,
+                            // 무조건 다른 아이템
+                            false
+                        }
+                    }
+
+                    is Item1.ItemVO -> {
+                        if (newItem is Item1.ItemVO) { // 아이템 서로 타입이 같으면,
+                            // 내용 비교
+                            oldItem == newItem
+                        } else { // 아이템 서로 타입이 다르면,
+                            // 무조건 다른 아이템
+                            false
+                        }
+                    }
+
+                    // 아이템이 늘어나면 추가
+
+                    else -> {
+                        oldItem == newItem
+                    }
+                }
+            }
+
+            // 아이템 복제 로직 (서로 다른 타입에 대응하기 위해 구현이 필요)
+            override fun getDeepCopyReplica(newItem: AdapterDataAbstractVO): AdapterDataAbstractVO {
+                return when (newItem) {
+                    is Header.ItemVO -> {
+                        newItem.copy()
+                    }
+
+                    is Footer.ItemVO -> {
+                        newItem.copy()
+                    }
+
+                    is ItemLoader.ItemVO -> {
+                        newItem.copy()
+                    }
+
+                    is Item1.ItemVO -> {
+                        newItem.copy()
+                    }
+
+                    // 아이템이 늘어나면 추가
+
+                    else -> {
+                        newItem
+                    }
+                }
+            }
+
+
+            // ---------------------------------------------------------------------------------------------
+            // <공개 메소드 공간>
+
+
+            // ---------------------------------------------------------------------------------------------
+            // <비공개 메소드 공간>
+
+
+            // ---------------------------------------------------------------------------------------------
+            // <내부 클래스 공간>
+            // (아이템 클래스)
+            // 헤더 / 푸터를 사용하지 않을 것이라면 item_empty 를 사용 및 ItemVO 데이터를 임시 데이터로 채우기
+            class Header {
+                data class ViewHolder(
+                    val view: View,
+                    val binding: ItemEmptyBinding =
+                        ItemEmptyBinding.bind(
+                            view
+                        )
+                ) : RecyclerView.ViewHolder(view)
+
+                class ItemVO : AdapterHeaderAbstractVO() {
+                    fun copy(): Footer.ItemVO {
+                        return Footer.ItemVO()
+                    }
+                }
+            }
+
+            class Footer {
+                data class ViewHolder(
+                    val view: View,
+                    val binding: ItemEmptyBinding =
+                        ItemEmptyBinding.bind(
+                            view
+                        )
+                ) : RecyclerView.ViewHolder(view)
+
+                class ItemVO : AdapterFooterAbstractVO() {
+                    fun copy(): ItemVO {
+                        return ItemVO()
+                    }
+                }
+            }
+
+            class ItemLoader {
+                data class ViewHolder(
+                    val view: View,
+                    val binding: ItemActivitySearchListSampleAdapterRecyclerViewLoaderBinding =
+                        ItemActivitySearchListSampleAdapterRecyclerViewLoaderBinding.bind(
+                            view
+                        )
+                ) : RecyclerView.ViewHolder(view)
+
+                data class ItemVO(
+                    override val itemUid: Long
+                ) : AdapterItemAbstractVO(itemUid)
+            }
+
+            class Item1 {
+                data class ViewHolder(
+                    val view: View,
+                    val binding: ItemActivitySearchListSampleAdapterRecyclerViewItem1Binding =
+                        ItemActivitySearchListSampleAdapterRecyclerViewItem1Binding.bind(
+                            view
+                        )
+                ) : RecyclerView.ViewHolder(view)
+
+                data class ItemVO(
+                    override val itemUid: Long,
+                    val searchResult: String
+                ) : AdapterItemAbstractVO(itemUid)
+            }
+
+            // 아이템이 늘어나면 추가
+
+        }
     }
 }
