@@ -127,7 +127,7 @@ dependencies {
     // socket 라이브러리
     implementation 'com.squareup.okio:okio:3.0.0'
 
-    // gpu location
+    // gps location
     implementation 'com.google.android.gms:play-services-location:20.0.0'
     
     // (뷰 라이브러리)
