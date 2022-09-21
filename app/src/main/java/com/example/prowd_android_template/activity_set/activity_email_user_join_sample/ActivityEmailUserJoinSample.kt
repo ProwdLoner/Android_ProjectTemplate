@@ -16,6 +16,7 @@ import android.text.TextWatcher
 import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +33,9 @@ import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityEmailUserJoinSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -467,87 +471,71 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // 회원가입 버튼 비활성화
-        //     적합성 검증 완료시 활성
-        bindingMbr.emailJoinBtn.isEnabled = false
-        bindingMbr.emailJoinBtn.isFocusable = false
+        // 에러 문구 초기화
+        bindingMbr.passwordInputLayout.error = null
+        bindingMbr.passwordInputLayout.isErrorEnabled = false
+        bindingMbr.passwordCheckInputLayout.error = null
+        bindingMbr.passwordCheckInputLayout.isErrorEnabled = false
+        bindingMbr.emailInputLayout.error = null
+        bindingMbr.emailInputLayout.isErrorEnabled = false
+        bindingMbr.nickNameInputLayout.error = null
+        bindingMbr.nickNameInputLayout.isErrorEnabled = false
 
-        var emailVerificationRequestUid: Long? = null
-        bindingMbr.emailCheckBtn.isEnabled = false
-        bindingMbr.emailCheckBtn.isFocusable = false
-        bindingMbr.emailCheckBtn.text = "인증\n발송"
-        bindingMbr.emailRuleMsg.text = "이메일 인증이 필요합니다."
+        // 인증 이전 비활성화
+        bindingMbr.passwordInputLayout.isEnabled = false
+        bindingMbr.passwordInputLayout.isFocusable = false
+        bindingMbr.passwordCheckInputLayout.isEnabled = false
+        bindingMbr.passwordCheckInputLayout.isFocusable = false
+        bindingMbr.emailUserJoin.isEnabled = false
+        bindingMbr.emailUserJoin.isFocusable = false
+        bindingMbr.checkEmailVerification.isEnabled = false
+        bindingMbr.checkEmailVerification.isFocusable = false
+        bindingMbr.nickNameInputLayout.isEnabled = false
+        bindingMbr.nickNameInputLayout.isFocusable = false
 
-        // (적합성 검증)
-        var emailClear = false
-        var nickNameClear = false
-        var pwClear = false
-        var pwCheckClear = false
-        bindingMbr.emailTextInputEditTxt.addTextChangedListener(object : TextWatcher {
+        // 인증 이전 숨기기
+        bindingMbr.checkEmailVerification.visibility = View.GONE
+        bindingMbr.userInputContainer.visibility = View.GONE
+        bindingMbr.emailUserJoin.visibility = View.GONE
+
+        // 아이디 입력 리스너
+        bindingMbr.emailInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(
-                s: CharSequence,
-                start: Int,
-                before: Int,
-                count: Int
-            ) { // 입력값 변경시 작동
-                bindingMbr.emailTextInputLayout.error = null
-                bindingMbr.emailTextInputLayout.isErrorEnabled = false
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                // 아이디용 이메일 변경시 모두 초기화
 
-                bindingMbr.emailCheckBtn.isEnabled = false
-                bindingMbr.emailCheckBtn.isFocusable = false
-                bindingMbr.emailCheckBtn.text = "인증\n발송"
-                bindingMbr.emailRuleMsg.text = "이메일 인증이 필요합니다."
-                emailVerificationRequestUid = null
+                // 에러 문구 초기화
+                bindingMbr.passwordInputLayout.error = null
+                bindingMbr.passwordInputLayout.isErrorEnabled = false
+                bindingMbr.passwordCheckInputLayout.error = null
+                bindingMbr.passwordCheckInputLayout.isErrorEnabled = false
+                bindingMbr.emailInputLayout.error = null
+                bindingMbr.emailInputLayout.isErrorEnabled = false
+                bindingMbr.nickNameInputLayout.error = null
+                bindingMbr.nickNameInputLayout.isErrorEnabled = false
 
-                emailClear = false
+                // 인증 이전 비활성화
+                bindingMbr.passwordInputLayout.isEnabled = false
+                bindingMbr.passwordInputLayout.isFocusable = false
+                bindingMbr.passwordCheckInputLayout.isEnabled = false
+                bindingMbr.passwordCheckInputLayout.isFocusable = false
+                bindingMbr.emailUserJoin.isEnabled = false
+                bindingMbr.emailUserJoin.isFocusable = false
+                bindingMbr.checkEmailVerification.isEnabled = false
+                bindingMbr.checkEmailVerification.isFocusable = false
+                bindingMbr.nickNameInputLayout.isEnabled = false
+                bindingMbr.nickNameInputLayout.isFocusable = false
 
-                bindingMbr.emailJoinBtn.isEnabled = false
-                bindingMbr.emailJoinBtn.isFocusable = false
+                // 인증 이전 숨기기
+                bindingMbr.checkEmailVerification.visibility = View.GONE
+                bindingMbr.userInputContainer.visibility = View.GONE
+                bindingMbr.emailUserJoin.visibility = View.GONE
             }
 
-            override fun afterTextChanged(s: Editable) { // onTextChanged 다음에 작동
-                val email = s.toString()
-
-                when {
-                    // 문자 입력 전
-                    "" == email -> {
-                        bindingMbr.emailTextInputLayout.error = null
-                        bindingMbr.emailTextInputLayout.isErrorEnabled = false
-                        emailClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    // 공백 존재
-                    email.contains(" ") -> {
-                        bindingMbr.emailTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
-                        emailClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-                        bindingMbr.emailTextInputLayout.error = "이메일 형태가 아닙니다."
-                        emailClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    else -> {
-                        bindingMbr.emailTextInputLayout.error = null
-                        bindingMbr.emailTextInputLayout.isErrorEnabled = false
-
-                        bindingMbr.emailCheckBtn.isEnabled = true
-                        bindingMbr.emailCheckBtn.isFocusable = true
-                        bindingMbr.emailRuleMsg.text = "이메일 인증이 필요합니다."
-                    }
-                }
+            override fun afterTextChanged(s: Editable) {
             }
         })
+
 
         // 이메일 본인 확인
         // : 본인 이메일인지 확인하기 위해 버튼을 누르면 확인 이메일이 발송됨
@@ -567,40 +555,464 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
         //     만료되었다면 만료되었다는 화면을 반환. 혹시나 비밀번호가 맞지 않는 해킹시도가 있으면 이를 처리
         // 5. 유저는 이메일 인증을 한 후 앱으로 돌아와 요청확인 버튼을 눌러 서버에 요청번호를 전달하여 확인 요청을 함.
         // 6. 서버는 요청확인 요청이 오면 인증 요청 테이블을 검색해서 해당 요청 번호가 만료되지 않았고, 검증 완료되었는지를 확인 후 결과 반환
-        bindingMbr.emailCheckBtn.setOnClickListener {
-            val email: String = bindingMbr.emailTextInputEditTxt.text.toString()
+        var emailVerificationRequestUid: Long? = null
+        bindingMbr.sendEmailVerification.setOnClickListener {
+            // 에러 문구 초기화
+            bindingMbr.passwordInputLayout.error = null
+            bindingMbr.passwordInputLayout.isErrorEnabled = false
+            bindingMbr.passwordCheckInputLayout.error = null
+            bindingMbr.passwordCheckInputLayout.isErrorEnabled = false
+            bindingMbr.emailInputLayout.error = null
+            bindingMbr.emailInputLayout.isErrorEnabled = false
+            bindingMbr.nickNameInputLayout.error = null
+            bindingMbr.nickNameInputLayout.isErrorEnabled = false
 
-            if (bindingMbr.emailCheckBtn.text == "인증\n발송") { // 인증 발송 버튼을 눌렀을 때
-                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
-                    false,
-                    "검증 요청을 하는 중입니다.",
-                    onCanceled = {}
-                )
-                val postEmailVerificationRequestCallback =
-                    { statusCode: Int, emailVerificationRequestUid1: Long? ->
-                        runOnUiThread {
+            // 인증 이전 비활성화
+            bindingMbr.passwordInputLayout.isEnabled = false
+            bindingMbr.passwordInputLayout.isFocusable = false
+            bindingMbr.passwordCheckInputLayout.isEnabled = false
+            bindingMbr.passwordCheckInputLayout.isFocusable = false
+            bindingMbr.emailUserJoin.isEnabled = false
+            bindingMbr.emailUserJoin.isFocusable = false
+            bindingMbr.checkEmailVerification.isEnabled = false
+            bindingMbr.checkEmailVerification.isFocusable = false
+            bindingMbr.nickNameInputLayout.isEnabled = false
+            bindingMbr.nickNameInputLayout.isFocusable = false
+
+            // 인증 이전 숨기기
+            bindingMbr.checkEmailVerification.visibility = View.GONE
+            bindingMbr.userInputContainer.visibility = View.GONE
+            bindingMbr.emailUserJoin.visibility = View.GONE
+
+            // 입력값 적합성 검증
+            val emailId = bindingMbr.emailInput.text.toString().trim()
+
+            val emailPattern = android.util.Patterns.EMAIL_ADDRESS
+
+            when {
+                "" == emailId.trim() -> { // userName 이 공란일 때
+                    bindingMbr.emailInputLayout.error = "이메일을 입력해주세요."
+                    bindingMbr.emailInput.requestFocus()
+                }
+
+                !emailPattern.matcher(emailId).matches() -> {
+                    bindingMbr.emailInputLayout.error = "이메일 형식이 아닙니다."
+                    bindingMbr.emailInput.requestFocus()
+                }
+
+                else -> { // 적합
+                    shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                        false,
+                        "검증 요청을 하는 중입니다.",
+                        onCanceled = {}
+                    )
+
+                    val postEmailVerificationRequestCallback =
+                        { statusCode: Int, emailVerificationRequestUid1: Long? ->
+                            runOnUiThread {
+                                shownDialogInfoVOMbr = null
+
+                                when (statusCode) {
+                                    1 -> { // 검증 요청 완료
+                                        emailVerificationRequestUid = emailVerificationRequestUid1
+                                        bindingMbr.checkEmailVerification.isEnabled = true
+                                        bindingMbr.checkEmailVerification.isFocusable = true
+
+                                        bindingMbr.checkEmailVerification.visibility = View.VISIBLE
+
+                                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "인증 발송",
+                                            "인증 이메일을 전송했습니다.\n" +
+                                                    "이메일을 확인해주세요.",
+                                            null,
+                                            onCheckBtnClicked = {
+                                                shownDialogInfoVOMbr = null
+
+                                            },
+                                            onCanceled = {
+                                                shownDialogInfoVOMbr = null
+
+                                            }
+                                        )
+                                    }
+                                    2 -> { // 아이디 중복
+                                        bindingMbr.emailInputLayout.error = "이미 가입된 회원입니다."
+                                        bindingMbr.emailInput.requestFocus()
+                                        emailVerificationRequestUid = null
+                                    }
+                                    -1 -> { // 네트워크 에러
+                                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "네트워크 불안정",
+                                            "현재 네트워크 연결이 불안정합니다.",
+                                            null,
+                                            onCheckBtnClicked = {
+                                                shownDialogInfoVOMbr = null
+                                            },
+                                            onCanceled = {
+                                                shownDialogInfoVOMbr = null
+                                            }
+                                        )
+                                    }
+                                    else -> { // 그외 서버 에러
+                                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "기술적 문제",
+                                            "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                            null,
+                                            onCheckBtnClicked = {
+                                                shownDialogInfoVOMbr = null
+                                            },
+                                            onCanceled = {
+                                                shownDialogInfoVOMbr = null
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                    // 이메일 검증 요청
+                    executorServiceMbr.execute {
+                        // 아래는 원래 네트워크 서버에서 처리하는 로직
+                        // 이메일 중복검사
+                        val idCount =
+                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                .getIdCount(emailId, 1)
+
+                        if (idCount != 0) { // 아이디 중복
+                            postEmailVerificationRequestCallback(2, null)
+                        } else {
+                            // 12 라는 반환값은 검증 리퀘스트 고유값을 가정. 실제론 서버에서 생성해서 반환해줌
+                            postEmailVerificationRequestCallback(1, 12)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 인증 확인 : emailVerificationRequestUid 의 리퀘스트가 승인되었는지 여부 확인
+        bindingMbr.checkEmailVerification.setOnClickListener {
+            shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                false,
+                "이메일 인증 상태 확인중입니다.",
+                onCanceled = {}
+            )
+
+            val emailVerificationCheckCallback = { statusCode: Int ->
+                runOnUiThread {
+                    shownDialogInfoVOMbr = null
+
+                    when (statusCode) {
+                        1 -> { // 승인
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "이메일 인증",
+                                "이메일 인증이 완료되었습니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+
+                                }
+                            )
+
+                            bindingMbr.checkEmailVerification.isEnabled = false
+                            bindingMbr.checkEmailVerification.isFocusable = false
+
+                            bindingMbr.passwordInputLayout.isEnabled = true
+                            bindingMbr.passwordInputLayout.isFocusable = true
+                            bindingMbr.passwordCheckInputLayout.isEnabled = true
+                            bindingMbr.passwordCheckInputLayout.isFocusable = true
+                            bindingMbr.emailUserJoin.isEnabled = true
+                            bindingMbr.emailUserJoin.isFocusable = true
+                            bindingMbr.nickNameInputLayout.isEnabled = true
+                            bindingMbr.nickNameInputLayout.isFocusable = true
+
+                            bindingMbr.userInputContainer.visibility = View.VISIBLE
+                            bindingMbr.emailUserJoin.visibility = View.VISIBLE
+                        }
+
+                        2 -> { // 대기중
+                            Toast.makeText(
+                                this,
+                                "인증 대기중입니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+
+                        3 -> { // 만료된 요청
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "이메일 인증 만료",
+                                "만료된 요청입니다.\n다시 한번 인증 발송을 해주세요.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                    bindingMbr.checkEmailVerification.isEnabled = false
+                                    bindingMbr.checkEmailVerification.isFocusable = false
+                                    bindingMbr.checkEmailVerification.visibility = View.GONE
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                    bindingMbr.checkEmailVerification.isEnabled = false
+                                    bindingMbr.checkEmailVerification.isFocusable = false
+                                    bindingMbr.checkEmailVerification.visibility = View.GONE
+                                }
+                            )
+
+                        }
+
+                        -1 -> { // 네트워크 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "네트워크 불안정",
+                                "현재 네트워크 연결이 불안정합니다.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
+                        else -> { // 그외 서버 에러
+                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                true,
+                                "기술적 문제",
+                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                null,
+                                onCheckBtnClicked = {
+                                    shownDialogInfoVOMbr = null
+                                },
+                                onCanceled = {
+                                    shownDialogInfoVOMbr = null
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 이메일 인증 확인 요청
+            executorServiceMbr.execute {
+                // 아래는 원래 네트워크 서버에서 처리하는 로직
+                emailVerificationCheckCallback(1)
+            }
+        }
+
+        // 닉네임 입력 리스너
+        bindingMbr.nickNameInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                // 만약 text input 에 에러가 있는 경우 입력시 에러를 제거
+                bindingMbr.passwordInputLayout.error = null
+                bindingMbr.passwordInputLayout.isErrorEnabled = false
+                bindingMbr.passwordCheckInputLayout.error = null
+                bindingMbr.passwordCheckInputLayout.isErrorEnabled = false
+                bindingMbr.nickNameInputLayout.error = null
+                bindingMbr.nickNameInputLayout.isErrorEnabled = false
+            }
+
+            override fun afterTextChanged(s: Editable) {
+            }
+        })
+
+        // 비밀번호 입력 리스너
+        bindingMbr.passwordInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                // 만약 text input 에 에러가 있는 경우 입력시 에러를 제거
+                bindingMbr.passwordInputLayout.error = null
+                bindingMbr.passwordInputLayout.isErrorEnabled = false
+                bindingMbr.passwordCheckInputLayout.error = null
+                bindingMbr.passwordCheckInputLayout.isErrorEnabled = false
+                bindingMbr.nickNameInputLayout.error = null
+                bindingMbr.nickNameInputLayout.isErrorEnabled = false
+            }
+
+            override fun afterTextChanged(s: Editable) {
+            }
+        })
+
+        // 비밀번호 확인 리스너
+        bindingMbr.passwordCheckInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                // 만약 text input 에 에러가 있는 경우 입력시 에러를 제거
+                bindingMbr.passwordInputLayout.error = null
+                bindingMbr.passwordInputLayout.isErrorEnabled = false
+                bindingMbr.passwordCheckInputLayout.error = null
+                bindingMbr.passwordCheckInputLayout.isErrorEnabled = false
+                bindingMbr.nickNameInputLayout.error = null
+                bindingMbr.nickNameInputLayout.isErrorEnabled = false
+            }
+
+            override fun afterTextChanged(s: Editable) {
+
+            }
+        })
+
+        bindingMbr.emailUserJoin.setOnClickListener {
+            shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                false,
+                null,
+                onCanceled = {}
+            )
+
+            // 에러 문구 초기화
+            bindingMbr.passwordInputLayout.error = null
+            bindingMbr.passwordInputLayout.isErrorEnabled = false
+            bindingMbr.passwordCheckInputLayout.error = null
+            bindingMbr.passwordCheckInputLayout.isErrorEnabled = false
+            bindingMbr.emailInputLayout.error = null
+            bindingMbr.emailInputLayout.isErrorEnabled = false
+            bindingMbr.nickNameInputLayout.error = null
+            bindingMbr.nickNameInputLayout.isErrorEnabled = false
+
+            // 이메일 가입
+            val emailId = bindingMbr.emailInput.text.toString().trim()
+            val pwStr = bindingMbr.passwordInput.text.toString()
+            val pwCheckStr = bindingMbr.passwordCheckInput.text.toString()
+            val nickNameStr = bindingMbr.nickNameInput.text.toString()
+
+            val emailPattern = android.util.Patterns.EMAIL_ADDRESS
+            val pwPattern =
+                Pattern.compile("^.*(?=^.{8,16}\$)(?=.*\\d)(?=.*[a-zA-Z])(?=.*[!@#\$%^&+=]).*\$")
+            val nicknamePattern = Pattern.compile("^[0-9a-zA-Zㄱ-ㅎ가-힣 ]{1,10}\$")
+            // 정보 유효성 검증
+            when {
+                "" == emailId.trim() -> { // userName 이 공란일 때
+                    shownDialogInfoVOMbr = null
+
+                    bindingMbr.emailInput.error = "이메일을 입력해주세요."
+                    bindingMbr.emailInput.requestFocus()
+                }
+
+                !emailPattern.matcher(emailId).matches() -> {
+                    shownDialogInfoVOMbr = null
+
+                    bindingMbr.emailInput.error = "이메일 형식이 아닙니다."
+                    bindingMbr.emailInput.requestFocus()
+                }
+
+                "" == nickNameStr.trim() -> {
+                    shownDialogInfoVOMbr = null
+
+                    bindingMbr.nickNameInput.error = "닉네임을 입력해주세요."
+                    bindingMbr.nickNameInput.requestFocus()
+                }
+
+                !nicknamePattern.matcher(nickNameStr).matches() -> {
+                    shownDialogInfoVOMbr = null
+
+                    bindingMbr.nickNameInput.error = "1~10자의 한글/영문/숫자만 가능합니다."
+                    bindingMbr.nickNameInput.requestFocus()
+                }
+
+                "" == pwStr.trim() -> {
+                    shownDialogInfoVOMbr = null
+
+                    bindingMbr.passwordInput.error = "비밀번호를 입력해주세요."
+                    bindingMbr.passwordInput.requestFocus()
+                }
+
+                !pwPattern.matcher(pwStr).matches() -> {
+                    shownDialogInfoVOMbr = null
+
+                    bindingMbr.passwordInput.error = "8~16자의 영문/숫자 조합만 가능합니다."
+                    bindingMbr.passwordInput.requestFocus()
+                }
+
+                "" == pwCheckStr.trim() -> {
+                    shownDialogInfoVOMbr = null
+
+                    bindingMbr.passwordCheckInput.error = "비밀번호 확인을 입력해주세요."
+                    bindingMbr.passwordCheckInput.requestFocus()
+                }
+
+                pwStr != pwCheckStr -> {
+                    shownDialogInfoVOMbr = null
+
+                    bindingMbr.passwordCheckInput.error = "비밀번호가 일치하지 않습니다."
+                    bindingMbr.passwordCheckInput.requestFocus()
+                }
+
+                else -> { // 모든 항목이 충족되면 로그인 정보 검증 수행
+                    shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                        false,
+                        "회원 가입 요청 중입니다.",
+                        onCanceled = {}
+                    )
+
+                    // 회원가입
+                    UserSessionUtil.userJoinToServer(
+                        this,
+                        UserSessionUtil.UserJoinInputVo(
+                            1,
+                            emailId,
+                            pwStr,
+                            nickNameStr
+                        ),
+                        onComplete = { statusCode: Int ->
                             shownDialogInfoVOMbr = null
 
                             when (statusCode) {
-                                1 -> { // 검증 요청 완료
-                                    bindingMbr.emailCheckBtn.text = "인증\n확인"
-                                    bindingMbr.emailRuleMsg.text =
-                                        "인증용 이메일이 발송되었습니다.\n발송된 이메일을 확인해주세요."
-                                    emailVerificationRequestUid = emailVerificationRequestUid1
+                                1 -> { // 회원 가입 완료
+                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "회원가입 완료",
+                                        "회원가입을 완료했습니다.",
+                                        "닫기",
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                            finish()
+                                        },
+                                        onCanceled = {
+                                            shownDialogInfoVOMbr = null
+                                            finish()
+                                        }
+                                    )
                                 }
-                                2 -> { // 아이디 중복
-                                    bindingMbr.emailTextInputLayout.error = "현재 사용중인 아이디입니다."
-                                    bindingMbr.emailTextInputEditTxt.requestFocus()
-                                    emailClear = false
+                                2 -> { // 입력값 에러
+                                    throw Exception("user join input error")
+                                }
+                                3 -> { // 이미 가입된 회원
+                                    bindingMbr.emailInput.error = "현재 사용중인 아이디입니다."
+                                    bindingMbr.emailInput.requestFocus()
 
-                                    bindingMbr.emailJoinBtn.isEnabled = false
-                                    bindingMbr.emailJoinBtn.isFocusable = false
+                                    // 에러 문구 초기화
+                                    bindingMbr.passwordInputLayout.error = null
+                                    bindingMbr.passwordInputLayout.isErrorEnabled = false
+                                    bindingMbr.passwordCheckInputLayout.error = null
+                                    bindingMbr.passwordCheckInputLayout.isErrorEnabled = false
+                                    bindingMbr.emailInputLayout.error = null
+                                    bindingMbr.emailInputLayout.isErrorEnabled = false
+                                    bindingMbr.nickNameInputLayout.error = null
+                                    bindingMbr.nickNameInputLayout.isErrorEnabled = false
 
-                                    bindingMbr.emailCheckBtn.isEnabled = false
-                                    bindingMbr.emailCheckBtn.isFocusable = false
-                                    bindingMbr.emailCheckBtn.text = "인증\n발송"
-                                    bindingMbr.emailRuleMsg.text = "이메일 인증이 필요합니다."
-                                    emailVerificationRequestUid = null
+                                    // 인증 이전 비활성화
+                                    bindingMbr.passwordInputLayout.isEnabled = false
+                                    bindingMbr.passwordInputLayout.isFocusable = false
+                                    bindingMbr.passwordCheckInputLayout.isEnabled = false
+                                    bindingMbr.passwordCheckInputLayout.isFocusable = false
+                                    bindingMbr.emailUserJoin.isEnabled = false
+                                    bindingMbr.emailUserJoin.isFocusable = false
+                                    bindingMbr.checkEmailVerification.isEnabled = false
+                                    bindingMbr.checkEmailVerification.isFocusable = false
+                                    bindingMbr.nickNameInputLayout.isEnabled = false
+                                    bindingMbr.nickNameInputLayout.isFocusable = false
+
+                                    // 인증 이전 숨기기
+                                    bindingMbr.checkEmailVerification.visibility = View.GONE
+                                    bindingMbr.userInputContainer.visibility = View.GONE
+                                    bindingMbr.emailUserJoin.visibility = View.GONE
+
                                 }
                                 -1 -> { // 네트워크 에러
                                     shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
@@ -632,307 +1044,9 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                                 }
                             }
                         }
-                    }
-
-                // 이메일 검증 요청
-                executorServiceMbr.execute {
-                    // 아래는 원래 네트워크 서버에서 처리하는 로직
-                    // 이메일 중복검사
-                    val idCount =
-                        repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
-                            .getIdCount(email, 1)
-
-                    if (idCount != 0) { // 아이디 중복
-                        postEmailVerificationRequestCallback(2, null)
-                    } else {
-                        // 12 라는 반환값은 검증 리퀘스트 고유값을 가정. 실제론 서버에서 생성해서 반환해줌
-                        postEmailVerificationRequestCallback(1, 12)
-                    }
-                }
-            } else { // 인증 확인 버튼을 눌렀을 때
-                // 서버에 인증 확인을 보내고 확인이 되면 아래 로직 실행
-
-                bindingMbr.emailCheckBtn.isEnabled = false
-                bindingMbr.emailCheckBtn.isFocusable = false
-                bindingMbr.emailRuleMsg.text = "이메일 인증이 완료되었습니다."
-
-                emailClear = true
-
-                if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                    bindingMbr.emailJoinBtn.isEnabled = true
-                    bindingMbr.emailJoinBtn.isFocusable = true
+                    )
                 }
             }
-        }
-
-        bindingMbr.nickNameTextInputEditTxt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.nickNameTextInputLayout.error = null
-                bindingMbr.nickNameTextInputLayout.isErrorEnabled = false
-            }
-
-            override fun afterTextChanged(s: Editable) {
-                val nickName = s.toString()
-
-                when {
-                    // 문자 입력 전
-                    "" == nickName -> {
-                        bindingMbr.nickNameTextInputLayout.error = null
-                        bindingMbr.nickNameTextInputLayout.isErrorEnabled = false
-                        nickNameClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    // 16자 초과
-                    nickName.length > 16 -> {
-                        bindingMbr.nickNameTextInputLayout.error = "16자 이하로 입력해주세요."
-                        nickNameClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    // trim 검사
-                    nickName.first() == ' ' || nickName.last() == ' ' -> {
-                        bindingMbr.nickNameTextInputLayout.error = "문장 앞뒤 공백 문자는 입력할 수 없습니다."
-                        nickNameClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    // 영문, 숫자, 한글 외의 특수문자 존재
-                    !Pattern.compile("^[0-9a-zA-Zㄱ-ㅎ가-힣 ]+$").matcher(nickName).matches() -> {
-                        bindingMbr.nickNameTextInputLayout.error = "유효하지 않은 닉네임입니다."
-                        nickNameClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    else -> {
-                        bindingMbr.nickNameTextInputLayout.error = null
-                        bindingMbr.nickNameTextInputLayout.isErrorEnabled = false
-                        nickNameClear = true
-
-                        if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.emailJoinBtn.isEnabled = true
-                            bindingMbr.emailJoinBtn.isFocusable = true
-                        }
-                    }
-                }
-            }
-        })
-
-        bindingMbr.pwTextInputEditTxt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.pwTextInputLayout.error = null
-                bindingMbr.pwTextInputLayout.isErrorEnabled = false
-
-                bindingMbr.pwTextCheckInputLayout.error = null
-                bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
-                pwCheckClear = false
-                bindingMbr.pwTextCheckInputEditTxt.setText("")
-            }
-
-            override fun afterTextChanged(s: Editable) {
-                val pw = s.toString()
-
-                when {
-                    "" == pw -> {
-                        bindingMbr.pwTextInputLayout.error = null
-                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
-                        pwClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    // 8자 미만
-                    pw.length < 8 -> {
-                        bindingMbr.pwTextInputLayout.error = "8자 이상 입력해주세요."
-                        pwClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    // 16자 초과
-                    pw.length > 16 -> {
-                        bindingMbr.pwTextInputLayout.error = "16자 이하로 입력해주세요."
-                        pwClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    // 공백 존재
-                    pw.contains(" ") -> {
-                        bindingMbr.pwTextInputLayout.error = "공백 문자는 입력할 수 없습니다."
-                        pwClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    // 비밀번호 작성 규칙 : 영문, 숫자, 특수문자 혼합
-                    !Pattern.compile("^.*(?=^.{8,16}\$)(?=.*\\d)(?=.*[a-zA-Z])(?=.*[!@#\$%^&+=]).*\$")
-                        .matcher(pw).matches() -> {
-                        bindingMbr.pwTextInputLayout.error = "유효하지 않은 비밀번호입니다."
-                        pwClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    else -> {
-                        bindingMbr.pwTextInputLayout.error = null
-                        bindingMbr.pwTextInputLayout.isErrorEnabled = false
-                        pwClear = true
-
-                        if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.emailJoinBtn.isEnabled = true
-                            bindingMbr.emailJoinBtn.isFocusable = true
-                        }
-                    }
-                }
-            }
-        })
-
-        bindingMbr.pwTextCheckInputEditTxt.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                bindingMbr.pwTextCheckInputLayout.error = null
-                bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
-            }
-
-            override fun afterTextChanged(s: Editable) {
-                val pwCheck = s.toString()
-                val pw = bindingMbr.pwTextInputEditTxt.text.toString()
-
-                when {
-                    // 문자 입력 전
-                    "" == pwCheck -> {
-                        bindingMbr.pwTextCheckInputLayout.error = null
-                        bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
-                        pwCheckClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-
-                    pw != pwCheck -> {
-                        bindingMbr.pwTextCheckInputLayout.error = "비밀번호가 일치하지 않습니다."
-                        pwCheckClear = false
-
-                        bindingMbr.emailJoinBtn.isEnabled = false
-                        bindingMbr.emailJoinBtn.isFocusable = false
-                    }
-                    else -> {
-                        bindingMbr.pwTextCheckInputLayout.error = null
-                        bindingMbr.pwTextCheckInputLayout.isErrorEnabled = false
-                        pwCheckClear = true
-
-                        if (emailClear && nickNameClear && pwClear && pwCheckClear) {
-                            bindingMbr.emailJoinBtn.isEnabled = true
-                            bindingMbr.emailJoinBtn.isFocusable = true
-                        }
-                    }
-                }
-            }
-        })
-
-        bindingMbr.emailJoinBtn.setOnClickListener {
-            // 적합성 검증 완료를 가정
-            if (!emailClear || !nickNameClear || !pwClear || !pwCheckClear) {
-                return@setOnClickListener
-            }
-
-            val email: String = bindingMbr.emailTextInputEditTxt.text.toString()
-            val nickName: String = bindingMbr.nickNameTextInputEditTxt.text.toString()
-            val pw: String = bindingMbr.pwTextInputEditTxt.text.toString()
-
-            shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
-                false,
-                "회원 가입 요청 중입니다.",
-                onCanceled = {}
-            )
-
-            // 회원가입
-            UserSessionUtil.userJoinToServer(
-                this,
-                UserSessionUtil.UserJoinInputVo(
-                    1,
-                    email,
-                    pw,
-                    nickName
-                ),
-                onComplete = { statusCode: Int ->
-                    shownDialogInfoVOMbr = null
-
-                    when (statusCode) {
-                        1 -> { // 회원 가입 완료
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "회원가입 완료",
-                                "회원가입을 완료했습니다.",
-                                "닫기",
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                }
-                            )
-                        }
-                        2 -> { // 입력값 에러
-                            throw Exception("user join input error")
-                        }
-                        3 -> { // 이미 가입된 회원
-                            bindingMbr.emailTextInputLayout.error = "현재 사용중인 아이디입니다."
-                            bindingMbr.emailTextInputEditTxt.requestFocus()
-                            emailClear = false
-
-                            bindingMbr.emailJoinBtn.isEnabled = false
-                            bindingMbr.emailJoinBtn.isFocusable = false
-                        }
-                        -1 -> { // 네트워크 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "네트워크 불안정",
-                                "현재 네트워크 연결이 불안정합니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
-                        }
-                        else -> { // 그외 서버 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "기술적 문제",
-                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
-                        }
-                    }
-                }
-            )
         }
     }
 
