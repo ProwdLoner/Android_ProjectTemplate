@@ -2,14 +2,16 @@ package com.example.prowd_android_template.util_object
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
+import android.content.res.AssetFileDescriptor
 import android.content.res.AssetManager
 import android.content.res.TypedArray
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Point
+import android.media.MediaPlayer
 import android.util.Size
 import android.view.*
-import java.io.InputStream
+import java.io.*
 import java.nio.ByteBuffer
 import kotlin.math.abs
 import kotlin.math.max
@@ -93,4 +95,43 @@ object CustomUtil {
     // 최소공배수
     fun getLcm(a: Int, b: Int): Int =
         (a * b) / getGcd(a, b)
+
+    fun playAssetsAudioFile(
+        context: Context,
+        filePath: String,
+        isLooping: Boolean,
+        onCompletePlaying: (MediaPlayer) -> Unit
+    ): MediaPlayer {
+        val mediaPlayer = MediaPlayer()
+        val descriptor: AssetFileDescriptor = context.assets.openFd(filePath)
+        mediaPlayer.setDataSource(
+            descriptor.fileDescriptor,
+            descriptor.startOffset,
+            descriptor.length
+        )
+        descriptor.close()
+        mediaPlayer.setOnCompletionListener {
+            onCompletePlaying(it)
+        }
+        mediaPlayer.prepare()
+        mediaPlayer.setVolume(1f, 1f)
+        mediaPlayer.isLooping = isLooping
+        mediaPlayer.start()
+
+        return mediaPlayer
+    }
+
+    fun fileCopy(src: File?, dst: File?) {
+        val inputStream1: InputStream = FileInputStream(src)
+        inputStream1.use { inputStream ->
+            val out: OutputStream = FileOutputStream(dst)
+            out.use { outputStream ->
+                val buf = ByteArray(1024)
+                var len: Int
+                while (inputStream.read(buf).also { len = it } > 0) {
+                    outputStream.write(buf, 0, len)
+                }
+            }
+        }
+    }
 }
