@@ -34,7 +34,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="카메라 샘플 목록"
+                android:text="시스템 카메라 샘플 (사진)"
                 android:textColor="#FFFFFFFF"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -64,36 +64,72 @@
                 android:layout_height="wrap_content">
 
                 <Button
-                    android:id="@+id/go_to_basic_camera2_api_sample_btn"
+                    android:id="@+id/system_camera_test_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="기본 카메라2 API 샘플"
+                    android:text="시스템 카메라 테스트"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <Button
-                    android:id="@+id/go_to_system_camera_photo_sample_btn"
+                <TextView
+                    android:id="@+id/img_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="15dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="기본 카메라 샘플\n(시스템 카메라 사진 촬영)"
+                    android:text="[카메라 이미지]"
+                    android:textColor="#FF000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_basic_camera2_api_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/system_camera_test_btn" />
+
+                <TextView
+                    android:id="@+id/file_img_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="15dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="파일 이미지"
+                    android:textColor="#FF000000"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/img_title" />
+
+                <!-- TODO : width, height 설정에 따라 고정하고 비율이 변하는 이미지 뷰 생성 -->
+
+                <VideoView
+                    android:id="@+id/file_video"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    app:layout_constraintDimensionRatio="1:1"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/file_img_title" />
 
                 <Button
-                    android:id="@+id/go_to_system_camera_video_sample_btn"
+                    android:id="@+id/add_to_gallery_btn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="기본 카메라 샘플\n(시스템 카메라 동영상 촬영)"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="15dp"
+                    android:text="갤러리에 추가"
+                    app:layout_constraintEnd_toStartOf="@id/go_to_gallery_btn"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_system_camera_photo_sample_btn" />
+                    app:layout_constraintTop_toBottomOf="@id/file_video" />
+
+                <Button
+                    android:id="@+id/go_to_gallery_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:text="갤러리로 이동"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/add_to_gallery_btn"
+                    app:layout_constraintTop_toBottomOf="@id/file_video" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView>

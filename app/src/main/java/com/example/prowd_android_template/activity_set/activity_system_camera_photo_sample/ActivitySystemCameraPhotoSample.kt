@@ -33,9 +33,12 @@ import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import com.example.prowd_android_template.util_object.GalleryUtil
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import kotlin.collections.ArrayList
 
 class ActivitySystemCameraPhotoSample : AppCompatActivity() {
     // <설정 변수 공간>
@@ -582,10 +585,14 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
                     )
 
                 executorServiceMbr.execute {
+                    val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                    val fileName = sdf.format(System.currentTimeMillis()) + ".png"
+
                     GalleryUtil.addImageFileToGallery(
                         this,
                         systemCameraImageTempFileMbr!!,
-                        "ProwdTemplate"
+                        "ProwdTemplate",
+                        fileName
                     )
 
                     runOnUiThread {
@@ -923,7 +930,7 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
             resultLauncherCallbackMbr = {
                 if (it.resultCode == RESULT_OK) {
                     Glide.with(this)
-                        .load(systemCameraImageTempFileMbr!!.absoluteFile)
+                        .load(systemCameraImageTempFileMbr!!.absolutePath)
                         .transform(CenterCrop())
                         .into(bindingMbr.fileImg)
                 }
