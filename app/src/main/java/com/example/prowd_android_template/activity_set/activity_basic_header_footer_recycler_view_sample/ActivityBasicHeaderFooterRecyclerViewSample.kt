@@ -641,7 +641,6 @@ class ActivityBasicHeaderFooterRecyclerViewSample : AppCompatActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
-            resultLauncherCallbackMbr = null
         }
 
     }

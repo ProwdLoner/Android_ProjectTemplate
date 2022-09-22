@@ -691,7 +691,6 @@ class ActivityBasicCamera2ApiSample : AppCompatActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
-            resultLauncherCallbackMbr = null
         }
 
         // (최초 사용 카메라 객체 생성)
