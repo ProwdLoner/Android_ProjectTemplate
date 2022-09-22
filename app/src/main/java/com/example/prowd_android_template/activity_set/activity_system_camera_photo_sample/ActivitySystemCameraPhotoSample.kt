@@ -1,11 +1,13 @@
 package com.example.prowd_android_template.activity_set.activity_system_camera_photo_sample
 
 import android.Manifest
-import android.app.Activity
+import android.app.Application
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -30,14 +32,11 @@ import com.example.prowd_android_template.databinding.ActivitySystemCameraPhotoS
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import com.example.prowd_android_template.util_object.GalleryUtil
-import com.example.prowd_android_template.util_object.UriAndPath
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
-// todo : 신코드 적용
-// todo : 시스템 카메라 코드 정리
 class ActivitySystemCameraPhotoSample : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -58,6 +57,9 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
     lateinit var adapterSetMbr: ActivitySystemCameraPhotoSampleAdapterSet
 
     // (SharedPreference 객체)
+    // 클래스 비휘발성 저장객체
+    lateinit var classSpwMbr: ActivitySystemCameraPhotoSampleSpw
+
     // 현 로그인 정보 접근 객체
     lateinit var currentLoginSessionInfoSpwMbr: CurrentLoginSessionInfoSpw
 
@@ -369,10 +371,13 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
         }
         permissionRequestOnProgressSemaphoreMbr.release()
 
+        // (onPause 알고리즘)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+
+        systemCameraImageTempFileMbr?.delete()
 
         // 다이얼로그 객체 해소
         dialogMbr?.dismiss()
@@ -412,6 +417,7 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
         adapterSetMbr = ActivitySystemCameraPhotoSampleAdapterSet()
 
         // SPW 객체 생성
+        classSpwMbr = ActivitySystemCameraPhotoSampleSpw(application)
         currentLoginSessionInfoSpwMbr = CurrentLoginSessionInfoSpw(application)
 
         // 권한 요청 객체 생성
@@ -439,7 +445,6 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
         bindingMbr.systemCameraTestBtn.setOnClickListener {
             // 카메라 디바이스 사용 가능 여부 확인
             if (this.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-
                 // 권한 요청 콜백
                 val permissionArray: Array<String> = arrayOf(Manifest.permission.CAMERA)
                 permissionRequestCallbackMbr = { permissions ->
@@ -567,7 +572,7 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
         }
 
         bindingMbr.addToGalleryBtn.setOnClickListener {
-            if (cameraImageFileMbr != null) {
+            if (systemCameraImageTempFileMbr != null) {
 
                 shownDialogInfoVOMbr =
                     DialogProgressLoading.DialogInfoVO(
@@ -577,10 +582,9 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
                     )
 
                 executorServiceMbr.execute {
-
                     GalleryUtil.addImageFileToGallery(
                         this,
-                        cameraImageFileMbr!!,
+                        systemCameraImageTempFileMbr!!,
                         "ProwdTemplate"
                     )
 
@@ -595,27 +599,114 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
         }
 
         bindingMbr.goToGalleryBtn.setOnClickListener {
-            val intent = Intent(
-                Intent.ACTION_PICK,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-            ).setType("image/*")
+            // 외부 저장소 읽기 권한
+            val permissionArray: Array<String> =
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+            permissionRequestCallbackMbr = { permissions ->
+                // (거부된 권한 리스트)
+                var isPermissionAllGranted = true // 모든 권한 승인여부
+                var neverAskAgain = false // 다시묻지 않기 체크 여부
+                for (permission in permissionArray) {
+                    if (!permissions[permission]!!) { // 필수 권한 거부
+                        // 모든 권한 승인여부 플래그를 변경하고 break
+                        isPermissionAllGranted = false
+                        neverAskAgain = !shouldShowRequestPermissionRationale(permission)
+                        break
+                    }
+                }
 
-            val mimeTypes = arrayOf("image/jpeg", "image/png", "image/jpg")
-            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+                if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                    goToGallery()
+                } else if (!neverAskAgain) { // 단순 거부
+                    shownDialogInfoVOMbr =
+                        DialogConfirm.DialogInfoVO(
+                            true,
+                            "권한 요청",
+                            "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
+                            null,
+                            onCheckBtnClicked = {
+                                shownDialogInfoVOMbr = null
+                            },
+                            onCanceled = {
+                                shownDialogInfoVOMbr = null
+                            }
+                        )
+                } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                    shownDialogInfoVOMbr =
+                        DialogBinaryChoose.DialogInfoVO(
+                            false,
+                            "권한 요청",
+                            "권한 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                shownDialogInfoVOMbr = null
 
-            resultLauncherCallbackMbr = { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val goToGalleryIntent = result.data
+                                // 권한 설정 화면으로 이동
+                                val intent =
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                        data = Uri.fromParts("package", packageName, null)
+                                    }
 
-                    val selectedUri: Uri = goToGalleryIntent?.data!!
+                                resultLauncherCallbackMbr = {
+                                    // 설정 페이지 복귀시 콜백
+                                    var isPermissionAllGranted1 = true
+                                    for (activityPermission in permissionArray) {
+                                        if (ActivityCompat.checkSelfPermission(
+                                                this,
+                                                activityPermission
+                                            ) != PackageManager.PERMISSION_GRANTED
+                                        ) { // 거부된 필수 권한이 존재
+                                            // 권한 클리어 플래그를 변경하고 break
+                                            isPermissionAllGranted1 = false
+                                            break
+                                        }
+                                    }
 
-                    val gotoImageViewerIntent = Intent()
-                    gotoImageViewerIntent.action = Intent.ACTION_VIEW
-                    gotoImageViewerIntent.setDataAndType(selectedUri, "image/*")
-                    startActivity(gotoImageViewerIntent)
+                                    if (isPermissionAllGranted1) { // 권한 승인
+                                        goToGallery()
+                                    } else { // 권한 거부
+                                        shownDialogInfoVOMbr =
+                                            DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "권한 요청",
+                                                "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
+                                                null,
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr = null
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr = null
+                                                }
+                                            )
+                                    }
+                                }
+                                resultLauncherMbr.launch(intent)
+                            },
+                            onNegBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                shownDialogInfoVOMbr =
+                                    DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "권한 요청",
+                                        "해당 서비스를 이용하기 위해선\n외부 저장장치 접근 권한이 필요합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                        },
+                                        onCanceled = {
+                                            shownDialogInfoVOMbr = null
+                                        }
+                                    )
+                            },
+                            onCanceled = {}
+                        )
                 }
             }
-            resultLauncherMbr.launch(intent)
+
+            // 권한 요청
+            permissionRequestMbr.launch(permissionArray)
         }
     }
 
@@ -811,39 +902,38 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
     }
 
     // 시스템 카메라 시작 : 카메라 관련 권한이 충족된 상태
-    private var cameraImageFileMbr: File? = null
+    private var systemCameraImageTempFileMbr: File? = null // 시스템 카메라에서 가져온 이미지의 임시파일
     private fun startSystemCamera() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
         if (takePictureIntent.resolveActivity(packageManager) != null) {
-            // 내부 저장소 사진 파일 생성 (갤러리 추가)
-            val file = File.createTempFile("photo_", ".jpg", externalCacheDir)
+            systemCameraImageTempFileMbr = File.createTempFile(
+                "temp",  /* 파일이름 */
+                ".jpg",  /* 파일형식 */
+                cacheDir
+            )
 
-            // 카메라 앱에 내부 저장소 사진 파일 공유
-            val photoUri = FileProvider.getUriForFile(
+            val photoURI = FileProvider.getUriForFile(
                 this,
                 "$packageName.provider",
-                file
+                systemCameraImageTempFileMbr!!
             )
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
 
             resultLauncherCallbackMbr = {
                 if (it.resultCode == RESULT_OK) {
-                    cameraImageFileMbr = file
-
                     Glide.with(this)
-                        .load(UriAndPath.getUriFromPath(file.absolutePath))
+                        .load(systemCameraImageTempFileMbr!!.absoluteFile)
                         .transform(CenterCrop())
                         .into(bindingMbr.fileImg)
                 }
             }
-
             resultLauncherMbr.launch(takePictureIntent)
         } else {
             shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
                 true,
                 "시스템 카메라 사용 불가",
-                "기본 카메라 앱을\n실행할 수 없습니다.\n설치 여부를 확인해주세요.",
+                "기본 카메라 앱을\n실행할 수 없습니다.",
                 null,
                 onCheckBtnClicked = {
                     shownDialogInfoVOMbr = null
@@ -855,7 +945,86 @@ class ActivitySystemCameraPhotoSample : AppCompatActivity() {
         }
     }
 
+    // 갤러리 이동 후 이미지 선택
+    private fun goToGallery() {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        val mimeTypes = arrayOf("image/jpg", "image/jpeg", "image/png")
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+
+        resultLauncherCallbackMbr = {
+            if (it.resultCode == RESULT_OK) {
+                val selectedImageUri: Uri? = it.data!!.data
+
+                var cursor: Cursor? = null
+
+                try {
+                    val proj = arrayOf(MediaStore.Images.Media.DATA)
+                    assert(selectedImageUri != null)
+                    cursor =
+                        contentResolver.query(
+                            selectedImageUri!!,
+                            proj,
+                            null,
+                            null,
+                            null
+                        )
+                    assert(cursor != null)
+                    val columnIndex: Int =
+                        cursor!!.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+                    cursor.moveToFirst()
+                    val tempFile = File(cursor.getString(columnIndex))
+
+                    Glide.with(this)
+                        .load(tempFile)
+                        .transform(CenterCrop())
+                        .into(bindingMbr.fileImg)
+                } finally {
+                    cursor?.close()
+                }
+            }
+        }
+        resultLauncherMbr.launch(Intent.createChooser(intent, "사진 선택"))
+    }
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
+    // (클래스 비휘발 저장 객체)
+    class ActivitySystemCameraPhotoSampleSpw(application: Application) {
+        // <멤버 변수 공간>
+        // SharedPreference 접근 객체
+        private val spMbr = application.getSharedPreferences(
+            "ActivitySystemCameraPhotoSampleSpw",
+            Context.MODE_PRIVATE
+        )
+
+//        var testData: String?
+//            get() {
+//                return spMbr.getString(
+//                    "testData",
+//                    null
+//                )
+//            }
+//            set(value) {
+//                with(spMbr.edit()) {
+//                    putString(
+//                        "testData",
+//                        value
+//                    )
+//                    apply()
+//                }
+//            }
+
+
+        // ---------------------------------------------------------------------------------------------
+        // <중첩 클래스 공간>
+
+    }
+
+    // (액티비티 내 사용 어뎁터 모음)
+    // : 액티비티 내 사용할 어뎁터가 있다면 본문에 클래스 추가 후 인자로 해당 클래스의 인스턴스를 받도록 하기
+    class ActivitySystemCameraPhotoSampleAdapterSet {
+        // 어뎁터 #1
+
+    }
 }
