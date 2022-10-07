@@ -417,7 +417,6 @@ class ActivityBasicNotificationSample : AppCompatActivity() {
                 ActivityResultContracts.RequestMultiplePermissions()
             ) {
                 permissionRequestCallbackMbr?.let { it1 -> it1(it) }
-                permissionRequestCallbackMbr = null
             }
 
         // ActivityResultLauncher 생성
