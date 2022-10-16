@@ -122,13 +122,13 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
 
     // view binding
-    implementation 'com.android.databinding:viewbinding:7.3.0'
+    implementation 'com.android.databinding:viewbinding:7.3.1'
 
     // socket 라이브러리
     implementation 'com.squareup.okio:okio:3.0.0'
 
     // gps location
-    implementation 'com.google.android.gms:play-services-location:20.0.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.0'
 
     // csv 파일 읽기
     implementation 'com.opencsv:opencsv:5.7.0'
