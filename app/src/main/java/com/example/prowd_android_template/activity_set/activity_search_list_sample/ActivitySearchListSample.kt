@@ -450,6 +450,8 @@ class ActivitySearchListSample : AppCompatActivity() {
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
+        setAllSearchItemList()
+
         bindingMbr.searchBox.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {}
             override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {}
@@ -462,8 +464,7 @@ class ActivitySearchListSample : AppCompatActivity() {
                 adapterSetMbr.recyclerViewAdapter.setItemList(arrayListOf())
 
                 if (charText.isEmpty()) {
-                    bindingMbr.searchSampleList.visibility = View.GONE
-                    adapterSetMbr.recyclerViewAdapter.setItemList(arrayListOf())
+                    setAllSearchItemList()
                 } else {
                     // 리스트의 모든 데이터를 검색한다.
                     // csv 품종 리스트 불러오기 = 추천 검색 리스트 준비
@@ -495,7 +496,6 @@ class ActivitySearchListSample : AppCompatActivity() {
                     }
 
                     adapterSetMbr.recyclerViewAdapter.setItemList(itemList)
-                    bindingMbr.searchSampleList.visibility = View.VISIBLE
                 }
             }
         })
@@ -692,6 +692,32 @@ class ActivitySearchListSample : AppCompatActivity() {
         }
     }
 
+    private fun setAllSearchItemList() {
+        // 리스트의 모든 데이터를 검색한다.
+        // csv 품종 리스트 불러오기 = 추천 검색 리스트 준비
+        var kindList = ArrayList<String>()
+        for (content in CSVReader(InputStreamReader(assets.open("dog_kind.csv"))).readAll()) {
+            kindList.add(content.toList()[0].toString())
+        }
+
+        kindList =
+            kindList.filter { x: String? -> x != null && x != "" } as ArrayList<String>
+
+        // 리스트에서 검색어 추려내기
+        val itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO> =
+            arrayListOf()
+        for (i in 0 until kindList.size) {
+            itemList.add(
+                ActivitySearchListSampleAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                    kindList[i]
+                )
+            )
+        }
+
+        adapterSetMbr.recyclerViewAdapter.setItemList(itemList)
+    }
+
 
     // ---------------------------------------------------------------------------------------------
     // <중첩 클래스 공간>
@@ -874,7 +900,6 @@ class ActivitySearchListSample : AppCompatActivity() {
 
                         binding.root.setOnClickListener {
                             parentViewMbr.bindingMbr.searchBox.setText(copyEntity.searchResult)
-                            parentViewMbr.bindingMbr.searchSampleList.visibility = View.GONE
                         }
                     }
 
