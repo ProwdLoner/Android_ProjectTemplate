@@ -209,7 +209,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
             //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
             //     1 이외의 상태값에서 item 은 null
             val getHeaderItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterHeaderAbstractVO?) -> Unit =
-                { statusCode, item ->
+                { statusCode, _ ->
                     parentActivityMbr.runOnUiThread {
                         // (c9. 로더 제거)
                     }
@@ -240,7 +240,7 @@ class FragmentActivityBasicBottomSheetNavigationSampleFragment1 : Fragment() {
             //     서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
             //     1 이외의 상태값에서 item 은 null
             val getFooterItemOnComplete: (statusCode: Int, item: AbstractProwdRecyclerViewAdapter.AdapterFooterAbstractVO?) -> Unit =
-                { statusCode, item ->
+                { statusCode, _ ->
                     parentActivityMbr.runOnUiThread {
                         // (c13. 로더 제거)
                     }

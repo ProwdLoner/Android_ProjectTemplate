@@ -16,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
+import com.example.prowd_android_template.activity_set.activity_pinch_image_view_list_sample.ActivityPinchImageViewListSample
 import com.example.prowd_android_template.activity_set.activity_pinch_image_view_sample.ActivityPinchImageViewSample
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
@@ -435,6 +436,15 @@ class ActivityMediaPlayerSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityPinchImageViewSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToPinchImageViewListSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityPinchImageViewListSample::class.java
                 )
             startActivity(intent)
         }

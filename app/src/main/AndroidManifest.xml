@@ -33,9 +33,17 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".activity_set.activity_pinch_image_list_viewer.ActivityPinchImageListViewer"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_pinch_image_view_list_sample.ActivityPinchImageViewListSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_thread_confluence_obj_sample.ActivityThreadConfluenceObjSample"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".activity_set.activity_system_camera_video_sample.ActivitySystemCameraVideoSample"
             android:configChanges="keyboardHidden|orientation|screenSize"

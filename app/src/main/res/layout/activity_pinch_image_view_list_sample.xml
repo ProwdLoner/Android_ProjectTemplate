@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -34,7 +35,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:fontFamily="@font/apple_sd_gothic_neo_sb"
-                android:text="미디어 플레이어 샘플 목록"
+                android:text="핀치 이미지 뷰 리스트 샘플"
                 android:textColor="#FFFFFFFF"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -63,26 +64,66 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <Button
-                    android:id="@+id/go_to_pinch_image_view_sample_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="핀치 이미지 뷰 샘플"
-                    app:layout_constraintEnd_toEndOf="parent"
+                <View
+                    android:id="@+id/image_box"
+                    android:layout_width="75dp"
+                    android:layout_height="75dp"
+                    android:layout_marginStart="20dp"
+                    android:background="@drawable/layer_list_layout_activity_pinch_image_view_list_sample_image_box"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <Button
-                    android:id="@+id/go_to_pinch_image_view_list_sample_btn"
+                <ImageView
+                    android:id="@+id/camera_icon"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:src="@drawable/img_layout_activity_pinch_image_view_list_sample_image_plus_btn"
+                    app:layout_constraintBottom_toBottomOf="@id/image_box"
+                    app:layout_constraintEnd_toEndOf="@id/image_box"
+                    app:layout_constraintStart_toStartOf="@id/image_box"
+                    app:layout_constraintTop_toTopOf="@id/image_box" />
+
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="핀치 이미지 뷰 리스트 샘플"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="@id/image_box"
+                    app:layout_constraintStart_toStartOf="@id/image_box"
+                    app:layout_constraintTop_toBottomOf="@id/camera_icon">
+
+                    <TextView
+                        android:id="@+id/image_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:text="0"
+                        android:textColor="#ac4609"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/image_max_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:text="/10"
+                        android:textColor="#FF6d6f71"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_view"
+                    android:layout_width="0dp"
+                    android:layout_height="80dp"
+                    android:layout_marginStart="10dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:paddingEnd="10dp"
+                    app:layout_constraintBottom_toBottomOf="@id/image_box"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/go_to_pinch_image_view_sample_btn" />
+                    app:layout_constraintStart_toEndOf="@id/image_box"
+                    tools:itemCount="1"
+                    tools:listitem="@layout/item_activity_pinch_image_view_list_sample_item1" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView>
