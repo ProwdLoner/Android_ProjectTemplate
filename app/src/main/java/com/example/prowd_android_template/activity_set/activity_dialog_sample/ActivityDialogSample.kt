@@ -19,10 +19,7 @@ import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
-import com.example.prowd_android_template.custom_view.DialogBinaryChoose
-import com.example.prowd_android_template.custom_view.DialogConfirm
-import com.example.prowd_android_template.custom_view.DialogProgressLoading
-import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
+import com.example.prowd_android_template.custom_view.*
 import com.example.prowd_android_template.databinding.ActivityDialogSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
@@ -595,6 +592,47 @@ class ActivityDialogSample : AppCompatActivity() {
                         ).show()
                     }
                 )
+        }
+
+        bindingMbr.testBottomSheetDialogFragmentSelector1Btn.setOnClickListener {
+            val bottomSheetDialogFragmentItemSelector1 =
+                BottomSheetDialogFragmentItemSelector1(
+                    "테스트",
+                    arrayListOf(
+                        BottomSheetDialogFragmentItemSelector1.Item(
+                            "테스트1"
+                        ) {
+                            Toast.makeText(
+                                this,
+                                "BottomSheetDialogFragmentItemSelector1? - 1",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        BottomSheetDialogFragmentItemSelector1.Item(
+                            "테스트2"
+                        ) {
+                            Toast.makeText(
+                                this,
+                                "BottomSheetDialogFragmentItemSelector1? - 2",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        BottomSheetDialogFragmentItemSelector1.Item(
+                            "테스트3"
+                        ) {
+                            Toast.makeText(
+                                this,
+                                "BottomSheetDialogFragmentItemSelector1? - 3",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
+                )
+
+            bottomSheetDialogFragmentItemSelector1.show(
+                supportFragmentManager,
+                bottomSheetDialogFragmentItemSelector1.tag
+            )
         }
     }
 
