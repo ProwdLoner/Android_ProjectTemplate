@@ -19,7 +19,7 @@
         android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions" /> <!-- OS 세팅 조작 권한 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- 포그라운드 서비스 권한 -->
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" /><!-- 전체화면 및 노출 노티피케이션 권한 -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
         android:allowBackup="false"
@@ -32,6 +32,10 @@
         android:theme="@style/Theme.Application"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".activity_set.activity_thread_confluence_obj_sample.ActivityThreadConfluenceObjSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false"/>
         <activity
             android:name=".activity_set.activity_system_camera_video_sample.ActivitySystemCameraVideoSample"
             android:configChanges="keyboardHidden|orientation|screenSize"
