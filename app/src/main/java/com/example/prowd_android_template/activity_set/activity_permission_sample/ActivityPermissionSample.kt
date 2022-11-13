@@ -8,14 +8,17 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.view.View
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
@@ -1136,6 +1139,92 @@ class ActivityPermissionSample : AppCompatActivity() {
                     )
             }
         }
+
+        // API 레벨 30이상 외부 저장소 읽기 쓰기 권한
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            bindingMbr.manageAllFilesPermissionContainer.visibility = View.VISIBLE
+
+            bindingMbr.manageAllFilesPermissionSwitch.setOnClickListener {
+                bindingMbr.manageAllFilesPermissionSwitch.isEnabled = false
+                bindingMbr.manageAllFilesPermissionSwitch.isClickable = false
+
+                if (bindingMbr.manageAllFilesPermissionSwitch.isChecked) { // 체크시
+                    shownDialogInfoVOMbr =
+                        DialogBinaryChoose.DialogInfoVO(
+                            false,
+                            "권한 요청",
+                            "권한 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                // 권한 설정 페이지 이동
+                                val intent = Intent(
+                                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                    Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+                                )
+
+                                bindingMbr.manageAllFilesPermissionSwitch.isEnabled = true
+                                bindingMbr.manageAllFilesPermissionSwitch.isClickable = true
+                                resultLauncherCallbackMbr = {}
+                                resultLauncherMbr.launch(intent)
+                            },
+                            onNegBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                // 뷰 상태 되돌리기
+                                bindingMbr.manageAllFilesPermissionSwitch.isChecked = false
+
+                                bindingMbr.manageAllFilesPermissionSwitch.isEnabled = true
+                                bindingMbr.manageAllFilesPermissionSwitch.isClickable = true
+                            },
+                            onCanceled = {
+                                // 취소 불가
+                            }
+                        )
+                } else {
+                    shownDialogInfoVOMbr =
+                        DialogBinaryChoose.DialogInfoVO(
+                            false,
+                            "권한 요청",
+                            "권한 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                bindingMbr.manageAllFilesPermissionSwitch.isEnabled = true
+                                bindingMbr.manageAllFilesPermissionSwitch.isClickable = true
+                                // 권한 설정 페이지 이동
+                                // onResume 시에 체크해서 판단하도록
+                                val intent = Intent(
+                                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                    Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+                                )
+                                resultLauncherCallbackMbr = {}
+                                resultLauncherMbr.launch(intent)
+
+                            },
+                            onNegBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                // 뷰 상태 되돌리기
+                                bindingMbr.manageAllFilesPermissionSwitch.isChecked = true
+
+                                bindingMbr.manageAllFilesPermissionSwitch.isEnabled = true
+                                bindingMbr.manageAllFilesPermissionSwitch.isClickable = true
+                            },
+                            onCanceled = {
+                                // 취소 불가
+                            }
+                        )
+                }
+            }
+        } else {
+            bindingMbr.manageAllFilesPermissionContainer.visibility = View.GONE
+            bindingMbr.manageAllFilesPermissionSwitch.setOnClickListener { }
+        }
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -1233,6 +1322,11 @@ class ActivityPermissionSample : AppCompatActivity() {
         }
 
         bindingMbr.writeSettingPermissionSwitch.isChecked = Settings.System.canWrite(this)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            bindingMbr.manageAllFilesPermissionSwitch.isChecked =
+                Environment.isExternalStorageManager()
+        }
     }
 
     // 화면 데이터 갱신관련 세마포어

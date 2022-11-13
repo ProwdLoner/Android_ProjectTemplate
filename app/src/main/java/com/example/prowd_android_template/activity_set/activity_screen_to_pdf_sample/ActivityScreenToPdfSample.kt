@@ -9,9 +9,11 @@ import android.content.res.Configuration
 import android.graphics.*
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
@@ -19,6 +21,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
@@ -439,8 +442,43 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
         bindingMbr.savePdfBtn.setOnClickListener {
-            // todo 권한 정리
-            captureScreen()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (!Environment.isExternalStorageManager()) {
+                    shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "외부 저장소 관리 권한",
+                        "PDF 파일 저장을 위하여 외부 저장소 관리 권한 설정이 필요합니다.",
+                        null,
+                        null,
+                        onPosBtnClicked = {
+                            val intent = Intent(
+                                ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+                            )
+
+                            resultLauncherCallbackMbr = {
+                                if (Environment.isExternalStorageManager()) {
+                                    captureScreen()
+                                }
+                            }
+                            resultLauncherMbr.launch(intent)
+                            shownDialogInfoVOMbr = null
+                        },
+                        onNegBtnClicked = {
+                            shownDialogInfoVOMbr = null
+
+                        },
+                        onCanceled = {
+                            shownDialogInfoVOMbr = null
+                        }
+                    )
+                } else {
+                    captureScreen()
+                }
+            } else {
+                // todo 권한 정리
+                captureScreen()
+            }
         }
     }
 
@@ -636,7 +674,13 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
         }
     }
 
-    private fun captureScreen(){
+    private fun captureScreen() {
+        shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+            false,
+            "처리중입니다.",
+            onCanceled = {}
+        )
+
         // screen to bitmap
         val screenBitmap = CustomUtil.getBitmapFromView(bindingMbr.capturedView)
 
@@ -673,6 +717,8 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
             Toast.LENGTH_SHORT
         ).show()
         pdfDocument.close()
+
+        shownDialogInfoVOMbr = null
 
         bindingMbr.test.visibility = View.VISIBLE
 
