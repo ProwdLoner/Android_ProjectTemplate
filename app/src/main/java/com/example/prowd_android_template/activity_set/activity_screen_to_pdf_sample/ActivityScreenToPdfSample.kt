@@ -1,5 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_screen_to_pdf_sample
 
+import android.app.Activity
 import android.app.Application
 import android.app.Dialog
 import android.content.Context
@@ -9,19 +10,14 @@ import android.content.res.Configuration
 import android.graphics.*
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.provider.Settings
-import android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
-import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.example.prowd_android_template.BuildConfig
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
@@ -33,11 +29,13 @@ import com.example.prowd_android_template.databinding.ActivityScreenToPdfSampleB
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import com.example.prowd_android_template.util_object.CustomUtil
-import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import kotlin.collections.ArrayList
 
 
 class ActivityScreenToPdfSample : AppCompatActivity() {
@@ -442,43 +440,69 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
         bindingMbr.savePdfBtn.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                if (!Environment.isExternalStorageManager()) {
-                    shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
-                        false,
-                        "외부 저장소 관리 권한",
-                        "PDF 파일 저장을 위하여 외부 저장소 관리 권한 설정이 필요합니다.",
-                        null,
-                        null,
-                        onPosBtnClicked = {
-                            val intent = Intent(
-                                ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                                Uri.parse("package:" + BuildConfig.APPLICATION_ID)
-                            )
+            shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                false,
+                "처리중입니다.",
+                onCanceled = {}
+            )
 
-                            resultLauncherCallbackMbr = {
-                                if (Environment.isExternalStorageManager()) {
-                                    captureScreen()
-                                }
-                            }
-                            resultLauncherMbr.launch(intent)
-                            shownDialogInfoVOMbr = null
-                        },
-                        onNegBtnClicked = {
-                            shownDialogInfoVOMbr = null
+            // screen to bitmap
+            val screenBitmap = CustomUtil.getBitmapFromView(bindingMbr.capturedView)
 
-                        },
-                        onCanceled = {
+            // bitmap to pdf document
+            val pdfDocument = PdfDocument()
+
+            val pageInfo = PdfDocument.PageInfo.Builder(
+                screenBitmap.width,
+                screenBitmap.height,
+                1
+            ).create()
+
+            val page = pdfDocument.startPage(pageInfo)
+
+            val canvas = page.canvas
+            val paint = Paint()
+            paint.color = Color.parseColor("#FFFFFF")
+            canvas.drawPaint(paint)
+            paint.color = Color.BLUE
+
+            canvas.drawBitmap(screenBitmap, 0f, 0f, null)
+            pdfDocument.finishPage(page)
+
+            // 공유 폴더 저장용 빈 파일 생성
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/pdf"
+
+                val hintFileName = SimpleDateFormat(
+                    "yyyyMMdd_HHmmss",
+                    Locale.getDefault()
+                ).format(System.currentTimeMillis()) + ".pdf"
+                putExtra(Intent.EXTRA_TITLE, hintFileName)
+            }
+
+            // pdf document 를 공유폴더에 저장
+            resultLauncherCallbackMbr = { activityResult ->
+                if (activityResult.resultCode == Activity.RESULT_OK) {
+                    activityResult.data?.data?.let { uri ->
+                        contentResolver.openFileDescriptor(uri, "w")?.use {
+                            pdfDocument.writeTo(FileOutputStream(it.fileDescriptor))
+
+                            Toast.makeText(
+                                this,
+                                "Documents 폴더에 PDF 파일을 저장했습니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            pdfDocument.close()
+
                             shownDialogInfoVOMbr = null
                         }
-                    )
+                    }
                 } else {
-                    captureScreen()
+                    shownDialogInfoVOMbr = null
                 }
-            } else {
-                // todo 권한 정리
-                captureScreen()
             }
+            resultLauncherMbr.launch(intent)
         }
     }
 
@@ -672,59 +696,6 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
             // (c20. 그외 스크린 데이터 가져오기)
 
         }
-    }
-
-    private fun captureScreen() {
-        shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
-            false,
-            "처리중입니다.",
-            onCanceled = {}
-        )
-
-        // screen to bitmap
-        val screenBitmap = CustomUtil.getBitmapFromView(bindingMbr.capturedView)
-
-        // bitmap to pdf document
-        val pdfDocument = PdfDocument()
-
-        val pageInfo = PdfDocument.PageInfo.Builder(
-            screenBitmap.width,
-            screenBitmap.height,
-            1
-        ).create()
-
-        val page = pdfDocument.startPage(pageInfo)
-
-        val canvas = page.canvas
-        val paint = Paint()
-        paint.color = Color.parseColor("#FFFFFF")
-        canvas.drawPaint(paint)
-        paint.color = Color.BLUE
-
-        canvas.drawBitmap(screenBitmap, 0f, 0f, null)
-        pdfDocument.finishPage(page)
-
-        // PDF document to file (Documents 에 저장)
-        val file = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-            "example.pdf"
-        )
-        pdfDocument.writeTo(FileOutputStream(file))
-
-        Toast.makeText(
-            this,
-            "Documents 폴더에 PDF 파일을 저장했습니다.",
-            Toast.LENGTH_SHORT
-        ).show()
-        pdfDocument.close()
-
-        shownDialogInfoVOMbr = null
-
-        bindingMbr.test.visibility = View.VISIBLE
-
-        bindingMbr.test
-            .fromFile(file)
-            .load()
     }
 
 
