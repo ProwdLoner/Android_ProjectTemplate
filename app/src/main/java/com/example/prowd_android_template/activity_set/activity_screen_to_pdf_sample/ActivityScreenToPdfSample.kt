@@ -1,7 +1,5 @@
 package com.example.prowd_android_template.activity_set.activity_screen_to_pdf_sample
 
-import android.Manifest
-import android.R
 import android.app.Application
 import android.app.Dialog
 import android.content.Context
@@ -12,6 +10,7 @@ import android.graphics.*
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
@@ -20,8 +19,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
@@ -147,12 +144,6 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
 
         // (초기 뷰 설정)
         onCreateInitView()
-
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-            PackageManager.PERMISSION_GRANTED
-        )
     }
 
     override fun onResume() {
@@ -451,12 +442,7 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
             // screen to bitmap
             val screenBitmap = CustomUtil.getBitmapFromView(bindingMbr.capturedView)
 
-//            Glide.with(this)
-//                .load(screenBitmap)
-//                .transform(CenterCrop())
-//                .into(bindingMbr.test)
-
-            // todo
+            // bitmap to pdf document
             val pdfDocument = PdfDocument()
 
             val pageInfo = PdfDocument.PageInfo.Builder(
@@ -476,20 +462,23 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
             canvas.drawBitmap(screenBitmap, 0f, 0f, null)
             pdfDocument.finishPage(page)
 
-            // PDF 파일 저장
-            val file = File(cacheDir, "GFG.pdf")
+            // todo 권한 정리
+            // PDF document to file (Documents 에 저장)
+            val file = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+                "example.pdf"
+            )
             pdfDocument.writeTo(FileOutputStream(file))
 
             Toast.makeText(
                 this,
-                "PDF file generated successfully.",
+                "Documents 폴더에 PDF 파일을 저장했습니다.",
                 Toast.LENGTH_SHORT
             ).show()
             pdfDocument.close()
 
             bindingMbr.test.visibility = View.VISIBLE
 
-            // todo
             bindingMbr.test
                 .fromFile(file)
                 .load()
