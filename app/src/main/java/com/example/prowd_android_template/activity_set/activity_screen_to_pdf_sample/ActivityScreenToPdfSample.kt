@@ -439,49 +439,8 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
         bindingMbr.savePdfBtn.setOnClickListener {
-            // screen to bitmap
-            val screenBitmap = CustomUtil.getBitmapFromView(bindingMbr.capturedView)
-
-            // bitmap to pdf document
-            val pdfDocument = PdfDocument()
-
-            val pageInfo = PdfDocument.PageInfo.Builder(
-                screenBitmap.width,
-                screenBitmap.height,
-                1
-            ).create()
-
-            val page = pdfDocument.startPage(pageInfo)
-
-            val canvas = page.canvas
-            val paint = Paint()
-            paint.color = Color.parseColor("#FFFFFF")
-            canvas.drawPaint(paint)
-            paint.color = Color.BLUE
-
-            canvas.drawBitmap(screenBitmap, 0f, 0f, null)
-            pdfDocument.finishPage(page)
-
             // todo 권한 정리
-            // PDF document to file (Documents 에 저장)
-            val file = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                "example.pdf"
-            )
-            pdfDocument.writeTo(FileOutputStream(file))
-
-            Toast.makeText(
-                this,
-                "Documents 폴더에 PDF 파일을 저장했습니다.",
-                Toast.LENGTH_SHORT
-            ).show()
-            pdfDocument.close()
-
-            bindingMbr.test.visibility = View.VISIBLE
-
-            bindingMbr.test
-                .fromFile(file)
-                .load()
+            captureScreen()
         }
     }
 
@@ -675,6 +634,51 @@ class ActivityScreenToPdfSample : AppCompatActivity() {
             // (c20. 그외 스크린 데이터 가져오기)
 
         }
+    }
+
+    private fun captureScreen(){
+        // screen to bitmap
+        val screenBitmap = CustomUtil.getBitmapFromView(bindingMbr.capturedView)
+
+        // bitmap to pdf document
+        val pdfDocument = PdfDocument()
+
+        val pageInfo = PdfDocument.PageInfo.Builder(
+            screenBitmap.width,
+            screenBitmap.height,
+            1
+        ).create()
+
+        val page = pdfDocument.startPage(pageInfo)
+
+        val canvas = page.canvas
+        val paint = Paint()
+        paint.color = Color.parseColor("#FFFFFF")
+        canvas.drawPaint(paint)
+        paint.color = Color.BLUE
+
+        canvas.drawBitmap(screenBitmap, 0f, 0f, null)
+        pdfDocument.finishPage(page)
+
+        // PDF document to file (Documents 에 저장)
+        val file = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+            "example.pdf"
+        )
+        pdfDocument.writeTo(FileOutputStream(file))
+
+        Toast.makeText(
+            this,
+            "Documents 폴더에 PDF 파일을 저장했습니다.",
+            Toast.LENGTH_SHORT
+        ).show()
+        pdfDocument.close()
+
+        bindingMbr.test.visibility = View.VISIBLE
+
+        bindingMbr.test
+            .fromFile(file)
+            .load()
     }
 
 
