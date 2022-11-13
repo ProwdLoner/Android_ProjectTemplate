@@ -158,4 +158,7 @@ dependencies {
 
     // 스와이프 리플래시 레이아웃
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // PDF 뷰어
+    implementation("com.github.barteksc:AndroidPdfViewer:2.3.0")
 }

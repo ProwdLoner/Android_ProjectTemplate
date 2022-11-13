@@ -22,3 +22,6 @@
 
 # retrofit 네트워크 통신을 위해, request api set 안의 모든 하위 폴더와 모든 클래스를 제외
 -keep public class com.example.prowd_android_template.repository.network_retrofit2.request_api_set.** { *; }
+
+# pdf Viewer 제외
+-keep class com.shockwave.**

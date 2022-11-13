@@ -194,6 +194,50 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/go_to_activity_search_list_sample_btn" />
 
+                <Button
+                    android:id="@+id/go_to_activity_screen_to_pdf_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="화면 -> PDF 파일 샘플"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_thread_confluence_obj_btn" />
+
+                <Button
+                    android:id="@+id/go_to_activity_pdf_viewer_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="PDF 뷰어 샘플"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_screen_to_pdf_sample_btn" />
+
+                <Button
+                    android:id="@+id/go_to_activity_view_to_bitmap_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="뷰 -> 비트맵 샘플"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_pdf_viewer_sample_btn" />
+
+                <Button
+                    android:id="@+id/go_to_activity_web_view_sample_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:fontFamily="@font/apple_sd_gothic_neo_r"
+                    android:text="웹뷰 샘플"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/go_to_activity_view_to_bitmap_sample_btn" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.example.prowd_android_template.custom_view.ScrollViewForInnerHorizontalScrollView>
 

@@ -33,6 +33,22 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".activity_set.activity_web_view_sample.ActivityWebViewSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_view_to_bitmap_sample.ActivityViewToBitmapSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_pdf_viewer_sample.ActivityPdfViewerSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_screen_to_pdf_sample.ActivityScreenToPdfSample"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_pinch_image_list_viewer.ActivityPinchImageListViewer"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />

@@ -24,10 +24,14 @@ import com.example.prowd_android_template.activity_set.activity_broadcast_receiv
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.activity_set.activity_dp_and_px_calculator.ActivityDpAndPxCalculator
 import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
+import com.example.prowd_android_template.activity_set.activity_pdf_viewer_sample.ActivityPdfViewerSample
 import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
+import com.example.prowd_android_template.activity_set.activity_screen_to_pdf_sample.ActivityScreenToPdfSample
 import com.example.prowd_android_template.activity_set.activity_search_list_sample.ActivitySearchListSample
 import com.example.prowd_android_template.activity_set.activity_thread_confluence_obj_sample.ActivityThreadConfluenceObjSample
 import com.example.prowd_android_template.activity_set.activity_touch_delegate_sample.ActivityTouchDelegateSample
+import com.example.prowd_android_template.activity_set.activity_view_to_bitmap_sample.ActivityViewToBitmapSample
+import com.example.prowd_android_template.activity_set.activity_web_view_sample.ActivityWebViewSample
 import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -547,6 +551,42 @@ class ActivityEtcSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityThreadConfluenceObjSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToActivityScreenToPdfSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityScreenToPdfSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToActivityPdfViewerSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityPdfViewerSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToActivityViewToBitmapSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityViewToBitmapSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToActivityWebViewSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityWebViewSample::class.java
                 )
             startActivity(intent)
         }

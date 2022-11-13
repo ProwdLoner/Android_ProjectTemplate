@@ -7,6 +7,7 @@ import android.content.res.AssetManager
 import android.content.res.TypedArray
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Point
 import android.media.MediaPlayer
 import android.util.Size
@@ -133,5 +134,24 @@ object CustomUtil {
                 }
             }
         }
+    }
+
+    fun getBitmapFromView(view: View): Bitmap {
+        val bitmap = Bitmap.createBitmap(
+            view.width, view.height, Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        view.draw(canvas)
+        return bitmap
+    }
+
+    fun getBitmapFromView(view: View, defaultColor: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(
+            view.width, view.height, Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(defaultColor)
+        view.draw(canvas)
+        return bitmap
     }
 }
