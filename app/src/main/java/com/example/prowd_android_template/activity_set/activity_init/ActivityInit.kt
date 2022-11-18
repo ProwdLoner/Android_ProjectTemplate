@@ -723,9 +723,10 @@ class ActivityInit : AppCompatActivity() {
                             val minUpdateVersionSplit = minUpdateVersion!!.split(".")
 
                             // 현재 버전이 서버 업데이트 기준 미달일 때에 강제 업데이트 수행
-                            val needUpdate =
-                                currVersionSplit[0].toInt() * 100 + currVersionSplit[1].toInt() * 10 + currVersionSplit[2].toInt() <
-                                        minUpdateVersionSplit[0].toInt() * 100 + minUpdateVersionSplit[1].toInt() * 10 + minUpdateVersionSplit[2].toInt()
+                            val needUpdate: Boolean =
+                                !(currVersionSplit[0].toInt() >= minUpdateVersionSplit[0].toInt() &&
+                                        currVersionSplit[1].toInt() >= minUpdateVersionSplit[1].toInt() &&
+                                        currVersionSplit[2].toInt() >= minUpdateVersionSplit[2].toInt())
 
                             if (needUpdate) { // 업데이트가 필요
                                 // 업데이트 여부를 묻고 종료
