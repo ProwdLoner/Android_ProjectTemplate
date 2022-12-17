@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <!-- (필요 디바이스 기능 설정) -->
     <!-- <uses-feature -->
     <!-- android:name="android.hardware.camera" -->
@@ -24,6 +25,7 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- 포그라운드 서비스 권한 -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:allowBackup="false"
@@ -36,6 +38,7 @@
         android:theme="@style/Theme.Application"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
         <activity
             android:name=".activity_set.activity_web_view_sample.ActivityWebViewSample"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -237,6 +240,14 @@
             android:name=".services.BackgroundServiceBroadcastTest"
             android:enabled="true"
             android:exported="true" />
+        <service
+            android:name=".services.FcmService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
 
         <provider
             android:name="androidx.core.content.FileProvider"
