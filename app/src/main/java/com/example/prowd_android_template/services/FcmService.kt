@@ -4,6 +4,7 @@ import android.app.NotificationManager
 import androidx.core.app.NotificationCompat
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.util_object.NotificationWrapper
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -12,6 +13,17 @@ import com.google.firebase.messaging.RemoteMessage
 // FCM 관련 설정은 build.gradle 에서의 종속성 설정과 AndroidManifest.xml 의 service 설정이 있고,
 // 파이어베이스 설정은 app 디렉토리 안의 google-services.json 파일을 발급받은 파일로 바꾸어 변경가능.
 class FcmService : FirebaseMessagingService() {
+    companion object {
+        fun getFcmTokenAsync(onSuccess: (token: String) -> Unit, onFailed: () -> Unit) {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onSuccess(task.result)
+                } else {
+                    onFailed()
+                }
+            }
+        }
+    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)

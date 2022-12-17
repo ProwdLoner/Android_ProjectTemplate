@@ -1225,6 +1225,123 @@ class ActivityPermissionSample : AppCompatActivity() {
             bindingMbr.manageAllFilesPermissionContainer.visibility = View.GONE
             bindingMbr.manageAllFilesPermissionSwitch.setOnClickListener { }
         }
+
+
+        // 알람 표시 권한
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bindingMbr.notificationPermissionContainer.visibility = View.VISIBLE
+
+            bindingMbr.notificationPermissionSwitch.setOnClickListener {
+                bindingMbr.notificationPermissionSwitch.isEnabled = false
+                bindingMbr.notificationPermissionSwitch.isClickable = false
+
+                if (bindingMbr.notificationPermissionSwitch.isChecked) { // 체크시
+                    // 권한 요청
+                    // 권한 요청 콜백
+                    val permissionArray: Array<String> =
+                        arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+                    permissionRequestCallbackMbr = { permissions ->
+                        // (거부된 권한 리스트)
+                        var isPermissionAllGranted = true // 모든 권한 승인여부
+                        var neverAskAgain = false // 다시묻지 않기 체크 여부
+                        for (permission in permissionArray) {
+                            if (!permissions[permission]!!) { // 필수 권한 거부
+                                // 모든 권한 승인여부 플래그를 변경하고 break
+                                isPermissionAllGranted = false
+                                neverAskAgain = !shouldShowRequestPermissionRationale(permission)
+                                break
+                            }
+                        }
+
+                        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+
+                            bindingMbr.notificationPermissionSwitch.isEnabled = true
+                            bindingMbr.notificationPermissionSwitch.isClickable = true
+                        } else if (!neverAskAgain) { // 단순 거부
+                            // 뷰 상태 되돌리기
+                            bindingMbr.notificationPermissionSwitch.isChecked = false
+
+                            bindingMbr.notificationPermissionSwitch.isEnabled = true
+                            bindingMbr.notificationPermissionSwitch.isClickable = true
+                        } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                            shownDialogInfoVOMbr =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 권한 설정 화면으로 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                data = Uri.fromParts("package", packageName, null)
+                                            }
+
+                                        bindingMbr.notificationPermissionSwitch.isEnabled = true
+                                        bindingMbr.notificationPermissionSwitch.isClickable = true
+                                        resultLauncherCallbackMbr = {}
+                                        resultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 뷰 상태 되돌리기
+                                        bindingMbr.notificationPermissionSwitch.isChecked = false
+
+                                        bindingMbr.notificationPermissionSwitch.isEnabled = true
+                                        bindingMbr.notificationPermissionSwitch.isClickable = true
+                                    },
+                                    onCanceled = {}
+                                )
+                        }
+                    }
+
+                    // 권한 요청
+                    permissionRequestMbr.launch(permissionArray)
+                } else {
+                    // 체크 해제시
+                    // 권한 해제 다이얼로그
+                    shownDialogInfoVOMbr =
+                        DialogBinaryChoose.DialogInfoVO(
+                            false,
+                            "권한 해제",
+                            "권한 해제를 위해 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                // 권한 설정 페이지 이동
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                val uri = Uri.fromParts("package", packageName, null)
+                                intent.data = uri
+
+                                bindingMbr.notificationPermissionSwitch.isEnabled = true
+                                bindingMbr.notificationPermissionSwitch.isClickable = true
+                                resultLauncherCallbackMbr = {}
+                                resultLauncherMbr.launch(intent)
+                            },
+                            onNegBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                bindingMbr.notificationPermissionSwitch.isChecked = true
+
+                                bindingMbr.notificationPermissionSwitch.isEnabled = true
+                                bindingMbr.notificationPermissionSwitch.isClickable = true
+                            },
+                            onCanceled = {
+                                // 취소 불가
+                            }
+                        )
+                }
+            }
+        } else {
+            bindingMbr.notificationPermissionContainer.visibility = View.GONE
+        }
+
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -1326,6 +1443,15 @@ class ActivityPermissionSample : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             bindingMbr.manageAllFilesPermissionSwitch.isChecked =
                 Environment.isExternalStorageManager()
+        }
+
+        // 알람 표시 권한 설정 여부 반영
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bindingMbr.notificationPermissionSwitch.isChecked =
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
         }
     }
 
