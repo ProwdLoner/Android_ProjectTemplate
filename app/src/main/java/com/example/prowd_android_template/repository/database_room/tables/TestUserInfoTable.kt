@@ -8,7 +8,7 @@ class TestUserInfoTable {
     @Entity(tableName = "test_user")
     data class TableVo(
         @ColumnInfo(name = "user_type")
-        val userType: Int, // 0 : 비회원, 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
+        val userType: Int, // CurrentLoginSessionInfoSpw 수록
 
         @ColumnInfo(name = "id")
         val id: String, // 이메일 로그인이면 이메일, SNS 로그인이면 SNS Id

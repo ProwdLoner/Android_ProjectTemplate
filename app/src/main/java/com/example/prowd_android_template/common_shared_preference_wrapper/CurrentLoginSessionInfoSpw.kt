@@ -34,7 +34,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
 
     // (loginType)
     // 코드
-    // 0 : 비회원, 1 : 이메일 회원, 2 : google, 3 : kakao, 4 : naver
+    // 0 : 비회원, 1 : 이메일 회원, 2 : google
     var loginType: Int
         get() {
             return spMbr.getInt(
