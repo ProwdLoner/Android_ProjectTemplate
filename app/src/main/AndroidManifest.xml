@@ -25,7 +25,7 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- 포그라운드 서비스 권한 -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/> <!-- 노티피케이션 알람 표시 권한 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/> <!-- API 33 이상 노티피케이션 알람 표시 권한 -->
 
     <application
         android:allowBackup="false"

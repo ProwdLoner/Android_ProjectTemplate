@@ -449,72 +449,6 @@ class ActivityPermissionSample : AppCompatActivity() {
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
         // (리스너 설정)
-        // 푸시 알람 권한
-        bindingMbr.pushPermissionSwitch.setOnClickListener {
-            bindingMbr.pushPermissionSwitch.isEnabled = false
-            bindingMbr.pushPermissionSwitch.isClickable = false
-
-            if (bindingMbr.pushPermissionSwitch.isChecked) { // 체크시
-                // 권한 승인 여부 다이얼로그
-                shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
-                    false,
-                    "서비스 알림 수신 권한",
-                    "서비스 알림을 수신하시겠습니까?",
-                    null,
-                    null,
-                    onPosBtnClicked = { // 권한 승인
-                        shownDialogInfoVOMbr = null
-
-                        // 변경 상태저장
-                        customPermissionSpwMbr.pushPermissionGranted = true
-
-                        bindingMbr.pushPermissionSwitch.isEnabled = true
-                        bindingMbr.pushPermissionSwitch.isClickable = true
-                    },
-                    onNegBtnClicked = {
-                        shownDialogInfoVOMbr = null
-
-                        // 뷰 상태 되돌리기
-                        bindingMbr.pushPermissionSwitch.isChecked = false
-
-                        bindingMbr.pushPermissionSwitch.isEnabled = true
-                        bindingMbr.pushPermissionSwitch.isClickable = true
-                    },
-                    onCanceled = {}
-                )
-            } else {
-                // 체크 해제시
-                // 권한 해제 다이얼로그
-                shownDialogInfoVOMbr =
-                    DialogBinaryChoose.DialogInfoVO(
-                        false,
-                        "서비스 알림 수신 권한 해제",
-                        "서비스 알림 수신 권한을 해제하시겠습니까?",
-                        null,
-                        null,
-                        onPosBtnClicked = {
-                            shownDialogInfoVOMbr = null
-
-                            // 변경 상태저장
-                            customPermissionSpwMbr.pushPermissionGranted = false
-
-                            bindingMbr.pushPermissionSwitch.isEnabled = true
-                            bindingMbr.pushPermissionSwitch.isClickable = true
-                        },
-                        onNegBtnClicked = {
-                            shownDialogInfoVOMbr = null
-
-                            // 뷰 상태 되돌리기
-                            bindingMbr.pushPermissionSwitch.isChecked = true
-
-                            bindingMbr.pushPermissionSwitch.isEnabled = true
-                            bindingMbr.pushPermissionSwitch.isClickable = true
-                        },
-                        onCanceled = {}
-                    )
-            }
-        }
-
         // 외부 저장소 읽기 권한
         bindingMbr.externalStorageReadPermissionSwitch.setOnClickListener {
             bindingMbr.externalStorageReadPermissionSwitch.isEnabled = false
@@ -1228,13 +1162,11 @@ class ActivityPermissionSample : AppCompatActivity() {
 
 
         // 알람 표시 권한
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            bindingMbr.notificationPermissionContainer.visibility = View.VISIBLE
+        bindingMbr.notificationPermissionSwitch.setOnClickListener {
+            bindingMbr.notificationPermissionSwitch.isEnabled = false
+            bindingMbr.notificationPermissionSwitch.isClickable = false
 
-            bindingMbr.notificationPermissionSwitch.setOnClickListener {
-                bindingMbr.notificationPermissionSwitch.isEnabled = false
-                bindingMbr.notificationPermissionSwitch.isClickable = false
-
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 if (bindingMbr.notificationPermissionSwitch.isChecked) { // 체크시
                     // 권한 요청
                     // 권한 요청 콜백
@@ -1337,9 +1269,67 @@ class ActivityPermissionSample : AppCompatActivity() {
                             }
                         )
                 }
+            } else {
+                if (bindingMbr.notificationPermissionSwitch.isChecked) { // 체크시
+                    // 권한 승인 여부 다이얼로그
+                    shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
+                        false,
+                        "서비스 알림 수신 권한",
+                        "서비스 알림을 수신하시겠습니까?",
+                        null,
+                        null,
+                        onPosBtnClicked = { // 권한 승인
+                            shownDialogInfoVOMbr = null
+
+                            // 변경 상태저장
+                            customPermissionSpwMbr.pushPermissionGranted = true
+
+                            bindingMbr.notificationPermissionSwitch.isEnabled = true
+                            bindingMbr.notificationPermissionSwitch.isClickable = true
+                        },
+                        onNegBtnClicked = {
+                            shownDialogInfoVOMbr = null
+
+                            // 뷰 상태 되돌리기
+                            bindingMbr.notificationPermissionSwitch.isChecked = false
+
+                            bindingMbr.notificationPermissionSwitch.isEnabled = true
+                            bindingMbr.notificationPermissionSwitch.isClickable = true
+                        },
+                        onCanceled = {}
+                    )
+                } else {
+                    // 체크 해제시
+                    // 권한 해제 다이얼로그
+                    shownDialogInfoVOMbr =
+                        DialogBinaryChoose.DialogInfoVO(
+                            false,
+                            "서비스 알림 수신 권한 해제",
+                            "서비스 알림 수신 권한을 해제하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                // 변경 상태저장
+                                customPermissionSpwMbr.pushPermissionGranted = false
+
+                                bindingMbr.notificationPermissionSwitch.isEnabled = true
+                                bindingMbr.notificationPermissionSwitch.isClickable = true
+                            },
+                            onNegBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                // 뷰 상태 되돌리기
+                                bindingMbr.notificationPermissionSwitch.isChecked = true
+
+                                bindingMbr.notificationPermissionSwitch.isEnabled = true
+                                bindingMbr.notificationPermissionSwitch.isClickable = true
+                            },
+                            onCanceled = {}
+                        )
+                }
             }
-        } else {
-            bindingMbr.notificationPermissionContainer.visibility = View.GONE
         }
 
     }
@@ -1381,9 +1371,6 @@ class ActivityPermissionSample : AppCompatActivity() {
 
     // (권한에 따라 스위치 반영)
     private fun setSwitchView() {
-        // 푸시 알람 권한 여부 반영
-        bindingMbr.pushPermissionSwitch.isChecked = customPermissionSpwMbr.pushPermissionGranted
-
         // 외부 저장소 읽기 권한 설정 여부 반영
         bindingMbr.externalStorageReadPermissionSwitch.isChecked =
             ActivityCompat.checkSelfPermission(
@@ -1452,6 +1439,10 @@ class ActivityPermissionSample : AppCompatActivity() {
                     this,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            bindingMbr.notificationPermissionSwitch.isChecked =
+                customPermissionSpwMbr.pushPermissionGranted
+
         }
     }
 
