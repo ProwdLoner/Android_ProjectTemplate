@@ -619,11 +619,7 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
                 bindingMbr.recyclerView,
                 true, // 세로 스크롤인지 가로 스크롤인지
                 1, // 이 개수를 늘리면 그리드 레이아웃으로 변화
-                onScrollReachTheEnd = {
-                    getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataList(
-                        onComplete = {}
-                    )
-                }
+                onScrollReachTheEnd = {}
             ))
 
         // SPW 객체 생성
@@ -844,6 +840,8 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
             //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
             executorServiceMbr.execute {
+                // todo
+
                 // 요청 대기시간 가정
                 Thread.sleep(1000)
 
@@ -880,130 +878,6 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
 
             // (c20. 그외 스크린 데이터 가져오기)
 
-        }
-    }
-
-    // ActivityFirebaseChatSampleLoginAdapterSet - RecyclerViewAdapter 의 다음 페이지 데이터 리스트 가져오기
-    // : serverItemUid 를 네트워크 요청에 입력하면 서버에선 해당 uid 이후의 데이터 리스트를 반환
-    private var getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
-        false
-
-    private fun getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataList(
-        onComplete: () -> Unit
-    ) {
-        if (getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr) {
-            return
-        }
-        getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
-            true
-
-        executorServiceMbr.execute {
-            screenDataSemaphoreMbr.acquire()
-
-            val cloneItemList1 =
-                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-
-            // 로더 추가
-            cloneItemList1.add(
-                ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.ItemLoader.ItemVO(
-                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr
-                )
-            )
-
-            runOnUiThread {
-                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList1)
-
-                val lastItemIdx = adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr
-
-                // 로더 추가시 스크롤을 내리기
-                bindingMbr.recyclerView.smoothScrollToPosition(lastItemIdx)
-            }
-
-            // (정보 요청 콜백)
-            // statusCode
-            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
-            //     1 이외의 상태값에서 itemList 는 null
-            val networkOnComplete: (statusCode: Int, itemList: ArrayList<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>?) -> Unit =
-                { statusCode, itemList ->
-                    val cloneItemList2 =
-                        adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-                    val beforeLastItemIdx =
-                        adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr
-
-                    // 로더 제거
-                    cloneItemList2.removeLast()
-                    runOnUiThread {
-                        adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList2)
-                    }
-
-                    when (statusCode) {
-                        1 -> {// 완료
-                            if (itemList!!.isEmpty()) { // 받아온 리스트가 비어있을 때
-                                getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
-                                    false
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            } else {
-                                // 받아온 아이템 추가
-                                cloneItemList2.addAll(itemList)
-                                runOnUiThread {
-                                    adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList2)
-                                    bindingMbr.recyclerView.scrollToPosition(beforeLastItemIdx)
-                                }
-
-                                getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
-                                    false
-                                screenDataSemaphoreMbr.release()
-                                onComplete()
-                            }
-                        }
-                        -1 -> { // 네트워크 에러
-
-                            getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
-                                false
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        else -> { // 그외 서버 에러
-
-                            getActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterNextPageDataListOnProgressMbr =
-                                false
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                    }
-                }
-
-            // 네트워크 요청
-            // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
-            //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
-            executorServiceMbr.execute {
-                // 요청 대기시간 가정
-                Thread.sleep(1000)
-
-                val lastItemServerUid = if (cloneItemList1.size < 1) { // 아이템 리스트에 실질적인 아이템이 없을 때,
-                    -1
-                } else {
-                    (cloneItemList1[cloneItemList1.lastIndex - 1] as
-                            ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
-                }
-
-                val resultObj =
-                    arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
-
-                for (idx in lastItemServerUid + 1..lastItemServerUid + 11) {
-                    val title = "item$idx"
-                    resultObj.add(
-                        ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                            idx,
-                            title
-                        )
-                    )
-                }
-
-                networkOnComplete(1, resultObj)
-            }
         }
     }
 
