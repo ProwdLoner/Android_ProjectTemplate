@@ -10,6 +10,7 @@ import android.content.res.Configuration
 import android.database.Cursor
 import android.media.MediaPlayer
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
@@ -609,7 +610,14 @@ class ActivitySystemCameraVideoSample : AppCompatActivity() {
         bindingMbr.goToGalleryBtn.setOnClickListener {
             // 외부 저장소 읽기 권한
             val permissionArray: Array<String> =
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    arrayOf(
+                        Manifest.permission.READ_MEDIA_IMAGES,
+                        Manifest.permission.READ_MEDIA_VIDEO
+                    )
+                } else {
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
             permissionRequestCallbackMbr = { permissions ->
                 // (거부된 권한 리스트)
                 var isPermissionAllGranted = true // 모든 권한 승인여부
