@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id("kotlin-parcelize") // 객체 직렬화
-    id 'com.google.gms.google-services' // FCM 추가
+    id 'com.google.gms.google-services' // firebase, google 서비스 관련
 }
 apply plugin: 'kotlin-kapt' // 추가
 
@@ -148,10 +148,18 @@ dependencies {
     // csv 파일 읽기
     implementation 'com.opencsv:opencsv:5.7.0'
 
+    // firebase
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation platform('com.google.firebase:firebase-bom:31.1.1')
+
     // FCM
     implementation 'com.google.firebase:firebase-messaging:23.1.1'
-    implementation platform('com.google.firebase:firebase-bom:31.1.1')
-    implementation 'com.google.firebase:firebase-analytics-ktx'
+
+    // firebase Auth
+    implementation 'com.google.firebase:firebase-auth:21.1.0'
+
+    // SNS OAuth2 Google Login
+    implementation 'com.google.android.gms:play-services-auth:20.4.0'
 
 
     // (뷰 라이브러리)

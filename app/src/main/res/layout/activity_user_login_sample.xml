@@ -119,21 +119,6 @@
                         android:textCursorDrawable="@null" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="자동 로그인"
-                    app:layout_constraintBottom_toBottomOf="@id/auto_login_check_box"
-                    app:layout_constraintEnd_toStartOf="@id/auto_login_check_box"
-                    app:layout_constraintTop_toTopOf="@id/auto_login_check_box" />
-
-                <CheckBox
-                    android:id="@+id/auto_login_check_box"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintEnd_toEndOf="@id/pw_text_input_layout"
-                    app:layout_constraintTop_toBottomOf="@id/pw_text_input_layout" />
-
                 <LinearLayout
                     android:id="@+id/login_container"
                     android:layout_width="wrap_content"
@@ -142,7 +127,7 @@
                     android:orientation="horizontal"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/auto_login_check_box">
+                    app:layout_constraintTop_toBottomOf="@id/pw_text_input_layout">
 
                     <TextView
                         android:id="@+id/go_to_find_pw_btn"
@@ -185,76 +170,12 @@
                     android:layout_marginTop="25dp"
                     android:background="#FF3D7DDC"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="로그인하기"
+                    android:text="이메일로 로그인"
                     android:textColor="#FFFFFFFF"
                     android:textSize="17sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/login_container" />
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/kakao_login_btn"
-                    android:layout_width="300dp"
-                    android:layout_height="45dp"
-                    android:layout_marginTop="35dp"
-                    android:background="@drawable/layer_list_layout_activity_user_login_sample_kakao_login_btn"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/email_login_btn">
-
-                    <com.example.prowd_android_template.custom_view.CircleImageView
-                        android:layout_width="25dp"
-                        android:layout_height="25dp"
-                        android:layout_marginStart="14.5dp"
-                        android:src="@drawable/img_activity_user_login_sample_kakao_login_btn"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/apple_sd_gothic_neo_r"
-                        android:text="카카오로 로그인"
-                        android:textColor="#FF000000"
-                        android:textSize="17sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/naver_login_btn"
-                    android:layout_width="300dp"
-                    android:layout_height="45dp"
-                    android:layout_marginTop="17dp"
-                    android:background="@drawable/layer_list_layout_activity_user_login_sample_naver_login_btn"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/kakao_login_btn">
-
-                    <com.example.prowd_android_template.custom_view.CircleImageView
-                        android:layout_width="25dp"
-                        android:layout_height="25dp"
-                        android:layout_marginStart="14.5dp"
-                        android:src="@drawable/img_activity_user_login_sample_naver_login_btn"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/apple_sd_gothic_neo_r"
-                        android:text="네이버로 로그인"
-                        android:textColor="#FF000000"
-                        android:textSize="17sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/google_login_btn"
@@ -264,7 +185,7 @@
                     android:background="@drawable/layer_list_layout_activity_user_login_sample_google_login_btn"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/naver_login_btn">
+                    app:layout_constraintTop_toBottomOf="@id/email_login_btn">
 
                     <com.example.prowd_android_template.custom_view.CircleImageView
                         android:layout_width="25dp"

@@ -200,7 +200,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/apple_sd_gothic_neo_r"
-                    android:text="화면 -> PDF 파일 샘플"
+                    android:text="화면 -> PDF 파일 샘플 (캡쳐 방식)"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/go_to_activity_thread_confluence_obj_btn" />

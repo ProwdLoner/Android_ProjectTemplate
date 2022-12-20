@@ -11,8 +11,6 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -22,15 +20,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
-import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityUserSignOutSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
-import com.example.prowd_android_template.application_session_service.UserSessionUtil
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -487,69 +487,111 @@ class ActivityUserSignOutSample : AppCompatActivity() {
                         currentLoginSessionInfoSpwMbr.loginType
 
                     // 회원탈퇴 처리
-                    UserSessionUtil.signOut(
-                        this,
-                        loginType,
-                        currentLoginSessionInfoSpwMbr.loginId!!,
-                        onComplete = { status ->
-                            when (status) {
-                                1 -> { // 회원탈퇴 완료
-                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                        false,
-                                        "회원탈퇴",
-                                        "회원탈퇴가 완료되었습니다.",
-                                        null,
-                                        onCheckBtnClicked = {
-                                            shownDialogInfoVOMbr = null
-                                            finish()
-                                        },
-                                        onCanceled = { }
-                                    )
-                                }
-                                3 -> { // 존재하지 않는 유저
-                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                        false,
-                                        "회원탈퇴",
-                                        "이미 탈퇴된 회원입니다.",
-                                        null,
-                                        onCheckBtnClicked = {
-                                            shownDialogInfoVOMbr = null
-                                            finish()
-                                        },
-                                        onCanceled = { }
-                                    )
-                                }
-                                -1 -> { // 네트워크 에러
-                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                        true,
-                                        "네트워크 불안정",
-                                        "현재 네트워크 연결이 불안정합니다.",
-                                        null,
-                                        onCheckBtnClicked = {
-                                            shownDialogInfoVOMbr = null
-                                        },
-                                        onCanceled = {
-                                            shownDialogInfoVOMbr = null
+
+                    // (정보 요청 콜백)
+                    val signOutCompleteCallback =
+                        { statusCode: Int ->
+                            runOnUiThread {
+                                when (statusCode) {
+                                    1 -> {// 회원탈퇴 완료
+                                        // 회원 처리
+                                        currentLoginSessionInfoSpwMbr.setLocalDataLogout()
+
+                                        // SNS 관련 로그아웃
+                                        when (loginType) {
+                                            2 -> { // 구글 로그인
+                                                // SNS 로그아웃 요청
+                                                val opt =
+                                                    GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                                        .build()
+                                                val client = GoogleSignIn.getClient(this, opt)
+                                                client.signOut()
+                                            }
                                         }
-                                    )
-                                }
-                                else -> { // 그외 서버 에러
-                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                        true,
-                                        "기술적 문제",
-                                        "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                        null,
-                                        onCheckBtnClicked = {
-                                            shownDialogInfoVOMbr = null
-                                        },
-                                        onCanceled = {
-                                            shownDialogInfoVOMbr = null
-                                        }
-                                    )
+
+                                        // SNS 로그아웃 완료
+                                        shownDialogInfoVOMbr =
+                                            DialogConfirm.DialogInfoVO(
+                                                false,
+                                                "회원탈퇴",
+                                                "회원탈퇴가 완료되었습니다.",
+                                                null,
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr = null
+                                                    finish()
+                                                },
+                                                onCanceled = { }
+                                            )
+                                    }
+                                    3 -> { // 존재하지 않는 유저
+                                        // 회원 처리
+                                        currentLoginSessionInfoSpwMbr.setLocalDataLogout()
+
+                                        // 존재하지 않는 유저
+                                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                            false,
+                                            "회원탈퇴",
+                                            "이미 탈퇴된 회원입니다.",
+                                            null,
+                                            onCheckBtnClicked = {
+                                                shownDialogInfoVOMbr = null
+                                                finish()
+                                            },
+                                            onCanceled = { }
+                                        )
+                                    }
+                                    -1 -> { // 네트워크 에러
+                                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "네트워크 불안정",
+                                            "현재 네트워크 연결이 불안정합니다.",
+                                            null,
+                                            onCheckBtnClicked = {
+                                                shownDialogInfoVOMbr = null
+                                            },
+                                            onCanceled = {
+                                                shownDialogInfoVOMbr = null
+                                            }
+                                        )
+                                    }
+                                    else -> { // 그외 서버 에러
+                                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                            true,
+                                            "기술적 문제",
+                                            "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                            null,
+                                            onCheckBtnClicked = {
+                                                shownDialogInfoVOMbr = null
+                                            },
+                                            onCanceled = {
+                                                shownDialogInfoVOMbr = null
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
-                    )
+
+                    // (회원탈퇴 요청)
+                    executorServiceMbr.execute {
+                        // 아래는 원래 네트워크 서버에서 처리하는 로직
+                        val userInfoList: List<TestUserInfoTable.TableDao.GetUserInfoForLoginOutput> =
+                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                .getUserInfoForLogin(
+                                    currentLoginSessionInfoSpwMbr.loginId!!,
+                                    loginType
+                                )
+
+                        if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
+                            signOutCompleteCallback(3)
+                        } else { // 회원정보 검증 완료
+                            // 회원 정보 삭제
+                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                .delete(userInfoList[0].uid)
+
+                            signOutCompleteCallback(1)
+                        }
+                    }
                 },
                 onNegBtnClicked = {
                     shownDialogInfoVOMbr = null

@@ -3,7 +3,6 @@ package com.example.prowd_android_template.util_object
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
@@ -18,23 +17,21 @@ object NotificationWrapper {
         setNotificationBuilderSpace: (NotificationCompat.Builder) -> Unit,
         notificationId: Int
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, channelName, channelImportance)
+        val channel = NotificationChannel(channelId, channelName, channelImportance)
 
-            // 채널 설정을 유저에게 넘기기
-            setChannelSpace(channel)
+        // 채널 설정을 유저에게 넘기기
+        setChannelSpace(channel)
 
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
-        }
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
 
         val notificationBuilderMbr = NotificationCompat.Builder(context, channelId)
 
         // notification 설정을 유저에게 넘기기
         setNotificationBuilderSpace(notificationBuilderMbr)
 
-        val notificationManager = NotificationManagerCompat.from(context)
-        notificationManager.notify(notificationId, notificationBuilderMbr.build())
+        val notificationManagerCompat = NotificationManagerCompat.from(context)
+        notificationManagerCompat.notify(notificationId, notificationBuilderMbr.build())
     }
 
     // (Notification 빌더 생성 및 반환)
@@ -45,15 +42,13 @@ object NotificationWrapper {
         channelImportance: Int,
         setChannelSpace: (NotificationChannel) -> Unit
     ): NotificationCompat.Builder {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, channelName, channelImportance)
+        val channel = NotificationChannel(channelId, channelName, channelImportance)
 
-            // 채널 설정을 유저에게 넘기기
-            setChannelSpace(channel)
+        // 채널 설정을 유저에게 넘기기
+        setChannelSpace(channel)
 
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
-        }
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
 
         return NotificationCompat.Builder(context, channelId)
     }
@@ -72,10 +67,8 @@ object NotificationWrapper {
         context: Context,
         channelId: String
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
-            notificationManager.deleteNotificationChannel(channelId)
-        }
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        notificationManager.deleteNotificationChannel(channelId)
 
     }
 }

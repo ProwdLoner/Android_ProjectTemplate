@@ -24,18 +24,15 @@ import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.activity_set.activity_user_login_sample.ActivityUserLoginSample
-import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
-import com.example.prowd_android_template.application_session_service.UserSessionUtil
+import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityEmailUserJoinSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -949,19 +946,26 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                     )
 
                     // 회원가입
-                    UserSessionUtil.userJoinToServer(
-                        this,
-                        UserSessionUtil.UserJoinInputVo(
-                            1,
-                            emailId,
-                            pwStr,
-                            nickNameStr
-                        ),
-                        onComplete = { statusCode: Int ->
-                            shownDialogInfoVOMbr = null
-
+                    // 회원가입 콜백
+                    val signInCallback = { statusCode: Int ->
+                        runOnUiThread {
                             when (statusCode) {
+                                -1 -> { // 네트워크 에러
+                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                        true,
+                                        "네트워크 불안정",
+                                        "현재 네트워크 연결이 불안정합니다.",
+                                        null,
+                                        onCheckBtnClicked = {
+                                            shownDialogInfoVOMbr = null
+                                        },
+                                        onCanceled = {
+                                            shownDialogInfoVOMbr = null
+                                        }
+                                    )
+                                }
                                 1 -> { // 회원 가입 완료
+                                    // 회원 가입 완료
                                     shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
                                         true,
                                         "회원가입 완료",
@@ -1010,21 +1014,6 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                                     bindingMbr.checkEmailVerification.visibility = View.GONE
                                     bindingMbr.userInputContainer.visibility = View.GONE
                                     bindingMbr.emailUserJoin.visibility = View.GONE
-
-                                }
-                                -1 -> { // 네트워크 에러
-                                    shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                        true,
-                                        "네트워크 불안정",
-                                        "현재 네트워크 연결이 불안정합니다.",
-                                        null,
-                                        onCheckBtnClicked = {
-                                            shownDialogInfoVOMbr = null
-                                        },
-                                        onCanceled = {
-                                            shownDialogInfoVOMbr = null
-                                        }
-                                    )
                                 }
                                 else -> { // 그외 서버 에러
                                     shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
@@ -1042,7 +1031,30 @@ class ActivityEmailUserJoinSample : AppCompatActivity() {
                                 }
                             }
                         }
-                    )
+                    }
+
+                    // 회원가입 요청
+                    executorServiceMbr.execute {
+                        // 아래는 원래 네트워크 서버에서 처리하는 로직
+                        // 이메일 중복검사
+                        val emailCount =
+                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                .getIdCount(emailId, 1)
+
+                        if (emailCount != 0) { // 아이디 중복
+                            signInCallback(3)
+                        } else {
+                            repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao().insert(
+                                TestUserInfoTable.TableVo(
+                                    1,
+                                    emailId,
+                                    nickNameStr,
+                                    pwStr
+                                )
+                            )
+                            signInCallback(1)
+                        }
+                    }
                 }
             }
         }

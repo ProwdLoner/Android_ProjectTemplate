@@ -67,11 +67,11 @@
                     android:id="@+id/user_info_container"
                     android:layout_width="250dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
                     android:background="@drawable/layer_list_activity_user_sample_list_user_info_container"
                     android:paddingStart="20dp"
                     android:paddingTop="10dp"
                     android:paddingEnd="20dp"
-                    android:layout_marginTop="10dp"
                     android:paddingBottom="10dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -190,12 +190,15 @@
 
                     <TextView
                         android:id="@+id/pw"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
+                        android:ellipsize="end"
                         android:fontFamily="@font/apple_sd_gothic_neo_r"
+                        android:maxLines="2"
                         android:textColor="#FF000000"
                         app:layout_constraintBottom_toBottomOf="@id/pw_label"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/pw_label"
                         app:layout_constraintTop_toTopOf="@id/pw_label" />
 

@@ -1,4 +1,4 @@
-package com.example.prowd_android_template.application_session_service
+package com.example.prowd_android_template.common_shared_preference_wrapper
 
 import android.app.Application
 import android.content.Context
@@ -221,7 +221,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
 
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
-    fun setLogin(
+    fun setLocalDataLogin(
         isAutoLogin: Boolean,
         loginType: Int,
         loginId: String,
@@ -246,7 +246,7 @@ class CurrentLoginSessionInfoSpw(application: Application) {
     }
 
     // (현 앱 상태를 로그아웃으로 만드는 함수)
-    fun setLogout() {
+    fun setLocalDataLogout() {
         this.isAutoLogin = false
         this.loginType = 0
         this.loginId = null

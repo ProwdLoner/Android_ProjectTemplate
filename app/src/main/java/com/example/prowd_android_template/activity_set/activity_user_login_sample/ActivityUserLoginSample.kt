@@ -1,5 +1,6 @@
 package com.example.prowd_android_template.activity_set.activity_user_login_sample
 
+import android.app.Activity
 import android.app.Application
 import android.app.Dialog
 import android.content.Context
@@ -8,7 +9,6 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
@@ -19,22 +19,28 @@ import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
 import com.example.prowd_android_template.activity_set.activity_email_user_join_sample.ActivityEmailUserJoinSample
-import com.example.prowd_android_template.application_session_service.CurrentLoginSessionInfoSpw
+import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
 import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityUserLoginSampleBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.repository.database_room.tables.TestUserInfoTable
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
-import com.example.prowd_android_template.application_session_service.UserSessionUtil
+import com.google.android.gms.auth.api.Auth
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+
 
 // 유저 로그인 샘플
 // : SNS OAuth 로그인은 서비스시 따로 구현이 필요
@@ -133,6 +139,9 @@ class ActivityUserLoginSample : AppCompatActivity() {
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+
+    // 구글 로그인 객체
+    lateinit var googleSignInClient: GoogleSignInClient
 
 
     // ---------------------------------------------------------------------------------------------
@@ -456,6 +465,14 @@ class ActivityUserLoginSample : AppCompatActivity() {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
         }
 
+        googleSignInClient = GoogleSignIn.getClient(
+            this,
+            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                // firebase 콘솔 - 안드로이드 해당 프로젝트 - Authentication - sign-in-method - google 로그인 안의 웹 클라이언트 아이디
+                .requestIdToken("858569574580-9buovt0tteuavt71o2jdvuee6d19o2qp.apps.googleusercontent.com")
+                .requestEmail()
+                .build()
+        )
     }
 
     // (초기 뷰 설정)
@@ -595,97 +612,595 @@ class ActivityUserLoginSample : AppCompatActivity() {
             )
 
             // 로그인 요청
-            UserSessionUtil.sessionLogIn(
-                this,
-                UserSessionUtil.SessionLogInInputVo(
-                    1,
-                    email,
-                    pw
-                ),
-                onComplete = { status ->
-                    shownDialogInfoVOMbr = null
+            // (정보 요청 콜백)
+            val loginCompleteCallback =
+                { statusCode: Int,
+                  userUid: Long?, // 클라이언트 내 현 유저 구분을 위한 고유 값
+                  userNickName: String?, // 닉네임은 다른 디바이스에서 변경이 가능하니 받아오기
+                  accessToken: String?,
+                  accessTokenExpireDate: String?,
+                  refreshToken: String?,
+                  refreshTokenExpireDate: String? ->
+                    runOnUiThread {
+                        when (statusCode) {
+                            -1 -> { // 네트워크 에러
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "네트워크 불안정",
+                                    "현재 네트워크 연결이 불안정합니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+                            1 -> {// 로그인 완료
+                                // 회원 처리
+                                currentLoginSessionInfoSpwMbr.setLocalDataLogin(
+                                    currentLoginSessionInfoSpwMbr.isAutoLogin,
+                                    1,
+                                    email,
+                                    pw,
+                                    userUid!!.toString(),
+                                    userNickName!!,
+                                    accessToken,
+                                    accessTokenExpireDate,
+                                    refreshToken,
+                                    refreshTokenExpireDate
+                                )
 
-                    when (status) {
-                        -1 -> { // 네트워크 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "네트워크 불안정",
-                                "현재 네트워크 연결이 불안정합니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
-                        }
-                        1 -> { // 로그인 검증됨
-                            currentLoginSessionInfoSpwMbr.isAutoLogin =
-                                bindingMbr.autoLoginCheckBox.isChecked
+                                // 로그인 검증됨
+                                currentLoginSessionInfoSpwMbr.isAutoLogin = true
 
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "로그인 완료",
-                                "로그인 되었습니다.",
-                                "닫기",
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                    finish()
-                                }
-                            )
-                        }
-                        2 -> { // 입력값 에러 = 일어나면 안되는 에러
-                            throw java.lang.Exception("login input error")
-                        }
-                        3 -> { // 가입된 회원이 아님
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "로그인 실패",
-                                "가입되지 않은 회원입니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
-                        }
-                        4 -> { // 로그인 정보 불일치
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "로그인 실패",
-                                "로그인 정보가 일치하지 않습니다.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
-                        }
-                        else -> { // 그외 서버 에러
-                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                true,
-                                "기술적 문제",
-                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                null,
-                                onCheckBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    shownDialogInfoVOMbr = null
-                                }
-                            )
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "로그인 완료",
+                                    "로그인 되었습니다.",
+                                    "닫기",
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                        finish()
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                        finish()
+                                    }
+                                )
+                            }
+                            2 -> { // 입력값 에러 = 일어나면 안되는 에러
+                                throw java.lang.Exception("login input error")
+                            }
+                            3 -> { // 가입된 회원이 아님
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "로그인 실패",
+                                    "가입되지 않은 회원입니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+                            4 -> { // 로그인 정보 불일치
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "로그인 실패",
+                                    "로그인 정보가 일치하지 않습니다.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
+                            else -> { // 그외 서버 에러
+                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                    true,
+                                    "기술적 문제",
+                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                    null,
+                                    onCheckBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+                                    },
+                                    onCanceled = {
+                                        shownDialogInfoVOMbr = null
+                                    }
+                                )
+                            }
                         }
                     }
                 }
+
+            // (로그인 요청)
+            // 서버에선 보내준 id, pw 를 가지고 적절한 검증 과정을 거치고 정보 반환
+            executorServiceMbr.execute {
+                // 아래는 원래 네트워크 서버에서 처리하는 로직
+                val userInfoList =
+                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                        .getUserInfoForLogin(
+                            email,
+                            1
+                        )
+
+                if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
+                    loginCompleteCallback(
+                        3,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                    )
+                } else {
+                    val uid = userInfoList[0].uid
+                    val nickname = userInfoList[0].nickName
+                    val password = userInfoList[0].password
+
+                    if (password != pw
+                    ) { // 이메일 로그인 비밀번호 불일치
+                        loginCompleteCallback(
+                            4,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                        )
+                    } else { // 검증 완료
+                        // jwt 사용시 access token, refresh token 발행
+                        // 여기선 jwt 를 구현하지 않았기에 null 반환
+                        loginCompleteCallback(
+                            1,
+                            uid,
+                            nickname,
+                            null,
+                            null,
+                            null,
+                            null
+                        )
+                    }
+                }
+            }
+        }
+
+        bindingMbr.googleLoginBtn.setOnClickListener {
+            // 구글 로그인을 하려면
+            // 1. firebase 콘솔에서 프로젝트를 등록하고 SHA1 을 등록한 후 얻은 google-services.json 파일을
+            //     프로젝트 앱 디렉토리에 붙여넣기
+            // 2. firebase 콘솔의 해당 프로젝트에서 Authentication - sign-in-method 에서 구글 로그인을 추가
+
+            resultLauncherCallbackMbr = {
+                if (it.resultCode == Activity.RESULT_OK) {
+                    val result = Auth.GoogleSignInApi.getSignInResultFromIntent(it.data!!)!!
+
+                    if (result.isSuccess) {
+                        val account = result.signInAccount!!
+                        val snsId = account.id!!
+                        val idToken = account.idToken!!
+                        val name = account.displayName!!
+//                        val email = account.email
+//                        val image = account.photoUrl.toString()
+//                        val credential = GoogleAuthProvider.getCredential(idToken, null)
+
+                        shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
+                            false,
+                            "로그인 중입니다.",
+                            onCanceled = {}
+                        )
+
+                        // 로그인 요청
+                        // (정보 요청 콜백)
+                        val loginCompleteCallback =
+                            { statusCode: Int,
+                              userUid: Long?, // 클라이언트 내 현 유저 구분을 위한 고유 값
+                              userNickName: String?, // 닉네임은 다른 디바이스에서 변경이 가능하니 받아오기
+                              accessToken: String?,
+                              accessTokenExpireDate: String?,
+                              refreshToken: String?,
+                              refreshTokenExpireDate: String? ->
+                                runOnUiThread {
+                                    when (statusCode) {
+                                        -1 -> { // 네트워크 에러
+                                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "네트워크 불안정",
+                                                "현재 네트워크 연결이 불안정합니다.",
+                                                null,
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr = null
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr = null
+                                                }
+                                            )
+                                        }
+                                        1 -> {// 로그인 완료
+                                            // 회원 처리
+                                            currentLoginSessionInfoSpwMbr.setLocalDataLogin(
+                                                currentLoginSessionInfoSpwMbr.isAutoLogin,
+                                                2,
+                                                snsId,
+                                                idToken,
+                                                userUid!!.toString(),
+                                                userNickName!!,
+                                                accessToken,
+                                                accessTokenExpireDate,
+                                                refreshToken,
+                                                refreshTokenExpireDate
+                                            )
+
+                                            // 로그인 검증됨
+                                            currentLoginSessionInfoSpwMbr.isAutoLogin = true
+
+                                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "로그인 완료",
+                                                "로그인 되었습니다.",
+                                                "닫기",
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr = null
+                                                    finish()
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr = null
+                                                    finish()
+                                                }
+                                            )
+                                        }
+                                        2 -> { // 입력값 에러 = 일어나면 안되는 에러
+                                            throw java.lang.Exception("login input error")
+                                        }
+                                        3 -> { // 가입된 회원이 아님
+                                            shownDialogInfoVOMbr =
+                                                DialogProgressLoading.DialogInfoVO(
+                                                    false,
+                                                    "",
+                                                    onCanceled = {}
+                                                )
+
+                                            // 회원가입
+                                            // 회원가입 콜백
+                                            val signInCallback = { statusCode: Int ->
+                                                runOnUiThread {
+                                                    when (statusCode) {
+                                                        -1 -> { // 네트워크 에러
+                                                            shownDialogInfoVOMbr =
+                                                                DialogConfirm.DialogInfoVO(
+                                                                    true,
+                                                                    "네트워크 불안정",
+                                                                    "현재 네트워크 연결이 불안정합니다.",
+                                                                    null,
+                                                                    onCheckBtnClicked = {
+                                                                        shownDialogInfoVOMbr = null
+                                                                    },
+                                                                    onCanceled = {
+                                                                        shownDialogInfoVOMbr = null
+                                                                    }
+                                                                )
+                                                        }
+                                                        1, 3 -> { // 회원 가입 완료 or 이미 가입된 회원(드물긴 하지만 다른 디바이스에서 로그인 완료됨)
+                                                            // 로그인
+
+                                                            // (정보 요청 콜백)
+                                                            val loginCompleteCallback =
+                                                                { statusCode: Int,
+                                                                  userUid: Long?, // 클라이언트 내 현 유저 구분을 위한 고유 값
+                                                                  userNickName: String?, // 닉네임은 다른 디바이스에서 변경이 가능하니 받아오기
+                                                                  accessToken: String?,
+                                                                  accessTokenExpireDate: String?,
+                                                                  refreshToken: String?,
+                                                                  refreshTokenExpireDate: String? ->
+                                                                    runOnUiThread {
+                                                                        when (statusCode) {
+                                                                            -1 -> { // 네트워크 에러
+                                                                                shownDialogInfoVOMbr =
+                                                                                    DialogConfirm.DialogInfoVO(
+                                                                                        true,
+                                                                                        "네트워크 불안정",
+                                                                                        "현재 네트워크 연결이 불안정합니다.",
+                                                                                        null,
+                                                                                        onCheckBtnClicked = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                        },
+                                                                                        onCanceled = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                        }
+                                                                                    )
+                                                                            }
+                                                                            1 -> {// 로그인 완료
+                                                                                // 회원 처리
+                                                                                currentLoginSessionInfoSpwMbr.setLocalDataLogin(
+                                                                                    currentLoginSessionInfoSpwMbr.isAutoLogin,
+                                                                                    2,
+                                                                                    snsId,
+                                                                                    idToken,
+                                                                                    userUid!!.toString(),
+                                                                                    userNickName!!,
+                                                                                    accessToken,
+                                                                                    accessTokenExpireDate,
+                                                                                    refreshToken,
+                                                                                    refreshTokenExpireDate
+                                                                                )
+
+                                                                                // 로그인 검증됨
+                                                                                currentLoginSessionInfoSpwMbr.isAutoLogin =
+                                                                                    true
+
+                                                                                shownDialogInfoVOMbr =
+                                                                                    DialogConfirm.DialogInfoVO(
+                                                                                        true,
+                                                                                        "로그인 완료",
+                                                                                        "로그인 되었습니다.",
+                                                                                        "닫기",
+                                                                                        onCheckBtnClicked = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                            finish()
+                                                                                        },
+                                                                                        onCanceled = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                            finish()
+                                                                                        }
+                                                                                    )
+                                                                            }
+                                                                            2 -> { // 입력값 에러 = 일어나면 안되는 에러
+                                                                                throw java.lang.Exception(
+                                                                                    "login input error"
+                                                                                )
+                                                                            }
+                                                                            3 -> { // 가입된 회원이 아님
+                                                                                // 가능성이 아예 없는 것은 아닌데 인간적으로 발생하는 사건이 아니라고 판단 가능함.
+                                                                                // = 회원이 없어서 회원가입을 한 바로 그 시점에 회원 탈퇴가 완료된 상황
+                                                                                shownDialogInfoVOMbr =
+                                                                                    DialogConfirm.DialogInfoVO(
+                                                                                        true,
+                                                                                        "기술적 문제",
+                                                                                        "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                                                        null,
+                                                                                        onCheckBtnClicked = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                        },
+                                                                                        onCanceled = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                        }
+                                                                                    )
+                                                                            }
+                                                                            4 -> { // 로그인 정보 불일치
+                                                                                shownDialogInfoVOMbr =
+                                                                                    DialogConfirm.DialogInfoVO(
+                                                                                        true,
+                                                                                        "로그인 실패",
+                                                                                        "로그인 정보가 일치하지 않습니다.",
+                                                                                        null,
+                                                                                        onCheckBtnClicked = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                        },
+                                                                                        onCanceled = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                        }
+                                                                                    )
+                                                                            }
+                                                                            else -> { // 그외 서버 에러
+                                                                                shownDialogInfoVOMbr =
+                                                                                    DialogConfirm.DialogInfoVO(
+                                                                                        true,
+                                                                                        "기술적 문제",
+                                                                                        "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                                                        null,
+                                                                                        onCheckBtnClicked = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                        },
+                                                                                        onCanceled = {
+                                                                                            shownDialogInfoVOMbr =
+                                                                                                null
+                                                                                        }
+                                                                                    )
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+
+                                                            // (로그인 요청)
+                                                            // 서버에선 보내준 id, pw 를 가지고 적절한 검증 과정을 거치고 정보 반환
+                                                            executorServiceMbr.execute {
+                                                                // 아래는 원래 네트워크 서버에서 처리하는 로직
+                                                                val userInfoList =
+                                                                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                                                        .getUserInfoForLogin(
+                                                                            snsId,
+                                                                            2
+                                                                        )
+
+                                                                if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
+                                                                    loginCompleteCallback(
+                                                                        3,
+                                                                        null,
+                                                                        null,
+                                                                        null,
+                                                                        null,
+                                                                        null,
+                                                                        null
+                                                                    )
+                                                                } else {
+                                                                    val uid = userInfoList[0].uid
+                                                                    val nickname =
+                                                                        userInfoList[0].nickName
+                                                                    val password =
+                                                                        userInfoList[0].password
+
+                                                                    // jwt 사용시 access token, refresh token 발행
+                                                                    // 여기선 jwt 를 구현하지 않았기에 null 반환
+                                                                    loginCompleteCallback(
+                                                                        1,
+                                                                        uid,
+                                                                        nickname,
+                                                                        null,
+                                                                        null,
+                                                                        null,
+                                                                        null
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        2 -> { // 입력값 에러
+                                                            throw Exception("user join input error")
+                                                        }
+                                                        else -> { // 그외 서버 에러
+                                                            shownDialogInfoVOMbr =
+                                                                DialogConfirm.DialogInfoVO(
+                                                                    true,
+                                                                    "기술적 문제",
+                                                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                                    null,
+                                                                    onCheckBtnClicked = {
+                                                                        shownDialogInfoVOMbr = null
+                                                                    },
+                                                                    onCanceled = {
+                                                                        shownDialogInfoVOMbr = null
+                                                                    }
+                                                                )
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // 회원가입 요청
+                                            executorServiceMbr.execute {
+                                                // 아래는 원래 네트워크 서버에서 처리하는 로직
+                                                // 이메일 중복검사
+                                                val emailCount =
+                                                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                                        .getIdCount(snsId, 2)
+
+                                                if (emailCount != 0) { // 아이디 중복
+                                                    signInCallback(3)
+                                                } else {
+                                                    repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                                        .insert(
+                                                            TestUserInfoTable.TableVo(
+                                                                2,
+                                                                snsId,
+                                                                name,
+                                                                idToken
+                                                            )
+                                                        )
+                                                    signInCallback(1)
+                                                }
+                                            }
+                                        }
+                                        4 -> { // 로그인 정보 불일치
+                                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "로그인 실패",
+                                                "로그인 정보가 일치하지 않습니다.",
+                                                null,
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr = null
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr = null
+                                                }
+                                            )
+                                        }
+                                        else -> { // 그외 서버 에러
+                                            shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                                                true,
+                                                "기술적 문제",
+                                                "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
+                                                null,
+                                                onCheckBtnClicked = {
+                                                    shownDialogInfoVOMbr = null
+                                                },
+                                                onCanceled = {
+                                                    shownDialogInfoVOMbr = null
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                        // (로그인 요청)
+                        // 서버에선 보내준 id, pw 를 가지고 적절한 검증 과정을 거치고 정보 반환
+                        executorServiceMbr.execute {
+                            // 아래는 원래 네트워크 서버에서 처리하는 로직
+                            val userInfoList =
+                                repositorySetMbr.databaseRoomMbr.appDatabaseMbr.testUserInfoTableDao()
+                                    .getUserInfoForLogin(
+                                        snsId,
+                                        2
+                                    )
+
+                            if (userInfoList.isEmpty()) { // 일치하는 정보가 없음
+                                loginCompleteCallback(
+                                    3,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null
+                                )
+                            } else {
+                                val uid = userInfoList[0].uid
+                                val nickname = userInfoList[0].nickName
+                                val password = userInfoList[0].password
+
+                                // jwt 사용시 access token, refresh token 발행
+                                // 여기선 jwt 를 구현하지 않았기에 null 반환
+                                loginCompleteCallback(
+                                    1,
+                                    uid,
+                                    nickname,
+                                    null,
+                                    null,
+                                    null,
+                                    null
+                                )
+                            }
+                        }
+
+                    } else {
+                        shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
+                            true,
+                            "로그인 실패",
+                            "SNS 로그인에 실패했습니다.\n" +
+                                    "잠시후 다시 시도해주세요.",
+                            null,
+                            onCheckBtnClicked = {
+                                shownDialogInfoVOMbr = null
+                            },
+                            onCanceled = {
+                                shownDialogInfoVOMbr = null
+                            }
+                        )
+                    }
+
+                } else { // 로그인 취소 or 로그인 설정 에러
+
+                }
+            }
+
+            resultLauncherMbr.launch(
+                googleSignInClient.signInIntent
             )
         }
 
