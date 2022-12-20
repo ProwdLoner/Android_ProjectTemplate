@@ -498,7 +498,6 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     }
 
     // (유저 정보 삭제)
-    // todo
     fun deleteThisUser(
         serverUid: Long,
         onComplete: () -> Unit
@@ -590,6 +589,8 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
 
             // 네트워크 요청
             executorServiceMbr.execute {
+                // todo 유저 삭제 후 리스트 반영
+
                 // 요청 대기시간 가정
                 Thread.sleep(1000)
 
@@ -840,7 +841,7 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
             //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
             executorServiceMbr.execute {
-                // todo
+                // todo 유저 리스트 가져와서 뿌려주기
 
                 // 요청 대기시간 가정
                 Thread.sleep(1000)
@@ -882,7 +883,6 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     }
 
     // (유저 추가)
-    // todo
     private fun postActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterData(
         text: String,
         onComplete: () -> Unit
@@ -979,6 +979,8 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
 
             // 네트워크 요청
             executorServiceMbr.execute {
+                // todo 유저 리스트를 가져와 가장 마지막 uid 으로 회원가입을 하고 리스트 갱신
+
                 // 요청 대기시간 가정
                 Thread.sleep(1000)
                 val lastItemUid =
