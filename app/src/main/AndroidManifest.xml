@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
     <!-- (필요 디바이스 기능 설정) -->
     <!-- <uses-feature -->
     <!-- android:name="android.hardware.camera" -->
@@ -11,12 +10,10 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- 대략적 위치 권한 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- 정확한 위치 권한 -->
     <uses-permission android:name="android.permission.CAMERA" /> <!-- 카메라 권한 -->
-
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- API 33 미만 통합 외부 저장소 읽기 권한 -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/> <!-- API 33 이상 외부 저장소 이미지 읽기 권한 -->
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/> <!-- API 33 이상 외부 저장소 비디오 읽기 권한 -->
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/> <!-- API 33 이상 외부 저장소 오디오오 읽기권한 -->
-
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> <!-- API 33 이상 외부 저장소 이미지 읽기 권한 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> <!-- API 33 이상 외부 저장소 비디오 읽기 권한 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> <!-- API 33 이상 외부 저장소 오디오오 읽기권한 -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" /> <!-- 외부 저장소 쓰기 권한 -->
@@ -30,7 +27,7 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- 포그라운드 서비스 권한 -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/> <!-- API 33 이상 노티피케이션 알람 표시 권한 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="false"
@@ -43,7 +40,18 @@
         android:theme="@style/Theme.Application"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
-
+        <activity
+            android:name=".activity_set.activity_firebase_chat_sample_channel_list.ActivityFirebaseChatSampleChannelList"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_firebase_chat_sample_chatting_room.ActivityFirebaseChatSampleChattingRoom"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
+            android:name=".activity_set.activity_firebase_chat_sample_login.ActivityFirebaseChatSampleLogin"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
         <activity
             android:name=".activity_set.activity_web_view_sample.ActivityWebViewSample"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -251,7 +259,7 @@
             android:exported="true"
             android:stopWithTask="false">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 

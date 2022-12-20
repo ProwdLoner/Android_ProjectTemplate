@@ -23,6 +23,7 @@ import com.example.prowd_android_template.activity_set.activity_brightness_chang
 import com.example.prowd_android_template.activity_set.activity_broadcast_receiver_sample.ActivityBroadcastReceiverSample
 import com.example.prowd_android_template.activity_set.activity_dialog_sample.ActivityDialogSample
 import com.example.prowd_android_template.activity_set.activity_dp_and_px_calculator.ActivityDpAndPxCalculator
+import com.example.prowd_android_template.activity_set.activity_firebase_chat_sample_login.ActivityFirebaseChatSampleLogin
 import com.example.prowd_android_template.activity_set.activity_module_caller_sample.ActivityModuleCallerSample
 import com.example.prowd_android_template.activity_set.activity_pdf_viewer_sample.ActivityPdfViewerSample
 import com.example.prowd_android_template.activity_set.activity_permission_sample.ActivityPermissionSample
@@ -587,6 +588,15 @@ class ActivityEtcSampleList : AppCompatActivity() {
                 Intent(
                     this,
                     ActivityWebViewSample::class.java
+                )
+            startActivity(intent)
+        }
+
+        bindingMbr.goToActivityFirebaseChatSampleBtn.setOnClickListener {
+            val intent =
+                Intent(
+                    this,
+                    ActivityFirebaseChatSampleLogin::class.java
                 )
             startActivity(intent)
         }
