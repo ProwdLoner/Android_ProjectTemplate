@@ -11,7 +11,12 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- 대략적 위치 권한 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- 정확한 위치 권한 -->
     <uses-permission android:name="android.permission.CAMERA" /> <!-- 카메라 권한 -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- 외부 저장소 읽기 권한 -->
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- API 33 미만 통합 외부 저장소 읽기 권한 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/> <!-- API 33 이상 외부 저장소 이미지 읽기 권한 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/> <!-- API 33 이상 외부 저장소 비디오 읽기 권한 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/> <!-- API 33 이상 외부 저장소 오디오오 읽기권한 -->
+
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" /> <!-- 외부 저장소 쓰기 권한 -->

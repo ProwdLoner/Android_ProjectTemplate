@@ -450,113 +450,375 @@ class ActivityPermissionSample : AppCompatActivity() {
     private fun onCreateInitView() {
         // (리스너 설정)
         // 외부 저장소 읽기 권한
-        bindingMbr.externalStorageReadPermissionSwitch.setOnClickListener {
-            bindingMbr.externalStorageReadPermissionSwitch.isEnabled = false
-            bindingMbr.externalStorageReadPermissionSwitch.isClickable = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // 버전 별 표시할 버튼 컨테이너 설정
+            bindingMbr.externalStorageReadImagesAndVideoPermissionContainer.visibility =
+                View.VISIBLE
+            bindingMbr.externalStorageReadAudioPermissionContainer.visibility = View.VISIBLE
+            bindingMbr.externalStorageReadPermissionContainer.visibility = View.GONE
 
-            if (bindingMbr.externalStorageReadPermissionSwitch.isChecked) { // 체크시
-                // 권한 요청
-                // 권한 요청 콜백
-                val permissionArray: Array<String> =
-                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-                permissionRequestCallbackMbr = { permissions ->
-                    // (거부된 권한 리스트)
-                    var isPermissionAllGranted = true // 모든 권한 승인여부
-                    var neverAskAgain = false // 다시묻지 않기 체크 여부
-                    for (permission in permissionArray) {
-                        if (!permissions[permission]!!) { // 필수 권한 거부
-                            // 모든 권한 승인여부 플래그를 변경하고 break
-                            isPermissionAllGranted = false
-                            neverAskAgain = !shouldShowRequestPermissionRationale(permission)
-                            break
+            // 외부 저장소 이미지 및 비디오 읽기 권한 스위치
+            bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.setOnClickListener {
+                bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isEnabled = false
+                bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isClickable = false
+
+                if (bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isChecked) { // 체크시
+                    // 권한 요청
+                    // 권한 요청 콜백
+                    val permissionArray: Array<String> =
+                        arrayOf(
+                            Manifest.permission.READ_MEDIA_IMAGES,
+                            Manifest.permission.READ_MEDIA_VIDEO
+                        )
+                    permissionRequestCallbackMbr = { permissions ->
+                        // (거부된 권한 리스트)
+                        var isPermissionAllGranted = true // 모든 권한 승인여부
+                        var neverAskAgain = false // 다시묻지 않기 체크 여부
+                        for (permission in permissionArray) {
+                            if (!permissions[permission]!!) { // 필수 권한 거부
+                                // 모든 권한 승인여부 플래그를 변경하고 break
+                                isPermissionAllGranted = false
+                                neverAskAgain = !shouldShowRequestPermissionRationale(permission)
+                                break
+                            }
+                        }
+
+                        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+
+                            bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isEnabled =
+                                true
+                            bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isClickable =
+                                true
+                        } else if (!neverAskAgain) { // 단순 거부
+                            // 뷰 상태 되돌리기
+                            bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isChecked =
+                                false
+
+                            bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isEnabled =
+                                true
+                            bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isClickable =
+                                true
+                        } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                            shownDialogInfoVOMbr =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 권한 설정 화면으로 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                data = Uri.fromParts("package", packageName, null)
+                                            }
+
+                                        bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isEnabled =
+                                            true
+                                        bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isClickable =
+                                            true
+                                        resultLauncherCallbackMbr = {}
+                                        resultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 뷰 상태 되돌리기
+                                        bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isChecked =
+                                            false
+
+                                        bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isEnabled =
+                                            true
+                                        bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isClickable =
+                                            true
+                                    },
+                                    onCanceled = {}
+                                )
                         }
                     }
 
-                    if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+                    // 권한 요청
+                    permissionRequestMbr.launch(permissionArray)
+                } else {
+                    // 체크 해제시
+                    // 권한 해제 다이얼로그
+                    shownDialogInfoVOMbr =
+                        DialogBinaryChoose.DialogInfoVO(
+                            false,
+                            "권한 해제",
+                            "권한 해제를 위해 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                shownDialogInfoVOMbr = null
 
-                        bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
-                        bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
-                    } else if (!neverAskAgain) { // 단순 거부
-                        // 뷰 상태 되돌리기
-                        bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
+                                // 권한 설정 페이지 이동
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                val uri = Uri.fromParts("package", packageName, null)
+                                intent.data = uri
 
-                        bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
-                        bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
-                    } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
-                        shownDialogInfoVOMbr =
-                            DialogBinaryChoose.DialogInfoVO(
-                                false,
-                                "권한 요청",
-                                "권한 설정 화면으로 이동하시겠습니까?",
-                                null,
-                                null,
-                                onPosBtnClicked = {
-                                    shownDialogInfoVOMbr = null
+                                bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isEnabled =
+                                    true
+                                bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isClickable =
+                                    true
+                                resultLauncherCallbackMbr = {}
+                                resultLauncherMbr.launch(intent)
+                            },
+                            onNegBtnClicked = {
+                                shownDialogInfoVOMbr = null
 
-                                    // 권한 설정 화면으로 이동
-                                    val intent =
-                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                            data = Uri.fromParts("package", packageName, null)
-                                        }
+                                bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isChecked =
+                                    true
 
-                                    bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
-                                    bindingMbr.externalStorageReadPermissionSwitch.isClickable =
-                                        true
-                                    resultLauncherCallbackMbr = {}
-                                    resultLauncherMbr.launch(intent)
-                                },
-                                onNegBtnClicked = {
-                                    shownDialogInfoVOMbr = null
-
-                                    // 뷰 상태 되돌리기
-                                    bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
-
-                                    bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
-                                    bindingMbr.externalStorageReadPermissionSwitch.isClickable =
-                                        true
-                                },
-                                onCanceled = {}
-                            )
-                    }
+                                bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isEnabled =
+                                    true
+                                bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isClickable =
+                                    true
+                            },
+                            onCanceled = {
+                                // 취소 불가
+                            }
+                        )
                 }
+            }
 
-                // 권한 요청
-                permissionRequestMbr.launch(permissionArray)
-            } else {
-                // 체크 해제시
-                // 권한 해제 다이얼로그
-                shownDialogInfoVOMbr =
-                    DialogBinaryChoose.DialogInfoVO(
-                        false,
-                        "권한 해제",
-                        "권한 해제를 위해 설정 화면으로 이동하시겠습니까?",
-                        null,
-                        null,
-                        onPosBtnClicked = {
-                            shownDialogInfoVOMbr = null
+            // 외부 저장소 오디오 읽기 권한 스위치
+            bindingMbr.externalStorageReadAudioPermissionSwitch.setOnClickListener {
+                bindingMbr.externalStorageReadAudioPermissionSwitch.isEnabled = false
+                bindingMbr.externalStorageReadAudioPermissionSwitch.isClickable = false
 
-                            // 권한 설정 페이지 이동
-                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                            val uri = Uri.fromParts("package", packageName, null)
-                            intent.data = uri
-
-                            bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
-                            bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
-                            resultLauncherCallbackMbr = {}
-                            resultLauncherMbr.launch(intent)
-                        },
-                        onNegBtnClicked = {
-                            shownDialogInfoVOMbr = null
-
-                            bindingMbr.externalStorageReadPermissionSwitch.isChecked = true
-
-                            bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
-                            bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
-                        },
-                        onCanceled = {
-                            // 취소 불가
+                if (bindingMbr.externalStorageReadAudioPermissionSwitch.isChecked) { // 체크시
+                    // 권한 요청
+                    // 권한 요청 콜백
+                    val permissionArray: Array<String> =
+                        arrayOf(
+                            Manifest.permission.READ_MEDIA_AUDIO
+                        )
+                    permissionRequestCallbackMbr = { permissions ->
+                        // (거부된 권한 리스트)
+                        var isPermissionAllGranted = true // 모든 권한 승인여부
+                        var neverAskAgain = false // 다시묻지 않기 체크 여부
+                        for (permission in permissionArray) {
+                            if (!permissions[permission]!!) { // 필수 권한 거부
+                                // 모든 권한 승인여부 플래그를 변경하고 break
+                                isPermissionAllGranted = false
+                                neverAskAgain = !shouldShowRequestPermissionRationale(permission)
+                                break
+                            }
                         }
-                    )
+
+                        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+
+                            bindingMbr.externalStorageReadAudioPermissionSwitch.isEnabled = true
+                            bindingMbr.externalStorageReadAudioPermissionSwitch.isClickable = true
+                        } else if (!neverAskAgain) { // 단순 거부
+                            // 뷰 상태 되돌리기
+                            bindingMbr.externalStorageReadAudioPermissionSwitch.isChecked = false
+
+                            bindingMbr.externalStorageReadAudioPermissionSwitch.isEnabled = true
+                            bindingMbr.externalStorageReadAudioPermissionSwitch.isClickable = true
+                        } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                            shownDialogInfoVOMbr =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 권한 설정 화면으로 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                data = Uri.fromParts("package", packageName, null)
+                                            }
+
+                                        bindingMbr.externalStorageReadAudioPermissionSwitch.isEnabled =
+                                            true
+                                        bindingMbr.externalStorageReadAudioPermissionSwitch.isClickable =
+                                            true
+                                        resultLauncherCallbackMbr = {}
+                                        resultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 뷰 상태 되돌리기
+                                        bindingMbr.externalStorageReadAudioPermissionSwitch.isChecked =
+                                            false
+
+                                        bindingMbr.externalStorageReadAudioPermissionSwitch.isEnabled =
+                                            true
+                                        bindingMbr.externalStorageReadAudioPermissionSwitch.isClickable =
+                                            true
+                                    },
+                                    onCanceled = {}
+                                )
+                        }
+                    }
+
+                    // 권한 요청
+                    permissionRequestMbr.launch(permissionArray)
+                } else {
+                    // 체크 해제시
+                    // 권한 해제 다이얼로그
+                    shownDialogInfoVOMbr =
+                        DialogBinaryChoose.DialogInfoVO(
+                            false,
+                            "권한 해제",
+                            "권한 해제를 위해 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                // 권한 설정 페이지 이동
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                val uri = Uri.fromParts("package", packageName, null)
+                                intent.data = uri
+
+                                bindingMbr.externalStorageReadAudioPermissionSwitch.isEnabled = true
+                                bindingMbr.externalStorageReadAudioPermissionSwitch.isClickable =
+                                    true
+                                resultLauncherCallbackMbr = {}
+                                resultLauncherMbr.launch(intent)
+                            },
+                            onNegBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                bindingMbr.externalStorageReadAudioPermissionSwitch.isChecked = true
+
+                                bindingMbr.externalStorageReadAudioPermissionSwitch.isEnabled = true
+                                bindingMbr.externalStorageReadAudioPermissionSwitch.isClickable =
+                                    true
+                            },
+                            onCanceled = {
+                                // 취소 불가
+                            }
+                        )
+                }
+            }
+        } else {
+            // 버전 별 표시할 버튼 컨테이너 설정
+            bindingMbr.externalStorageReadImagesAndVideoPermissionContainer.visibility = View.GONE
+            bindingMbr.externalStorageReadAudioPermissionContainer.visibility = View.GONE
+            bindingMbr.externalStorageReadPermissionContainer.visibility = View.VISIBLE
+
+            // 외부 저장소 읽기 권한 스위치
+            bindingMbr.externalStorageReadPermissionSwitch.setOnClickListener {
+                bindingMbr.externalStorageReadPermissionSwitch.isEnabled = false
+                bindingMbr.externalStorageReadPermissionSwitch.isClickable = false
+
+                if (bindingMbr.externalStorageReadPermissionSwitch.isChecked) { // 체크시
+                    // 권한 요청
+                    // 권한 요청 콜백
+                    val permissionArray: Array<String> =
+                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    permissionRequestCallbackMbr = { permissions ->
+                        // (거부된 권한 리스트)
+                        var isPermissionAllGranted = true // 모든 권한 승인여부
+                        var neverAskAgain = false // 다시묻지 않기 체크 여부
+                        for (permission in permissionArray) {
+                            if (!permissions[permission]!!) { // 필수 권한 거부
+                                // 모든 권한 승인여부 플래그를 변경하고 break
+                                isPermissionAllGranted = false
+                                neverAskAgain = !shouldShowRequestPermissionRationale(permission)
+                                break
+                            }
+                        }
+
+                        if (isPermissionAllGranted) { // 모든 권한이 클리어된 상황
+
+                            bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                            bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
+                        } else if (!neverAskAgain) { // 단순 거부
+                            // 뷰 상태 되돌리기
+                            bindingMbr.externalStorageReadPermissionSwitch.isChecked = false
+
+                            bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                            bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
+                        } else { // 권한 클리어 되지 않음 + 다시 묻지 않기 선택
+                            shownDialogInfoVOMbr =
+                                DialogBinaryChoose.DialogInfoVO(
+                                    false,
+                                    "권한 요청",
+                                    "권한 설정 화면으로 이동하시겠습니까?",
+                                    null,
+                                    null,
+                                    onPosBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 권한 설정 화면으로 이동
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                data = Uri.fromParts("package", packageName, null)
+                                            }
+
+                                        bindingMbr.externalStorageReadPermissionSwitch.isEnabled =
+                                            true
+                                        bindingMbr.externalStorageReadPermissionSwitch.isClickable =
+                                            true
+                                        resultLauncherCallbackMbr = {}
+                                        resultLauncherMbr.launch(intent)
+                                    },
+                                    onNegBtnClicked = {
+                                        shownDialogInfoVOMbr = null
+
+                                        // 뷰 상태 되돌리기
+                                        bindingMbr.externalStorageReadPermissionSwitch.isChecked =
+                                            false
+
+                                        bindingMbr.externalStorageReadPermissionSwitch.isEnabled =
+                                            true
+                                        bindingMbr.externalStorageReadPermissionSwitch.isClickable =
+                                            true
+                                    },
+                                    onCanceled = {}
+                                )
+                        }
+                    }
+
+                    // 권한 요청
+                    permissionRequestMbr.launch(permissionArray)
+                } else {
+                    // 체크 해제시
+                    // 권한 해제 다이얼로그
+                    shownDialogInfoVOMbr =
+                        DialogBinaryChoose.DialogInfoVO(
+                            false,
+                            "권한 해제",
+                            "권한 해제를 위해 설정 화면으로 이동하시겠습니까?",
+                            null,
+                            null,
+                            onPosBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                // 권한 설정 페이지 이동
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                val uri = Uri.fromParts("package", packageName, null)
+                                intent.data = uri
+
+                                bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                                bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
+                                resultLauncherCallbackMbr = {}
+                                resultLauncherMbr.launch(intent)
+                            },
+                            onNegBtnClicked = {
+                                shownDialogInfoVOMbr = null
+
+                                bindingMbr.externalStorageReadPermissionSwitch.isChecked = true
+
+                                bindingMbr.externalStorageReadPermissionSwitch.isEnabled = true
+                                bindingMbr.externalStorageReadPermissionSwitch.isClickable = true
+                            },
+                            onCanceled = {
+                                // 취소 불가
+                            }
+                        )
+                }
             }
         }
 
@@ -1274,8 +1536,8 @@ class ActivityPermissionSample : AppCompatActivity() {
                     // 권한 승인 여부 다이얼로그
                     shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
                         false,
-                        "서비스 알림 수신 권한",
-                        "서비스 알림을 수신하시겠습니까?",
+                        "알림 수신 권한",
+                        "알림을 수신하시겠습니까?",
                         null,
                         null,
                         onPosBtnClicked = { // 권한 승인
@@ -1304,8 +1566,8 @@ class ActivityPermissionSample : AppCompatActivity() {
                     shownDialogInfoVOMbr =
                         DialogBinaryChoose.DialogInfoVO(
                             false,
-                            "서비스 알림 수신 권한 해제",
-                            "서비스 알림 수신 권한을 해제하시겠습니까?",
+                            "알림 수신 권한 해제",
+                            "알림 수신 권한을 해제하시겠습니까?",
                             null,
                             null,
                             onPosBtnClicked = {
@@ -1372,11 +1634,30 @@ class ActivityPermissionSample : AppCompatActivity() {
     // (권한에 따라 스위치 반영)
     private fun setSwitchView() {
         // 외부 저장소 읽기 권한 설정 여부 반영
-        bindingMbr.externalStorageReadPermissionSwitch.isChecked =
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bindingMbr.externalStorageReadImagesAndVideoPermissionSwitch.isChecked =
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_MEDIA_IMAGES
+                ) == PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.READ_MEDIA_VIDEO
+                        ) == PackageManager.PERMISSION_GRANTED
+
+            bindingMbr.externalStorageReadAudioPermissionSwitch.isChecked =
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_MEDIA_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+
+        } else {
+            bindingMbr.externalStorageReadPermissionSwitch.isChecked =
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+        }
 
         // 카메라 접근 권한 설정 여부 반영
         bindingMbr.cameraPermissionSwitch.isChecked =
