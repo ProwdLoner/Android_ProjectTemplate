@@ -162,8 +162,8 @@ dependencies {
     implementation 'com.google.android.gms:play-services-auth:20.4.0'
 
     // firebase storage
-    implementation 'com.google.firebase:firebase-database:20.1.0'
-    implementation 'com.google.firebase:firebase-storage:20.1.0'
+    implementation 'com.google.firebase:firebase-database-ktx:20.1.0'
+    implementation 'com.google.firebase:firebase-storage-ktx:20.1.0'
 
     // (뷰 라이브러리)
     // Glide

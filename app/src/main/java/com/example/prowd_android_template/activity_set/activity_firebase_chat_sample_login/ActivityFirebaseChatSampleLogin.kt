@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
@@ -16,11 +15,13 @@ import android.view.ViewGroup
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
+import com.example.prowd_android_template.activity_set.activity_firebase_chat_sample_channel_list.ActivityFirebaseChatSampleChannelList
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -32,9 +33,39 @@ import com.example.prowd_android_template.databinding.ItemActivityFirebaseChatSa
 import com.example.prowd_android_template.databinding.ItemEmptyBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
+import com.google.firebase.database.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+
+// [firebase 채팅 샘플 (채팅 유저 목록 관련)]
+// firebase 채팅을 사용하려면 firebase 에 프로젝트를 생성하고 그곳에서 안드로이드 프로젝트 설정 후 google-service.json 파일을 가져와 프로젝트에 적용
+// firebase 콘솔에서 realtime database 사용 설정
+// 이 화면은 어디까지나 예시화면으로, 실제 서비스 적용시엔 이 화면을 건너뛰고 channelList 화면에서 채팅 서버에 유저 정보를 검증하여 사용하면 됩니다.
+
+// (관련 NoSQL DB 스키마)
+// users/{key : Long}
+//     originServerUserUid : Long
+//     originServerUserNickname : String
+//     isTableAlive : Boolean
+
+// channels/{key : Long}
+//     channelName : String
+//     createDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
+//     isTableAlive : Boolean
+
+// channelUsers/{key : Long}
+//     usersTableKey : Long
+//     channelsTableKey : Long
+//     joinDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
+//     lastReadMessageTableKey : Long
+//     isTableAlive : Boolean
+
+// messages/{key : Long}
+//     channelUsersTableKey : Long
+//     message : String
+//     createDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
+//     isTableAlive : Boolean
 
 class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     // <설정 변수 공간>
@@ -127,6 +158,9 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     // : 액티비티 결과 받아오기 객체. 사용법은 permissionRequestMbr 와 동일
     lateinit var resultLauncherMbr: ActivityResultLauncher<Intent>
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
+
+    // (Firebase Database 객체)
+    lateinit var fdRoot: DatabaseReference
 
 
     // ---------------------------------------------------------------------------------------------
@@ -396,207 +430,29 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     // ---------------------------------------------------------------------------------------------
     // <공개 메소드 공간>
     // (로그인 변경)
-    // todo
+    // 실제 적용시 유저는 적용하려는 서버의 유저를 사용할 것.
+    // 아래는 실제 서버 내의 유저 정보를 기반으로 채팅
     fun loginThisUser(
-        serverUid: Long,
-        onComplete: () -> Unit
+        serverUid: Long, // 실제 서버의 유저 uid
+        userName: String
     ) {
-        executorServiceMbr.execute {
-            screenDataSemaphoreMbr.acquire()
-
-            // 로더 추가
-            runOnUiThread {
-                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
-                    false,
-                    "저장중입니다. 잠시만 기다려주세요.",
-                    onCanceled = {}
-                )
-            }
-
-            // (정보 요청 콜백)
-            // statusCode
-            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
-            val putItemOnComplete: (statusCode: Int) -> Unit =
-                { statusCode ->
-                    // 로더 제거
-                    runOnUiThread {
-                        shownDialogInfoVOMbr = null
-                    }
-
-                    when (statusCode) {
-                        1 -> {// 완료
-                            val cloneItemList =
-                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-
-                            // 데이터 화면 변경
-//                            val idx =
-//                                cloneItemList.indexOfFirst {
-//                                    (it as ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
-//                                        .serverItemUid == serverUid
-//                                }
-//
-//                            (cloneItemList[idx] as ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO).title =
-//                                text
-
-                            // 받아온 아이템 추가
-                            runOnUiThread {
-                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
-                            }
-
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        -1 -> { // 네트워크 에러
-                            runOnUiThread {
-                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "네트워크 불안정",
-                                    "현재 네트워크 연결이 불안정합니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr = null
-                                    }
-                                )
-                            }
-
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        else -> { // 그외 서버 에러
-                            runOnUiThread {
-                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "기술적 문제",
-                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr = null
-                                    }
-                                )
-                            }
-
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                    }
-                }
-
-            // 네트워크 요청
-            executorServiceMbr.execute {
-                // 요청 대기시간 가정
-                Thread.sleep(1000)
-
-                putItemOnComplete(1)
-            }
-        }
+        // 채팅 목록 화면으로 이동
+        val intent =
+            Intent(
+                this,
+                ActivityFirebaseChatSampleChannelList::class.java
+            )
+        intent.putExtra("serverUid", serverUid)
+        intent.putExtra("userName", userName)
+        startActivity(intent)
     }
 
     // (유저 정보 삭제)
+    // 실제 적용시 유저는 적용하려는 서버의 유저를 사용할 것.
     fun deleteThisUser(
-        serverUid: Long,
-        onComplete: () -> Unit
+        chatServerUsersKey: Long
     ) {
-        executorServiceMbr.execute {
-            screenDataSemaphoreMbr.acquire()
-
-            // 로더 추가
-            runOnUiThread {
-                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
-                    false,
-                    "유저 정보를 삭제중입니다. 잠시만 기다려주세요.",
-                    onCanceled = {}
-                )
-            }
-
-            // (정보 요청 콜백)
-            // statusCode
-            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
-            val deleteItemOnComplete: (statusCode: Int) -> Unit =
-                { statusCode ->
-                    // 로더 제거
-                    runOnUiThread {
-                        shownDialogInfoVOMbr = null
-                    }
-
-                    when (statusCode) {
-                        1 -> {// 완료
-                            val cloneItemList =
-                                adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-
-                            // 데이터 화면 변경
-                            val idx =
-                                cloneItemList.indexOfFirst {
-                                    (it as ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO)
-                                        .serverItemUid == serverUid
-                                }
-
-                            cloneItemList.removeAt(idx)
-
-                            // 받아온 아이템 추가
-                            runOnUiThread {
-                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
-                            }
-
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        -1 -> { // 네트워크 에러
-                            runOnUiThread {
-                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "네트워크 불안정",
-                                    "현재 네트워크 연결이 불안정합니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr = null
-                                    }
-                                )
-                            }
-
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        else -> { // 그외 서버 에러
-                            runOnUiThread {
-                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "기술적 문제",
-                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr = null
-                                    }
-                                )
-                            }
-
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                    }
-                }
-
-            // 네트워크 요청
-            executorServiceMbr.execute {
-                // todo 유저 삭제 후 리스트 반영
-
-                // 요청 대기시간 가정
-                Thread.sleep(1000)
-
-                deleteItemOnComplete(1)
-            }
-        }
+        fdRoot.child("users/${chatServerUsersKey}").child("isTableAlive").setValue(false)
     }
 
 
@@ -642,23 +498,15 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
         }
 
+        fdRoot = FirebaseDatabase.getInstance().reference
     }
 
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        // 화면 리플레시
-        bindingMbr.screenRefreshLayout.setOnRefreshListener {
-            refreshWholeScreenData(onComplete = {
-                bindingMbr.screenRefreshLayout.isRefreshing = false
-            })
-        }
-
         // 유저 추가
         bindingMbr.addUser.setOnClickListener {
-            postActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterData(
-                "추가 아이템",
-                onComplete = {})
+            addUser()
         }
     }
 
@@ -838,30 +686,53 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
 
             // (네트워크 요청)
             // (c17. 아이템 리스트 가져오기)
+            // 실제 적용시 유저는 적용하려는 서버의 유저를 사용할 것.
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
             //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
-            executorServiceMbr.execute {
-                // todo 유저 리스트 가져와서 뿌려주기
+            // 유저 리스트 가져와서 뿌려주기
+            fdRoot
+                .child("users")
+                .addValueEventListener(object :
+                    ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            val resultObj =
+                                arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
 
-                // 요청 대기시간 가정
-                Thread.sleep(1000)
+                            for (snapshot in dataSnapshot.children) {
+                                // 실제 서버의 유저 uid 가 반환되었다고 가정
+                                val originServerUserUid =
+                                    snapshot.child("originServerUserUid").getValue(Long::class.java)
+                                val originServerUserNickname =
+                                    snapshot.child("originServerUserNickname")
+                                        .getValue(String::class.java)
+                                val isTableAlive =
+                                    snapshot.child("isTableAlive").getValue(Boolean::class.java)
 
-                val resultObj =
-                    arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+                                if (originServerUserUid == null || originServerUserNickname == null || isTableAlive == null) {
+                                    continue
+                                }
 
-                for (idx in 0L..10L) {
-                    val title = "item$idx"
-                    resultObj.add(
-                        ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                            idx,
-                            title
-                        )
-                    )
-                }
+                                if (isTableAlive) {
+                                    resultObj.add(
+                                        ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                                            snapshot.key.toString().toLong(),
+                                            originServerUserUid,
+                                            originServerUserNickname
+                                        )
+                                    )
+                                }
+                            }
 
-                getItemListOnComplete(1, resultObj)
-            }
+                            getItemListOnComplete(1, resultObj)
+                        } else {
+                            getItemListOnComplete(1, arrayListOf())
+                        }
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {}
+                })
 
             // (c18. 헤더 데이터 가져오기)
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
@@ -883,112 +754,41 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     }
 
     // (유저 추가)
-    private fun postActivityFirebaseChatSampleLoginAdapterSetRecyclerViewAdapterData(
-        text: String,
-        onComplete: () -> Unit
-    ) {
-        executorServiceMbr.execute {
-            screenDataSemaphoreMbr.acquire()
-
-            // 로더 추가
-            runOnUiThread {
-                shownDialogInfoVOMbr = DialogProgressLoading.DialogInfoVO(
-                    false,
-                    "저장중입니다. 잠시만 기다려주세요.",
-                    onCanceled = {}
-                )
-            }
-
-            // (정보 요청 콜백)
-            // statusCode
-            // : 서버 반환 상태값. 1이라면 정상동작, -1 이라면 타임아웃, 2 이상 값들 중 서버에서 정한 상태값 처리, 그외엔 서버 에러
-            //     serverUid = 해당 아이템에 대한 서버 Uid
-            val networkOnComplete: (statusCode: Int, serverUid: Long?) -> Unit =
-                { statusCode, serverUid ->
-                    val cloneItemList =
-                        adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr
-
-                    // 로더 제거
-                    runOnUiThread {
-                        shownDialogInfoVOMbr = null
-                    }
-
-                    when (statusCode) {
-                        1 -> {// 완료
-                            // 입력한 데이터 객체
-                            val addedItem =
-                                ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                    adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                                    serverUid!!,
-                                    text
-                                )
-
-                            // 받아온 아이템 추가
-                            cloneItemList.add(addedItem)
-                            runOnUiThread {
-                                adapterSetMbr.recyclerViewAdapter.setItemList(cloneItemList)
-
-                                val lastItemIdx =
-                                    adapterSetMbr.recyclerViewAdapter.currentDataListLastIndexMbr
-                                bindingMbr.recyclerView.scrollToPosition(lastItemIdx)
-                            }
-
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
+    // 실제 적용시 유저는 적용하려는 서버의 유저를 사용할 것.
+    private fun addUser() {
+        fdRoot
+            .child("users")
+            .orderByKey()
+            .limitToLast(1)
+            .addListenerForSingleValueEvent(object :
+                ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        var lastUid: Long = 0
+                        for (snapshot in dataSnapshot.children) {
+                            lastUid = snapshot.key.toString().toLong()
                         }
-                        -1 -> { // 네트워크 에러
-                            runOnUiThread {
-                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "네트워크 불안정",
-                                    "현재 네트워크 연결이 불안정합니다.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr = null
-                                    }
-                                )
-                            }
+                        val nextUid = lastUid + 1
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
-                        else -> { // 그외 서버 에러
-                            runOnUiThread {
-                                shownDialogInfoVOMbr = DialogConfirm.DialogInfoVO(
-                                    true,
-                                    "기술적 문제",
-                                    "기술적 문제가 발생했습니다.\n잠시후 다시 시도해주세요.",
-                                    null,
-                                    onCheckBtnClicked = {
-                                        shownDialogInfoVOMbr = null
-                                    },
-                                    onCanceled = {
-                                        shownDialogInfoVOMbr = null
-                                    }
-                                )
-                            }
+                        // 실제 서버의 유저 uid 저장
+                        fdRoot.child("users").child((nextUid).toString() + "/originServerUserUid")
+                            .setValue(nextUid)
+                        fdRoot.child("users")
+                            .child((nextUid).toString() + "/originServerUserNickname")
+                            .setValue("user$nextUid")
+                        fdRoot.child("users").child((nextUid).toString() + "/isTableAlive")
+                            .setValue(true)
+                    } else {
 
-                            screenDataSemaphoreMbr.release()
-                            onComplete()
-                        }
+                        // 실제 서버의 유저 uid 저장
+                        fdRoot.child("users").child("1/originServerUserUid").setValue(1)
+                        fdRoot.child("users").child("1/originServerUserNickname").setValue("user1")
+                        fdRoot.child("users").child("1/isTableAlive").setValue(true)
                     }
                 }
 
-            // 네트워크 요청
-            executorServiceMbr.execute {
-                // todo 유저 리스트를 가져와 가장 마지막 uid 으로 회원가입을 하고 리스트 갱신
-
-                // 요청 대기시간 가정
-                Thread.sleep(1000)
-                val lastItemUid =
-                    (adapterSetMbr.recyclerViewAdapter.currentItemListCloneMbr.last() as
-                            ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO).serverItemUid
-                networkOnComplete(1, lastItemUid + 1)
-            }
-        }
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
     }
 
 
@@ -1169,13 +969,14 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
                         val binding = holder.binding
                         val copyEntity = currentDataListCloneMbr[position] as Item1.ItemVO
 
-                        binding.title.text = copyEntity.title
+                        binding.nickname.text = copyEntity.originServerUserNickname
 
                         // 해당 유저로 로그인
                         binding.root.setOnClickListener {
                             parentViewMbr.loginThisUser(
-                                copyEntity.serverItemUid,
-                                onComplete = {})
+                                copyEntity.originServerUserUid,
+                                copyEntity.originServerUserNickname
+                            )
                         }
 
                         // 아이템 제거 버튼
@@ -1188,8 +989,8 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
                                 null,
                                 onPosBtnClicked = {
                                     parentViewMbr.deleteThisUser(
-                                        copyEntity.serverItemUid,
-                                        onComplete = {})
+                                        copyEntity.chatServerUsersKey
+                                    )
                                 },
                                 onNegBtnClicked = {
                                     parentViewMbr.shownDialogInfoVOMbr = null
@@ -1359,8 +1160,9 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
 
                 data class ItemVO(
                     override val itemUid: Long,
-                    val serverItemUid: Long,
-                    var title: String
+                    val chatServerUsersKey: Long,
+                    val originServerUserUid: Long,
+                    var originServerUserNickname: String
                 ) : AdapterItemAbstractVO(itemUid)
             }
 
