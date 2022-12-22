@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id("kotlin-parcelize") // 객체 직렬화
     id 'com.google.gms.google-services' // firebase, google 서비스 관련
+    id 'com.google.firebase.crashlytics' // firebase 에러 추적
 }
 apply plugin: 'kotlin-kapt' // 추가
 
@@ -149,21 +150,15 @@ dependencies {
     implementation 'com.opencsv:opencsv:5.7.0'
 
     // firebase
-    implementation 'com.google.firebase:firebase-analytics-ktx'
-    implementation platform('com.google.firebase:firebase-bom:31.1.1')
-
-    // FCM
-    implementation 'com.google.firebase:firebase-messaging:23.1.1'
-
-    // firebase Auth
-    implementation 'com.google.firebase:firebase-auth:21.1.0'
+    // : firebase 설정은 종속성 추가와 더불어 콘솔 프로젝트에서 발급받은 google-services.json 을 앱 디렉토리에 넣어주고 기능별 상세 설정을 합니다.
+    implementation platform('com.google.firebase:firebase-bom:31.1.1') // Firebase 기본
+    implementation 'com.google.firebase:firebase-messaging:23.1.1' // FCM (FCM Push Service 객체 생성하여 사용)
+    implementation 'com.google.firebase:firebase-analytics-ktx' // 사용 추적 (종속성 이외의 설정은 필요없음)
+    implementation 'com.google.firebase:firebase-crashlytics-ktx' // 에러 추적 (종속성 이외의 설정은 필요없음)
 
     // SNS OAuth2 Google Login
+    // : firebase 설정 후 프로젝트 Authentication Sign-in-method 에서 구글 로그인을 추가
     implementation 'com.google.android.gms:play-services-auth:20.4.0'
-
-    // firebase storage
-    implementation 'com.google.firebase:firebase-database-ktx:20.1.0'
-    implementation 'com.google.firebase:firebase-storage-ktx:20.1.0'
 
     // (뷰 라이브러리)
     // Glide

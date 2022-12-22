@@ -10,6 +10,7 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,6 +32,7 @@ import com.example.prowd_android_template.custom_view.DialogProgressLoading
 import com.example.prowd_android_template.custom_view.DialogRadioButtonChoose
 import com.example.prowd_android_template.databinding.ActivityHomeBinding
 import com.example.prowd_android_template.repository.RepositorySet
+import com.example.prowd_android_template.services.FcmService
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -137,6 +139,16 @@ class ActivityHome : AppCompatActivity() {
     //     액티비티 종료 = onPause() → onStop() → onDestroy()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // firebase FCM 토큰값 확인
+        FcmService.getFcmTokenAsync(
+            onSuccess = {
+                Log.i("firebase FCM Token", it)
+            },
+            onFailed = {
+                Log.w("warning", "Need Setting FCM On This Project")
+            }
+        )
 
         // (초기 객체 생성)
         onCreateInitObject()
