@@ -505,7 +505,7 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
         }
 
         bindingMbr.activityTitle.text =
-            "파이어베이스 채팅 샘플\n(${intent.getStringExtra("userName")!!} 채팅 채널 리스트)"
+            "파이어베이스 채팅 샘플\n(${intent.getStringExtra("userNickname")!!} 채팅 채널 리스트)"
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -705,7 +705,7 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
 
                                 if (data.child("originServerUserUid")
                                         .getValue(Long::class.java)!! == intent.getLongExtra(
-                                        "serverUid",
+                                        "userUid",
                                         -1
                                     )
                                 ) {
@@ -720,19 +720,19 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
                                 // 실제 서버의 유저 uid 저장
                                 fdRoot.child("users")
                                     .child((nextKey).toString() + "/originServerUserUid")
-                                    .setValue(intent.getLongExtra("serverUid", -1))
+                                    .setValue(intent.getLongExtra("userUid", -1))
                                 fdRoot.child("users")
                                     .child((nextKey).toString() + "/originServerUserNickname")
-                                    .setValue(intent.getStringExtra("userName")!!)
+                                    .setValue(intent.getStringExtra("userNickname")!!)
 
                                 chatServerUsersTableKeyMbr = nextKey
                             }
 
                         } else { // 데이터 스키마가 없음 = 서버에 저장된 유저 정보가 없으니 추가
                             fdRoot.child("users").child("1/originServerUserUid")
-                                .setValue(intent.getLongExtra("serverUid", -1))
+                                .setValue(intent.getLongExtra("userUid", -1))
                             fdRoot.child("users").child("1/originServerUserNickname")
-                                .setValue(intent.getStringExtra("userName")!!)
+                                .setValue(intent.getStringExtra("userNickname")!!)
 
                             chatServerUsersTableKeyMbr = 1
                         }
@@ -816,12 +816,14 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
     // (채널 추가)
     private fun addChannel() {
         // 채팅 목록 화면으로 이동
+        val userUid = intent.getLongExtra("userUid", -1)
+
         val intent =
             Intent(
                 this,
                 ActivityFirebaseChatSampleAddChannel::class.java
             )
-        intent.putExtra("serverUid", intent.getLongExtra("serverUid", -1))
+        intent.putExtra("userUid", userUid)
         startActivity(intent)
     }
 

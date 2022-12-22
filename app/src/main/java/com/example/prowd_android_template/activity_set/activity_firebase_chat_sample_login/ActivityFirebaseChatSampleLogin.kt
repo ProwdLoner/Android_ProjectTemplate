@@ -65,6 +65,26 @@ import java.util.concurrent.Semaphore
 //     createDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
 
 class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
+    companion object {
+        // 채팅 샘플에 사용될 유저 목록
+        val sampleUserList = ArrayList<SampleUser>().apply {
+            for (idx in 1..10) {
+                this.add(
+                    SampleUser(
+                        idx.toLong(),
+                        "유저 $idx"
+                    )
+                )
+            }
+        }
+
+        data class SampleUser(
+            val userUid: Long,
+            val userNickname: String
+        )
+    }
+
+
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
     // : 앱 진입에 필요한 권한 배열.
@@ -431,16 +451,12 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     // 아래는 실제 서버 내의 유저 정보를 기반으로 채팅
     fun loginThisUser(
         serverUid: Long, // 실제 서버의 유저 uid
-        userName: String
+        userNickname: String
     ) {
         // 채팅 목록 화면으로 이동
-        val intent =
-            Intent(
-                this,
-                ActivityFirebaseChatSampleChannelList::class.java
-            )
-        intent.putExtra("serverUid", serverUid)
-        intent.putExtra("userName", userName)
+        val intent = Intent(this, ActivityFirebaseChatSampleChannelList::class.java)
+        intent.putExtra("userUid", serverUid)
+        intent.putExtra("userNickname", userNickname)
         startActivity(intent)
     }
 
@@ -677,13 +693,12 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
             val resultObj =
                 arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
 
-            for (idx in 1..10) {
+            for (sampleUser in sampleUserList) {
                 resultObj.add(
                     ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
                         adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                        idx.toLong(),
-                        idx.toLong(),
-                        "유저 $idx"
+                        sampleUser.userUid,
+                        sampleUser.userNickname
                     )
                 )
             }
@@ -1054,7 +1069,6 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
 
                 data class ItemVO(
                     override val itemUid: Long,
-                    val chatServerUsersKey: Long,
                     val originServerUserUid: Long,
                     var originServerUserNickname: String
                 ) : AdapterItemAbstractVO(itemUid)
