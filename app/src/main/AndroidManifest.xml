@@ -41,6 +41,10 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".activity_set.activity_firebase_chat_sample_add_channel.ActivityFirebaseChatSampleAddChannel"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="false" />
+        <activity
             android:name=".activity_set.activity_firebase_chat_sample_channel_list.ActivityFirebaseChatSampleChannelList"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false" />

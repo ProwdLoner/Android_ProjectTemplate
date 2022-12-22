@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.prowd_android_template.R
 import com.example.prowd_android_template.abstract_class.AbstractProwdRecyclerViewAdapter
 import com.example.prowd_android_template.abstract_class.InterfaceDialogInfoVO
+import com.example.prowd_android_template.activity_set.activity_firebase_chat_sample_add_channel.ActivityFirebaseChatSampleAddChannel
 import com.example.prowd_android_template.common_shared_preference_wrapper.CurrentLoginSessionInfoSpw
 import com.example.prowd_android_template.custom_view.DialogBinaryChoose
 import com.example.prowd_android_template.custom_view.DialogConfirm
@@ -40,7 +41,28 @@ import java.util.concurrent.Semaphore
 
 // [현재 유저가 가진 채팅 채널 리스트 표시]
 // 실제 서비스 적용시 앞서 채팅 서버가 아닌 서버스 서버로부터 인증인가를 받은 상태에서 여기부터 시작된다고 생각하면 됨.
-// 실제 서비스 적용시 intent 에서 받아오는 유저 정보를 지우고 실제 서버의 유저 정보를 사용할것.
+// 실제 서비스 적용시 intent 에서 받아오는 유저 정보를 지우고 실제 서버의 유저 정보(고유번호, 닉네임)를 사용할것.
+
+// (관련 NoSQL DB 스키마)
+// users/{key : Long}
+//     originServerUserUid : Long
+//     originServerUserNickname : String
+
+// channels/{key : Long}
+//     channelName : String
+//     createDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
+
+// channelUsers/{key : Long}
+//     usersTableKey : Long
+//     channelsTableKey : Long
+//     joinDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
+//     lastReadMessageTableKey : Long
+
+// messages/{key : Long}
+//     channelUsersTableKey : Long
+//     message : String
+//     createDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
+
 class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
     // <설정 변수 공간>
     // (앱 진입 필수 권한 배열)
@@ -139,10 +161,6 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
     // 유저 정보
     // chatServerUsersTableKeyMbr 는 채팅 서버에서 받아와 사용
     var chatServerUsersTableKeyMbr: Long = -1
-
-    // originServerUserUidMbr, originServerUserNicknameMbr 는 실제 서버 로그인 정보를 사용
-    var originServerUserUidMbr: Long = -1
-    lateinit var originServerUserNicknameMbr: String
 
 
     // ---------------------------------------------------------------------------------------------
@@ -476,12 +494,6 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
 
         fdRoot = FirebaseDatabase.getInstance().reference
 
-        // 실제 서비스 적용시, 아래 유저 정보는 intent extra 가 아닌 실제 서버 로그인 결과 얻은 정보를 사용할 것.
-        originServerUserUidMbr = intent.getLongExtra("serverUid", -1)
-        if (originServerUserUidMbr == -1L) {
-            throw java.lang.NullPointerException()
-        }
-        originServerUserNicknameMbr = intent.getStringExtra("userName")!!
     }
 
     // (초기 뷰 설정)
@@ -493,7 +505,7 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
         }
 
         bindingMbr.activityTitle.text =
-            "파이어베이스 채팅 샘플\n($originServerUserNicknameMbr 채팅 채널 리스트)"
+            "파이어베이스 채팅 샘플\n(${intent.getStringExtra("userName")!!} 채팅 채널 리스트)"
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -674,111 +686,113 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
             // (c17. 아이템 리스트 가져오기)
             //  보통 이곳에 진입할 때엔 실제 서버 user uid 를 가지고 있음.
             //  이 고유값으로 채팅 서버 users 에 정보가 등록된지를 파악 후 없으면 등록
-//            fdRoot
-//                .child("users")
-//                .addListenerForSingleValueEvent(object :
-//                    ValueEventListener {
-//                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-//                        if (dataSnapshot.exists()) { // 데이터 스키마가 존재
-//                            // 서버에 고유값에 해당하는 유저가 있는지 확인
-//                            var notOnChatServer = true
+            fdRoot
+                .child("users")
+                .addListenerForSingleValueEvent(object :
+                    ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        if (dataSnapshot.exists()) { // 데이터 스키마가 존재
+                            // 서버에 고유값에 해당하는 유저가 있는지 확인
+                            var notOnChatServer = true
+
+                            var lastKey: Long = 0
+                            for (data in dataSnapshot.children) {
+                                val key = data.key.toString().toLong()
+
+                                if (key > lastKey) {
+                                    lastKey = key
+                                }
+
+                                if (data.child("originServerUserUid")
+                                        .getValue(Long::class.java)!! == intent.getLongExtra(
+                                        "serverUid",
+                                        -1
+                                    )
+                                ) {
+                                    notOnChatServer = false
+                                    chatServerUsersTableKeyMbr = key
+                                }
+                            }
+
+                            if (notOnChatServer) { // 서버에 저장된 유저 정보가 없으면 추가
+                                val nextKey = lastKey + 1
+
+                                // 실제 서버의 유저 uid 저장
+                                fdRoot.child("users")
+                                    .child((nextKey).toString() + "/originServerUserUid")
+                                    .setValue(intent.getLongExtra("serverUid", -1))
+                                fdRoot.child("users")
+                                    .child((nextKey).toString() + "/originServerUserNickname")
+                                    .setValue(intent.getStringExtra("userName")!!)
+
+                                chatServerUsersTableKeyMbr = nextKey
+                            }
+
+                        } else { // 데이터 스키마가 없음 = 서버에 저장된 유저 정보가 없으니 추가
+                            fdRoot.child("users").child("1/originServerUserUid")
+                                .setValue(intent.getLongExtra("serverUid", -1))
+                            fdRoot.child("users").child("1/originServerUserNickname")
+                                .setValue(intent.getStringExtra("userName")!!)
+
+                            chatServerUsersTableKeyMbr = 1
+                        }
+
+                        // todo : 채널 리스트 가져오기
+                        fdRoot.child("channelUsers").child("usersTableKey")
+                            .equalTo(chatServerUsersTableKeyMbr.toString())
+
+//                        fdRoot
+//                            .child("users")
+//                            .addValueEventListener(object :
+//                                ValueEventListener {
+//                                override fun onDataChange(dataSnapshot: DataSnapshot) {
+//                                    if (dataSnapshot.exists()) {
+//                                        val resultObj =
+//                                            arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
 //
-//                            var lastKey: Long = 0
-//                            for (data in dataSnapshot.children) {
-//                                if (data.child("isTableAlive")
-//                                        .getValue(Boolean::class.java)!!
-//                                ) {
-//                                    val uid = data.child("uid")
-//                                        .getValue(Long::class.java)!!
+//                                        for (snapshot in dataSnapshot.children) {
+//                                            // 실제 서버의 유저 uid 가 반환됨
+//                                            val userUid =
+//                                                snapshot.child("uid").getValue(Long::class.java)
+//                                            val nickname =
+//                                                snapshot.child("nickname")
+//                                                    .getValue(String::class.java)
+//                                            val isTableAlive =
+//                                                snapshot.child("isTableAlive")
+//                                                    .getValue(Boolean::class.java)
 //
-//                                    if (uid == originServerUserUidMbr
-//                                    ) {
-//                                        notOnChatServer = false
-//                                    }
+//                                            if (userUid == null || nickname == null || isTableAlive == null) {
+//                                                continue
+//                                            }
 //
-//                                    val key = data.key.toString().toLong()
+//                                            if (isTableAlive) {
+//                                                resultObj.add(
+//                                                    ActivityFirebaseChatSampleChannelListAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+//                                                        adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+//                                                        userUid,
+//                                                        nickname
+//                                                    )
+//                                                )
+//                                            }
+//                                        }
 //
-//                                    if (key > lastKey) {
-//                                        lastKey = key
+//                                        getItemListOnComplete(1, resultObj)
+//                                    } else {
+//                                        getItemListOnComplete(1, arrayListOf())
 //                                    }
 //                                }
-//                            }
 //
-//                            if (notOnChatServer) { // 서버에 저장된 유저 정보가 없으면 추가
-//                                val nextKey = lastKey + 1
-//
-//                                // 실제 서버의 유저 uid 저장
-//                                fdRoot.child("users").child((nextKey).toString() + "/uid")
-//                                    .setValue(originServerUserUidMbr)
-//                                fdRoot.child("users").child((nextKey).toString() + "/nickname")
-//                                    .setValue(originServerUserNicknameMbr)
-//                                fdRoot.child("users").child((nextKey).toString() + "/isOnline")
-//                                    .setValue(true)
-//                                fdRoot.child("users").child((nextKey).toString() + "/isTableAlive")
-//                                    .setValue(true)
-//
-//                                chatServerUsersTableKeyMbr = nextKey
-//                            }
-//
-//                        } else { // 데이터 스키마가 없음 = 서버에 저장된 유저 정보가 없으니 추가
-//                            fdRoot.child("users").child("1/uid").setValue(originServerUserUidMbr)
-//                            fdRoot.child("users").child("1/nickname")
-//                                .setValue(originServerUserNicknameMbr)
-//                            fdRoot.child("users").child("1/isOnline").setValue(true)
-//                            fdRoot.child("users").child("1/isTableAlive").setValue(true)
-//
-//                            chatServerUsersTableKeyMbr = 1
-//                        }
-//
-//                        // todo : 채널 리스트 가져오기
-//                    }
-//
-//                    override fun onCancelled(databaseError: DatabaseError) {}
-//                })
+//                                override fun onCancelled(databaseError: DatabaseError) {}
+//                            })
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        // todo 채널 데이터를 가져오는데 실패함
+                    }
+                })
 
             // 채널 리스트 가져와서 뿌려주기
 
-
-//            fdRoot
-//                .child("users")
-//                .addValueEventListener(object :
-//                    ValueEventListener {
-//                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-//                        if (dataSnapshot.exists()) {
-//                            val resultObj =
-//                                arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
-//
-//                            for (snapshot in dataSnapshot.children) {
-//                                // 실제 서버의 유저 uid 가 반환됨
-//                                val userUid = snapshot.child("uid").getValue(Long::class.java)
-//                                val nickname =
-//                                    snapshot.child("nickname").getValue(String::class.java)
-//                                val isTableAlive =
-//                                    snapshot.child("isTableAlive").getValue(Boolean::class.java)
-//
-//                                if (userUid == null || nickname == null || isTableAlive == null) {
-//                                    continue
-//                                }
-//
-//                                if (isTableAlive) {
-//                                    resultObj.add(
-//                                        ActivityFirebaseChatSampleChannelListAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-//                                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-//                                            userUid,
-//                                            nickname
-//                                        )
-//                                    )
-//                                }
-//                            }
-//
-//                            getItemListOnComplete(1, resultObj)
-//                        } else {
-//                            getItemListOnComplete(1, arrayListOf())
-//                        }
-//                    }
-//
-//                    override fun onCancelled(databaseError: DatabaseError) {}
-//                })
 
             // (c18. 헤더 데이터 가져오기)
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
@@ -801,42 +815,14 @@ class ActivityFirebaseChatSampleChannelList : AppCompatActivity() {
 
     // (채널 추가)
     private fun addChannel() {
-        // todo
-
-//        fdRoot
-//            .child("users")
-//            .orderByKey()
-//            .limitToLast(1)
-//            .addListenerForSingleValueEvent(object :
-//                ValueEventListener {
-//                override fun onDataChange(dataSnapshot: DataSnapshot) {
-//                    if (dataSnapshot.exists()) {
-//                        var lastUid: Long = 0
-//                        for (snapshot in dataSnapshot.children) {
-//                            lastUid = snapshot.key.toString().toLong()
-//                        }
-//                        val nextUid = lastUid + 1
-//
-//                        // 실제 서버의 유저 uid 저장
-//                        fdRoot.child("users").child((nextUid).toString() + "/uid").setValue(nextUid)
-//                        fdRoot.child("users").child((nextUid).toString() + "/nickname")
-//                            .setValue("user$nextUid")
-//                        fdRoot.child("users").child((nextUid).toString() + "/isOnline")
-//                            .setValue(true)
-//                        fdRoot.child("users").child((nextUid).toString() + "/isTableAlive")
-//                            .setValue(true)
-//                    } else {
-//
-//                        // 실제 서버의 유저 uid 저장
-//                        fdRoot.child("users").child("1/uid").setValue(1)
-//                        fdRoot.child("users").child("1/nickname").setValue("user1")
-//                        fdRoot.child("users").child("1/isOnline").setValue(true)
-//                        fdRoot.child("users").child("1/isTableAlive").setValue(true)
-//                    }
-//                }
-//
-//                override fun onCancelled(databaseError: DatabaseError) {}
-//            })
+        // 채팅 목록 화면으로 이동
+        val intent =
+            Intent(
+                this,
+                ActivityFirebaseChatSampleAddChannel::class.java
+            )
+        intent.putExtra("serverUid", intent.getLongExtra("serverUid", -1))
+        startActivity(intent)
     }
 
 

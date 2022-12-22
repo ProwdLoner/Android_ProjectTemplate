@@ -33,7 +33,6 @@ import com.example.prowd_android_template.databinding.ItemActivityFirebaseChatSa
 import com.example.prowd_android_template.databinding.ItemEmptyBinding
 import com.example.prowd_android_template.repository.RepositorySet
 import com.example.prowd_android_template.util_class.ThreadConfluenceObj
-import com.google.firebase.database.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -41,31 +40,29 @@ import java.util.concurrent.Semaphore
 // [firebase 채팅 샘플 (채팅 유저 목록 관련)]
 // firebase 채팅을 사용하려면 firebase 에 프로젝트를 생성하고 그곳에서 안드로이드 프로젝트 설정 후 google-service.json 파일을 가져와 프로젝트에 적용
 // firebase 콘솔에서 realtime database 사용 설정
-// 이 화면은 어디까지나 예시화면으로, 실제 서비스 적용시엔 이 화면을 건너뛰고 channelList 화면에서 채팅 서버에 유저 정보를 검증하여 사용하면 됩니다.
+// 이 화면은 어디까지나 채팅 유저 변경 테스트를 위한 예시화면으로,
+// 실제 서비스 적용시엔 이 화면을 건너뛰고 channelList 화면에서 채팅 서버에 유저 정보를 검증하여 사용하면 됩니다.
+// 테스트 환경시 실서버의 유저가 10 명이 존재한다고 가정할 것입니다.
 
 // (관련 NoSQL DB 스키마)
 // users/{key : Long}
 //     originServerUserUid : Long
 //     originServerUserNickname : String
-//     isTableAlive : Boolean
 
 // channels/{key : Long}
 //     channelName : String
 //     createDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
-//     isTableAlive : Boolean
 
 // channelUsers/{key : Long}
 //     usersTableKey : Long
 //     channelsTableKey : Long
 //     joinDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
 //     lastReadMessageTableKey : Long
-//     isTableAlive : Boolean
 
 // messages/{key : Long}
 //     channelUsersTableKey : Long
 //     message : String
 //     createDate : String (yyyy-MM-dd HH-mm-ss.SSSS)
-//     isTableAlive : Boolean
 
 class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     // <설정 변수 공간>
@@ -160,7 +157,7 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
     var resultLauncherCallbackMbr: ((ActivityResult) -> Unit)? = null
 
     // (Firebase Database 객체)
-    lateinit var fdRoot: DatabaseReference
+//    lateinit var fdRoot: DatabaseReference
 
 
     // ---------------------------------------------------------------------------------------------
@@ -447,14 +444,6 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
         startActivity(intent)
     }
 
-    // (유저 정보 삭제)
-    // 실제 적용시 유저는 적용하려는 서버의 유저를 사용할 것.
-    fun deleteThisUser(
-        chatServerUsersKey: Long
-    ) {
-        fdRoot.child("users/${chatServerUsersKey}").child("isTableAlive").setValue(false)
-    }
-
 
     // ---------------------------------------------------------------------------------------------
     // <비공개 메소드 공간>
@@ -497,17 +486,12 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
         ) {
             resultLauncherCallbackMbr?.let { it1 -> it1(it) }
         }
-
-        fdRoot = FirebaseDatabase.getInstance().reference
     }
 
     // (초기 뷰 설정)
     // : 뷰 리스너 바인딩, 초기 뷰 사이즈, 위치 조정 등
     private fun onCreateInitView() {
-        // 유저 추가
-        bindingMbr.addUser.setOnClickListener {
-            addUser()
-        }
+
     }
 
     // (액티비티 진입 권한이 클리어 된 시점)
@@ -690,49 +674,21 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
             //     데이터 요청 API 는 정렬기준, 마지막 uid, 요청 아이템 개수 등을 입력하여 데이터 리스트를 반환받음
             // 유저 리스트 가져와서 뿌려주기
-            fdRoot
-                .child("users")
-                .addValueEventListener(object :
-                    ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            val resultObj =
-                                arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
+            val resultObj =
+                arrayListOf<AbstractProwdRecyclerViewAdapter.AdapterItemAbstractVO>()
 
-                            for (snapshot in dataSnapshot.children) {
-                                // 실제 서버의 유저 uid 가 반환되었다고 가정
-                                val originServerUserUid =
-                                    snapshot.child("originServerUserUid").getValue(Long::class.java)
-                                val originServerUserNickname =
-                                    snapshot.child("originServerUserNickname")
-                                        .getValue(String::class.java)
-                                val isTableAlive =
-                                    snapshot.child("isTableAlive").getValue(Boolean::class.java)
+            for (idx in 1..10) {
+                resultObj.add(
+                    ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
+                        adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
+                        idx.toLong(),
+                        idx.toLong(),
+                        "유저 $idx"
+                    )
+                )
+            }
 
-                                if (originServerUserUid == null || originServerUserNickname == null || isTableAlive == null) {
-                                    continue
-                                }
-
-                                if (isTableAlive) {
-                                    resultObj.add(
-                                        ActivityFirebaseChatSampleLoginAdapterSet.RecyclerViewAdapter.Item1.ItemVO(
-                                            adapterSetMbr.recyclerViewAdapter.nextItemUidMbr,
-                                            snapshot.key.toString().toLong(),
-                                            originServerUserUid,
-                                            originServerUserNickname
-                                        )
-                                    )
-                                }
-                            }
-
-                            getItemListOnComplete(1, resultObj)
-                        } else {
-                            getItemListOnComplete(1, arrayListOf())
-                        }
-                    }
-
-                    override fun onCancelled(databaseError: DatabaseError) {}
-                })
+            getItemListOnComplete(1, resultObj)
 
             // (c18. 헤더 데이터 가져오기)
             // : lastItemUid 등의 인자값을 네트워크 요청으로 넣어주고 데이터를 받아와서 onComplete 실행
@@ -751,44 +707,6 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
             // (c20. 그외 스크린 데이터 가져오기)
 
         }
-    }
-
-    // (유저 추가)
-    // 실제 적용시 유저는 적용하려는 서버의 유저를 사용할 것.
-    private fun addUser() {
-        fdRoot
-            .child("users")
-            .orderByKey()
-            .limitToLast(1)
-            .addListenerForSingleValueEvent(object :
-                ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    if (dataSnapshot.exists()) {
-                        var lastUid: Long = 0
-                        for (snapshot in dataSnapshot.children) {
-                            lastUid = snapshot.key.toString().toLong()
-                        }
-                        val nextUid = lastUid + 1
-
-                        // 실제 서버의 유저 uid 저장
-                        fdRoot.child("users").child((nextUid).toString() + "/originServerUserUid")
-                            .setValue(nextUid)
-                        fdRoot.child("users")
-                            .child((nextUid).toString() + "/originServerUserNickname")
-                            .setValue("user$nextUid")
-                        fdRoot.child("users").child((nextUid).toString() + "/isTableAlive")
-                            .setValue(true)
-                    } else {
-
-                        // 실제 서버의 유저 uid 저장
-                        fdRoot.child("users").child("1/originServerUserUid").setValue(1)
-                        fdRoot.child("users").child("1/originServerUserNickname").setValue("user1")
-                        fdRoot.child("users").child("1/isTableAlive").setValue(true)
-                    }
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {}
-            })
     }
 
 
@@ -977,30 +895,6 @@ class ActivityFirebaseChatSampleLogin : AppCompatActivity() {
                                 copyEntity.originServerUserUid,
                                 copyEntity.originServerUserNickname
                             )
-                        }
-
-                        // 아이템 제거 버튼
-                        binding.root.setOnLongClickListener {
-                            parentViewMbr.shownDialogInfoVOMbr = DialogBinaryChoose.DialogInfoVO(
-                                true,
-                                "유저 삭제",
-                                "이 유저를 삭제하시겠습니까?",
-                                null,
-                                null,
-                                onPosBtnClicked = {
-                                    parentViewMbr.deleteThisUser(
-                                        copyEntity.chatServerUsersKey
-                                    )
-                                },
-                                onNegBtnClicked = {
-                                    parentViewMbr.shownDialogInfoVOMbr = null
-                                },
-                                onCanceled = {
-                                    parentViewMbr.shownDialogInfoVOMbr = null
-                                }
-                            )
-
-                            return@setOnLongClickListener true
                         }
 
                     }
