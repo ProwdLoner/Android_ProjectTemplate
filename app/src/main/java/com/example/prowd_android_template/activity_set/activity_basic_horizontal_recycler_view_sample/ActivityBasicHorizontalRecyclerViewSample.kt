@@ -613,6 +613,7 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
             ActivityBasicHorizontalRecyclerViewSampleAdapterSet.RecyclerViewAdapter(
                 this,
                 bindingMbr.recyclerView,
+                false,
                 false, // 세로 스크롤인지 가로 스크롤인지
                 1, // 이 개수를 늘리면 그리드 레이아웃으로 변화
                 onScrollReachTheEnd = {
@@ -1172,12 +1173,14 @@ class ActivityBasicHorizontalRecyclerViewSample : AppCompatActivity() {
         class RecyclerViewAdapter(
             private val parentViewMbr: ActivityBasicHorizontalRecyclerViewSample,
             targetView: RecyclerView,
+            targetViewLayoutManagerStackFromEnd : Boolean,
             isVertical: Boolean,
             oneRowItemCount: Int,
             onScrollReachTheEnd: (() -> Unit)?
         ) : AbstractProwdRecyclerViewAdapter(
             parentViewMbr,
             targetView,
+            targetViewLayoutManagerStackFromEnd,
             isVertical,
             oneRowItemCount,
             onScrollReachTheEnd

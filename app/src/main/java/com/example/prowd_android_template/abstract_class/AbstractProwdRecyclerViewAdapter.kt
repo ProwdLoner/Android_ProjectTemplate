@@ -12,6 +12,7 @@ import java.util.concurrent.Semaphore
 abstract class AbstractProwdRecyclerViewAdapter(
     context: Context,
     targetView: RecyclerView,
+    targetViewLayoutManagerStackFromEnd : Boolean,
     isVertical: Boolean,
     oneRowItemCount : Int,
     onScrollReachTheEnd: (() -> Unit)?
@@ -211,6 +212,8 @@ abstract class AbstractProwdRecyclerViewAdapter(
                 }
             }
         }
+
+        scrollAdapterLayoutManager.stackFromEnd = targetViewLayoutManagerStackFromEnd
 
         targetView.layoutManager = scrollAdapterLayoutManager
 

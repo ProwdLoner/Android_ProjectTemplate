@@ -25,12 +25,14 @@ class ActivityEasyLutSampleAdapterSet(
     class RecyclerViewAdapter(
         private val parentViewMbr: ActivityEasyLutSample,
         targetView: RecyclerView,
+        targetViewLayoutManagerStackFromEnd : Boolean,
         isVertical: Boolean,
         oneRowItemCount : Int,
         onScrollReachTheEnd: (() -> Unit)?
     ) : AbstractProwdRecyclerViewAdapter(
         parentViewMbr,
         targetView,
+        targetViewLayoutManagerStackFromEnd,
         isVertical,
         oneRowItemCount,
         onScrollReachTheEnd

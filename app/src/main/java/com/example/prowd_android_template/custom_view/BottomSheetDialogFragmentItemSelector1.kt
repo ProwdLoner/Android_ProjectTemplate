@@ -50,6 +50,7 @@ class BottomSheetDialogFragmentItemSelector1 constructor(
                 BottomSheetDialogFragmentItemSelector1AdapterSet.RecyclerViewAdapter(
                     this,
                     bindingMbr.recyclerView,
+                    false,
                     true, // 세로 스크롤인지 가로 스크롤인지
                     1, // 이 개수를 늘리면 그리드 레이아웃으로 변화
                     onScrollReachTheEnd = {}
@@ -94,12 +95,14 @@ class BottomSheetDialogFragmentItemSelector1 constructor(
         class RecyclerViewAdapter(
             private val parentViewMbr: BottomSheetDialogFragmentItemSelector1,
             targetView: RecyclerView,
+            targetViewLayoutManagerStackFromEnd : Boolean,
             isVertical: Boolean,
             oneRowItemCount: Int,
             onScrollReachTheEnd: (() -> Unit)?
         ) : AbstractProwdRecyclerViewAdapter(
             parentViewMbr.requireContext(),
             targetView,
+            targetViewLayoutManagerStackFromEnd,
             isVertical,
             oneRowItemCount,
             onScrollReachTheEnd
