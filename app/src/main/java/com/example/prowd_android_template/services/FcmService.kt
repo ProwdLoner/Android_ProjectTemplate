@@ -12,6 +12,9 @@ import com.google.firebase.messaging.RemoteMessage
 // [FCM 푸시 메세지 수신 서비스]
 // FCM 관련 설정은 build.gradle 에서의 종속성 설정과 AndroidManifest.xml 의 service 설정이 있고,
 // 파이어베이스 설정은 app 디렉토리 안의 google-services.json 파일을 발급받은 파일로 바꾸어 변경가능.
+// FCM 메세지는 앱 상태에 상관 없이 수신 가능함.
+// 예를들어 디바이스 종료 상태에 n번의 메세지를 받으면, 디바이스가 켜지고 시간이 지나고 한꺼번에 수신됨.
+// 단, 밀린 메세지의 수신은 디바이스가 앱이 켜진다고 바로 받는 것이 아니라 시간차가 존재하므로 이를 주의할것.
 class FcmService : FirebaseMessagingService() {
 
     companion object {
