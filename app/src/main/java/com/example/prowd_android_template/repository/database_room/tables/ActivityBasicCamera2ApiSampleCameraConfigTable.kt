@@ -1,7 +1,6 @@
 package com.example.prowd_android_template.repository.database_room.tables
 
 import androidx.room.*
-import androidx.room.ForeignKey.CASCADE
 
 // CameraId 테이블의 Uid 별 카메라 정보 테이블
 class ActivityBasicCamera2ApiSampleCameraConfigTable {
