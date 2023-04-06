@@ -68,7 +68,7 @@
                     android:layout_width="250dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:background="@drawable/layer_list_activity_user_sample_list_user_info_container"
+                    android:background="@drawable/background_activity_user_sample_list_user_info_container"
                     android:paddingStart="20dp"
                     android:paddingTop="10dp"
                     android:paddingEnd="20dp"

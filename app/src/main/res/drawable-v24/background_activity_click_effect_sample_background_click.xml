@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 클릭시 둥글게 퍼지는 효과 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#FF3D7DDC">
+
+    <!-- 클릭시 전환후 화면 -->
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <corners android:radius="5dp" />
+            <solid android:color="#FF3D7DDC" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="5dp" />
+            <solid android:color="#79aaf2" />
+        </shape>
+    </item>
+</ripple>

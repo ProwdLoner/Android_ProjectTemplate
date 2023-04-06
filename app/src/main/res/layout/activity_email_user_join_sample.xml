@@ -90,7 +90,7 @@
                     android:layout_width="303.5dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="30.95dp"
-                    android:background="@drawable/layer_list_layout_activity_email_user_join_sample_send_email_btn"
+                    android:background="@drawable/background_activity_email_user_join_sample_send_email_btn"
                     android:fontFamily="@font/apple_sd_gothic_neo_sb"
                     android:paddingTop="10.5dp"
                     android:paddingBottom="10.5dp"

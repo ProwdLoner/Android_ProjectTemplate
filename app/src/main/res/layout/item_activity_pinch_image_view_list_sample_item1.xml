@@ -8,7 +8,7 @@
         android:id="@+id/image_box"
         android:layout_width="75dp"
         android:layout_height="75dp"
-        android:background="@drawable/layer_list_item_activity_pinch_image_view_list_sample_item1_image_box"
+        android:background="@drawable/background_item_activity_pinch_image_view_list_sample_item1_image_box"
         android:clipToOutline="true"
         android:scaleType="centerCrop"
         app:layout_constraintBottom_toBottomOf="parent"

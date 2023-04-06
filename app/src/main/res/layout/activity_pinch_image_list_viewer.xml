@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="20dp"
-        android:background="@drawable/layer_list_activity_pinch_image_list_viewer_page_container"
+        android:background="@drawable/background_activity_pinch_image_list_viewer_page_container"
         android:paddingStart="20dp"
         android:paddingTop="10dp"
         android:paddingEnd="20dp"

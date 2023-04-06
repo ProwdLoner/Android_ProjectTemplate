@@ -18,7 +18,7 @@
             android:id="@+id/upper_container"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:background="@drawable/layer_list_layout_dialog_binary_choose_upper_container">
+            android:background="@drawable/background_dialog_binary_choose_upper_container">
 
             <TextView
                 android:id="@+id/title"
@@ -45,7 +45,7 @@
                 android:id="@+id/content_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/layer_list_layout_dialog_binary_choose_content_container"
+                android:background="@drawable/background_dialog_binary_choose_content_container"
                 android:maxHeight="300dp"
                 android:minHeight="100dp"
                 android:paddingTop="20dp"
@@ -88,7 +88,7 @@
                 android:id="@+id/btn_container"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:background="@drawable/layer_list_layout_dialog_binary_choose_btn_container"
+                android:background="@drawable/background_dialog_binary_choose_btn_container"
                 app:layout_constraintTop_toBottomOf="@id/content_container">
 
                 <TextView
